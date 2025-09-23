@@ -40,7 +40,7 @@ export function MyDashboardPageContent({ initialData }: { initialData: Dashboard
   const { user, company, loading: userLoading, getUnacknowledgedAlerts, acknowledgeAlerts } = useUser();
   const { settings } = useSettings();
   const [data, setData] = useState<DashboardData>(initialData);
-  const [dataLoading, setDataLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
   const [alerts, setAlerts] = useState<AlertType[]>([]);
   const { toast } = useToast();
   
@@ -63,12 +63,9 @@ export function MyDashboardPageContent({ initialData }: { initialData: Dashboard
   }, [user, company, toast]);
 
   useEffect(() => {
-    // This effect runs if the initial server-side fetch couldn't get a user ID.
-    // It refetches data on the client once the user context is available.
-    if (!userLoading && user && company && !initialData.upcomingBookings.length) {
-      fetchDashboardData();
-    }
-  }, [user, userLoading, company, fetchDashboardData, initialData.upcomingBookings.length]);
+    setData(initialData);
+    setDataLoading(false);
+  }, [initialData]);
   
   useEffect(() => {
     if (!userLoading && user) {

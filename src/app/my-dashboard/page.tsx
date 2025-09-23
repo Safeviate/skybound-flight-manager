@@ -10,7 +10,13 @@ import { useEffect, useState } from 'react';
 
 export default function MyDashboardPage() {
     const { user, company } = useUser();
-    const [initialData, setInitialData] = useState({
+    const [initialData, setInitialData] = useState<{
+        upcomingBookings: Booking[];
+        allUserBookings: Booking[];
+        openSafetyReports: SafetyReport[];
+        openQualityAudits: QualityAudit[];
+        assignedStudents: User[];
+    }>({
         upcomingBookings: [],
         allUserBookings: [],
         openSafetyReports: [],

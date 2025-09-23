@@ -17,41 +17,46 @@ export async function getDashboardData(companyId: string, userId: string): Promi
         return { upcomingBookings: [], allUserBookings: [], openSafetyReports: [], openQualityAudits: [], assignedStudents: [] };
     }
     
-    const userRef = doc(db, `companies/${companyId}/users`, userId);
-    const userSnap = await getDoc(userRef);
-    
-    if (!userSnap.exists()) {
-        const studentUserRef = doc(db, `companies/${companyId}/students`, userId);
-        const studentUserSnap = await getDoc(studentUserRef);
-        if (!studentUserSnap.exists()) {
-            console.error("Dashboard: Could not find user to fetch data.");
-            return { upcomingBookings: [], allUserBookings: [], openSafetyReports: [], openQualityAudits: [], assignedStudents: [] };
+    const userCollections = ['users', 'students'];
+    let userSnap: import('firebase/firestore').DocumentSnapshot | null = null;
+
+    for (const coll of userCollections) {
+        const userDocRef = doc(db, `companies/${companyId}/${coll}`, userId);
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+            userSnap = docSnap;
+            break;
         }
-        userSnap = studentUserSnap;
+    }
+    
+    if (!userSnap) {
+        console.error("Dashboard: Could not find user to fetch data.");
+        return { upcomingBookings: [], allUserBookings: [], openSafetyReports: [], openQualityAudits: [], assignedStudents: [] };
     }
     const user = userSnap.data() as User;
     const userName = user.name;
 
     const today = format(startOfToday(), 'yyyy-MM-dd');
 
-    const upcomingBookingsAsStudentQuery = query(
-        collection(db, `companies/${companyId}/bookings`),
+    const upcomingBookingsQuery = query(
+      collection(db, `companies/${companyId}/bookings`),
+      and(
         where('date', '>=', today),
-        where('student', '==', userName)
-    );
-    const upcomingBookingsAsInstructorQuery = query(
-        collection(db, `companies/${companyId}/bookings`),
-        where('date', '>=', today),
-        where('instructor', '==', userName)
+        or(
+          where('student', '==', userName),
+          where('instructor', '==', userName)
+        )
+      ),
+      orderBy('date'),
+      orderBy('startTime')
     );
 
-    const allBookingsAsStudentQuery = query(
-        collection(db, `companies/${companyId}/bookings`),
-        where('student', '==', userName)
-    );
-    const allBookingsAsInstructorQuery = query(
-        collection(db, `companies/${companyId}/bookings`),
+    const allUserBookingsQuery = query(
+      collection(db, `companies/${companyId}/bookings`),
+      or(
+        where('student', '==', userName),
         where('instructor', '==', userName)
+      )
     );
 
     const openSafetyReportsQuery = query(
@@ -70,45 +75,30 @@ export async function getDashboardData(companyId: string, userId: string): Promi
     );
 
     const [
-        upcomingStudentBookingsSnap,
-        upcomingInstructorBookingsSnap,
-        allStudentBookingsSnap,
-        allInstructorBookingsSnap,
+        upcomingBookingsSnap,
+        allUserBookingsSnap,
         openSafetyReportsSnapshot,
         openQualityAuditsSnapshot,
         assignedStudentsSnapshot,
     ] = await Promise.all([
-        getDocs(upcomingBookingsAsStudentQuery),
-        getDocs(upcomingBookingsAsInstructorQuery),
-        getDocs(allBookingsAsStudentQuery),
-        getDocs(allBookingsAsInstructorQuery),
+        getDocs(upcomingBookingsQuery),
+        getDocs(allUserBookingsQuery),
         user.permissions.includes('Safety:View') ? getDocs(openSafetyReportsQuery) : Promise.resolve({ docs: [] }),
         user.permissions.includes('Quality:View') ? getDocs(openQualityAuditsQuery) : Promise.resolve({ docs: [] }),
         user.role.includes('Instructor') || user.role === 'Chief Flight Instructor' || user.role === 'Head Of Training' ? getDocs(assignedStudentsQuery) : Promise.resolve({ docs: [] }),
     ]);
 
-    const upcomingStudentBookings = upcomingStudentBookingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
-    const upcomingInstructorBookings = upcomingInstructorBookingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
-    const allUpcomingBookings = [...upcomingStudentBookings, ...upcomingInstructorBookings];
-    const uniqueUpcomingBookings = Array.from(new Map(allUpcomingBookings.map(item => [item['id'], item])).values());
-    uniqueUpcomingBookings.sort((a,b) => {
-        const dateComparison = a.date.localeCompare(b.date);
-        if (dateComparison !== 0) return dateComparison;
-        return a.startTime.localeCompare(b.startTime);
-    });
-
-    const allStudentBookings = allStudentBookingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
-    const allInstructorBookings = allInstructorBookingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
-    const allUserBookings = [...allStudentBookings, ...allInstructorBookings];
-    const uniqueAllUserBookings = Array.from(new Map(allUserBookings.map(item => [item['id'], item])).values());
+    const upcomingBookings = upcomingBookingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
+    
+    const allUserBookings = allUserBookingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
 
     const openSafetyReports = openSafetyReportsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as SafetyReport));
     const openQualityAudits = openQualityAuditsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as QualityAudit));
     const assignedStudents = assignedStudentsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
     
     return { 
-        upcomingBookings: uniqueUpcomingBookings.slice(0, 5), 
-        allUserBookings: uniqueAllUserBookings, 
+        upcomingBookings: upcomingBookings.slice(0, 5), 
+        allUserBookings, 
         openSafetyReports, 
         openQualityAudits, 
         assignedStudents 
