@@ -239,10 +239,6 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
                                       </div>
                                  </div>
                                  <div className="flex items-center">
-                                  <Button size="sm" variant="outline" onClick={() => handleAcknowledge(alert.id)}>
-                                      <Check className="mr-2 h-4 w-4" />
-                                      Acknowledge
-                                  </Button>
                                   <CollapsibleTrigger asChild>
                                     <Button variant="ghost" size="icon">
                                       <ChevronRight className="h-5 w-5 text-muted-foreground self-center" />
