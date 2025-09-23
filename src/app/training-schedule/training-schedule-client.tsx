@@ -492,7 +492,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             padding: 0;
             text-align: left;
             height: 70px;
-            min-width: 4rem; /* 64px for 15 min slots */
+            min-width: 3rem; /* 48px for 15 min slots */
         }
         .gantt-header-cell {
             text-align: center;
@@ -586,7 +586,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                             </div>
                         </div>
                         <div className="flex-1 mt-6 overflow-auto rounded-lg border" style={{ minWidth: '0' }}>
-                            <table className="w-full border-collapse" style={{ minWidth: '6294px', tableLayout: 'fixed' }}>
+                            <table className="w-full border-collapse" style={{ minWidth: '4758px', tableLayout: 'fixed' }}>
                                 <thead>
                                     <tr>
                                         <th className="gantt-header-cell aircraft-name-cell">Aircraft</th>
