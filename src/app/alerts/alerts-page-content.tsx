@@ -56,16 +56,8 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
   }, [user, loading, router]);
   
   useEffect(() => {
-    // The alerts from the UserProvider are real-time, so we prefer them if available
-    // We filter for only Red and Yellow tags here for the main alerts page.
-    const unacknowledgedAlerts = getUnacknowledgedAlerts(['Red Tag', 'Yellow Tag']);
-    if (unacknowledgedAlerts.length > 0) {
-        setAlerts(unacknowledgedAlerts);
-    } else {
-        // Fallback to initial props if provider hasn't loaded them yet
-        setAlerts(initialAlerts.filter(alert => !alert.readBy.includes(user?.id || '')));
-    }
-  }, [getUnacknowledgedAlerts, user, initialAlerts]);
+    setAlerts(initialAlerts);
+  }, [initialAlerts]);
   
   const canCreateAlerts = user?.permissions.includes('Super User') || user?.permissions.includes('Alerts:Edit');
   
@@ -153,7 +145,11 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
     if (!user) return;
     try {
         await acknowledgeAlerts([alertId]);
-        setAlerts(prev => prev.filter(a => a.id !== alertId));
+        setAlerts(prev => 
+            prev.map(a => 
+                a.id === alertId ? { ...a, readBy: [...a.readBy, user.id] } : a
+            )
+        );
         toast({
             title: 'Alert Acknowledged',
             description: 'The notification has been marked as read.',
