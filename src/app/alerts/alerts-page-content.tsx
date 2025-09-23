@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, Info, ChevronRight, PlusCircle, Users, MoreHorizontal, Trash2, Check } from 'lucide-react';
+import { AlertTriangle, Info, ChevronRight, PlusCircle, Users, MoreHorizontal, Trash2, Check, Edit } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Alert } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ import { NewAlertForm } from './new-alert-form';
 import { format, parseISO } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, limit } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, limit, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -45,6 +45,7 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
   const { user, company, loading, acknowledgeAlerts, getUnacknowledgedAlerts } = useUser();
   const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingAlert, setEditingAlert] = useState<Alert | null>(null);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -67,11 +68,25 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
   }, [getUnacknowledgedAlerts, user, initialAlerts]);
   
   const canCreateAlerts = user?.permissions.includes('Super User') || user?.permissions.includes('Alerts:Edit');
+  
+  const handleOpenEditDialog = (alert: Alert) => {
+    setEditingAlert(alert);
+    setIsDialogOpen(true);
+  };
 
   const handleNewAlert = async (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => {
     if (!user || !company) return;
 
     try {
+      if (editingAlert) {
+        const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
+        await updateDoc(alertRef, data);
+        setAlerts(prev => prev.map(a => a.id === editingAlert.id ? { ...a, ...data } : a));
+        toast({
+            title: 'Alert Updated',
+            description: `The "${data.title}" alert has been updated.`,
+        });
+      } else {
         const alertsCollection = collection(db, 'companies', company.id, 'alerts');
         
         const q = query(
@@ -95,17 +110,20 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
 
         const docRef = await addDoc(alertsCollection, newAlertData);
         setAlerts(prev => [{...newAlertData, id: docRef.id}, ...prev]);
-        setIsDialogOpen(false);
         toast({
             title: 'Alert Created',
             description: `The "${data.title}" alert has been issued.`,
         });
+      }
+        
+      setIsDialogOpen(false);
+      setEditingAlert(null);
     } catch (error) {
-        console.error("Error creating new alert:", error);
+        console.error("Error saving alert:", error);
         toast({
             variant: 'destructive',
             title: 'Error',
-            description: 'Failed to create the alert in the database.'
+            description: 'Failed to save the alert in the database.'
         });
     }
   }
@@ -170,7 +188,7 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
               </CardDescription>
           </div>
           {canCreateAlerts && (
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <Dialog open={isDialogOpen} onOpenChange={(isOpen) => { setIsDialogOpen(isOpen); if (!isOpen) setEditingAlert(null); }}>
                   <DialogTrigger asChild>
                       <Button>
                           <PlusCircle className="mr-2 h-4 w-4" />
@@ -179,12 +197,12 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
                   </DialogTrigger>
                   <DialogContent>
                       <DialogHeader>
-                          <DialogTitle>Create New System Notification</DialogTitle>
+                          <DialogTitle>{editingAlert ? 'Edit System Notification' : 'Create New System Notification'}</DialogTitle>
                           <DialogDescription>
-                              Select the type and provide details for the new alert.
+                              {editingAlert ? 'Update the details for this alert.' : 'Select the type and provide details for the new alert.'}
                           </DialogDescription>
                       </DialogHeader>
-                      <NewAlertForm onSubmit={handleNewAlert} />
+                      <NewAlertForm onSubmit={handleNewAlert} existingAlert={editingAlert}/>
                   </DialogContent>
               </Dialog>
           )}
@@ -227,6 +245,9 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
                                               </Button>
                                           </DropdownMenuTrigger>
                                           <DropdownMenuContent>
+                                              <DropdownMenuItem onSelect={() => handleOpenEditDialog(alert)}>
+                                                  <Edit className="mr-2 h-4 w-4" /> Edit
+                                              </DropdownMenuItem>
                                               <AlertDialog>
                                                   <AlertDialogTrigger asChild>
                                                       <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">

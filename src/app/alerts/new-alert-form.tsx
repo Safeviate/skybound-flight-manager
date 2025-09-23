@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import type { Alert } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { format } from 'date-fns';
+import { useEffect } from 'react';
 
 const alertFormSchema = z.object({
   type: z.enum(['Red Tag', 'Yellow Tag'], {
@@ -37,9 +38,10 @@ type AlertFormValues = z.infer<typeof alertFormSchema>;
 
 interface NewAlertFormProps {
   onSubmit: (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => void;
+  existingAlert?: Alert | null;
 }
 
-export function NewAlertForm({ onSubmit }: NewAlertFormProps) {
+export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
   const { toast } = useToast();
   const form = useForm<AlertFormValues>({
     resolver: zodResolver(alertFormSchema),
@@ -49,12 +51,24 @@ export function NewAlertForm({ onSubmit }: NewAlertFormProps) {
     },
   });
 
+  useEffect(() => {
+    if (existingAlert) {
+      form.reset({
+        type: existingAlert.type as 'Red Tag' | 'Yellow Tag',
+        title: existingAlert.title,
+        description: existingAlert.description,
+      });
+    } else {
+        form.reset({
+            type: undefined,
+            title: '',
+            description: '',
+        });
+    }
+  }, [existingAlert, form]);
+
   function handleFormSubmit(data: AlertFormValues) {
     onSubmit(data);
-    toast({
-      title: 'Alert Created',
-      description: `The "${data.title}" alert has been issued.`,
-    });
     form.reset();
   }
 
@@ -113,7 +127,7 @@ export function NewAlertForm({ onSubmit }: NewAlertFormProps) {
           )}
         />
         <div className="flex justify-end pt-4">
-          <Button type="submit">Issue Notification</Button>
+          <Button type="submit">{existingAlert ? 'Save Changes' : 'Issue Notification'}</Button>
         </div>
       </form>
     </Form>
