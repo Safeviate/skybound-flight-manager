@@ -519,21 +519,20 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         .empty-slot:hover { background-color: hsl(var(--muted)); }
         .booking-slot { position: relative; }
         
-        .gantt-bar { 
-            padding: 4px 8px; 
-            border-radius: 4px; 
-            text-align: center; 
-            font-size: 11px; 
-            white-space: normal; 
-            overflow: hidden; 
-            position: absolute; 
-            top: 4px; 
-            left: 4px; 
-            right: 4px; 
-            bottom: 4px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
+        .gantt-bar {
+            padding: 4px 8px;
+            text-align: center;
+            font-size: 11px;
+            white-space: normal;
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border: 1px solid rgba(0,0,0,0.1);
         }
         .gantt-bar.clickable { cursor: pointer; }
