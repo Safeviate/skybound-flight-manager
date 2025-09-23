@@ -22,6 +22,7 @@ import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, lim
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import Image from 'next/image';
 
 
 const getAlertVariant = (type: Alert['type']) => {
@@ -196,7 +197,10 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
                           <Card className="hover:bg-muted/50 transition-colors">
                               <CardHeader className="flex flex-row items-start justify-between gap-4">
                                  <div className="flex items-start gap-4 flex-1">
-                                      {getAlertIcon(alert.type)}
+                                      <div className="flex flex-col items-center gap-2">
+                                        {company?.logoUrl && <Image src={company.logoUrl} alt="Company Logo" width={40} height={40} className="rounded-md" />}
+                                        {getAlertIcon(alert.type)}
+                                      </div>
                                       <div>
                                           <div className="flex items-center gap-2">
                                               <Badge variant={getAlertVariant(alert.type)}>{alert.type}</Badge>
