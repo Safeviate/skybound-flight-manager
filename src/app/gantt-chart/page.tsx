@@ -61,7 +61,7 @@ const StickyGanttChart = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {resources.map(resource => (
+                        {resources.map((resource, rowIndex) => (
                             <TableRow key={resource}>
                                 <TableCell className="sticky left-0 z-10 bg-card font-medium w-[150px] border-r">{resource}</TableCell>
                                 {timeSlots.map(time => (
@@ -77,48 +77,13 @@ const StickyGanttChart = () => {
 }
 
 const SplitTableGanttChart = () => {
-    const resourceColumnRef = React.useRef<HTMLDivElement>(null);
-    const dataAreaRef = React.useRef<HTMLDivElement>(null);
-
-    const syncScroll = (source: HTMLDivElement | null, target: HTMLDivElement | null) => {
-        if (target && source) {
-            target.scrollTop = source.scrollTop;
-        }
-    };
-
     return (
-        <div className="grid grid-cols-[150px_1fr] h-[600px] border rounded-lg overflow-hidden">
-            {/* Resource Column */}
-            <div 
-                ref={resourceColumnRef} 
-                className="overflow-y-hidden pr-[17px]" // Compensate for scrollbar width
-                onScroll={(e) => syncScroll(e.currentTarget, dataAreaRef.current)}
-            >
-                 <Table style={{ tableLayout: 'fixed' }}>
+        <div className="h-[600px] overflow-auto rounded-lg border">
+            <div className="relative" style={{ width: '2880px' }}>
+                <Table className="border-collapse" style={{ tableLayout: 'fixed' }}>
                     <TableHeader className="sticky top-0 z-10 bg-card">
-                        <TableRow style={{ height: '57px' }}>
-                            <TableHead className="text-center">Resource</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {resources.map(resource => (
-                            <TableRow key={resource} style={{ height: '41px' }}>
-                                <TableCell className="font-medium text-center">{resource}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
-            
-            {/* Data Area */}
-            <div 
-                ref={dataAreaRef} 
-                className="overflow-auto" 
-                onScroll={(e) => syncScroll(e.currentTarget, resourceColumnRef.current)}
-            >
-                <Table className="border-collapse" style={{ tableLayout: 'fixed', width: '2880px' }}>
-                     <TableHeader className="sticky top-0 z-10 bg-card">
-                        <TableRow style={{ height: '57px' }}>
+                        <TableRow>
+                            <TableHead className="sticky left-0 z-20 bg-card text-center w-[150px] border-r">Resource</TableHead>
                             {hourlyTimeSlots.map(time => (
                                 <TableHead key={time} colSpan={2} className="text-center w-[120px] border-l">{time}</TableHead>
                             ))}
@@ -126,7 +91,8 @@ const SplitTableGanttChart = () => {
                     </TableHeader>
                     <TableBody>
                         {resources.map(resource => (
-                            <TableRow key={resource} style={{ height: '41px' }}>
+                            <TableRow key={resource}>
+                                <TableCell className="sticky left-0 z-10 bg-card font-medium text-center w-[150px] border-r">{resource}</TableCell>
                                 {timeSlots.map(time => (
                                     <TableCell key={time} className="w-[60px] border-l"></TableCell>
                                 ))}
@@ -149,17 +115,17 @@ function GanttChartPage() {
                     <CardDescription>A visual representation of schedules and bookings using different implementation techniques.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Tabs defaultValue="sticky">
+                    <Tabs defaultValue="split">
                         <TabsList>
                             <TabsTrigger value="sticky">CSS Sticky Approach</TabsTrigger>
-                            <TabsTrigger value="split">Split Table Approach</TabsTrigger>
+                            <TabsTrigger value="split">Final Corrected Approach</TabsTrigger>
                         </TabsList>
                         <TabsContent value="sticky" className="mt-4">
                             <p className="text-sm text-muted-foreground mb-4">This version uses `position: sticky` in CSS to keep the header and first column fixed. Use the buttons to scroll horizontally.</p>
                             <StickyGanttChart />
                         </TabsContent>
                         <TabsContent value="split" className="mt-4">
-                             <p className="text-sm text-muted-foreground mb-2">This version uses two separate tables and synchronizes their scrolling with JavaScript.</p>
+                             <p className="text-sm text-muted-foreground mb-2">This version uses a single table inside a scrolling container with `position: sticky` for the resource column, ensuring perfect alignment and a single scrollbar.</p>
                             <SplitTableGanttChart />
                         </TabsContent>
                     </Tabs>
