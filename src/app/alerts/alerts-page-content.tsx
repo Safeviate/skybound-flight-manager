@@ -224,7 +224,7 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
                                               <Badge variant={getAlertVariant(alert.type)}>{alert.type}</Badge>
                                               <CardTitle className="text-lg">#{alert.number} - {alert.title}</CardTitle>
                                           </div>
-                                          <CardDescription className="mt-2">{alert.description}</CardDescription>
+                                          <CardDescription className="mt-2 whitespace-pre-wrap">{alert.description}</CardDescription>
                                       </div>
                                  </div>
                                  <div className="flex items-center">
