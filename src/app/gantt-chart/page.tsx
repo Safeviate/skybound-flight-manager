@@ -4,10 +4,6 @@
 import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-
 
 const timeSlots = Array.from({ length: 24 * 2 }, (_, i) => {
     const hour = (6 + Math.floor(i / 2)) % 24;
@@ -22,7 +18,7 @@ const resources = ['Aircraft 1', 'Aircraft 2', 'Instructor A', 'Instructor B', '
 const GanttChart = () => {
     return (
         <div className="h-[600px] overflow-auto rounded-lg border">
-            <Table className="border-collapse" style={{ tableLayout: 'fixed' }}>
+            <Table className="border-collapse" style={{ tableLayout: 'fixed', width: '150%' }}>
                 <TableHeader className="sticky top-0 z-10 bg-card">
                     <TableRow>
                         <TableHead className="sticky left-0 z-20 bg-card text-center w-[150px] border-r">Resource</TableHead>
