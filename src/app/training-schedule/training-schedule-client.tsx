@@ -203,6 +203,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     return bookings.filter(b => b.status !== 'Cancelled' && b.date === format(selectedDate, 'yyyy-MM-dd'));
   }, [bookings, selectedDate]);
   
+  const timeToMinutes = (time: string) => {
+      const [hours, minutes] = time.split(':').map(Number);
+      return hours * 60 + minutes;
+  }
+
   const activeBookingsByAircraft = useMemo(() => {
     const activeMap = new Map<string, Booking>();
     aircraft.forEach(ac => {
@@ -224,12 +229,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   
   const hourlyTimeSlots = Array.from({ length: 24 }, (_, i) => `${((i + 6) % 24).toString().padStart(2, '0')}:00`);
 
-
-  const timeToMinutes = (time: string) => {
-      const [hours, minutes] = time.split(':').map(Number);
-      return hours * 60 + minutes;
-  }
-  
   const getBookingForSlot = (aircraftTailNumber: string, time: string) => {
     const slotTimeInMinutes = timeToMinutes(time);
     return filteredBookings.find(b => {
