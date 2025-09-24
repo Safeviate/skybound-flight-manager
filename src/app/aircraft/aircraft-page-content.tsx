@@ -954,105 +954,72 @@ export function AircraftPageContent() {
         );
     };
     
-  const ChecklistForms = () => {
-    const isPostFlight = selectedAircraftForChecklist?.checklistStatus === 'needs-post-flight';
-    const lastPostFlightChecklist = allChecklists.get(selectedAircraftForChecklist?.id || '')?.find(c => c.type === 'Post-Flight');
-    const initialHobbs = lastPostFlightChecklist?.results.hobbs || selectedAircraftForChecklist?.hours || 0;
-
-    if (isSuperUser) {
-        // Super User can always see both forms and switch between them.
+    const ChecklistForms = () => {
+        const isPostFlight = selectedAircraftForChecklist?.checklistStatus === 'needs-post-flight';
+        const lastPostFlightChecklist = allChecklists.get(selectedAircraftForChecklist?.id || '')?.find(c => c.type === 'Post-Flight');
+        const initialHobbs = lastPostFlightChecklist?.results.hobbs || selectedAircraftForChecklist?.hours || 0;
+    
+        // This is the main logic change: we check who is allowed to perform the post-flight.
+        let canPerformPostFlight = false;
+        if (isPostFlight) {
+            if (!settings.enforcePostFlightCheck) {
+                // If enforcement is off, anyone with permission can do it.
+                canPerformPostFlight = user?.permissions.includes('Checklists:Complete') || isSuperUser;
+            } else {
+                // If enforcement is on, only the flight crew or a super user can.
+                canPerformPostFlight = user && activeBookingForSelectedAircraft && 
+                    (activeBookingForSelectedAircraft.student === user.name || activeBookingForSelectedAircraft.instructor === user.name || isSuperUser);
+            }
+        }
+        
+        // This is the new behavior. If a post-flight is needed, only show that form.
+        if (isPostFlight) {
+            return (
+                <>
+                    <div className="mb-4">
+                        <Button variant="outline" size="sm" onClick={() => handleAircraftSelected(null)}>
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Change Aircraft
+                        </Button>
+                    </div>
+                    {canPerformPostFlight ? (
+                        <PostFlightChecklistForm
+                            onSuccess={handleChecklistSuccess}
+                            aircraft={selectedAircraftForChecklist!}
+                            startHobbs={activeBookingForSelectedAircraft?.startHobbs}
+                            onReportIssue={handleReportIssue}
+                        />
+                    ) : (
+                        <Alert variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>Post-Flight Check Required</AlertTitle>
+                            <AlertDescription>
+                                A post-flight check for the previous flight is outstanding. Only the flight crew or a super user can complete it.
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                </>
+            );
+        }
+      
+        // This part remains for pre-flight checklists.
         return (
           <>
-            <div className="mb-4">
-                <Button variant="outline" size="sm" onClick={() => handleAircraftSelected(null)}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Change Aircraft
-                </Button>
-            </div>
-            <Tabs defaultValue={isPostFlight ? "post-flight" : "pre-flight"}>
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="pre-flight" disabled={isPostFlight}>Pre-Flight</TabsTrigger>
-                    <TabsTrigger value="post-flight" disabled={!isPostFlight}>Post-Flight</TabsTrigger>
-                </TabsList>
-                <TabsContent value="pre-flight" className="pt-4">
-                    <PreFlightChecklistForm
-                        onSuccess={handleChecklistSuccess}
-                        aircraft={selectedAircraftForChecklist!}
-                        onReportIssue={handleReportIssue}
-                        initialHobbs={initialHobbs}
-                    />
-                </TabsContent>
-                <TabsContent value="post-flight" className="pt-4">
-                    <PostFlightChecklistForm
-                        onSuccess={handleChecklistSuccess}
-                        aircraft={selectedAircraftForChecklist!}
-                        startHobbs={activeBookingForSelectedAircraft?.startHobbs}
-                        onReportIssue={handleReportIssue}
-                    />
-                </TabsContent>
-            </Tabs>
-        </>
-      );
-    }
-  
-    // Logic for non-super users
-    let canPerformPostFlight = false;
-    if (isPostFlight) {
-        if (!settings.enforcePostFlightCheck) {
-            canPerformPostFlight = user?.permissions.includes('Checklists:Complete') ?? false;
-        } else {
-            canPerformPostFlight = user && activeBookingForSelectedAircraft && 
-                (activeBookingForSelectedAircraft.student === user.name || activeBookingForSelectedAircraft.instructor === user.name);
-        }
-    }
-    
-    if (isPostFlight && !canPerformPostFlight) {
-      return (
-        <>
-            <div className="mb-4">
-                <Button variant="outline" size="sm" onClick={() => handleAircraftSelected(null)}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Change Aircraft
-                </Button>
-            </div>
-            <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Post-Flight Check Required</AlertTitle>
-                <AlertDescription>
-                    Only the student or instructor from the previous flight, or a user with checklist completion permissions, can complete the post-flight checklist.
-                    A Super User can override this from the main aircraft management view.
-                </AlertDescription>
-            </Alert>
-        </>
-      );
-    }
-    
-    return (
-      <>
-          <div className="mb-4">
-              <Button variant="outline" size="sm" onClick={() => handleAircraftSelected(null)}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Change Aircraft
-              </Button>
-          </div>
-          { isPostFlight ? (
-              <PostFlightChecklistForm
-                  onSuccess={handleChecklistSuccess}
-                  aircraft={selectedAircraftForChecklist!}
-                  startHobbs={activeBookingForSelectedAircraft?.startHobbs}
-                  onReportIssue={handleReportIssue}
-              />
-          ) : (
+              <div className="mb-4">
+                  <Button variant="outline" size="sm" onClick={() => handleAircraftSelected(null)}>
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Change Aircraft
+                  </Button>
+              </div>
               <PreFlightChecklistForm
                   onSuccess={handleChecklistSuccess}
                   aircraft={selectedAircraftForChecklist!}
                   onReportIssue={handleReportIssue}
                   initialHobbs={initialHobbs}
               />
-          )}
-      </>
-    );
-  };
+          </>
+        );
+    };
 
   if (userLoading) {
     return <Loading />;
