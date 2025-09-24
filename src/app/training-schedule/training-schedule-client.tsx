@@ -203,6 +203,19 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     return bookings.filter(b => b.status !== 'Cancelled' && b.date === format(selectedDate, 'yyyy-MM-dd'));
   }, [bookings, selectedDate]);
   
+  const activeBookingsByAircraft = useMemo(() => {
+    const activeMap = new Map<string, Booking>();
+    aircraft.forEach(ac => {
+        const aircraftBookings = filteredBookings
+            .filter(b => b.aircraft === ac.tailNumber && b.status !== 'Completed')
+            .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+        if (aircraftBookings.length > 0) {
+            activeMap.set(ac.tailNumber, aircraftBookings[0]);
+        }
+    });
+    return activeMap;
+  }, [filteredBookings, aircraft]);
+
   const timeSlots = Array.from({ length: 24 * 4 }, (_, i) => {
       const hour = (6 + Math.floor(i / 4)) % 24;
       const minute = (i % 4) * 15;
@@ -249,27 +262,32 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     return `${bookingNumPart}${booking.purpose}: ${booking.student} w/ ${booking.instructor}`;
   };
   
-  const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined): { className?: string, style?: React.CSSProperties } => {
+  const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined): { className?: string, style?: React.CSSProperties, isClickable: boolean } => {
     if (aircraftForBooking?.status === 'In Maintenance') {
-        return { className: 'bg-destructive text-destructive-foreground' };
+        return { className: 'bg-destructive text-destructive-foreground', isClickable: false };
     }
 
     if (!aircraftForBooking) {
-        return { className: 'bg-gray-400 text-white' };
+        return { className: 'bg-gray-400 text-white', isClickable: false };
     }
     
     if (booking.status === 'Completed') {
-        return { className: 'bg-gray-400 text-white' };
+        return { className: 'bg-gray-400 text-white', isClickable: false };
+    }
+
+    const activeBookingForThisAircraft = activeBookingsByAircraft.get(booking.aircraft);
+    if (activeBookingForThisAircraft && activeBookingForThisAircraft.id !== booking.id) {
+        return { className: 'bg-muted text-muted-foreground', isClickable: false };
     }
     
     switch (aircraftForBooking.checklistStatus) {
       case 'needs-post-flight':
-        return { className: 'bg-blue-500 text-white' };
+        return { className: 'bg-blue-500 text-white', isClickable: true };
       case 'ready':
       case 'needs-pre-flight':
-        return { className: 'bg-green-500 text-white' };
+        return { className: 'bg-green-500 text-white', isClickable: true };
       default:
-        return { className: 'bg-gray-400 text-white' };
+        return { className: 'bg-gray-400 text-white', isClickable: false };
     }
   };
 
@@ -467,8 +485,17 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     setActiveFlight(null);
   }
 
-  const handleBookingClick = (booking: Booking) => {
+  const handleBookingClick = (booking: Booking, isClickable: boolean) => {
+    if (!isClickable) {
+        toast({
+            variant: 'default',
+            title: 'Booking Not Active',
+            description: 'This booking cannot be actioned until the preceding flight is completed.',
+        });
+        return;
+    };
     if (booking.status === 'Completed') return;
+
     const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
     if (aircraftForBooking) {
         setActiveFlight({ booking, aircraft: aircraftForBooking });
@@ -582,6 +609,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 <div className="legend-item"><div className="legend-color-box bg-blue-500"></div>Post-Flight Outstanding</div>
                                 <div className="legend-item"><div className="legend-color-box bg-gray-400"></div>Completed</div>
                                 <div className="legend-item"><div className="legend-color-box bg-destructive"></div>In Maintenance</div>
+                                <div className="legend-item"><div className="legend-color-box bg-muted"></div>Pending</div>
                             </div>
                         </div>
                         <div className="flex-1 mt-6 overflow-auto rounded-lg border" style={{ minWidth: '0' }}>
@@ -615,8 +643,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                                 const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
                                                 const variant = getBookingVariant(booking, aircraftForBooking);
                                                 return (
-                                                    <td key={time} colSpan={colSpan} className="gantt-cell booking-slot" onClick={() => handleBookingClick(booking)}>
-                                                    <div className={cn('gantt-bar', variant.className, booking.status === 'Completed' ? 'not-clickable' : 'clickable')} style={variant.style}>
+                                                    <td key={time} colSpan={colSpan} className="gantt-cell booking-slot" onClick={() => handleBookingClick(booking, variant.isClickable)}>
+                                                    <div className={cn('gantt-bar', variant.className, variant.isClickable ? 'clickable' : 'not-clickable')} style={variant.style}>
                                                         <div className="flex items-center gap-2">
                                                             {(aircraftForBooking?.status === 'In Maintenance') && <AlertTriangle className="h-4 w-4 text-white flex-shrink-0" title="Aircraft In Maintenance" />}
                                                             <span>{getBookingLabel(booking)}</span>
