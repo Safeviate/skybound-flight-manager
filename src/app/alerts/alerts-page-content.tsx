@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { AlertTriangle, Info, ChevronRight, PlusCircle, Users, MoreHorizontal, Trash2, Check, Edit, Printer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { Alert, User } from '@/lib/types';
+import type { Alert, User, AlertAcknowledgement } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/context/user-provider';
 import {
@@ -142,7 +142,10 @@ const AlertCard = ({ alert, userMap, canCreateAlerts, onDelete, onEdit, onPrint 
               {alert.readBy.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {alert.readBy.map(ack => (
-                    <Badge key={ack.userId} variant="secondary">{userMap.get(ack.userId) || ack.userId} on {format(parseISO(ack.date), 'PPP p')}</Badge>
+                    <Badge key={ack.userId} variant="secondary">
+                        {userMap.get(ack.userId) || ack.userId}
+                        {ack.date ? ` on ${format(parseISO(ack.date), 'PPP p')}` : ''}
+                    </Badge>
                   ))}
                 </div>
               ) : (
@@ -217,7 +220,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
             companyId: company.id,
             number: newAlertNumber,
             author: user.name,
-            date: format(new Date(), 'yyyy-MM-dd'),
+            date: new Date().toISOString(),
             readBy: [],
         };
 
