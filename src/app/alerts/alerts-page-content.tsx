@@ -45,7 +45,7 @@ const getAlertIcon = (type: Alert['type']) => {
 }
 
 const AlertCard = ({ alert, userMap, canCreateAlerts, onDelete, onEdit, onPrint }: { alert: Alert, userMap: Map<string, string>, canCreateAlerts: boolean, onDelete: (id: string) => void, onEdit: (alert: Alert) => void, onPrint: (id: string) => void }) => (
-    <Collapsible key={alert.id} id={`alert-${alert.id}`} className="w-full">
+    <Collapsible key={alert.id} id={`alert-${alert.id}`} className="w-full printable-area">
         <Card className="hover:bg-muted/50 transition-colors">
             <CardHeader>
                   <div className="flex justify-between items-start">
@@ -196,7 +196,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     try {
       if (editingAlert) {
         const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
-        await updateDoc(alertRef, data);
+        await updateDoc(alertRef, data as any);
         setAlerts(prev => prev.map(a => a.id === editingAlert.id ? { ...a, ...data } : a));
         toast({
             title: 'Alert Updated',
@@ -266,7 +266,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
   };
 
   const handlePrint = (alertId: string) => {
-    const printableArea = document.getElementById(`alert-${alertId}`);
+    const printableArea = document.getElementById(alertId);
     if (printableArea) {
       document.body.classList.add('printing-alert');
       printableArea.classList.add('print-this');
