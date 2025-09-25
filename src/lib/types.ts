@@ -87,6 +87,8 @@ export type Aircraft = {
   next50HourInspection?: number;
   next100HourInspection?: number;
   totalTimeInService?: number;
+  maintenanceStartDate?: string;
+  maintenanceEndDate?: string;
 };
 
 export type Endorsement = {
@@ -263,7 +265,7 @@ export type Booking = {
   id: string;
   bookingNumber?: string;
   companyId: string;
-  date: string;
+  startDate: string;
   endDate?: string;
   startTime: string;
   endTime: string;

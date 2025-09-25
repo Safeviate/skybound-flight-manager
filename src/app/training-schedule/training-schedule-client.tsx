@@ -15,7 +15,7 @@ import { Loader2, AlertTriangle, Calendar as CalendarIcon, Search, Trash2 } from
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { format, parseISO, setHours, setMinutes, isBefore, addDays } from 'date-fns';
+import { format, parseISO, setHours, setMinutes, isBefore, addDays, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useSettings } from '@/context/settings-provider';
@@ -68,7 +68,7 @@ const FlightHub = ({
             <DialogHeader>
                 <DialogTitle>Flight Hub: {activeFlight.booking.bookingNumber}</DialogTitle>
                 <DialogDescription>
-                    {`For ${activeFlight.aircraft.tailNumber} on ${format(parseISO(activeFlight.booking.date), 'PPP')}`}
+                    {`For ${activeFlight.aircraft.tailNumber} on ${format(parseISO(activeFlight.booking.startDate), 'PPP')}`}
                 </DialogDescription>
             </DialogHeader>
             
@@ -200,8 +200,14 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 }, [company, toast]);
   
   const filteredBookings = useMemo(() => {
-    return bookings.filter(b => b.status !== 'Cancelled' && b.date === format(selectedDate, 'yyyy-MM-dd'));
-  }, [bookings, selectedDate]);
+    const dayStart = startOfDay(selectedDate);
+    return bookings.filter(b => {
+        if (b.status === 'Cancelled' || !b.startDate) return false;
+        const bookingStart = parseISO(b.startDate);
+        const bookingEnd = b.endDate ? parseISO(b.endDate) : bookingStart;
+        return isWithinInterval(dayStart, { start: startOfDay(bookingStart), end: endOfDay(bookingEnd) });
+    });
+}, [bookings, selectedDate]);
   
   const timeToMinutes = (time: string) => {
       const [hours, minutes] = time.split(':').map(Number);
@@ -305,43 +311,49 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
              toast({ title: 'Booking Updated', description: 'The booking has been successfully updated.' });
         } else { // This is a new booking
             const newBookingId = doc(collection(db, 'temp')).id;
-            const newBooking = { ...data, id: newBookingId, companyId: company.id, status: 'Approved' as const };
+            
+            const bookingData = { ...data, id: newBookingId, companyId: company.id, status: 'Approved' as const };
+            if (bookingData.purpose !== 'Maintenance') {
+                 const bookingCount = bookings.filter(b => b.bookingNumber).length;
+                 bookingData.bookingNumber = `BKNG-${(bookingCount + 1).toString().padStart(4, '0')}`;
+            }
+
             const bookingRef = doc(db, `companies/${company.id}/bookings`, newBookingId);
-            batch.set(bookingRef, newBooking);
+            batch.set(bookingRef, bookingData);
 
             // Link booking to aircraft
-            if (newBooking.purpose !== 'Maintenance') {
+            if (bookingData.purpose !== 'Maintenance') {
                 const aircraftRef = doc(db, `companies/${company.id}/aircraft`, newBookingSlot!.aircraft.id);
                 batch.update(aircraftRef, { activeBookingId: newBookingId });
             }
 
             // If it's a training booking, add its ID to the student's pending bookings
-            if (newBooking.purpose === 'Training' && newBooking.studentId) {
-                const studentRef = doc(db, `companies/${company.id}/students`, newBooking.studentId);
-                const selectedAircraft = aircraft.find(ac => ac.tailNumber === newBooking.aircraft);
+            if (bookingData.purpose === 'Training' && bookingData.studentId) {
+                const studentRef = doc(db, `companies/${company.id}/students`, bookingData.studentId);
+                const selectedAircraft = aircraft.find(ac => ac.tailNumber === bookingData.aircraft);
                 const logEntry: TrainingLogEntry = {
                     id: `log-${newBookingId}`,
-                    date: newBooking.date,
-                    aircraft: `${newBooking.aircraft}`,
+                    date: bookingData.startDate,
+                    aircraft: `${bookingData.aircraft}`,
                     make: selectedAircraft?.make || '',
                     aircraftType: selectedAircraft?.aircraftType,
                     startHobbs: 0,
                     endHobbs: 0,
                     flightDuration: 0,
-                    instructorName: newBooking.instructor || 'Unknown',
+                    instructorName: bookingData.instructor || 'Unknown',
                     trainingExercises: [],
-                    departure: newBooking.departure,
-                    arrival: newBooking.arrival,
+                    departure: bookingData.departure,
+                    arrival: bookingData.arrival,
                 };
                 batch.update(studentRef, { 
                     trainingLogs: arrayUnion(logEntry),
-                    pendingBookingIds: arrayUnion(newBooking.id)
+                    pendingBookingIds: arrayUnion(newBookingId)
                 });
                 // Link this log entry ID to the booking
                 batch.update(bookingRef, { pendingLogEntryId: logEntry.id });
             }
             
-            toast({ title: 'Booking Created', description: `Booking ${newBooking.bookingNumber} has been added to the schedule.` });
+            toast({ title: 'Booking Created', description: `Booking ${bookingData.bookingNumber} has been added to the schedule.` });
         }
         
         await batch.commit();
@@ -622,11 +634,18 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 <tbody>
                                     {aircraft.map(ac => {
                                     const renderedSlots = new Set();
+                                    const isMaintenance = ac.status === 'In Maintenance' && ac.maintenanceStartDate && ac.maintenanceEndDate && isWithinInterval(selectedDate, { start: parseISO(ac.maintenanceStartDate), end: parseISO(ac.maintenanceEndDate) });
+
                                     return (
                                     <tr key={ac.id}>
-                                            <td className="gantt-cell aircraft-name-cell">{ac.tailNumber}</td>
-                                            {timeSlots.map(time => {
+                                        <td className={cn("gantt-cell aircraft-name-cell", isMaintenance && "bg-destructive/20")}>{ac.tailNumber}</td>
+                                        {timeSlots.map(time => {
                                             if (renderedSlots.has(time)) return null;
+
+                                            if (isMaintenance) {
+                                                renderedSlots.add(time);
+                                                return <td key={time} className="gantt-cell bg-destructive/10"></td>
+                                            }
 
                                             const booking = getBookingForSlot(ac.tailNumber, time);
                                             if (booking) {
