@@ -124,6 +124,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
 
   const students = useMemo(() => users.filter(u => u.role === 'Student'), [users]);
   const instructors = useMemo(() => users.filter(u => u.role !== 'Student' && u.role !== 'Hire and Fly'), [users]);
+  const personnel = useMemo(() => users.filter(u => u.role !== 'Student'), [users]);
 
 
   function handleFormSubmit(data: BookingFormValues) {
@@ -139,7 +140,8 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
     }
     
     if (data.pilotName && !data.pilotId) {
-        const selectedPilot = hireAndFly.find(u => u.name === data.pilotName);
+        const allPilots = [...hireAndFly, ...personnel];
+        const selectedPilot = allPilots.find(u => u.name === data.pilotName);
         if (selectedPilot) data.pilotId = selectedPilot.id;
     }
 
@@ -153,8 +155,8 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
         ...data,
         student: data.purpose === 'Training' ? data.student : null,
         studentId: data.purpose === 'Training' ? data.studentId : null,
-        pilotId: data.purpose === 'Hire and Fly' || data.purpose === 'Post-Maintenance Flight' ? data.pilotId : null,
-        pilotName: data.purpose === 'Hire and Fly' || data.purpose === 'Post-Maintenance Flight' ? data.pilotName : null,
+        pilotId: (data.purpose === 'Hire and Fly' || data.purpose === 'Post-Maintenance Flight') ? data.pilotId : null,
+        pilotName: (data.purpose === 'Hire and Fly' || data.purpose === 'Post-Maintenance Flight') ? data.pilotName : null,
         instructor: data.purpose === 'Training' ? data.instructor : null,
         maintenanceType: null,
         trainingExercise: data.purpose === 'Training' ? data.trainingExercise : null,
@@ -277,7 +279,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
           </div>
         )}
         
-        {(purpose === 'Hire and Fly' || purpose === 'Post-Maintenance Flight') && (
+        {purpose === 'Hire and Fly' && (
           <div className="grid grid-cols-1 gap-4 p-4 border rounded-lg">
             <FormField
               control={form.control}
@@ -298,6 +300,29 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
               )}
             />
           </div>
+        )}
+
+        {purpose === 'Post-Maintenance Flight' && (
+             <div className="grid grid-cols-1 gap-4 p-4 border rounded-lg">
+                <FormField
+                control={form.control}
+                name="pilotName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Pilot</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select personnel" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {personnel.map(p => (
+                                <SelectItem key={p.id} value={p.name}>{p.name} ({p.role})</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
         )}
 
         <div className="grid grid-cols-2 gap-4">
