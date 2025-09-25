@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,7 +19,7 @@ import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 
 const bookingFormSchema = z.object({
-  purpose: z.enum(['Training', 'Hire and Fly']),
+  purpose: z.enum(['Training', 'Hire and Fly', 'Post-Maintenance Flight']),
   aircraft: z.string(),
   date: z.string(),
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
@@ -152,8 +153,8 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
         ...data,
         student: data.purpose === 'Training' ? data.student : null,
         studentId: data.purpose === 'Training' ? data.studentId : null,
-        pilotId: data.purpose === 'Hire and Fly' ? data.pilotId : null,
-        pilotName: data.purpose === 'Hire and Fly' ? data.pilotName : null,
+        pilotId: data.purpose === 'Hire and Fly' || data.purpose === 'Post-Maintenance Flight' ? data.pilotId : null,
+        pilotName: data.purpose === 'Hire and Fly' || data.purpose === 'Post-Maintenance Flight' ? data.pilotName : null,
         instructor: data.purpose === 'Training' ? data.instructor : null,
         maintenanceType: null,
         trainingExercise: data.purpose === 'Training' ? data.trainingExercise : null,
@@ -191,6 +192,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
                 <SelectContent>
                   <SelectItem value="Training">Training</SelectItem>
                   <SelectItem value="Hire and Fly">Hire and Fly</SelectItem>
+                  <SelectItem value="Post-Maintenance Flight">Post-Maintenance Flight</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -275,7 +277,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
           </div>
         )}
         
-        {purpose === 'Hire and Fly' && (
+        {(purpose === 'Hire and Fly' || purpose === 'Post-Maintenance Flight') && (
           <div className="grid grid-cols-1 gap-4 p-4 border rounded-lg">
             <FormField
               control={form.control}
