@@ -68,7 +68,7 @@ const FlightHub = ({
             <DialogHeader>
                 <DialogTitle>Flight Hub: {activeFlight.booking.bookingNumber}</DialogTitle>
                 <DialogDescription>
-                    {`For ${activeFlight.aircraft.tailNumber} on ${format(parseISO(activeFlight.booking.startDate), 'PPP')}`}
+                    {`For ${activeFlight.aircraft.tailNumber} on ${format(parseISO(activeFlight.booking.date), 'PPP')}`}
                 </DialogDescription>
             </DialogHeader>
             
@@ -202,8 +202,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const filteredBookings = useMemo(() => {
     const dayStart = startOfDay(selectedDate);
     return bookings.filter(b => {
-        if (b.status === 'Cancelled' || !b.startDate) return false;
-        const bookingStart = parseISO(b.startDate);
+        if (b.status === 'Cancelled' || !b.date) return false;
+        const bookingStart = parseISO(b.date);
         const bookingEnd = b.endDate ? parseISO(b.endDate) : bookingStart;
         return isWithinInterval(dayStart, { start: startOfDay(bookingStart), end: endOfDay(bookingEnd) });
     });
@@ -258,9 +258,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
   const getBookingLabel = (booking: Booking) => {
     const bookingNumPart = booking.bookingNumber ? `${booking.bookingNumber} - ` : '';
-    if (booking.purpose === 'Maintenance') {
-      return `Maintenance: ${booking.maintenanceType || 'Scheduled'}`;
-    }
     if (booking.purpose === 'Hire and Fly') {
         return `${bookingNumPart}${booking.purpose}: ${booking.pilotName}`;
     }
@@ -322,10 +319,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             batch.set(bookingRef, bookingData);
 
             // Link booking to aircraft
-            if (bookingData.purpose !== 'Maintenance') {
-                const aircraftRef = doc(db, `companies/${company.id}/aircraft`, newBookingSlot!.aircraft.id);
-                batch.update(aircraftRef, { activeBookingId: newBookingId });
-            }
+            const aircraftRef = doc(db, `companies/${company.id}/aircraft`, newBookingSlot!.aircraft.id);
+            batch.update(aircraftRef, { activeBookingId: newBookingId });
 
             // If it's a training booking, add its ID to the student's pending bookings
             if (bookingData.purpose === 'Training' && bookingData.studentId) {
@@ -333,7 +328,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 const selectedAircraft = aircraft.find(ac => ac.tailNumber === bookingData.aircraft);
                 const logEntry: TrainingLogEntry = {
                     id: `log-${newBookingId}`,
-                    date: bookingData.startDate,
+                    date: bookingData.date,
                     aircraft: `${bookingData.aircraft}`,
                     make: selectedAircraft?.make || '',
                     aircraftType: selectedAircraft?.aircraftType,

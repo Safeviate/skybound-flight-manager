@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 
 const bookingFormSchema = z.object({
-  purpose: z.enum(['Training', 'Maintenance', 'Hire and Fly']),
+  purpose: z.enum(['Training', 'Hire and Fly']),
   aircraft: z.string(),
   date: z.string(),
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
@@ -42,14 +42,6 @@ const bookingFormSchema = z.object({
 }, {
     message: "Student and Instructor are required for Training bookings.",
     path: ["student"],
-}).refine(data => {
-    if (data.purpose === 'Maintenance') {
-        return !!data.maintenanceType;
-    }
-    return true;
-}, {
-    message: "Maintenance Type is required for Maintenance bookings.",
-    path: ["maintenanceType"],
 }).refine(data => {
     if (data.purpose === 'Hire and Fly') {
         return !!data.pilotName;
@@ -163,7 +155,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
         pilotId: data.purpose === 'Hire and Fly' ? data.pilotId : null,
         pilotName: data.purpose === 'Hire and Fly' ? data.pilotName : null,
         instructor: data.purpose === 'Training' ? data.instructor : null,
-        maintenanceType: data.purpose === 'Maintenance' ? data.maintenanceType : null,
+        maintenanceType: null,
         trainingExercise: data.purpose === 'Training' ? data.trainingExercise : null,
         endDate: format(bookingEndDate, 'yyyy-MM-dd'),
     };
@@ -198,7 +190,6 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="Training">Training</SelectItem>
-                  <SelectItem value="Maintenance">Maintenance</SelectItem>
                   <SelectItem value="Hire and Fly">Hire and Fly</SelectItem>
                 </SelectContent>
               </Select>
@@ -305,24 +296,6 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
               )}
             />
           </div>
-        )}
-
-        {purpose === 'Maintenance' && (
-             <div className="p-4 border rounded-lg">
-                <FormField
-                    control={form.control}
-                    name="maintenanceType"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Maintenance Details</FormLabel>
-                        <FormControl>
-                            <Textarea placeholder="e.g., 100-hour inspection, oil change" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-             </div>
         )}
 
         <div className="grid grid-cols-2 gap-4">

@@ -265,7 +265,7 @@ export type Booking = {
   id: string;
   bookingNumber?: string;
   companyId: string;
-  startDate: string;
+  date: string;
   endDate?: string;
   startTime: string;
   endTime: string;
@@ -275,7 +275,7 @@ export type Booking = {
   pilotId?: string | null;
   pilotName?: string | null;
   instructor?: string | null;
-  purpose: 'Training' | 'Maintenance' | 'Hire and Fly';
+  purpose: 'Training' | 'Hire and Fly';
   status: 'Approved' | 'Completed' | 'Cancelled';
   flightDuration?: number;
   maintenanceType?: string | null;
