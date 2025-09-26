@@ -37,6 +37,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { cn } from '@/lib/utils.tsx';
+import { useForm } from 'react-hook-form';
 
 
 const ComplianceItemForm = ({
@@ -834,7 +835,7 @@ export function QualityPageContent({
           <TabsContent value="coherence-matrix" className="mt-4">
             <CoherenceMatrix audits={audits} personnel={initialPersonnel} />
           </TabsContent>
-      </Tabs>
-    </main>
+        </Tabs>
+      </main>
   );
 }
