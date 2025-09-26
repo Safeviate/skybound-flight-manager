@@ -143,7 +143,7 @@ const AlertCard = ({ alert, userMap, canCreateAlerts, onDelete, onEdit, onPrint 
               {alert.readBy.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {alert.readBy.map(ack => (
-                    <Badge key={ack.userId} variant="secondary">
+                    <Badge key={`${ack.userId}-${ack.date}`} variant="secondary">
                         {userMap.get(ack.userId) || ack.userId}
                         {ack.date ? ` on ${format(parseISO(ack.date), 'PPP p')}` : ''}
                     </Badge>
