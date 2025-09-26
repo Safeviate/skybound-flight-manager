@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import type { Alert, User, AlertAcknowledgement, Department } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/context/user-provider';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { NewAlertForm } from './new-alert-form';
 import { format, parseISO } from 'date-fns';
 import { useRouter } from 'next/navigation';
