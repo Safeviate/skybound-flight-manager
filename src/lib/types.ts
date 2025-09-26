@@ -5,7 +5,7 @@ export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-cor
 import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
 export type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
 import type { SuggestInvestigationStepsOutput } from '@/ai/flows/suggest-investigation-steps-flow';
-export type { SuggestInvestigationStepsOutput } from '@/aiflows/suggest-investigation-steps-flow';
+export type { SuggestInvestigationStepsOutput } from '@/ai/flows/suggest-investigation-steps-flow';
 import { PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistFormValues } from '@/app/checklists/post-flight-checklist-form';
 
@@ -577,6 +577,7 @@ export type Alert = {
   description: string;
   author: string;
   date: string;
+  department?: Department;
   readBy: AlertAcknowledgement[];
   targetUserId?: string;
   relatedLink?: string;

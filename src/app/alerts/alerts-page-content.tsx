@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { AlertTriangle, Info, ChevronRight, PlusCircle, Users, MoreHorizontal, Trash2, Check, Edit, Printer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { Alert, User, AlertAcknowledgement } from '@/lib/types';
+import type { Alert, User, AlertAcknowledgement, Department } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/context/user-provider';
 import {
@@ -74,6 +74,7 @@ const AlertCard = ({ alert, userMap, canCreateAlerts, onDelete, onEdit, onPrint 
                           <CardTitle className="mt-2 text-2xl">{alert.number ? `#${alert.number}`: ''} {alert.title}</CardTitle>
                           <CardDescription>
                               Issued by {alert.author} on {format(parseISO(alert.date), 'MMMM d, yyyy')}
+                              {alert.department && alert.department !== 'all' && ` to ${alert.department} Department`}
                           </CardDescription>
                       </div>
                       <div className="flex flex-col items-end gap-2">

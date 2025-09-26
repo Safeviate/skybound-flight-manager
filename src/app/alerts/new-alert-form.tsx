@@ -17,10 +17,13 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import type { Alert } from '@/lib/types';
+import type { Alert, Department, CompanyDepartment } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { format } from 'date-fns';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { db } from '@/lib/firebase';
+import { collection, query, getDocs } from 'firebase/firestore';
+
 
 const alertFormSchema = z.object({
   type: z.enum(['Red Tag', 'Yellow Tag'], {
@@ -32,6 +35,7 @@ const alertFormSchema = z.object({
   description: z.string().min(10, {
     message: 'Description must be at least 10 characters.',
   }),
+  department: z.string().optional(),
 });
 
 type AlertFormValues = z.infer<typeof alertFormSchema>;
@@ -43,13 +47,31 @@ interface NewAlertFormProps {
 
 export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
   const { toast } = useToast();
+  const { company } = useUser();
+  const [departments, setDepartments] = useState<CompanyDepartment[]>([]);
+
   const form = useForm<AlertFormValues>({
     resolver: zodResolver(alertFormSchema),
     defaultValues: {
       title: '',
       description: '',
+      department: '',
     },
   });
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+        if (!company) return;
+        try {
+            const deptsQuery = query(collection(db, `companies/${company.id}/departments`));
+            const deptsSnapshot = await getDocs(deptsQuery);
+            setDepartments(deptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment)));
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch departments.' });
+        }
+    };
+    fetchDepartments();
+  }, [company, toast]);
 
   useEffect(() => {
     if (existingAlert) {
@@ -57,12 +79,14 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
         type: existingAlert.type as 'Red Tag' | 'Yellow Tag',
         title: existingAlert.title,
         description: existingAlert.description,
+        department: existingAlert.department,
       });
     } else {
         form.reset({
             type: undefined,
             title: '',
             description: '',
+            department: '',
         });
     }
   }, [existingAlert, form]);
@@ -90,6 +114,29 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
                 <SelectContent>
                   <SelectItem value="Red Tag">Red Tag (High Priority)</SelectItem>
                   <SelectItem value="Yellow Tag">Yellow Tag (Standard Priority)</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="department"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Target Department (Optional)</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a department to target" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="all">All Departments</SelectItem>
+                  {departments.map((dept) => (
+                    <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />
