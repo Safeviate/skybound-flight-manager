@@ -42,41 +42,41 @@ const getAlertIcon = (type: Alert['type']) => {
 const AlertViewDialog = ({ alert, userMap, onPrint }: { alert: Alert; userMap: Map<string, string>, onPrint: (id: string) => void }) => {
     return (
         <DialogContent className="sm:max-w-2xl" id={`alert-${alert.id}`}>
-            <div className="printable-area">
-                <DialogHeader>
-                    <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-4">
-                            {useUser().company?.logoUrl && (
-                                <Image
-                                    src={useUser().company!.logoUrl!}
-                                    alt={`${useUser().company!.name} Logo`}
-                                    width={60}
-                                    height={60}
-                                    className="h-16 w-16 rounded-md object-contain"
-                                />
-                            )}
+            <ScrollArea className="max-h-[70vh] pr-6">
+                <div className="printable-area space-y-4">
+                    <DialogHeader>
+                        <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-4">
+                                {useUser().company?.logoUrl && (
+                                    <Image
+                                        src={useUser().company!.logoUrl!}
+                                        alt={`${useUser().company!.name} Logo`}
+                                        width={60}
+                                        height={60}
+                                        className="h-16 w-16 rounded-md object-contain"
+                                    />
+                                )}
+                            </div>
+                            <div className="flex-1 text-center">
+                                <DialogTitle>{useUser().company?.name}</DialogTitle>
+                                <DialogDescription>System Alert</DialogDescription>
+                            </div>
+                            <div className="w-16 flex justify-end">
+                                {getAlertIcon(alert.type)}
+                            </div>
                         </div>
-                        <div className="flex-1 text-center">
-                            <DialogTitle>{useUser().company?.name}</DialogTitle>
-                            <DialogDescription>System Alert</DialogDescription>
+                         <Separator className="my-4"/>
+                         <div className="flex justify-between items-start text-left">
+                            <div>
+                                <DialogTitle className="mt-2 text-2xl">{alert.number ? `#${alert.number}`: ''} {alert.title}</DialogTitle>
+                                <DialogDescription>
+                                    Issued by {alert.author} on {format(parseISO(alert.date), 'MMMM d, yyyy')}
+                                    {alert.department && alert.department !== 'all' && ` to ${alert.department} Department`}
+                                </DialogDescription>
+                            </div>
+                             <Badge variant={getAlertVariant(alert.type)}>{alert.type}</Badge>
                         </div>
-                        <div className="w-16 flex justify-end">
-                            {getAlertIcon(alert.type)}
-                        </div>
-                    </div>
-                     <Separator className="my-4"/>
-                     <div className="flex justify-between items-start text-left">
-                        <div>
-                            <DialogTitle className="mt-2 text-2xl">{alert.number ? `#${alert.number}`: ''} {alert.title}</DialogTitle>
-                            <DialogDescription>
-                                Issued by {alert.author} on {format(parseISO(alert.date), 'MMMM d, yyyy')}
-                                {alert.department && alert.department !== 'all' && ` to ${alert.department} Department`}
-                            </DialogDescription>
-                        </div>
-                         <Badge variant={getAlertVariant(alert.type)}>{alert.type}</Badge>
-                    </div>
-                </DialogHeader>
-                <ScrollArea className="max-h-[50vh] pr-6">
+                    </DialogHeader>
                     <div className="py-4 space-y-4">
                         <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md">{alert.description}</p>
                         <div>
@@ -95,9 +95,9 @@ const AlertViewDialog = ({ alert, userMap, onPrint }: { alert: Alert; userMap: M
                             )}
                         </div>
                     </div>
-                </ScrollArea>
-            </div>
-             <DialogFooter className="no-print">
+                </div>
+            </ScrollArea>
+             <DialogFooter className="no-print pt-4 border-t">
                 <Button variant="outline" onClick={() => onPrint(`alert-${alert.id}`)}>
                     <Printer className="mr-2 h-4 w-4" /> Print
                 </Button>
