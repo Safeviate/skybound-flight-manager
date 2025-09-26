@@ -21,6 +21,7 @@ import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const getAlertVariant = (type: Alert['type']) => {
     switch (type) {
@@ -75,24 +76,26 @@ const AlertViewDialog = ({ alert, userMap, onPrint }: { alert: Alert; userMap: M
                          <Badge variant={getAlertVariant(alert.type)}>{alert.type}</Badge>
                     </div>
                 </DialogHeader>
-                <div className="py-4 space-y-4">
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md">{alert.description}</p>
-                    <div>
-                        <h4 className="text-sm font-semibold mb-2">Acknowledged By ({alert.readBy.length})</h4>
-                        {alert.readBy.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                            {alert.readBy.map((ack, index) => (
-                                <Badge key={`${ack.userId}-${index}`} variant="secondary">
-                                    {userMap.get(ack.userId) || ack.userId}
-                                    {ack.date ? ` on ${format(parseISO(ack.date), 'PPP p')}` : ''}
-                                </Badge>
-                            ))}
-                            </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">No acknowledgements yet.</p>
-                        )}
+                <ScrollArea className="max-h-[50vh] pr-6">
+                    <div className="py-4 space-y-4">
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md">{alert.description}</p>
+                        <div>
+                            <h4 className="text-sm font-semibold mb-2">Acknowledged By ({alert.readBy.length})</h4>
+                            {alert.readBy.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                {alert.readBy.map((ack, index) => (
+                                    <Badge key={`${ack.userId}-${index}`} variant="secondary">
+                                        {userMap.get(ack.userId) || ack.userId}
+                                        {ack.date ? ` on ${format(parseISO(ack.date), 'PPP p')}` : ''}
+                                    </Badge>
+                                ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">No acknowledgements yet.</p>
+                            )}
+                        </div>
                     </div>
-                </div>
+                </ScrollArea>
             </div>
              <DialogFooter className="no-print">
                 <Button variant="outline" onClick={() => onPrint(`alert-${alert.id}`)}>
@@ -369,5 +372,3 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     </main>
   );
 }
-
-    
