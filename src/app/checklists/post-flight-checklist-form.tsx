@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import type { Aircraft } from '@/lib/types';
 import { StandardCamera } from '@/components/ui/standard-camera';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 const checklistSchema = z.object({
@@ -123,175 +124,179 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
                 <CardTitle>Post-Flight Checklist</CardTitle>
                 <CardDescription>Complete all items for {aircraft.tailNumber} before submitting.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                    <FormItem>
-                        <FormLabel>Starting Hobbs Meter</FormLabel>
-                        <div className="flex items-center gap-2">
-                            <Hash className="h-5 w-5 text-muted-foreground" />
-                            <Input 
-                                type="number" 
-                                value={startHobbs?.toFixed(1) || 'N/A'} 
-                                readOnly 
-                                className="flex-1 bg-muted"
+            <CardContent>
+                <ScrollArea className="h-[60vh] pr-4">
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormItem>
+                                <FormLabel>Starting Hobbs Meter</FormLabel>
+                                <div className="flex items-center gap-2">
+                                    <Hash className="h-5 w-5 text-muted-foreground" />
+                                    <Input 
+                                        type="number" 
+                                        value={startHobbs?.toFixed(1) || 'N/A'} 
+                                        readOnly 
+                                        className="flex-1 bg-muted"
+                                    />
+                                </div>
+                            </FormItem>
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="hobbs"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Closing Hobbs Meter</FormLabel>
+                                            <div className="flex items-center gap-2">
+                                                <Hash className="h-5 w-5 text-muted-foreground" />
+                                                <Input 
+                                                    type="number" 
+                                                    step="0.1" 
+                                                    placeholder="Enter closing Hobbs" 
+                                                    {...field} 
+                                                    onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                    className="flex-1" 
+                                                />
+                                            </div>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="tacho"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Closing Tacho Meter</FormLabel>
+                                            <div className="flex items-center gap-2">
+                                                <Hash className="h-5 w-5 text-muted-foreground" />
+                                                <Input 
+                                                    type="number" 
+                                                    step="0.1" 
+                                                    placeholder="Enter closing Tacho" 
+                                                    {...field}
+                                                    value={field.value ?? ''}
+                                                    onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                    className="flex-1" 
+                                                />
+                                            </div>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="leftSidePhoto"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Left Side of Aircraft</FormLabel>
+                                        {watchedValues.leftSidePhoto ? (
+                                            <div className="flex items-center gap-2">
+                                                <ImageIcon className="h-5 w-5 text-green-500" />
+                                                <span className="text-sm text-green-500">Photo captured</span>
+                                                <Button type="button" size="sm" variant="outline" onClick={() => openCamera('leftSidePhoto')}>Retake</Button>
+                                            </div>
+                                        ) : (
+                                            <Button type="button" variant="outline" className="w-full" onClick={() => openCamera('leftSidePhoto')}>
+                                                <Camera className="mr-2" /> Take Photo
+                                            </Button>
+                                        )}
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="rightSidePhoto"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Right Side of Aircraft</FormLabel>
+                                        {watchedValues.rightSidePhoto ? (
+                                            <div className="flex items-center gap-2">
+                                                <ImageIcon className="h-5 w-5 text-green-500" />
+                                                <span className="text-sm text-green-500">Photo captured</span>
+                                                <Button type="button" size="sm" variant="outline" onClick={() => openCamera('rightSidePhoto')}>Retake</Button>
+                                            </div>
+                                        ) : (
+                                            <Button type="button" variant="outline" className="w-full" onClick={() => openCamera('rightSidePhoto')}>
+                                                <Camera className="mr-2" /> Take Photo
+                                            </Button>
+                                        )}
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
                             />
                         </div>
-                    </FormItem>
-                     <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                            control={form.control}
-                            name="hobbs"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Closing Hobbs Meter</FormLabel>
-                                    <div className="flex items-center gap-2">
-                                        <Hash className="h-5 w-5 text-muted-foreground" />
-                                        <Input 
-                                            type="number" 
-                                            step="0.1" 
-                                            placeholder="Enter closing Hobbs" 
-                                            {...field} 
-                                            onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                            className="flex-1" 
-                                        />
-                                    </div>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="tacho"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Closing Tacho Meter</FormLabel>
-                                    <div className="flex items-center gap-2">
-                                        <Hash className="h-5 w-5 text-muted-foreground" />
-                                        <Input 
-                                            type="number" 
-                                            step="0.1" 
-                                            placeholder="Enter closing Tacho" 
-                                            {...field}
-                                            value={field.value ?? ''}
-                                            onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                            className="flex-1" 
-                                        />
-                                    </div>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="fuelUplift"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Fuel Uplift (Litres)</FormLabel>
+                                        <Input type="number" step="0.1" placeholder="e.g., 50.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="oilUplift"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Oil Uplift (Quarts)</FormLabel>
+                                        <Input type="number" step="0.1" placeholder="e.g., 1.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                        <div className="space-y-4 p-4 border rounded-lg">
+                            <Label className="font-medium">Defect Report</Label>
+                            <FormField
+                                control={form.control}
+                                name="report"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <Textarea placeholder="Note any defects, issues, or observations..." {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="defectPhoto"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        {watchedValues.defectPhoto ? (
+                                            <div className="flex items-center gap-2">
+                                                <ImageIcon className="h-5 w-5 text-green-500" />
+                                                <span className="text-sm text-green-500">Defect photo captured</span>
+                                                <Button type="button" size="sm" variant="link" onClick={() => openCamera('defectPhoto')}>Retake photo</Button>
+                                            </div>
+                                        ) : (
+                                            <Button type="button" variant="outline" size="sm" onClick={() => openCamera('defectPhoto')}>
+                                                <Camera className="mr-2 h-4 w-4" /> Add Photo of Defect
+                                            </Button>
+                                        )}
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <div className="flex justify-end">
+                                <Button type="button" variant="destructive" onClick={handleIssueSubmit}>
+                                <Send className="mr-2 h-4 w-4"/> Submit Issue Report
+                                </Button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="leftSidePhoto"
-                        render={({ field }) => (
-                             <FormItem>
-                                <FormLabel>Left Side of Aircraft</FormLabel>
-                                {watchedValues.leftSidePhoto ? (
-                                    <div className="flex items-center gap-2">
-                                        <ImageIcon className="h-5 w-5 text-green-500" />
-                                        <span className="text-sm text-green-500">Photo captured</span>
-                                        <Button type="button" size="sm" variant="outline" onClick={() => openCamera('leftSidePhoto')}>Retake</Button>
-                                    </div>
-                                ) : (
-                                    <Button type="button" variant="outline" className="w-full" onClick={() => openCamera('leftSidePhoto')}>
-                                        <Camera className="mr-2" /> Take Photo
-                                    </Button>
-                                )}
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="rightSidePhoto"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Right Side of Aircraft</FormLabel>
-                                {watchedValues.rightSidePhoto ? (
-                                     <div className="flex items-center gap-2">
-                                        <ImageIcon className="h-5 w-5 text-green-500" />
-                                        <span className="text-sm text-green-500">Photo captured</span>
-                                        <Button type="button" size="sm" variant="outline" onClick={() => openCamera('rightSidePhoto')}>Retake</Button>
-                                    </div>
-                                ) : (
-                                    <Button type="button" variant="outline" className="w-full" onClick={() => openCamera('rightSidePhoto')}>
-                                        <Camera className="mr-2" /> Take Photo
-                                    </Button>
-                                )}
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                 </div>
-                 <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="fuelUplift"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Fuel Uplift (Litres)</FormLabel>
-                                <Input type="number" step="0.1" placeholder="e.g., 50.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="oilUplift"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Oil Uplift (Quarts)</FormLabel>
-                                <Input type="number" step="0.1" placeholder="e.g., 1.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-                <div className="space-y-4 p-4 border rounded-lg">
-                    <Label className="font-medium">Defect Report</Label>
-                    <FormField
-                        control={form.control}
-                        name="report"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormControl>
-                                    <Textarea placeholder="Note any defects, issues, or observations..." {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="defectPhoto"
-                        render={({ field }) => (
-                            <FormItem>
-                                {watchedValues.defectPhoto ? (
-                                    <div className="flex items-center gap-2">
-                                        <ImageIcon className="h-5 w-5 text-green-500" />
-                                        <span className="text-sm text-green-500">Defect photo captured</span>
-                                        <Button type="button" size="sm" variant="link" onClick={() => openCamera('defectPhoto')}>Retake photo</Button>
-                                    </div>
-                                ) : (
-                                    <Button type="button" variant="outline" size="sm" onClick={() => openCamera('defectPhoto')}>
-                                        <Camera className="mr-2 h-4 w-4" /> Add Photo of Defect
-                                    </Button>
-                                )}
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <div className="flex justify-end">
-                        <Button type="button" variant="destructive" onClick={handleIssueSubmit}>
-                           <Send className="mr-2 h-4 w-4"/> Submit Issue Report
-                        </Button>
-                    </div>
-                </div>
+                </ScrollArea>
             </CardContent>
             <CardFooter>
                  <Button type="submit" className="w-full">Submit Post-Flight Checklist</Button>
