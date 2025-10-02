@@ -207,7 +207,7 @@ const GanttChart = ({
     };
 
     return (
-        <div className="flex-1 overflow-auto mt-4">
+        <div className="relative mt-4">
             <table className="w-full border-collapse" style={{ minWidth: '4758px', tableLayout: 'fixed' }}>
                 <thead>
                     <tr>
