@@ -211,7 +211,7 @@ const GanttChart = ({
     const getBookingLabel = (booking: Booking) => {
         const bookingNumPart = booking.bookingNumber ? `${booking.bookingNumber} - ` : '';
         if (booking.purpose === 'Facility Booking') {
-            return `${booking.bookingNumber} - ${booking.title} (${booking.responsiblePerson})`;
+            return `${booking.bookingNumber || ''} - ${booking.title} (${booking.responsiblePerson})`;
         }
         if (booking.purpose === 'Hire and Fly') {
             return `${bookingNumPart}${booking.purpose}: ${booking.pilotName}`;
@@ -304,50 +304,38 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   };
 
     const getBookingVariant = useCallback((booking: Booking): { className?: string, style?: React.CSSProperties, isClickable: boolean } => {
-    if (booking.status === 'Completed') {
-      return { className: 'bg-gray-400 text-white', isClickable: true };
-    }
-    if (booking.purpose === 'Maintenance') {
-      return { className: 'bg-destructive text-white', isClickable: false };
-    }
-    if (booking.purpose === 'Post-Maintenance Flight') {
-      return { className: 'bg-purple-600 text-white', isClickable: true };
-    }
-    
-    if (booking.resourceType === 'facility') {
-        return { className: 'bg-sky-500 text-white', isClickable: true };
-    }
+        if (booking.status === 'Completed') {
+            return { className: 'bg-gray-400 text-white', isClickable: true };
+        }
+        if (booking.purpose === 'Maintenance') {
+            return { className: 'bg-destructive text-white', isClickable: false };
+        }
+        if (booking.purpose === 'Post-Maintenance Flight') {
+            return { className: 'bg-purple-600 text-white', isClickable: true };
+        }
+        if (booking.resourceType === 'facility') {
+            return { className: 'bg-sky-500 text-white', isClickable: true };
+        }
 
-    if (aircraft) {
-      const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
-      if (ac) {
-        // Find all bookings for this aircraft on this day, sorted by time.
+        const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
+        if (!ac) return { className: 'bg-gray-500', isClickable: false };
+
         const todaysAircraftBookings = bookings
-          .filter(b => b.aircraft === ac.tailNumber && isWithinInterval(startOfDay(parseISO(b.date)), { start: startOfDay(selectedDate), end: endOfDay(selectedDate) }) && b.status !== 'Cancelled')
-          .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+            .filter(b => b.aircraft === ac.tailNumber && isWithinInterval(startOfDay(parseISO(b.date)), { start: startOfDay(selectedDate), end: endOfDay(selectedDate) }) && b.status !== 'Cancelled')
+            .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+        
+        const activeBookingForAircraft = todaysAircraftBookings.find(b => b.status !== 'Completed');
 
-        // Find the first booking that isn't completed. This is the "active" booking for the day.
-        const activeBooking = todaysAircraftBookings.find(b => b.status !== 'Completed');
-
-        // If the current booking is NOT the active one, it means it's in the future and not yet actionable.
-        if (activeBooking && booking.id !== activeBooking.id) {
+        if (!activeBookingForAircraft || booking.id !== activeBookingForAircraft.id) {
             return { className: 'bg-green-500 text-white opacity-50', isClickable: false };
         }
         
-        // If the current booking IS the active one, its state depends on the aircraft's checklist status.
-        if (booking.id === activeBooking?.id) {
-             if (ac.checklistStatus === 'needs-post-flight') {
-                return { className: 'bg-blue-500 text-white', isClickable: true };
-            }
-            if (ac.checklistStatus === 'ready') {
-                return { className: 'bg-green-500 text-white', isClickable: true };
-            }
+        if (ac.checklistStatus === 'needs-post-flight') {
+            return { className: 'bg-blue-500 text-white', isClickable: true };
         }
-      }
-    }
-    // Default to green if no other state applies
-    return { className: 'bg-green-500 text-white', isClickable: true };
-  }, [aircraft, bookings, selectedDate]);
+
+        return { className: 'bg-green-500 text-white', isClickable: true };
+    }, [aircraft, bookings, selectedDate]);
   
   useEffect(() => {
     if (!company) {
@@ -432,7 +420,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         });
     }, [bookings, selectedDate]);
   
-  const handleBookingSubmit = async (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking) => {
+  const handleBookingSubmit = async (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking, studentRef?: any, logEntry?: TrainingLogEntry) => {
     if (!company || !user) {
       toast({ variant: 'destructive', title: 'Error', description: 'No company context.' });
       return;
@@ -475,30 +463,13 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
               } else {
                  batch.update(aircraftRef, { activeBookingId: newBookingId });
               }
-              
 
-              if (bookingData.purpose === 'Training' && bookingData.studentId) {
-                  const studentRef = doc(db, `companies/${company.id}/students`, bookingData.studentId);
-                  const selectedAircraft = aircraft.find(ac => ac.tailNumber === bookingData.aircraft);
-                  const logEntry: TrainingLogEntry = {
-                      id: `log-${newBookingId}`,
-                      date: bookingData.date,
-                      aircraft: `${bookingData.aircraft}`,
-                      make: selectedAircraft?.make || '',
-                      aircraftType: selectedAircraft?.aircraftType,
-                      startHobbs: 0,
-                      endHobbs: 0,
-                      flightDuration: 0,
-                      instructorName: bookingData.instructor || 'Unknown',
-                      trainingExercises: [],
-                      departure: bookingData.departure,
-                      arrival: bookingData.arrival,
-                  };
-                  batch.update(studentRef, { 
+              if (bookingData.purpose === 'Training' && bookingData.studentId && logEntry) {
+                  const studentDocRef = doc(db, `companies/${company.id}/students`, bookingData.studentId);
+                  batch.update(studentDocRef, {
                       trainingLogs: arrayUnion(logEntry),
                       pendingBookingIds: arrayUnion(newBookingId)
                   });
-                  batch.update(bookingRef, { pendingLogEntryId: logEntry.id });
               }
             }
             

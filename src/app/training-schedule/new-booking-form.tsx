@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format, addDays, isBefore, setHours, setMinutes } from 'date-fns';
-import type { Aircraft, User, Booking, Role } from '@/lib/types';
+import type { Aircraft, User, Booking, Role, TrainingLogEntry } from '@/lib/types';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -61,7 +61,7 @@ interface NewBookingFormProps {
   users: User[];
   hireAndFly: User[];
   bookings: Booking[];
-  onSubmit: (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking) => void;
+  onSubmit: (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking, studentRef?: any, logEntry?: TrainingLogEntry) => void;
   onDelete?: (bookingId: string, reason: string) => void;
   existingBooking?: Booking | null;
   startTime?: string;
@@ -128,22 +128,30 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
 
 
   function handleFormSubmit(data: BookingFormValues) {
+    let studentRef, logEntry;
     
-    if (!existingBooking && data.purpose !== 'Maintenance') {
-        const bookingCount = bookings.filter(b => b.bookingNumber).length;
-        data.bookingNumber = `BKNG-${(bookingCount + 1).toString().padStart(4, '0')}`;
+    if (data.purpose === 'Training' && data.studentId && !existingBooking) {
+      const selectedAircraft = aircraft;
+      const newLogId = `log-${Date.now()}`;
+      data.bookingNumber = `BKNG-${(bookings.length + 1).toString().padStart(4, '0')}`;
+      logEntry = {
+        id: newLogId,
+        date: data.date,
+        aircraft: data.aircraft,
+        make: selectedAircraft?.make || '',
+        aircraftType: selectedAircraft?.aircraftType,
+        startHobbs: 0,
+        endHobbs: 0,
+        flightDuration: 0,
+        instructorName: data.instructor || 'Unknown',
+        trainingExercises: [],
+        departure: data.departure,
+        arrival: data.arrival,
+      };
+      
+      data = {...data, pendingLogEntryId: newLogId} as BookingFormValues & {pendingLogEntryId: string}
     }
-    
-    if (data.student && !data.studentId) {
-        const selectedStudent = users.find(u => u.name === data.student);
-        if (selectedStudent) data.studentId = selectedStudent.id;
-    }
-    
-    if (data.pilotName && !data.pilotId) {
-        const allPilots = [...hireAndFly, ...personnel];
-        const selectedPilot = allPilots.find(u => u.name === data.pilotName);
-        if (selectedPilot) data.pilotId = selectedPilot.id;
-    }
+
 
     const bookingStartDate = new Date(data.date);
     let bookingEndDate = bookingStartDate;
@@ -153,7 +161,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
 
     const cleanData = {
         ...data,
-        resourceType: 'aircraft' as const, // Explicitly set resourceType
+        resourceType: 'aircraft' as const,
         student: data.purpose === 'Training' ? data.student : null,
         studentId: data.purpose === 'Training' ? data.studentId : null,
         pilotId: (data.purpose === 'Hire and Fly' || data.purpose === 'Post-Maintenance Flight') ? data.pilotId : null,
@@ -163,11 +171,11 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
         trainingExercise: data.purpose === 'Training' ? data.trainingExercise : null,
         endDate: format(bookingEndDate, 'yyyy-MM-dd'),
     };
-
+    
     if (existingBooking) {
       onSubmit({ ...existingBooking, ...cleanData });
     } else {
-      onSubmit(cleanData as Omit<Booking, 'id' | 'companyId' | 'status'>);
+      onSubmit(cleanData as Omit<Booking, 'id' | 'companyId' | 'status'>, studentRef, logEntry);
     }
   }
 
@@ -241,7 +249,11 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Student</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        const selectedStudent = users.find(u => u.name === value);
+                        if (selectedStudent) form.setValue('studentId', selectedStudent.id);
+                    }} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select student" /></SelectTrigger></FormControl>
                         <SelectContent>{students.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
                     </Select>
@@ -288,7 +300,11 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Pilot</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={(value) => {
+                    field.onChange(value);
+                    const selectedPilot = [...hireAndFly, ...personnel].find(u => u.name === value);
+                    if (selectedPilot) form.setValue('pilotId', selectedPilot.id);
+                  }} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select pilot" /></SelectTrigger></FormControl>
                     <SelectContent>
                         {hireAndFly.map(p => (
@@ -311,7 +327,11 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Pilot</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        const selectedPilot = personnel.find(p => p.name === value);
+                        if (selectedPilot) form.setValue('pilotId', selectedPilot.id);
+                    }} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select personnel" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {personnel.map(p => (
