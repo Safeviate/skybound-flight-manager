@@ -169,7 +169,8 @@ const GanttChart = ({
     onSlotClick,
     onBookingClick,
     resourceKey,
-    resourceNameKey
+    resourceNameKey,
+    getBookingVariant
 }: { 
     resources: any[], 
     bookings: Booking[], 
@@ -177,7 +178,8 @@ const GanttChart = ({
     onSlotClick: (resource: any, time: string) => void,
     onBookingClick: (booking: Booking) => void,
     resourceKey: string,
-    resourceNameKey: string
+    resourceNameKey: string,
+    getBookingVariant: (booking: Booking) => { className?: string, style?: React.CSSProperties, isClickable: boolean }
 }) => {
     const timeToMinutes = (time: string) => {
         const [hours, minutes] = time.split(':').map(Number);
@@ -214,37 +216,6 @@ const GanttChart = ({
             return `${bookingNumPart}${booking.purpose}: ${booking.pilotName}`;
         }
         return `${bookingNumPart}${booking.purpose}: ${booking.student} w/ ${booking.instructor}`;
-    };
-
-    const getBookingVariant = (booking: Booking): { className?: string, style?: React.CSSProperties, isClickable: boolean } => {
-        if (booking.status === 'Completed') {
-            return { className: 'bg-gray-400 text-white', isClickable: false };
-        }
-        if (booking.purpose === 'Maintenance') {
-            return { className: 'bg-destructive text-white', isClickable: false };
-        }
-    
-        if (aircraft) {
-            const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
-            if (ac) {
-                 if (ac.checklistStatus === 'needs-post-flight') {
-                    const isClickable = ac.activeBookingId === booking.id;
-                    return {
-                        className: cn('bg-blue-500 text-white', !isClickable && 'opacity-50'),
-                        isClickable
-                    };
-                }
-                if (ac.checklistStatus === 'ready') {
-                    // This booking is clickable only if it's the NEXT booking for this aircraft
-                    const aircraftBookings = bookings.filter(b => b.aircraft === ac.tailNumber && b.status !== 'Cancelled').sort((a,b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
-                    const nextBooking = aircraftBookings.find(b => timeToMinutes(b.startTime) >= timeToMinutes(format(new Date(), 'HH:mm')));
-                    
-                    return { className: 'bg-green-500 text-white', isClickable: !nextBooking || nextBooking.id === booking.id };
-                }
-            }
-        }
-        
-        return { className: 'bg-green-500 text-white', isClickable: true };
     };
 
     return (
@@ -406,6 +377,41 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         });
     }, [bookings, selectedDate]);
   
+    const timeToMinutes = (time: string) => {
+        const [hours, minutes] = time.split(':').map(Number);
+        return hours * 60 + minutes;
+    };
+
+    const getBookingVariant = (booking: Booking): { className?: string, style?: React.CSSProperties, isClickable: boolean } => {
+        if (booking.status === 'Completed') {
+            return { className: 'bg-gray-400 text-white', isClickable: false };
+        }
+        if (booking.purpose === 'Maintenance') {
+            return { className: 'bg-destructive text-white', isClickable: false };
+        }
+    
+        if (aircraft) {
+            const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
+            if (ac) {
+                 if (ac.checklistStatus === 'needs-post-flight') {
+                    const isClickable = ac.activeBookingId === booking.id;
+                    return {
+                        className: cn('bg-blue-500 text-white', !isClickable && 'opacity-50'),
+                        isClickable
+                    };
+                }
+                if (ac.checklistStatus === 'ready') {
+                    // This booking is clickable only if it's the NEXT booking for this aircraft
+                    const aircraftBookings = bookings.filter(b => b.aircraft === ac.tailNumber && b.status !== 'Cancelled').sort((a,b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+                    const nextBooking = aircraftBookings.find(b => timeToMinutes(b.startTime) >= timeToMinutes(format(new Date(), 'HH:mm')));
+                    
+                    return { className: 'bg-green-500 text-white', isClickable: !nextBooking || nextBooking.id === booking.id };
+                }
+            }
+        }
+        
+        return { className: 'bg-green-500 text-white', isClickable: true };
+    };
 
   const handleBookingSubmit = async (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking) => {
     if (!company || !user) {
@@ -673,6 +679,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                         onBookingClick={handleBookingClick}
                                         resourceKey="tailNumber"
                                         resourceNameKey="tailNumber"
+                                        getBookingVariant={getBookingVariant}
                                     />
                                 </TooltipProvider>
                                 <ScrollBar orientation="horizontal" />
@@ -688,6 +695,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                         onBookingClick={handleBookingClick}
                                         resourceKey="id"
                                         resourceNameKey="name"
+                                        getBookingVariant={getBookingVariant}
                                     />
                                 </TooltipProvider>
                                 <ScrollBar orientation="horizontal" />
