@@ -64,6 +64,7 @@ export const navItems: {
   { href: '/hire-and-fly', label: 'Hire and Fly', icon: Contact, requiredFeature: 'Personnel' },
   { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredFeature: 'Personnel' },
   { href: '/training-schedule', label: 'Training Schedule', icon: Calendar, requiredFeature: 'Bookings' },
+  { href: '/meetings', label: 'Meetings', icon: Users, requiredFeature: 'Bookings' },
   { href: '/flight-logs', label: 'Flight Logs', icon: BookOpen },
   { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredFeature: 'AdvancedAnalytics' },
   { href: '/safety', label: 'Safety', icon: Shield, requiredFeature: 'Safety' },
