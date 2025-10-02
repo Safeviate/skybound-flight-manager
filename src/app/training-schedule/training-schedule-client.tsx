@@ -211,7 +211,7 @@ const GanttChart = ({
     const getBookingLabel = (booking: Booking) => {
         const bookingNumPart = booking.bookingNumber ? `${booking.bookingNumber} - ` : '';
         if (booking.purpose === 'Facility Booking') {
-            return `${bookingNumPart}${booking.title} (${booking.responsiblePerson})`;
+            return `${booking.bookingNumber} - ${booking.title} (${booking.responsiblePerson})`;
         }
         if (booking.purpose === 'Hire and Fly') {
             return `${bookingNumPart}${booking.purpose}: ${booking.pilotName}`;
@@ -325,13 +325,10 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         }
         if (ac.checklistStatus === 'ready') {
           const aircraftBookings = bookings
-            .filter(b => b.aircraft === ac.tailNumber && b.status !== 'Cancelled' && isWithinInterval(startOfDay(parseISO(b.date)), { start: startOfDay(selectedDate), end: endOfDay(selectedDate) }))
+            .filter(b => b.aircraft === ac.tailNumber && b.status !== 'Cancelled' && b.status !== 'Completed' && isWithinInterval(startOfDay(parseISO(b.date)), { start: startOfDay(selectedDate), end: endOfDay(selectedDate) }))
             .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
           
-          const nextBooking = aircraftBookings.find(b => {
-              const bookingDateTime = parseISO(`${b.date}T${b.startTime}`);
-              return !isBefore(bookingDateTime, new Date());
-          });
+          const nextBooking = aircraftBookings[0];
           
           return { className: 'bg-green-500 text-white', isClickable: !nextBooking || nextBooking.id === booking.id };
         }
@@ -451,7 +448,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             if (bookingData.resourceType === 'aircraft') {
                  const aircraftBookings = bookings.filter(b => b.bookingNumber && b.resourceType === 'aircraft');
                  const bookingNumbers = aircraftBookings.map(b => parseInt(b.bookingNumber!.split('-')[1], 10));
-                 const nextId = bookingNumbers.length > 0 ? Math.max(...bookingNumbers) + 1 : 1;
+                 const nextId = bookingNumbers.length > 0 ? Math.max(0, ...bookingNumbers) + 1 : 1;
                  bookingData.bookingNumber = `BKNG-${nextId.toString().padStart(4, '0')}`;
             } else if (bookingData.resourceType === 'facility') {
                  const facilityBookings = bookings.filter(b => b.bookingNumber && b.resourceType === 'facility');
