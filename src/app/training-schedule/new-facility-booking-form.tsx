@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { User, Booking, Facility } from '@/lib/types';
 import React, { useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
+import { format } from 'date-fns';
 
 const facilityBookingSchema = z.object({
   title: z.string().min(3, 'A title for the event is required.'),
@@ -36,6 +38,8 @@ export function NewFacilityBookingForm({ facility, users, onSubmit, startTime, s
       startTime: startTime || '',
       endTime: '',
       notes: '',
+      title: '',
+      responsiblePerson: '',
     }
   });
 
