@@ -94,7 +94,7 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
   };
 
   const SortableHeader = ({ label, sortKey }: { label: string, sortKey: keyof Booking }) => (
-    <Button variant="ghost" onClick={() => requestSort(sortKey)}>
+    <Button variant="ghost" onClick={() => requestSort(sortKey)} className="px-2 py-1 h-auto">
         {label}
         <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig?.key === sortKey ? '' : 'opacity-0 group-hover:opacity-50'}`} />
     </Button>
