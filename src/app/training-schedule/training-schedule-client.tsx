@@ -297,6 +297,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [activeFlight, setActiveFlight] = useState<{ booking: Booking, aircraft: Aircraft } | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  
+  const timeToMinutes = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
 
     const getBookingVariant = useCallback((booking: Booking): { className?: string, style?: React.CSSProperties, isClickable: boolean } => {
     if (booking.status === 'Completed') {
@@ -316,24 +321,31 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     if (aircraft) {
       const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
       if (ac) {
-        if (ac.checklistStatus === 'needs-post-flight') {
-          const isClickable = ac.activeBookingId === booking.id;
-          return {
-            className: cn('bg-blue-500 text-white', !isClickable && 'opacity-50'),
-            isClickable
-          };
+        // Find all bookings for this aircraft on this day, sorted by time.
+        const todaysAircraftBookings = bookings
+          .filter(b => b.aircraft === ac.tailNumber && isWithinInterval(startOfDay(parseISO(b.date)), { start: startOfDay(selectedDate), end: endOfDay(selectedDate) }) && b.status !== 'Cancelled')
+          .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+
+        // Find the first booking that isn't completed. This is the "active" booking for the day.
+        const activeBooking = todaysAircraftBookings.find(b => b.status !== 'Completed');
+
+        // If the current booking is NOT the active one, it means it's in the future and not yet actionable.
+        if (activeBooking && booking.id !== activeBooking.id) {
+            return { className: 'bg-green-500 text-white opacity-50', isClickable: false };
         }
-        if (ac.checklistStatus === 'ready') {
-          const aircraftBookings = bookings
-            .filter(b => b.aircraft === ac.tailNumber && b.status !== 'Cancelled' && b.status !== 'Completed' && isWithinInterval(startOfDay(parseISO(b.date)), { start: startOfDay(selectedDate), end: endOfDay(selectedDate) }))
-            .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
-          
-          const nextBooking = aircraftBookings[0];
-          
-          return { className: 'bg-green-500 text-white', isClickable: !nextBooking || nextBooking.id === booking.id };
+        
+        // If the current booking IS the active one, its state depends on the aircraft's checklist status.
+        if (booking.id === activeBooking?.id) {
+             if (ac.checklistStatus === 'needs-post-flight') {
+                return { className: 'bg-blue-500 text-white', isClickable: true };
+            }
+            if (ac.checklistStatus === 'ready') {
+                return { className: 'bg-green-500 text-white', isClickable: true };
+            }
         }
       }
     }
+    // Default to green if no other state applies
     return { className: 'bg-green-500 text-white', isClickable: true };
   }, [aircraft, bookings, selectedDate]);
   
@@ -420,11 +432,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         });
     }, [bookings, selectedDate]);
   
-    const timeToMinutes = (time: string) => {
-        const [hours, minutes] = time.split(':').map(Number);
-        return hours * 60 + minutes;
-    };
-
   const handleBookingSubmit = async (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking) => {
     if (!company || !user) {
       toast({ variant: 'destructive', title: 'Error', description: 'No company context.' });
