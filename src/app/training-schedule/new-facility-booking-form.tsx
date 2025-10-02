@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,10 +10,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { User, Booking, Facility } from '@/lib/types';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
 import { MultiSelect } from '@/components/ui/multi-select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Trash2 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 const facilityBookingSchema = z.object({
   title: z.string().min(3, 'A title for the event is required.'),
@@ -32,12 +37,24 @@ interface NewFacilityBookingFormProps {
   facility: Facility;
   users: User[];
   onSubmit: (data: Partial<Booking>) => void;
+  onDelete?: (bookingId: string, reason: string) => void;
   startTime?: string;
   selectedDate?: Date;
   existingBooking?: Booking | null;
 }
 
-export function NewFacilityBookingForm({ facility, users, onSubmit, startTime, selectedDate, existingBooking }: NewFacilityBookingFormProps) {
+const deletionReasons = [
+    'Maintenance',
+    'Weather',
+    'Congested Airspace',
+    'No show - Pilot',
+    'No show - Student',
+    'Illness - Pilot',
+    'Illness - Student',
+    'Other',
+];
+
+export function NewFacilityBookingForm({ facility, users, onSubmit, onDelete, startTime, selectedDate, existingBooking }: NewFacilityBookingFormProps) {
   const form = useForm<FacilityBookingFormValues>({
     resolver: zodResolver(facilityBookingSchema),
     defaultValues: {
@@ -51,6 +68,9 @@ export function NewFacilityBookingForm({ facility, users, onSubmit, startTime, s
       externalAttendees: '',
     }
   });
+
+  const [deleteReason, setDeleteReason] = useState('');
+  const [otherReason, setOtherReason] = useState('');
 
   useEffect(() => {
     form.reset({
@@ -88,6 +108,14 @@ export function NewFacilityBookingForm({ facility, users, onSubmit, startTime, s
         onSubmit({ ...existingBooking, ...bookingData });
     } else {
         onSubmit(bookingData);
+    }
+  }
+  
+  const handleDeleteConfirm = () => {
+    if (existingBooking && onDelete) {
+        const finalReason = deleteReason === 'Other' ? `Other: ${otherReason}` : deleteReason;
+        if (!finalReason) return;
+        onDelete(existingBooking.id, finalReason);
     }
   }
 
@@ -212,8 +240,56 @@ export function NewFacilityBookingForm({ facility, users, onSubmit, startTime, s
             </FormItem>
           )}
         />
-        <div className="flex justify-end pt-4">
-          <Button type="submit">{existingBooking ? 'Save Changes' : 'Create Booking'}</Button>
+        <div className="flex justify-between items-center pt-4">
+           {existingBooking && onDelete && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                         <Button type="button" variant="destructive">
+                            <Trash2 className="mr-2 h-4 w-4"/>
+                            Cancel Booking
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Reason for Cancellation</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Please select a reason for cancelling this booking. This information is used for reporting.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="py-4 space-y-4">
+                            <Select value={deleteReason} onValueChange={setDeleteReason}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a reason..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {deletionReasons.map(reason => (
+                                        <SelectItem key={reason} value={reason}>{reason}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {deleteReason === 'Other' && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="other-reason">Please specify:</Label>
+                                    <Textarea
+                                        id="other-reason"
+                                        value={otherReason}
+                                        onChange={(e) => setOtherReason(e.target.value)}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteConfirm} disabled={!deleteReason || (deleteReason === 'Other' && !otherReason)}>
+                                Yes, Cancel Booking
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+           )}
+           <div className={cn("flex-1 flex justify-end", !existingBooking && 'w-full')}>
+                <Button type="submit">{existingBooking ? 'Save Changes' : 'Create Booking'}</Button>
+           </div>
         </div>
       </form>
     </Form>

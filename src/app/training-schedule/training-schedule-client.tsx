@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -513,8 +514,13 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         toast({ variant: 'destructive', title: 'Error', description: 'No company context.' });
         return;
     }
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return;
+
+    const collectionName = booking.resourceType === 'facility' ? 'facility-bookings' : 'aircraft-bookings';
+    
     try {
-        const bookingRef = doc(db, `companies/${company.id}/aircraft-bookings`, bookingId);
+        const bookingRef = doc(db, `companies/${company.id}/${collectionName}`, bookingId);
         await updateDoc(bookingRef, { status: 'Cancelled', cancellationReason: reason });
         toast({ title: 'Booking Cancelled', description: `Reason: ${reason}` });
         handleDialogClose();
@@ -801,6 +807,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                     facility={company?.facilities?.find(f => f.id === editingBooking.facilityId)!}
                     users={users}
                     onSubmit={handleBookingSubmit}
+                    onDelete={handleBookingDelete}
                     existingBooking={editingBooking}
                     selectedDate={parseISO(editingBooking.date)}
                 />
