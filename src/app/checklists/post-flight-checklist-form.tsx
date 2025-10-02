@@ -18,6 +18,7 @@ import type { Aircraft } from '@/lib/types';
 import { StandardCamera } from '@/components/ui/standard-camera';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useSettings } from '@/context/settings-provider';
 
 
 const checklistSchema = z.object({
@@ -43,6 +44,7 @@ interface PostFlightChecklistFormProps {
 
 export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onReportIssue }: PostFlightChecklistFormProps) {
   const { toast } = useToast();
+  const { settings } = useSettings();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | 'defectPhoto' | null>(null);
@@ -140,15 +142,14 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
                                     />
                                 </div>
                             </FormItem>
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="hobbs"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Closing Hobbs Meter</FormLabel>
-                                            <div className="flex items-center gap-2">
-                                                <Hash className="h-5 w-5 text-muted-foreground" />
+                            <FormField
+                                control={form.control}
+                                name="hobbs"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Closing Hobbs Meter</FormLabel>
+                                        <div className="flex items-center gap-2">
+                                            <FormControl>
                                                 <Input 
                                                     type="number" 
                                                     step="0.1" 
@@ -157,37 +158,42 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
                                                     onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                                     className="flex-1" 
                                                 />
-                                            </div>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="tacho"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Closing Tacho Meter</FormLabel>
-                                            <div className="flex items-center gap-2">
-                                                <Hash className="h-5 w-5 text-muted-foreground" />
-                                                <Input 
-                                                    type="number" 
-                                                    step="0.1" 
-                                                    placeholder="Enter closing Tacho" 
-                                                    {...field}
-                                                    value={field.value ?? ''}
-                                                    onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                                    className="flex-1" 
-                                                />
-                                            </div>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                                            </FormControl>
+                                            {settings.useAiChecklists && (
+                                                <Button type="button" variant="outline" size="icon" onClick={() => setIsScannerOpen(true)}>
+                                                    <Bot className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="tacho"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Closing Tacho Meter</FormLabel>
+                                        <div className="flex items-center gap-2">
+                                            <Hash className="h-5 w-5 text-muted-foreground" />
+                                            <Input 
+                                                type="number" 
+                                                step="0.1" 
+                                                placeholder="Enter closing Tacho" 
+                                                {...field}
+                                                value={field.value ?? ''}
+                                                onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                className="flex-1" 
+                                            />
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <FormField
                                 control={form.control}
                                 name="leftSidePhoto"

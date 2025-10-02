@@ -19,6 +19,7 @@ import type { Aircraft } from '@/lib/types';
 import { StandardCamera } from '@/components/ui/standard-camera';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useSettings } from '@/context/settings-provider';
 
 
 const checklistSchema = z.object({
@@ -61,6 +62,7 @@ interface PreFlightChecklistFormProps {
 
 export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, initialHobbs }: PreFlightChecklistFormProps) {
   const { toast } = useToast();
+  const { settings } = useSettings();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | 'defectPhoto' | null>(null);
 
@@ -153,49 +155,26 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, ini
                                     </FormItem>
                                 )}
                             />
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="hobbs"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Hobbs Meter</FormLabel>
-                                            <div className="flex items-center gap-2">
-                                                <Hash className="h-5 w-5 text-muted-foreground" />
-                                                <Input 
-                                                    type="number" 
-                                                    step="0.1" 
-                                                    placeholder="Enter current Hobbs hours" 
-                                                    {...field} 
-                                                    onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} 
-                                                    className="flex-1" />
-                                            </div>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="tacho"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Tacho Meter</FormLabel>
-                                            <div className="flex items-center gap-2">
-                                                <Hash className="h-5 w-5 text-muted-foreground" />
-                                                <Input 
-                                                    type="number" 
-                                                    step="0.1" 
-                                                    placeholder="Enter Tacho hours" 
-                                                    {...field} 
-                                                    value={field.value ?? ''}
-                                                    onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} 
-                                                    className="flex-1" />
-                                            </div>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                            <FormField
+                                control={form.control}
+                                name="hobbs"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Hobbs Meter</FormLabel>
+                                        <div className="flex items-center gap-2">
+                                            <Hash className="h-5 w-5 text-muted-foreground" />
+                                            <Input 
+                                                type="number" 
+                                                step="0.1" 
+                                                placeholder="Enter current Hobbs hours" 
+                                                {...field} 
+                                                onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} 
+                                                className="flex-1" />
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4">
