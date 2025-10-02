@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import type { Aircraft, Booking, User, CompletedChecklist, Alert as AlertType, TrainingLogEntry, Facility } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { NewBookingForm } from './new-booking-form';
+import { NewFacilityBookingForm } from './new-facility-booking-form';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, writeBatch, arrayUnion, getDocs, getDoc } from 'firebase/firestore';
@@ -169,7 +170,8 @@ const GanttChart = ({
     const getBookingForSlot = (resourceIdentifier: string, time: string) => {
         const slotTimeInMinutes = timeToMinutes(time);
         return bookings.find(b => {
-            if (b.aircraft !== resourceIdentifier) return false;
+            const bookingResourceIdentifier = b.resourceType === 'facility' ? b.facilityId : b.aircraft;
+            if (bookingResourceIdentifier !== resourceIdentifier) return false;
             if (b.status === 'Cancelled') return false; 
             const startTimeInMinutes = timeToMinutes(b.startTime);
             const endTimeInMinutes = timeToMinutes(b.endTime);
@@ -187,6 +189,9 @@ const GanttChart = ({
     };
 
     const getBookingLabel = (booking: Booking) => {
+        if (booking.purpose === 'Facility Booking') {
+            return `${booking.title} (${booking.responsiblePerson})`;
+        }
         const bookingNumPart = booking.bookingNumber ? `${booking.bookingNumber} - ` : '';
         if (booking.purpose === 'Hire and Fly') {
             return `${bookingNumPart}${booking.purpose}: ${booking.pilotName}`;
@@ -219,7 +224,7 @@ const GanttChart = ({
                             {timeSlots.map(time => {
                                 if (renderedSlots.has(time)) return null;
 
-                                const booking = getBookingForSlot(resource.tailNumber, time);
+                                const booking = getBookingForSlot(resource[resourceKey], time);
                                 if (booking) {
                                     const colSpan = calculateColSpan(booking, time);
                                     if (colSpan > 0) {
@@ -264,7 +269,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [hireAndFly, setHireAndFly] = useState<User[]>(initialHireAndFly);
   const [loading, setLoading] = useState(true);
-  const [newBookingSlot, setNewBookingSlot] = useState<{ aircraft: Aircraft, time: string, date: Date } | null>(null);
+  const [newBookingSlot, setNewBookingSlot] = useState<{ aircraft?: Aircraft, facility?: Facility, time: string, date: Date } | null>(null);
   const [activeFlight, setActiveFlight] = useState<{ booking: Booking, aircraft: Aircraft } | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   
@@ -350,37 +355,36 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             const bookingRef = doc(db, `companies/${company.id}/bookings`, newBookingId);
             batch.set(bookingRef, bookingData);
 
-            // Link booking to aircraft
-            const aircraftRef = doc(db, `companies/${company.id}/aircraft`, newBookingSlot!.aircraft.id);
-            batch.update(aircraftRef, { activeBookingId: newBookingId });
+            if (bookingData.resourceType === 'aircraft') {
+              const aircraftRef = doc(db, `companies/${company.id}/aircraft`, newBookingSlot!.aircraft!.id);
+              batch.update(aircraftRef, { activeBookingId: newBookingId });
 
-            // If it's a training booking, add its ID to the student's pending bookings
-            if (bookingData.purpose === 'Training' && bookingData.studentId) {
-                const studentRef = doc(db, `companies/${company.id}/students`, bookingData.studentId);
-                const selectedAircraft = aircraft.find(ac => ac.tailNumber === bookingData.aircraft);
-                const logEntry: TrainingLogEntry = {
-                    id: `log-${newBookingId}`,
-                    date: bookingData.date,
-                    aircraft: `${bookingData.aircraft}`,
-                    make: selectedAircraft?.make || '',
-                    aircraftType: selectedAircraft?.aircraftType,
-                    startHobbs: 0,
-                    endHobbs: 0,
-                    flightDuration: 0,
-                    instructorName: bookingData.instructor || 'Unknown',
-                    trainingExercises: [],
-                    departure: bookingData.departure,
-                    arrival: bookingData.arrival,
-                };
-                batch.update(studentRef, { 
-                    trainingLogs: arrayUnion(logEntry),
-                    pendingBookingIds: arrayUnion(newBookingId)
-                });
-                // Link this log entry ID to the booking
-                batch.update(bookingRef, { pendingLogEntryId: logEntry.id });
+              if (bookingData.purpose === 'Training' && bookingData.studentId) {
+                  const studentRef = doc(db, `companies/${company.id}/students`, bookingData.studentId);
+                  const selectedAircraft = aircraft.find(ac => ac.tailNumber === bookingData.aircraft);
+                  const logEntry: TrainingLogEntry = {
+                      id: `log-${newBookingId}`,
+                      date: bookingData.date,
+                      aircraft: `${bookingData.aircraft}`,
+                      make: selectedAircraft?.make || '',
+                      aircraftType: selectedAircraft?.aircraftType,
+                      startHobbs: 0,
+                      endHobbs: 0,
+                      flightDuration: 0,
+                      instructorName: bookingData.instructor || 'Unknown',
+                      trainingExercises: [],
+                      departure: bookingData.departure,
+                      arrival: bookingData.arrival,
+                  };
+                  batch.update(studentRef, { 
+                      trainingLogs: arrayUnion(logEntry),
+                      pendingBookingIds: arrayUnion(newBookingId)
+                  });
+                  batch.update(bookingRef, { pendingLogEntryId: logEntry.id });
+              }
             }
             
-            toast({ title: 'Booking Created', description: `Booking ${bookingData.bookingNumber} has been added to the schedule.` });
+            toast({ title: 'Booking Created', description: `Booking ${bookingData.bookingNumber || 'for facility'} has been added to the schedule.` });
         }
         
         await batch.commit();
@@ -482,7 +486,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         }
     };
   
-  const handleNewBookingClick = (aircraft: Aircraft, time: string) => {
+  const handleNewBookingClick = (resource: Aircraft | Facility, time: string) => {
     const [hour, minute] = time.split(':').map(Number);
     const bookingDate = hour < 6 ? addDays(selectedDate, 1) : selectedDate;
     const bookingDateTime = setMinutes(setHours(new Date(bookingDate), hour), minute);
@@ -492,7 +496,12 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         toast({ variant: 'destructive', title: 'Invalid Time', description: 'Cannot create a booking in the past.' });
         return;
     }
-    setNewBookingSlot({ aircraft, time, date: bookingDate });
+    
+    if ('tailNumber' in resource) {
+        setNewBookingSlot({ aircraft: resource, time, date: bookingDate });
+    } else {
+        setNewBookingSlot({ facility: resource, time, date: bookingDate });
+    }
   }
 
   const handleDialogClose = () => {
@@ -511,9 +520,13 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     };
     if (booking.status === 'Completed') return;
 
-    const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
-    if (aircraftForBooking) {
-        setActiveFlight({ booking, aircraft: aircraftForBooking });
+    if (booking.resourceType === 'aircraft') {
+        const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
+        if (aircraftForBooking) {
+            setActiveFlight({ booking, aircraft: aircraftForBooking });
+        }
+    } else {
+        // Handle facility booking clicks here if needed in the future
     }
   };
 
@@ -569,19 +582,19 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 </div>
                 <GanttChart 
                     resources={aircraft} 
-                    bookings={filteredBookings}
+                    bookings={filteredBookings.filter(b => b.resourceType === 'aircraft')}
                     onSlotClick={handleNewBookingClick}
                     onBookingClick={handleBookingClick}
-                    resourceKey="id"
+                    resourceKey="tailNumber"
                     resourceNameKey="tailNumber"
                 />
             </TabsContent>
             <TabsContent value="facilities">
                 <GanttChart 
                     resources={company?.facilities || []}
-                    bookings={[]} // No bookings for facilities yet
-                    onSlotClick={() => { /* TODO */ }}
-                    onBookingClick={() => { /* TODO */ }}
+                    bookings={filteredBookings.filter(b => b.resourceType === 'facility')}
+                    onSlotClick={handleNewBookingClick}
+                    onBookingClick={handleBookingClick}
                     resourceKey="id"
                     resourceNameKey="name"
                 />
@@ -590,12 +603,12 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
       </main>
        <Dialog open={!!newBookingSlot || !!activeFlight} onOpenChange={handleDialogClose}>
         <DialogContent className="sm:max-w-xl">
-          {newBookingSlot && (
+          {newBookingSlot?.aircraft && (
             <>
               <DialogHeader>
                 <DialogTitle>Create New Booking</DialogTitle>
                 <DialogDescription>
-                    {`Creating a booking for ${newBookingSlot?.aircraft.tailNumber} on ${newBookingSlot ? format(newBookingSlot.date, 'PPP') : ''}`}
+                    {`Creating a booking for ${newBookingSlot.aircraft.tailNumber} on ${format(newBookingSlot.date, 'PPP')}`}
                 </DialogDescription>
               </DialogHeader>
               <NewBookingForm
@@ -607,6 +620,23 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                   startTime={newBookingSlot?.time}
                   selectedDate={newBookingSlot?.date}
                 />
+            </>
+          )}
+          {newBookingSlot?.facility && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Create New Facility Booking</DialogTitle>
+                <DialogDescription>
+                    {`Booking ${newBookingSlot.facility.name} on ${format(newBookingSlot.date, 'PPP')}`}
+                </DialogDescription>
+              </DialogHeader>
+              <NewFacilityBookingForm
+                  facility={newBookingSlot.facility}
+                  users={users}
+                  onSubmit={handleBookingSubmit}
+                  startTime={newBookingSlot?.time}
+                  selectedDate={newBookingSlot?.date}
+              />
             </>
           )}
           {activeFlight && (

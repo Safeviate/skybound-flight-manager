@@ -274,13 +274,18 @@ export type Booking = {
   endDate?: string;
   startTime: string;
   endTime: string;
-  aircraft: string;
+  aircraft: string; // Tail number, or facility name
+  resourceType: 'aircraft' | 'facility';
+  facilityId?: string;
+  title?: string; // For facility bookings
+  responsiblePerson?: string; // For facility bookings
+  notes?: string; // For facility bookings
   student?: string | null;
   studentId?: string | null;
   pilotId?: string | null;
   pilotName?: string | null;
   instructor?: string | null;
-  purpose: 'Training' | 'Hire and Fly' | 'Post-Maintenance Flight';
+  purpose: 'Training' | 'Hire and Fly' | 'Post-Maintenance Flight' | 'Facility Booking' | 'Maintenance';
   status: 'Approved' | 'Completed' | 'Cancelled';
   flightDuration?: number;
   maintenanceType?: string | null;
