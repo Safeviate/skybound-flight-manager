@@ -339,7 +339,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     const dayStart = startOfDay(selectedDate);
     return bookings.filter(b => {
         if (b.status === 'Cancelled' || !b.date) return false;
-        if (b.resourceType && b.resourceType !== 'aircraft') return false; // Ensure it's for aircraft
+        // This is the key fix: include bookings without a resourceType for backward compatibility.
+        if (b.resourceType && b.resourceType !== 'aircraft') return false; 
         const bookingStart = parseISO(b.date);
         const bookingEnd = b.endDate ? parseISO(b.endDate) : bookingStart;
         return isWithinInterval(dayStart, { start: startOfDay(bookingStart), end: endOfDay(bookingEnd) });
@@ -549,7 +550,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     };
     if (booking.status === 'Completed') return;
 
-    if (booking.resourceType === 'aircraft') {
+    if (!booking.resourceType || booking.resourceType === 'aircraft') {
         const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
         if (aircraftForBooking) {
             setActiveFlight({ booking, aircraft: aircraftForBooking });
