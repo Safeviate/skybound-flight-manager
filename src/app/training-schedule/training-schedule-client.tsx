@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -339,7 +338,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     const dayStart = startOfDay(selectedDate);
     return bookings.filter(b => {
         if (b.status === 'Cancelled' || !b.date) return false;
-        if (!b.resourceType || b.resourceType !== 'aircraft') return false; 
+        if (!b.resourceType || b.resourceType === 'facility') return false; 
         const bookingStart = parseISO(b.date);
         const bookingEnd = b.endDate ? parseISO(b.endDate) : bookingStart;
         return isWithinInterval(dayStart, { start: startOfDay(bookingStart), end: endOfDay(bookingEnd) });
@@ -451,62 +450,63 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     const bookingRef = doc(db, `companies/${company.id}/${bookingCollectionName}`, activeFlight.booking.id);
   
     try {
-      if (isPreFlight) {
-        batch.update(aircraftRef, { checklistStatus: 'needs-post-flight' });
-        batch.update(bookingRef, {
-          startHobbs: data.hobbs,
-          preFlightChecklist: {
-            leftSidePhoto: data.leftSidePhoto,
-            rightSidePhoto: data.rightSidePhoto,
-            defectPhoto: data.defectPhoto,
-          },
-        });
-        toast({ title: 'Pre-Flight Checklist Submitted' });
-      } else { // POST-FLIGHT LOGIC
-        const flightDuration = activeFlight.booking.startHobbs ? parseFloat((data.hobbs - activeFlight.booking.startHobbs).toFixed(1)) : 0;
-  
-        batch.update(aircraftRef, {
-          checklistStatus: 'ready',
-          activeBookingId: null,
-          hours: data.hobbs,
-          currentTachoReading: data.tacho,
-        });
-  
-        batch.update(bookingRef, {
-          status: 'Completed',
-          endHobbs: data.hobbs,
-          flightDuration,
-          fuelUplift: data.fuelUplift,
-          oilUplift: data.oilUplift,
-          postFlightChecklist: {
-            leftSidePhoto: data.leftSidePhoto,
-            rightSidePhoto: data.rightSidePhoto,
-            defectPhoto: data.defectPhoto,
-          },
-        });
-  
-        if (activeFlight.booking.purpose === 'Training' && activeFlight.booking.studentId && activeFlight.booking.pendingLogEntryId) {
-          const studentRef = doc(db, `companies/${company.id}/students`, activeFlight.booking.studentId);
-          const studentSnap = await getDoc(studentRef);
-  
-          if (studentSnap.exists()) {
-            const studentData = studentSnap.data() as User;
-            const newTotalHours = (studentData.flightHours || 0) + flightDuration;
-  
-            const updatedLogs = studentData.trainingLogs?.map(log =>
-              log.id === activeFlight.booking.pendingLogEntryId
-                ? { ...log, startHobbs: activeFlight.booking.startHobbs, endHobbs: data.hobbs, flightDuration }
-                : log
-            ) || [];
-  
-            batch.update(studentRef, {
-              trainingLogs: updatedLogs,
-              flightHours: newTotalHours,
+        const historyDocRef = doc(collection(db, `companies/${company.id}/aircraft/${activeFlight.aircraft.id}/completed-checklists`));
+        const historyDoc: Omit<CompletedChecklist, 'id'> = {
+            aircraftId: activeFlight.aircraft.id,
+            aircraftTailNumber: activeFlight.aircraft.tailNumber,
+            userId: user.id,
+            userName: user.name,
+            dateCompleted: new Date().toISOString(),
+            type: isPreFlight ? 'Pre-Flight' : 'Post-Flight',
+            results: data,
+            bookingNumber: activeFlight.booking.bookingNumber,
+        };
+        batch.set(historyDocRef, historyDoc);
+
+        if (isPreFlight) {
+            batch.update(aircraftRef, { checklistStatus: 'needs-post-flight' });
+            batch.update(bookingRef, { startHobbs: data.hobbs });
+            toast({ title: 'Pre-Flight Checklist Submitted' });
+        } else { // POST-FLIGHT LOGIC
+            const flightDuration = activeFlight.booking.startHobbs ? parseFloat((data.hobbs - activeFlight.booking.startHobbs).toFixed(1)) : 0;
+            
+            batch.update(aircraftRef, {
+                checklistStatus: 'ready',
+                activeBookingId: null,
+                hours: data.hobbs,
+                currentTachoReading: data.tacho,
             });
-          }
+    
+            batch.update(bookingRef, {
+                status: 'Completed',
+                endHobbs: data.hobbs,
+                flightDuration,
+                fuelUplift: data.fuelUplift,
+                oilUplift: data.oilUplift,
+            });
+    
+            if (activeFlight.booking.purpose === 'Training' && activeFlight.booking.studentId && activeFlight.booking.pendingLogEntryId) {
+                const studentRef = doc(db, `companies/${company.id}/students`, activeFlight.booking.studentId);
+                const studentSnap = await getDoc(studentRef);
+        
+                if (studentSnap.exists()) {
+                    const studentData = studentSnap.data() as User;
+                    const newTotalHours = (studentData.flightHours || 0) + flightDuration;
+        
+                    const updatedLogs = studentData.trainingLogs?.map(log =>
+                    log.id === activeFlight.booking.pendingLogEntryId
+                        ? { ...log, startHobbs: activeFlight.booking.startHobbs, endHobbs: data.hobbs, flightDuration }
+                        : log
+                    ) || [];
+        
+                    batch.update(studentRef, {
+                    trainingLogs: updatedLogs,
+                    flightHours: newTotalHours,
+                    });
+                }
+            }
+            toast({ title: 'Post-Flight Checklist Submitted', description: 'Logbook entry created and booking completed.' });
         }
-        toast({ title: 'Post-Flight Checklist Submitted', description: 'Logbook entry created and booking completed.' });
-      }
   
       await batch.commit();
       handleDialogClose();
@@ -571,75 +571,75 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
   return (
     <>
-      <main className="flex flex-col flex-1 p-4 md:p-8">
-        <Card>
-           <Tabs defaultValue="aircraft" className="flex-1 flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between">
-                <TabsList>
-                    <TabsTrigger value="aircraft">Aircraft Schedule</TabsTrigger>
-                    <TabsTrigger value="facilities">Facility Schedule</TabsTrigger>
-                </TabsList>
-                <Popover>
-                    <PopoverTrigger asChild>
-                    <Button
-                        variant={"outline"}
-                        className={cn(
-                        "w-[280px] justify-start text-left font-normal",
-                        !selectedDate && "text-muted-foreground"
-                        )}
-                        data-nosnippet
-                    >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                    <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(date) => setSelectedDate(date || new Date())}
-                        initialFocus
-                    />
-                    </PopoverContent>
-                </Popover>
-            </CardHeader>
-            <CardContent>
-                <TabsContent value="aircraft">
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mt-4">
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-500"></div>Ready for Pre-Flight</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-blue-500"></div>Post-Flight Outstanding</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-gray-400"></div>Completed</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-destructive"></div>In Maintenance</div>
-                    </div>
-                    <ScrollArea>
-                        <GanttChart 
-                            resources={aircraft} 
-                            bookings={dailyAircraftBookings}
-                            onSlotClick={handleNewBookingClick}
-                            onBookingClick={handleBookingClick}
-                            resourceKey="tailNumber"
-                            resourceNameKey="tailNumber"
-                        />
-                        <ScrollBar orientation="horizontal" />
-                    </ScrollArea>
-                </TabsContent>
-                <TabsContent value="facilities">
-                     <ScrollArea>
-                        <GanttChart 
-                            resources={company?.facilities || []}
-                            bookings={dailyFacilityBookings}
-                            onSlotClick={handleNewBookingClick}
-                            onBookingClick={handleBookingClick}
-                            resourceKey="id"
-                            resourceNameKey="name"
-                        />
-                        <ScrollBar orientation="horizontal" />
-                    </ScrollArea>
-                </TabsContent>
-            </CardContent>
-           </Tabs>
-        </Card>
-      </main>
+        <main className="flex-1 p-4 md:p-8">
+            <Card>
+                <Tabs defaultValue="aircraft">
+                    <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <TabsList className="grid w-full grid-cols-2 max-w-sm">
+                            <TabsTrigger value="aircraft">Aircraft Schedule</TabsTrigger>
+                            <TabsTrigger value="facilities">Facility Schedule</TabsTrigger>
+                        </TabsList>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <Button
+                                variant={"outline"}
+                                className={cn(
+                                "w-full md:w-[280px] justify-start text-left font-normal",
+                                !selectedDate && "text-muted-foreground"
+                                )}
+                                data-nosnippet
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                            </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                            <Calendar
+                                mode="single"
+                                selected={selectedDate}
+                                onSelect={(date) => setSelectedDate(date || new Date())}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                    </CardHeader>
+                    <CardContent>
+                        <TabsContent value="aircraft">
+                            <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mt-4">
+                                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-500"></div>Ready for Pre-Flight</div>
+                                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-blue-500"></div>Post-Flight Outstanding</div>
+                                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-gray-400"></div>Completed</div>
+                                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-destructive"></div>In Maintenance</div>
+                            </div>
+                            <ScrollArea>
+                                <GanttChart 
+                                    resources={aircraft} 
+                                    bookings={dailyAircraftBookings}
+                                    onSlotClick={handleNewBookingClick}
+                                    onBookingClick={handleBookingClick}
+                                    resourceKey="tailNumber"
+                                    resourceNameKey="tailNumber"
+                                />
+                                <ScrollBar orientation="horizontal" />
+                            </ScrollArea>
+                        </TabsContent>
+                        <TabsContent value="facilities">
+                            <ScrollArea>
+                                <GanttChart 
+                                    resources={company?.facilities || []}
+                                    bookings={dailyFacilityBookings}
+                                    onSlotClick={handleNewBookingClick}
+                                    onBookingClick={handleBookingClick}
+                                    resourceKey="id"
+                                    resourceNameKey="name"
+                                />
+                                <ScrollBar orientation="horizontal" />
+                            </ScrollArea>
+                        </TabsContent>
+                    </CardContent>
+                </Tabs>
+            </Card>
+        </main>
        <Dialog open={!!newBookingSlot || !!activeFlight} onOpenChange={handleDialogClose}>
         <DialogContent className="sm:max-w-xl">
           {newBookingSlot?.aircraft && (
