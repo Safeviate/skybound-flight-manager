@@ -599,24 +599,34 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                       <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-gray-400"></div>Completed</div>
                       <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-destructive"></div>In Maintenance</div>
                   </div>
-                  <GanttChart 
-                      resources={aircraft} 
-                      bookings={filteredBookings.filter(b => b.resourceType === 'aircraft')}
-                      onSlotClick={handleNewBookingClick}
-                      onBookingClick={handleBookingClick}
-                      resourceKey="tailNumber"
-                      resourceNameKey="tailNumber"
-                  />
+                   <div className="relative mt-4">
+                      <ScrollArea>
+                        <GanttChart 
+                            resources={aircraft} 
+                            bookings={filteredBookings.filter(b => b.resourceType === 'aircraft')}
+                            onSlotClick={handleNewBookingClick}
+                            onBookingClick={handleBookingClick}
+                            resourceKey="tailNumber"
+                            resourceNameKey="tailNumber"
+                        />
+                         <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                   </div>
               </TabsContent>
               <TabsContent value="facilities">
-                  <GanttChart 
-                      resources={company?.facilities || []}
-                      bookings={filteredBookings.filter(b => b.resourceType === 'facility')}
-                      onSlotClick={handleNewBookingClick}
-                      onBookingClick={handleBookingClick}
-                      resourceKey="id"
-                      resourceNameKey="name"
-                  />
+                  <div className="relative mt-4">
+                      <ScrollArea>
+                        <GanttChart 
+                            resources={company?.facilities || []}
+                            bookings={filteredBookings.filter(b => b.resourceType === 'facility')}
+                            onSlotClick={handleNewBookingClick}
+                            onBookingClick={handleBookingClick}
+                            resourceKey="id"
+                            resourceNameKey="name"
+                        />
+                         <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                   </div>
               </TabsContent>
             </CardContent>
           </Card>
