@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, Fragment } from 'react';
@@ -1087,8 +1088,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                             const booking = getBookingForLog(log.id);
                                                             const bookingNumRemark = booking?.bookingNumber ? `Booking: ${booking.bookingNumber}\n` : '';
                                                             return (
-                                                            <Collapsible asChild>
-                                                                <Fragment key={log.id}>
+                                                            <Collapsible asChild key={log.id}>
+                                                                <Fragment>
                                                                     <TableRow>
                                                                         <TableCell>{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
                                                                         <TableCell>{log.make || 'N/A'}</TableCell>
