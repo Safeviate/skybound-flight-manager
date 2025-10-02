@@ -1,8 +1,7 @@
 
-
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, Fragment } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2, Search, ChevronLeft, ChevronRight, Wind, Users as UsersIcon, Save, Signature, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -1088,8 +1087,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                             const booking = getBookingForLog(log.id);
                                                             const bookingNumRemark = booking?.bookingNumber ? `Booking: ${booking.bookingNumber}\n` : '';
                                                             return (
-                                                            <Collapsible asChild key={log.id}>
-                                                                <>
+                                                            <Collapsible asChild>
+                                                                <Fragment key={log.id}>
                                                                     <TableRow>
                                                                         <TableCell>{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
                                                                         <TableCell>{log.make || 'N/A'}</TableCell>
@@ -1151,7 +1150,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                                             </TableCell>
                                                                         </tr>
                                                                     </CollapsibleContent>
-                                                                </>
+                                                                </Fragment>
                                                             </Collapsible>
                                                         )})
                                                     ) : (
@@ -1199,8 +1198,3 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
-
-    
-
-    
-
