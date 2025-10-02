@@ -520,11 +520,44 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   return (
     <>
       <style>{`
-        .gantt-table,
-        .gantt-table th,
-        .gantt-table td {
-          border: 1px solid #${Math.floor(Math.random()*16777215).toString(16)};
+        .gantt-table { border-collapse: collapse; }
+        .gantt-table th, .gantt-table td { border: 1px solid hsl(var(--border)); }
+        .gantt-header-cell {
+          position: sticky;
+          top: 0;
+          background-color: hsl(var(--card));
+          z-index: 20;
+          text-align: center;
+          padding: 0.5rem;
         }
+        .gantt-cell { padding: 0; height: 50px; }
+        .aircraft-name-cell {
+            width: 150px;
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background-color: hsl(var(--card));
+            font-weight: 500;
+            text-align: center;
+        }
+        .booking-slot { padding: 0; }
+        .gantt-bar {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 0 0.5rem;
+            color: white;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .clickable { cursor: pointer; }
+        .not-clickable { cursor: not-allowed; }
+        .empty-slot:hover { background-color: hsl(var(--primary) / 0.1); cursor: pointer; }
+        .color-legend { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.75rem; align-items: center; }
+        .legend-item { display: flex; align-items: center; gap: 0.5rem; }
+        .legend-color-box { width: 1rem; height: 1rem; border-radius: 2px; }
       `}</style>
       <div className="flex flex-col flex-1 p-4 md:p-8">
         <Card className="flex flex-col flex-1">
@@ -532,13 +565,13 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 <CardTitle>Training Schedule</CardTitle>
                 <CardDescription>View and manage all aircraft and instructor bookings.</CardDescription>
             </CardHeader>
-            <CardContent style={{ border: '2px solid red' }} className="flex flex-col flex-1 min-h-0">
+            <CardContent className="flex flex-col flex-1 min-h-0">
                 <Tabs defaultValue="bookings" className="flex flex-col flex-1">
                     <TabsList>
                         <TabsTrigger value="bookings">Bookings</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="bookings" className="mt-6 flex flex-col flex-1 min-h-0">
-                        <div style={{ border: '2px solid blue' }} className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <TabsContent value="bookings" className="mt-6 flex flex-col flex-1 min-h-0 border-4 border-orange-500">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-4 border-blue-500">
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
@@ -570,8 +603,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 <div className="legend-item"><div className="legend-color-box bg-muted"></div>Pending</div>
                             </div>
                         </div>
-                        <div style={{ border: '2px solid green' }} className="flex-1 mt-6 overflow-auto rounded-lg border" style={{ minWidth: '0' }}>
-                            <table style={{ border: '2px solid purple' }} className="w-full border-collapse gantt-table" style={{ minWidth: '4758px', tableLayout: 'fixed' }}>
+                        <div className="flex-1 mt-6 overflow-auto rounded-lg border border-4 border-green-500" style={{ minWidth: '0' }}>
+                            <table className="w-full border-collapse gantt-table border-4 border-purple-500" style={{ minWidth: '4758px', tableLayout: 'fixed' }}>
                                 <thead>
                                     <tr>
                                         <th className="gantt-header-cell aircraft-name-cell">Aircraft</th>
