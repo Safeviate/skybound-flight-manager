@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -28,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TrainingSchedulePageContentProps {
   initialAircraft: Aircraft[];
@@ -140,6 +140,19 @@ const FlightHub = ({
     );
 };
 
+const BookingTooltipContent = ({ booking }: { booking: Booking }) => (
+    <div className="p-2 text-sm space-y-1">
+        <p className="font-bold">{booking.bookingNumber || booking.title}</p>
+        <p><strong>Time:</strong> {booking.startTime} - {booking.endTime}</p>
+        <p><strong>Purpose:</strong> {booking.purpose}</p>
+        {booking.purpose === 'Training' && <p><strong>Student:</strong> {booking.student}</p>}
+        {booking.purpose === 'Training' && <p><strong>Instructor:</strong> {booking.instructor}</p>}
+        {booking.purpose === 'Hire and Fly' && <p><strong>Pilot:</strong> {booking.pilotName}</p>}
+        <p><strong>Aircraft:</strong> {booking.aircraft}</p>
+        <p><strong>Status:</strong> <Badge variant={booking.status === 'Completed' ? 'secondary' : 'default'}>{booking.status}</Badge></p>
+    </div>
+);
+
 const timeSlots = Array.from({ length: 24 * 4 }, (_, i) => {
     const hour = (6 + Math.floor(i / 4)) % 24;
     const minute = (i % 4) * 15;
@@ -209,26 +222,23 @@ const GanttChart = ({
         if (booking.purpose === 'Maintenance') {
             return { className: 'bg-destructive text-white', isClickable: false };
         }
-        
+    
         if (aircraft) {
             const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
             if (ac) {
-                // If the aircraft needs a post-flight, only its active booking is clickable.
                 if (ac.checklistStatus === 'needs-post-flight') {
                     const isClickable = ac.activeBookingId === booking.id;
-                    return { 
+                    return {
                         className: cn('bg-blue-500 text-white', !isClickable && 'opacity-50'),
                         isClickable
                     };
                 }
-                // If the aircraft is ready, any upcoming flight is clickable.
                 if (ac.checklistStatus === 'ready') {
                     return { className: 'bg-green-500 text-white', isClickable: true };
                 }
             }
         }
         
-        // Default for facility bookings or if aircraft state is undetermined
         return { className: 'bg-green-500 text-white', isClickable: true };
     };
 
@@ -263,12 +273,21 @@ const GanttChart = ({
                                         }
                                         const variant = getBookingVariant(booking);
                                         return (
-                                            <td key={time} colSpan={colSpan} className="p-0 h-[50px]" onClick={() => onBookingClick(booking, variant.isClickable)}>
-                                                <div className={cn('h-full flex items-center p-2 text-white text-xs whitespace-nowrap overflow-hidden', variant.className, variant.isClickable ? 'cursor-pointer' : 'cursor-not-allowed')} style={variant.style}>
-                                                    <div className="flex items-center gap-2">
-                                                        <span>{getBookingLabel(booking)}</span>
-                                                    </div>
-                                                </div>
+                                            <td key={time} colSpan={colSpan} className="p-0 h-[50px]">
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div 
+                                                            onClick={() => onBookingClick(booking, variant.isClickable)}
+                                                            className={cn('h-full flex items-center p-2 text-white text-xs whitespace-nowrap overflow-hidden', variant.className, variant.isClickable ? 'cursor-pointer' : 'cursor-not-allowed')} style={variant.style}>
+                                                            <div className="flex items-center gap-2">
+                                                                <span>{getBookingLabel(booking)}</span>
+                                                            </div>
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <BookingTooltipContent booking={booking} />
+                                                    </TooltipContent>
+                                                </Tooltip>
                                             </td>
                                         )
                                     }
@@ -359,28 +378,29 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         aircraftUnsub();
     };
 }, [company, toast]);
+
+    const dailyAircraftBookings = useMemo(() => {
+        const dayStart = startOfDay(selectedDate);
+        return bookings.filter(b => {
+            if (b.status === 'Cancelled' || !b.date) return false;
+            if (b.resourceType && b.resourceType === 'facility') return false;
+            const bookingStart = parseISO(b.date);
+            const bookingEnd = b.endDate ? parseISO(b.endDate) : bookingStart;
+            return isWithinInterval(dayStart, { start: startOfDay(bookingStart), end: endOfDay(bookingEnd) });
+        });
+    }, [bookings, selectedDate]);
+
+    const dailyFacilityBookings = useMemo(() => {
+        const dayStart = startOfDay(selectedDate);
+        return bookings.filter(b => {
+            if (b.status === 'Cancelled' || !b.date) return false;
+            if (b.resourceType !== 'facility') return false;
+            const bookingStart = parseISO(b.date);
+            const bookingEnd = b.endDate ? parseISO(b.endDate) : bookingStart;
+            return isWithinInterval(dayStart, { start: startOfDay(bookingStart), end: endOfDay(bookingEnd) });
+        });
+    }, [bookings, selectedDate]);
   
-  const dailyAircraftBookings = useMemo(() => {
-    const dayStart = startOfDay(selectedDate);
-    return bookings.filter(b => {
-        if (b.status === 'Cancelled' || !b.date) return false;
-        if (b.resourceType && b.resourceType === 'facility') return false; 
-        const bookingStart = parseISO(b.date);
-        const bookingEnd = b.endDate ? parseISO(b.endDate) : bookingStart;
-        return isWithinInterval(dayStart, { start: startOfDay(bookingStart), end: endOfDay(bookingEnd) });
-    });
-  }, [bookings, selectedDate]);
-  
-  const dailyFacilityBookings = useMemo(() => {
-    const dayStart = startOfDay(selectedDate);
-    return bookings.filter(b => {
-        if (b.status === 'Cancelled' || !b.date) return false;
-        if (b.resourceType !== 'facility') return false;
-        const bookingStart = parseISO(b.date);
-        const bookingEnd = b.endDate ? parseISO(b.endDate) : bookingStart;
-        return isWithinInterval(dayStart, { start: startOfDay(bookingStart), end: endOfDay(bookingEnd) });
-    });
-  }, [bookings, selectedDate]);
 
   const handleBookingSubmit = async (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking) => {
     if (!company || !user) {
@@ -638,28 +658,32 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-destructive"></div>In Maintenance</div>
                             </div>
                             <ScrollArea>
-                                <GanttChart 
-                                    resources={aircraft} 
-                                    bookings={dailyAircraftBookings}
-                                    aircraft={aircraft}
-                                    onSlotClick={handleNewBookingClick}
-                                    onBookingClick={handleBookingClick}
-                                    resourceKey="tailNumber"
-                                    resourceNameKey="tailNumber"
-                                />
+                                <TooltipProvider>
+                                    <GanttChart 
+                                        resources={aircraft} 
+                                        bookings={dailyAircraftBookings}
+                                        aircraft={aircraft}
+                                        onSlotClick={handleNewBookingClick}
+                                        onBookingClick={handleBookingClick}
+                                        resourceKey="tailNumber"
+                                        resourceNameKey="tailNumber"
+                                    />
+                                </TooltipProvider>
                                 <ScrollBar orientation="horizontal" />
                             </ScrollArea>
                         </TabsContent>
                         <TabsContent value="facilities">
                             <ScrollArea>
-                                <GanttChart 
-                                    resources={company?.facilities || []}
-                                    bookings={dailyFacilityBookings}
-                                    onSlotClick={handleNewBookingClick}
-                                    onBookingClick={handleBookingClick}
-                                    resourceKey="id"
-                                    resourceNameKey="name"
-                                />
+                                <TooltipProvider>
+                                    <GanttChart 
+                                        resources={company?.facilities || []}
+                                        bookings={dailyFacilityBookings}
+                                        onSlotClick={handleNewBookingClick}
+                                        onBookingClick={handleBookingClick}
+                                        resourceKey="id"
+                                        resourceNameKey="name"
+                                    />
+                                </TooltipProvider>
                                 <ScrollBar orientation="horizontal" />
                             </ScrollArea>
                         </TabsContent>
