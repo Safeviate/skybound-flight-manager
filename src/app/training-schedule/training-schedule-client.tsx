@@ -28,6 +28,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 
 interface TrainingSchedulePageContentProps {
   initialAircraft: Aircraft[];
@@ -174,7 +175,7 @@ const GanttChart = ({
     bookings: Booking[], 
     aircraft?: Aircraft[],
     onSlotClick: (resource: any, time: string) => void,
-    onBookingClick: (booking: Booking, isClickable: boolean) => void,
+    onBookingClick: (booking: Booking) => void,
     resourceKey: string,
     resourceNameKey: string
 }) => {
@@ -226,7 +227,7 @@ const GanttChart = ({
         if (aircraft) {
             const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
             if (ac) {
-                if (ac.checklistStatus === 'needs-post-flight') {
+                 if (ac.checklistStatus === 'needs-post-flight') {
                     const isClickable = ac.activeBookingId === booking.id;
                     return {
                         className: cn('bg-blue-500 text-white', !isClickable && 'opacity-50'),
@@ -234,7 +235,11 @@ const GanttChart = ({
                     };
                 }
                 if (ac.checklistStatus === 'ready') {
-                    return { className: 'bg-green-500 text-white', isClickable: true };
+                    // This booking is clickable only if it's the NEXT booking for this aircraft
+                    const aircraftBookings = bookings.filter(b => b.aircraft === ac.tailNumber && b.status !== 'Cancelled').sort((a,b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+                    const nextBooking = aircraftBookings.find(b => timeToMinutes(b.startTime) >= timeToMinutes(format(new Date(), 'HH:mm')));
+                    
+                    return { className: 'bg-green-500 text-white', isClickable: !nextBooking || nextBooking.id === booking.id };
                 }
             }
         }
@@ -277,7 +282,7 @@ const GanttChart = ({
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
                                                         <div 
-                                                            onClick={() => onBookingClick(booking, variant.isClickable)}
+                                                            onClick={() => onBookingClick(booking)}
                                                             className={cn('h-full flex items-center p-2 text-white text-xs whitespace-nowrap overflow-hidden', variant.className, variant.isClickable ? 'cursor-pointer' : 'cursor-not-allowed')} style={variant.style}>
                                                             <div className="flex items-center gap-2">
                                                                 <span>{getBookingLabel(booking)}</span>
@@ -585,8 +590,9 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     setActiveFlight(null);
   }
 
-  const handleBookingClick = (booking: Booking, isClickable: boolean) => {
-    if (!isClickable) {
+  const handleBookingClick = (booking: Booking) => {
+    const variant = getBookingVariant(booking);
+    if (!variant.isClickable) {
         toast({
             variant: 'default',
             title: 'Booking Not Active',
