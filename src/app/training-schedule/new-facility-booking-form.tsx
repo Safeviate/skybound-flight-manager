@@ -23,6 +23,7 @@ const facilityBookingSchema = z.object({
   studentAttendees: z.array(z.string()).optional(),
   personnelAttendees: z.array(z.string()).optional(),
   externalAttendees: z.string().optional(),
+  bookingNumber: z.string().optional(),
 });
 
 type FacilityBookingFormValues = z.infer<typeof facilityBookingSchema>;
@@ -33,9 +34,10 @@ interface NewFacilityBookingFormProps {
   onSubmit: (data: Partial<Booking>) => void;
   startTime?: string;
   selectedDate?: Date;
+  existingBooking?: Booking | null;
 }
 
-export function NewFacilityBookingForm({ facility, users, onSubmit, startTime, selectedDate }: NewFacilityBookingFormProps) {
+export function NewFacilityBookingForm({ facility, users, onSubmit, startTime, selectedDate, existingBooking }: NewFacilityBookingFormProps) {
   const form = useForm<FacilityBookingFormValues>({
     resolver: zodResolver(facilityBookingSchema),
     defaultValues: {
@@ -52,16 +54,17 @@ export function NewFacilityBookingForm({ facility, users, onSubmit, startTime, s
 
   useEffect(() => {
     form.reset({
-      startTime: startTime || '',
-      endTime: '',
-      title: '',
-      responsiblePerson: '',
-      notes: '',
-      studentAttendees: [],
-      personnelAttendees: [],
-      externalAttendees: '',
+      startTime: existingBooking?.startTime || startTime || '',
+      endTime: existingBooking?.endTime || '',
+      title: existingBooking?.title || '',
+      responsiblePerson: existingBooking?.responsiblePerson || '',
+      notes: existingBooking?.notes || '',
+      studentAttendees: existingBooking?.studentAttendees || [],
+      personnelAttendees: existingBooking?.personnelAttendees || [],
+      externalAttendees: existingBooking?.externalAttendees?.join(', ') || '',
+      bookingNumber: existingBooking?.bookingNumber || undefined,
     });
-  }, [facility, startTime, selectedDate, form]);
+  }, [facility, startTime, selectedDate, form, existingBooking]);
 
   const personnel = useMemo(() => users.filter(u => u.role !== 'Student'), [users]);
   const students = useMemo(() => users.filter(u => u.role === 'Student'), [users]);
@@ -80,7 +83,12 @@ export function NewFacilityBookingForm({ facility, users, onSubmit, startTime, s
       ...data,
       externalAttendees: data.externalAttendees?.split(',').map(s => s.trim()).filter(Boolean),
     };
-    onSubmit(bookingData);
+    
+    if (existingBooking) {
+        onSubmit({ ...existingBooking, ...bookingData });
+    } else {
+        onSubmit(bookingData);
+    }
   }
 
   return (
@@ -205,7 +213,7 @@ export function NewFacilityBookingForm({ facility, users, onSubmit, startTime, s
           )}
         />
         <div className="flex justify-end pt-4">
-          <Button type="submit">Create Booking</Button>
+          <Button type="submit">{existingBooking ? 'Save Changes' : 'Create Booking'}</Button>
         </div>
       </form>
     </Form>
