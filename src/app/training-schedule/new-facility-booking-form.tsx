@@ -9,9 +9,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { User, Booking, Facility } from '@/lib/types';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
+import { MultiSelect } from '@/components/ui/multi-select';
 
 const facilityBookingSchema = z.object({
   title: z.string().min(3, 'A title for the event is required.'),
@@ -19,6 +20,9 @@ const facilityBookingSchema = z.object({
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
   responsiblePerson: z.string().min(1, 'Please select a responsible person.'),
   notes: z.string().optional(),
+  studentAttendees: z.array(z.string()).optional(),
+  personnelAttendees: z.array(z.string()).optional(),
+  externalAttendees: z.string().optional(),
 });
 
 type FacilityBookingFormValues = z.infer<typeof facilityBookingSchema>;
@@ -40,6 +44,9 @@ export function NewFacilityBookingForm({ facility, users, onSubmit, startTime, s
       notes: '',
       title: '',
       responsiblePerson: '',
+      studentAttendees: [],
+      personnelAttendees: [],
+      externalAttendees: '',
     }
   });
 
@@ -50,10 +57,17 @@ export function NewFacilityBookingForm({ facility, users, onSubmit, startTime, s
       title: '',
       responsiblePerson: '',
       notes: '',
+      studentAttendees: [],
+      personnelAttendees: [],
+      externalAttendees: '',
     });
   }, [facility, startTime, selectedDate, form]);
 
-  const personnel = users.filter(u => u.role !== 'Student');
+  const personnel = useMemo(() => users.filter(u => u.role !== 'Student'), [users]);
+  const students = useMemo(() => users.filter(u => u.role === 'Student'), [users]);
+
+  const personnelOptions = useMemo(() => personnel.map(p => ({ value: p.name, label: p.name })), [personnel]);
+  const studentOptions = useMemo(() => students.map(s => ({ value: s.name, label: s.name })), [students]);
 
   function handleFormSubmit(data: FacilityBookingFormValues) {
     const bookingData: Partial<Booking> = {
@@ -64,6 +78,7 @@ export function NewFacilityBookingForm({ facility, users, onSubmit, startTime, s
       date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
       status: 'Approved',
       ...data,
+      externalAttendees: data.externalAttendees?.split(',').map(s => s.trim()).filter(Boolean),
     };
     onSubmit(bookingData);
   }
@@ -126,6 +141,56 @@ export function NewFacilityBookingForm({ facility, users, onSubmit, startTime, s
             </FormItem>
           )}
         />
+
+        <div className="space-y-4 pt-4 border-t">
+          <h4 className="font-medium">Attendees</h4>
+           <FormField
+            control={form.control}
+            name="personnelAttendees"
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Personnel</FormLabel>
+                    <MultiSelect
+                        options={personnelOptions}
+                        selected={field.value || []}
+                        onChange={field.onChange}
+                        placeholder="Select personnel..."
+                    />
+                    <FormMessage />
+                </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="studentAttendees"
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Students</FormLabel>
+                    <MultiSelect
+                        options={studentOptions}
+                        selected={field.value || []}
+                        onChange={field.onChange}
+                        placeholder="Select students..."
+                    />
+                    <FormMessage />
+                </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="externalAttendees"
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>External Attendees</FormLabel>
+                    <FormControl>
+                        <Textarea placeholder="Enter names, separated by commas" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
           name="notes"

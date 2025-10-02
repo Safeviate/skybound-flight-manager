@@ -303,6 +303,9 @@ export type Booking = {
   postFlightData?: Partial<PostFlightChecklistFormValues>;
   preFlightChecklist?: Partial<PreFlightChecklistFormValues>;
   postFlightChecklist?: Partial<PostFlightChecklistFormValues>;
+  studentAttendees?: string[];
+  personnelAttendees?: string[];
+  externalAttendees?: string[];
 };
 
 export type SafetyReportType = 'Flight Operations Report' | 'Ground Operations Report' | 'Occupational Report' | 'General Report' | 'Aircraft Defect Report';
