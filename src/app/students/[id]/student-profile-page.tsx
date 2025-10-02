@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2, Search, ChevronLeft, ChevronRight, Wind, Users as UsersIcon, Save, Signature } from 'lucide-react';
+import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2, Search, ChevronLeft, ChevronRight, Wind, Users as UsersIcon, Save, Signature, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser, Booking, Alert } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -35,6 +35,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const BroughtForwardHoursForm = ({ onSave, initialHours }: { onSave: (hours: any) => void, initialHours?: TrainingLogEntry | null }) => {
     const [hours, setHours] = useState({
@@ -1061,26 +1062,24 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             />
                                         </div>
                                         <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-                                            <Table style={{ tableLayout: 'fixed' }}>
+                                            <Table>
                                                 <TableHeader>
                                                     <TableRow>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DATE</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>MAKE & MODEL</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>TYPE</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>REG</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DEPART</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>ARRIVE</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '150px' }}>NAME(S) PIC/INSTR</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '400px' }}>REMARKS</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>SE</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>ME</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>FSTD</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>SOLO</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DUAL</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>NIGHT</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DAY</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>TIME</TableHead>
-                                                        <TableHead style={{ width: '100px' }} className="text-center align-middle">ACTIONS</TableHead>
+                                                        <TableHead>DATE</TableHead>
+                                                        <TableHead>MAKE & MODEL</TableHead>
+                                                        <TableHead>REG</TableHead>
+                                                        <TableHead>DEPART</TableHead>
+                                                        <TableHead>ARRIVE</TableHead>
+                                                        <TableHead>PIC/INSTR</TableHead>
+                                                        <TableHead>SE</TableHead>
+                                                        <TableHead>ME</TableHead>
+                                                        <TableHead>FSTD</TableHead>
+                                                        <TableHead>SOLO</TableHead>
+                                                        <TableHead>DUAL</TableHead>
+                                                        <TableHead>NIGHT</TableHead>
+                                                        <TableHead>DAY</TableHead>
+                                                        <TableHead>TIME</TableHead>
+                                                        <TableHead className="text-center align-middle">ACTIONS</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
@@ -1089,54 +1088,71 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                             const booking = getBookingForLog(log.id);
                                                             const bookingNumRemark = booking?.bookingNumber ? `Booking: ${booking.bookingNumber}\n` : '';
                                                             return (
-                                                            <TableRow key={log.id}>
-                                                                <TableCell className="text-center align-middle border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{log.make || 'N/A'}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{log.aircraftType || 'N/A'}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{log.aircraft.replace(log.make || '', '').trim()}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{log.departure || 'N/A'}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{log.arrival || 'N/A'}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{log.instructorName}</TableCell>
-                                                                <TableCell className="border-r whitespace-pre-wrap">
-                                                                    {bookingNumRemark}
-                                                                    {log.remarks || ''}
-                                                                    {log.studentSignatureRequired && (
-                                                                        <Badge variant="warning" className="mt-1">Signature Required</Badge>
-                                                                    )}
-                                                                </TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.fstdTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.singleTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.dualTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.nightTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.dayTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
-                                                                <TableCell className="text-center align-middle">
-                                                                    <div className="flex justify-center gap-1">
-                                                                        <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
-                                                                            <Edit className="h-4 w-4" />
-                                                                        </Button>
-                                                                        <AlertDialog>
-                                                                            <AlertDialogTrigger asChild>
-                                                                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                                                                    <Trash2 className="h-4 w-4" />
+                                                            <Collapsible asChild key={log.id}>
+                                                                <>
+                                                                    <TableRow>
+                                                                        <TableCell>{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
+                                                                        <TableCell>{log.make || 'N/A'}</TableCell>
+                                                                        <TableCell>{log.aircraft.replace(log.make || '', '').trim()}</TableCell>
+                                                                        <TableCell>{log.departure || 'N/A'}</TableCell>
+                                                                        <TableCell>{log.arrival || 'N/A'}</TableCell>
+                                                                        <TableCell>{log.instructorName}</TableCell>
+                                                                        <TableCell>{formatDecimalTime(log.singleEngineTime)}</TableCell>
+                                                                        <TableCell>{formatDecimalTime(log.multiEngineTime)}</TableCell>
+                                                                        <TableCell>{formatDecimalTime(log.fstdTime)}</TableCell>
+                                                                        <TableCell>{formatDecimalTime(log.singleTime)}</TableCell>
+                                                                        <TableCell>{formatDecimalTime(log.dualTime)}</TableCell>
+                                                                        <TableCell>{formatDecimalTime(log.nightTime)}</TableCell>
+                                                                        <TableCell>{formatDecimalTime(log.dayTime)}</TableCell>
+                                                                        <TableCell>{formatDecimalTime(log.flightDuration)}</TableCell>
+                                                                        <TableCell>
+                                                                            <div className="flex justify-center gap-1">
+                                                                                <CollapsibleTrigger asChild>
+                                                                                    <Button variant="ghost" size="icon" disabled={!log.trainingExercises || log.trainingExercises.length === 0}>
+                                                                                        <ChevronDown className="h-4 w-4" />
+                                                                                    </Button>
+                                                                                </CollapsibleTrigger>
+                                                                                <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
+                                                                                    <Edit className="h-4 w-4" />
                                                                                 </Button>
-                                                                            </AlertDialogTrigger>
-                                                                            <AlertDialogContent>
-                                                                                <AlertDialogHeader>
-                                                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                                                    <AlertDialogDescription>This action cannot be undone. This will permanently delete this logbook entry.</AlertDialogDescription>
-                                                                                </AlertDialogHeader>
-                                                                                <AlertDialogFooter>
-                                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                                    <AlertDialogAction onClick={() => handleDeleteLogEntry(log.id)}>Yes, Delete Entry</AlertDialogAction>
-                                                                                </AlertDialogFooter>
-                                                                            </AlertDialogContent>
-                                                                        </AlertDialog>
-                                                                    </div>
-                                                                </TableCell>
-                                                            </TableRow>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                    </TableRow>
+                                                                    <CollapsibleContent asChild>
+                                                                        <tr className="bg-muted/50">
+                                                                            <TableCell colSpan={15} className="p-0">
+                                                                                <div className="p-4 space-y-4">
+                                                                                    <div>
+                                                                                        <h4 className="font-semibold text-sm">Remarks</h4>
+                                                                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{bookingNumRemark}{log.remarks || 'No remarks.'}</p>
+                                                                                    </div>
+                                                                                    <Separator />
+                                                                                    <div>
+                                                                                        <h4 className="font-semibold text-sm mb-2">Debrief & Exercises</h4>
+                                                                                        {log.trainingExercises.map((ex, i) => (
+                                                                                            <div key={i} className="text-sm mb-2 border-b pb-2">
+                                                                                                <div className="flex justify-between items-center">
+                                                                                                    <p className="font-medium">{ex.exercise}</p>
+                                                                                                    <Badge variant="outline">Rating: {ex.rating}/4</Badge>
+                                                                                                </div>
+                                                                                                {ex.comment && <p className="text-xs text-muted-foreground mt-1 pl-2 border-l-2">{ex.comment}</p>}
+                                                                                            </div>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                    <Separator />
+                                                                                    <div>
+                                                                                         <h4 className="font-semibold text-sm mb-2">Signatures</h4>
+                                                                                         <div className="flex gap-4">
+                                                                                            {log.instructorSignature && <Image src={log.instructorSignature} alt="Instructor Signature" width={150} height={75} className="rounded-md border bg-white" />}
+                                                                                            {log.studentSignature && <Image src={log.studentSignature} alt="Student Signature" width={150} height={75} className="rounded-md border bg-white" />}
+                                                                                         </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </TableCell>
+                                                                        </tr>
+                                                                    </CollapsibleContent>
+                                                                </>
+                                                            </Collapsible>
                                                         )})
                                                     ) : (
                                                         <TableRow>
@@ -1187,3 +1203,4 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     
 
     
+
