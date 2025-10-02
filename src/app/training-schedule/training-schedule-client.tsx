@@ -308,6 +308,10 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
       return { className: 'bg-purple-600 text-white', isClickable: true };
     }
     
+    if (booking.resourceType === 'facility') {
+        return { className: 'bg-sky-500 text-white', isClickable: true };
+    }
+
     if (aircraft) {
       const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
       if (ac) {
@@ -443,7 +447,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             
             const collectionName = bookingData.resourceType === 'facility' ? 'facility-bookings' : 'aircraft-bookings';
 
-            if (bookingData.purpose !== 'Maintenance' && bookingData.resourceType === 'aircraft') {
+            if (bookingData.resourceType === 'aircraft') {
                  const aircraftBookings = bookings.filter(b => b.bookingNumber && b.resourceType === 'aircraft');
                  const bookingNumbers = aircraftBookings.map(b => parseInt(b.bookingNumber!.split('-')[1], 10));
                  const nextId = bookingNumbers.length > 0 ? Math.max(...bookingNumbers) + 1 : 1;
@@ -451,7 +455,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             } else if (bookingData.resourceType === 'facility') {
                  const facilityBookings = bookings.filter(b => b.bookingNumber && b.resourceType === 'facility');
                  const bookingNumbers = facilityBookings.map(b => parseInt(b.bookingNumber!.split('-')[1], 10));
-                 const nextId = bookingNumbers.length > 0 ? Math.max(...bookingNumbers) + 1 : 1;
+                 const nextId = facilityBookings.length > 0 ? Math.max(...bookingNumbers) + 1 : 1;
                  bookingData.bookingNumber = `FAC-${nextId.toString().padStart(4, '0')}`;
             }
 
@@ -815,4 +819,3 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     </>
   );
 }
-

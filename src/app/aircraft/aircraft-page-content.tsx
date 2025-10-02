@@ -486,7 +486,7 @@ export function AircraftPageContent() {
                 setDataLoading(false);
             });
 
-            const unsubBookings = onSnapshot(query(collection(db, `companies/${company.id}/bookings`)), (snapshot) => {
+            const unsubBookings = onSnapshot(query(collection(db, `companies/${company.id}/aircraft-bookings`)), (snapshot) => {
                 const bookingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
                 setBookings(bookingsData);
             }, (error) => {
@@ -648,6 +648,12 @@ export function AircraftPageContent() {
     
         const bookingForChecklist = bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId);
     
+        // Ensure we only proceed if there is an aircraft booking
+        if (!bookingForChecklist || bookingForChecklist.resourceType !== 'aircraft') {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not find a valid aircraft booking for this checklist.' });
+            return;
+        }
+
         try {
             const historyDocRef = doc(collection(db, `companies/${company.id}/aircraft/${selectedAircraftForChecklist.id}/completed-checklists`));
             const historyData = {
@@ -663,39 +669,36 @@ export function AircraftPageContent() {
             batch.set(historyDocRef, historyData);
     
             if (isPreFlight) {
-                if (bookingForChecklist) {
-                    const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
-                    batch.update(bookingRef, { startHobbs: data.hobbs });
-                }
+                const bookingRef = doc(db, `companies/${company.id}/aircraft-bookings`, bookingForChecklist.id);
+                batch.update(bookingRef, { startHobbs: data.hobbs });
                 batch.update(aircraftRef, { checklistStatus: 'needs-post-flight' });
                 toast({ title: 'Pre-Flight Checklist Submitted' });
             } else {
-                if (bookingForChecklist) {
-                    const flightDuration = bookingForChecklist.startHobbs ? parseFloat((data.hobbs - bookingForChecklist.startHobbs).toFixed(1)) : 0;
-                    const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
-                    batch.update(bookingRef, { status: 'Completed', endHobbs: data.hobbs, flightDuration });
-    
-                    if (bookingForChecklist.purpose === 'Training' && bookingForChecklist.studentId) {
-                        const studentRef = doc(db, `companies/${company.id}/students`, bookingForChecklist.studentId);
-                        const studentSnap = await getDoc(studentRef);
-    
-                        if (studentSnap.exists()) {
-                            const studentData = studentSnap.data() as User;
-                            const newTotalHours = (studentData.flightHours || 0) + flightDuration;
-                            
-                            const updatedLogs = (studentData.trainingLogs || []).map(log => 
-                                log.id === bookingForChecklist.pendingLogEntryId
-                                ? { ...log, startHobbs: bookingForChecklist.startHobbs || 0, endHobbs: data.hobbs, flightDuration }
-                                : log
-                            );
-                            
-                            batch.update(studentRef, { 
-                                trainingLogs: updatedLogs,
-                                flightHours: newTotalHours
-                            });
-                        }
+                const flightDuration = bookingForChecklist.startHobbs ? parseFloat((data.hobbs - bookingForChecklist.startHobbs).toFixed(1)) : 0;
+                const bookingRef = doc(db, `companies/${company.id}/aircraft-bookings`, bookingForChecklist.id);
+                batch.update(bookingRef, { status: 'Completed', endHobbs: data.hobbs, flightDuration });
+
+                if (bookingForChecklist.purpose === 'Training' && bookingForChecklist.studentId) {
+                    const studentRef = doc(db, `companies/${company.id}/students`, bookingForChecklist.studentId);
+                    const studentSnap = await getDoc(studentRef);
+
+                    if (studentSnap.exists()) {
+                        const studentData = studentSnap.data() as User;
+                        const newTotalHours = (studentData.flightHours || 0) + flightDuration;
+                        
+                        const updatedLogs = (studentData.trainingLogs || []).map(log => 
+                            log.id === bookingForChecklist.pendingLogEntryId
+                            ? { ...log, startHobbs: bookingForChecklist.startHobbs || 0, endHobbs: data.hobbs, flightDuration }
+                            : log
+                        );
+                        
+                        batch.update(studentRef, { 
+                            trainingLogs: updatedLogs,
+                            flightHours: newTotalHours
+                        });
                     }
                 }
+                
                 batch.update(aircraftRef, {
                     checklistStatus: 'ready',
                     activeBookingId: null,
