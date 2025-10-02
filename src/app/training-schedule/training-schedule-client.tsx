@@ -138,6 +138,122 @@ const FlightHub = ({
     );
 };
 
+const timeSlots = Array.from({ length: 24 * 4 }, (_, i) => {
+    const hour = (6 + Math.floor(i / 4)) % 24;
+    const minute = (i % 4) * 15;
+    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+});
+
+const hourlyTimeSlots = Array.from({ length: 24 }, (_, i) => `${((i + 6) % 24).toString().padStart(2, '0')}:00`);
+
+const GanttChart = ({ 
+    resources, 
+    bookings, 
+    onSlotClick,
+    onBookingClick,
+    resourceKey,
+    resourceNameKey
+}: { 
+    resources: any[], 
+    bookings: Booking[], 
+    onSlotClick: (resource: any, time: string) => void,
+    onBookingClick: (booking: Booking, isClickable: boolean) => void,
+    resourceKey: string,
+    resourceNameKey: string
+}) => {
+    const timeToMinutes = (time: string) => {
+        const [hours, minutes] = time.split(':').map(Number);
+        return hours * 60 + minutes;
+    }
+
+    const getBookingForSlot = (resourceIdentifier: string, time: string) => {
+        const slotTimeInMinutes = timeToMinutes(time);
+        return bookings.find(b => {
+            if (b.aircraft !== resourceIdentifier) return false;
+            if (b.status === 'Cancelled') return false; 
+            const startTimeInMinutes = timeToMinutes(b.startTime);
+            const endTimeInMinutes = timeToMinutes(b.endTime);
+            return slotTimeInMinutes >= startTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
+        });
+    };
+
+    const calculateColSpan = (booking: Booking, time: string) => {
+        const startTimeInMinutes = timeToMinutes(booking.startTime);
+        const slotTimeInMinutes = timeToMinutes(time);
+        if (startTimeInMinutes !== slotTimeInMinutes) return 0;
+        const endTimeInMinutes = timeToMinutes(booking.endTime);
+        const durationInMinutes = endTimeInMinutes - startTimeInMinutes;
+        return Math.ceil(durationInMinutes / 15);
+    };
+
+    const getBookingLabel = (booking: Booking) => {
+        const bookingNumPart = booking.bookingNumber ? `${booking.bookingNumber} - ` : '';
+        if (booking.purpose === 'Hire and Fly') {
+            return `${bookingNumPart}${booking.purpose}: ${booking.pilotName}`;
+        }
+        return `${bookingNumPart}${booking.purpose}: ${booking.student} w/ ${booking.instructor}`;
+    };
+
+    const getBookingVariant = (booking: Booking): { className?: string, style?: React.CSSProperties, isClickable: boolean } => {
+        if (booking.status === 'Completed') {
+            return { className: 'bg-gray-400 text-white', isClickable: false };
+        }
+        return { className: 'bg-green-500 text-white', isClickable: true };
+    };
+
+    return (
+        <div className="flex-1 overflow-auto mt-4 border-green-500 border-4">
+            <table className="w-full border-collapse border-4 border-purple-500" style={{ minWidth: '4758px', tableLayout: 'fixed' }}>
+                <thead>
+                    <tr>
+                        <th className="sticky top-0 z-20 bg-card text-center p-2 w-[150px] border-r">Resource</th>
+                        {hourlyTimeSlots.map(time => <th key={time} colSpan={4} className="text-center p-2 sticky top-0 z-10 bg-card border-l">{time}</th>)}
+                    </tr>
+                </thead>
+                <tbody>
+                    {resources.map(resource => {
+                        const renderedSlots = new Set();
+                        return (
+                        <tr key={resource[resourceKey]}>
+                            <td className="sticky left-0 z-10 bg-card font-medium text-center p-2 w-[150px] border-r">{resource[resourceNameKey]}</td>
+                            {timeSlots.map(time => {
+                                if (renderedSlots.has(time)) return null;
+
+                                const booking = getBookingForSlot(resource.tailNumber, time);
+                                if (booking) {
+                                    const colSpan = calculateColSpan(booking, time);
+                                    if (colSpan > 0) {
+                                        const startTimeInMinutes = timeToMinutes(booking.startTime);
+                                        for (let i = 1; i < colSpan; i++) {
+                                            const nextSlotTimeInMinutes = startTimeInMinutes + i * 15;
+                                            const nextHour = Math.floor(nextSlotTimeInMinutes / 60);
+                                            const nextMinute = nextSlotTimeInMinutes % 60;
+                                            renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:${nextMinute.toString().padStart(2, '0')}`);
+                                        }
+                                        const variant = getBookingVariant(booking);
+                                        return (
+                                            <td key={time} colSpan={colSpan} className="p-0 h-[50px]" onClick={() => onBookingClick(booking, variant.isClickable)}>
+                                                <div className={cn('h-full flex items-center p-2 text-white text-xs whitespace-nowrap overflow-hidden', variant.className, variant.isClickable ? 'cursor-pointer' : 'cursor-not-allowed')} style={variant.style}>
+                                                    <div className="flex items-center gap-2">
+                                                        <span>{getBookingLabel(booking)}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        )
+                                    }
+                                }
+                                return (
+                                    <td key={time} className="h-[50px] p-0 border hover:bg-primary/10 cursor-pointer" onClick={() => onSlotClick(resource, time)}></td>
+                                );
+                            })}
+                        </tr>
+                        )
+                    })}
+                </tbody>
+            </table>
+        </div>
+    );
+};
 
 export function TrainingSchedulePageContent({ initialAircraft, initialBookings, initialUsers, initialHireAndFly }: TrainingSchedulePageContentProps) {
   const { user, company } = useUser();
@@ -208,90 +324,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         return isWithinInterval(dayStart, { start: startOfDay(bookingStart), end: endOfDay(bookingEnd) });
     });
 }, [bookings, selectedDate]);
-  
-  const timeToMinutes = (time: string) => {
-      const [hours, minutes] = time.split(':').map(Number);
-      return hours * 60 + minutes;
-  }
-
-  const activeBookingsByAircraft = useMemo(() => {
-    const activeMap = new Map<string, Booking>();
-    aircraft.forEach(ac => {
-        const aircraftBookings = filteredBookings
-            .filter(b => b.aircraft === ac.tailNumber && b.status !== 'Completed')
-            .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
-        if (aircraftBookings.length > 0) {
-            activeMap.set(ac.tailNumber, aircraftBookings[0]);
-        }
-    });
-    return activeMap;
-  }, [filteredBookings, aircraft]);
-
-  const timeSlots = Array.from({ length: 24 * 4 }, (_, i) => {
-      const hour = (6 + Math.floor(i / 4)) % 24;
-      const minute = (i % 4) * 15;
-      return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-  });
-  
-  const hourlyTimeSlots = Array.from({ length: 24 }, (_, i) => `${((i + 6) % 24).toString().padStart(2, '0')}:00`);
-
-  const getBookingForSlot = (aircraftTailNumber: string, time: string) => {
-    const slotTimeInMinutes = timeToMinutes(time);
-    return filteredBookings.find(b => {
-      if (b.aircraft !== aircraftTailNumber) return false;
-      if (b.status === 'Cancelled') return false; 
-      const startTimeInMinutes = timeToMinutes(b.startTime);
-      const endTimeInMinutes = timeToMinutes(b.endTime);
-      return slotTimeInMinutes >= startTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
-    });
-  };
-
-  const calculateColSpan = (booking: Booking, time: string) => {
-      const startTimeInMinutes = timeToMinutes(booking.startTime);
-      const slotTimeInMinutes = timeToMinutes(time);
-      if (startTimeInMinutes !== slotTimeInMinutes) return 0;
-
-      const endTimeInMinutes = timeToMinutes(booking.endTime);
-      const durationInMinutes = endTimeInMinutes - startTimeInMinutes;
-      return Math.ceil(durationInMinutes / 15);
-  };
-
-  const getBookingLabel = (booking: Booking) => {
-    const bookingNumPart = booking.bookingNumber ? `${booking.bookingNumber} - ` : '';
-    if (booking.purpose === 'Hire and Fly') {
-        return `${bookingNumPart}${booking.purpose}: ${booking.pilotName}`;
-    }
-    return `${bookingNumPart}${booking.purpose}: ${booking.student} w/ ${booking.instructor}`;
-  };
-  
-  const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined): { className?: string, style?: React.CSSProperties, isClickable: boolean } => {
-    if (aircraftForBooking?.status === 'In Maintenance') {
-        return { className: 'bg-destructive text-destructive-foreground', isClickable: false };
-    }
-
-    if (!aircraftForBooking) {
-        return { className: 'bg-gray-400 text-white', isClickable: false };
-    }
-    
-    if (booking.status === 'Completed') {
-        return { className: 'bg-gray-400 text-white', isClickable: false };
-    }
-
-    const activeBookingForThisAircraft = activeBookingsByAircraft.get(booking.aircraft);
-    if (activeBookingForThisAircraft && activeBookingForThisAircraft.id !== booking.id) {
-        return { className: 'bg-muted text-muted-foreground', isClickable: false };
-    }
-    
-    switch (aircraftForBooking.checklistStatus) {
-      case 'needs-post-flight':
-        return { className: 'bg-blue-500 text-white', isClickable: true };
-      case 'ready':
-      case 'needs-pre-flight':
-        return { className: 'bg-green-500 text-white', isClickable: true };
-      default:
-        return { className: 'bg-gray-400 text-white', isClickable: false };
-    }
-  };
 
   const handleBookingSubmit = async (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking) => {
     if (!company || !user) {
@@ -452,35 +484,12 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   
   const handleNewBookingClick = (aircraft: Aircraft, time: string) => {
     const [hour, minute] = time.split(':').map(Number);
-    
     const bookingDate = hour < 6 ? addDays(selectedDate, 1) : selectedDate;
-    
     const bookingDateTime = setMinutes(setHours(new Date(bookingDate), hour), minute);
     const now = new Date();
 
     if (isBefore(bookingDateTime, now)) {
-        toast({
-            variant: 'destructive',
-            title: 'Invalid Time',
-            description: 'Cannot create a booking in the past.',
-        });
-        return;
-    }
-
-    if (settings.enforcePostFlightCheck && aircraft.checklistStatus === 'needs-post-flight') {
-        toast({
-            variant: 'destructive',
-            title: 'Booking Prohibited',
-            description: 'A post-flight check is outstanding for this aircraft. It cannot be booked until the previous flight is signed off.',
-        });
-        return;
-    }
-    if (aircraft.status === 'In Maintenance') {
-        toast({
-            variant: 'destructive',
-            title: 'Booking Prohibited',
-            description: 'This aircraft is currently in maintenance and cannot be booked.',
-        });
+        toast({ variant: 'destructive', title: 'Invalid Time', description: 'Cannot create a booking in the past.' });
         return;
     }
     setNewBookingSlot({ aircraft, time, date: bookingDate });
@@ -507,6 +516,12 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         setActiveFlight({ booking, aircraft: aircraftForBooking });
     }
   };
+  
+  const facilities = [
+    { id: 'sim-1', name: 'Simulator A' },
+    { id: 'brief-1', name: 'Briefing Room 1' },
+    { id: 'class-1', name: 'Classroom Alpha' },
+  ];
 
   if (loading) {
     return (
@@ -519,178 +534,100 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
   return (
     <>
-      <style>{`
-        .gantt-table { border-collapse: collapse; }
-        .gantt-table th, .gantt-table td { border: 1px solid hsl(var(--border)); }
-        .gantt-header-cell {
-          position: sticky;
-          top: 0;
-          background-color: hsl(var(--card));
-          z-index: 20;
-          text-align: center;
-          padding: 0.5rem;
-        }
-        .gantt-cell { padding: 0; height: 50px; }
-        .aircraft-name-cell {
-            width: 150px;
-            position: sticky;
-            left: 0;
-            z-index: 10;
-            background-color: hsl(var(--card));
-            font-weight: 500;
-            text-align: center;
-        }
-        .booking-slot { padding: 0; }
-        .gantt-bar {
-            height: 100%;
-            display: flex;
-            align-items: center;
-            padding: 0 0.5rem;
-            color: white;
-            font-size: 0.75rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .clickable { cursor: pointer; }
-        .not-clickable { cursor: not-allowed; }
-        .empty-slot:hover { background-color: hsl(var(--primary) / 0.1); cursor: pointer; }
-        .color-legend { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.75rem; align-items: center; }
-        .legend-item { display: flex; align-items: center; gap: 0.5rem; }
-        .legend-color-box { width: 1rem; height: 1rem; border-radius: 2px; }
-      `}</style>
-      <div className="flex flex-col flex-1 p-4 md:p-8">
-        <Card className="flex flex-col flex-1">
-            <CardHeader>
-                <CardTitle>Training Schedule</CardTitle>
-                <CardDescription>View and manage all aircraft and instructor bookings.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1 min-h-0">
-                <Tabs defaultValue="bookings" className="flex flex-col flex-1">
-                    <TabsList>
-                        <TabsTrigger value="bookings">Bookings</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="bookings" className="mt-6 flex flex-col flex-1 min-h-0 border-4 border-orange-500">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-4 border-blue-500">
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-[280px] justify-start text-left font-normal",
-                                        !selectedDate && "text-muted-foreground"
-                                    )}
-                                    data-nosnippet
-                                    >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                    mode="single"
-                                    selected={selectedDate}
-                                    onSelect={(date) => setSelectedDate(date || new Date())}
-                                    initialFocus
-                                    />
-                                </PopoverContent>
-                            </Popover>
-                            <div className="color-legend">
-                                <div className="legend-item"><div className="legend-color-box bg-green-500"></div>Ready for Pre-Flight</div>
-                                <div className="legend-item"><div className="legend-color-box bg-blue-500"></div>Post-Flight Outstanding</div>
-                                <div className="legend-item"><div className="legend-color-box bg-gray-400"></div>Completed</div>
-                                <div className="legend-item"><div className="legend-color-box bg-destructive"></div>In Maintenance</div>
-                                <div className="legend-item"><div className="legend-color-box bg-muted"></div>Pending</div>
-                            </div>
-                        </div>
-                        <div className="flex-1 mt-6 overflow-auto rounded-lg border border-4 border-green-500" style={{ minWidth: '0' }}>
-                            <table className="w-full border-collapse gantt-table border-4 border-purple-500" style={{ minWidth: '4758px', tableLayout: 'fixed' }}>
-                                <thead>
-                                    <tr>
-                                        <th className="gantt-header-cell aircraft-name-cell">Aircraft</th>
-                                        {hourlyTimeSlots.map(time => <th key={time} colSpan={4} className="gantt-header-cell">{time}</th>)}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {aircraft.map(ac => {
-                                    const renderedSlots = new Set();
-                                    const isMaintenance = ac.status === 'In Maintenance' && ac.maintenanceStartDate && ac.maintenanceEndDate && isWithinInterval(selectedDate, { start: parseISO(ac.maintenanceStartDate), end: parseISO(ac.maintenanceEndDate) });
+      <main className="flex flex-col flex-1 p-4 md:p-8">
+        <Tabs defaultValue="bookings" className="flex flex-col flex-1">
+            <TabsList>
+                <TabsTrigger value="bookings">Bookings</TabsTrigger>
+            </TabsList>
+            <TabsContent value="bookings" className="mt-6 flex-1 flex flex-col gap-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-[280px] justify-start text-left font-normal",
+                                !selectedDate && "text-muted-foreground"
+                            )}
+                            data-nosnippet
+                            >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={(date) => setSelectedDate(date || new Date())}
+                            initialFocus
+                            />
+                        </PopoverContent>
+                    </Popover>
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-500"></div>Ready for Pre-Flight</div>
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-blue-500"></div>Post-Flight Outstanding</div>
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-gray-400"></div>Completed</div>
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-destructive"></div>In Maintenance</div>
+                    </div>
+                </div>
 
-                                    return (
-                                    <tr key={ac.id}>
-                                        <td className={cn("gantt-cell aircraft-name-cell", isMaintenance && "bg-destructive/20")}>{ac.tailNumber}</td>
-                                        {timeSlots.map(time => {
-                                            if (renderedSlots.has(time)) return null;
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Aircraft Schedule</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <GanttChart 
+                            resources={aircraft} 
+                            bookings={filteredBookings}
+                            onSlotClick={handleNewBookingClick}
+                            onBookingClick={handleBookingClick}
+                            resourceKey="id"
+                            resourceNameKey="tailNumber"
+                        />
+                    </CardContent>
+                </Card>
 
-                                            if (isMaintenance) {
-                                                renderedSlots.add(time);
-                                                return <td key={time} className="gantt-cell bg-destructive/10"></td>
-                                            }
-
-                                            const booking = getBookingForSlot(ac.tailNumber, time);
-                                            if (booking) {
-                                                const colSpan = calculateColSpan(booking, time);
-                                                if (colSpan > 0) {
-                                                const startTimeInMinutes = timeToMinutes(booking.startTime);
-                                                for (let i = 1; i < colSpan; i++) {
-                                                    const nextSlotTimeInMinutes = startTimeInMinutes + i * 15;
-                                                    const nextHour = Math.floor(nextSlotTimeInMinutes / 60);
-                                                    const nextMinute = nextSlotTimeInMinutes % 60;
-                                                    renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:${nextMinute.toString().padStart(2, '0')}`);
-                                                }
-                                                const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
-                                                const variant = getBookingVariant(booking, aircraftForBooking);
-                                                return (
-                                                    <td key={time} colSpan={colSpan} className="gantt-cell booking-slot" onClick={() => handleBookingClick(booking, variant.isClickable)}>
-                                                    <div className={cn('gantt-bar', variant.className, variant.isClickable ? 'clickable' : 'not-clickable')} style={variant.style}>
-                                                        <div className="flex items-center gap-2">
-                                                            {(aircraftForBooking?.status === 'In Maintenance') && <AlertTriangle className="h-4 w-4 text-white flex-shrink-0" title="Aircraft In Maintenance" />}
-                                                            <span>{getBookingLabel(booking)}</span>
-                                                        </div>
-                                                    </div>
-                                                    </td>
-                                                )
-                                                }
-                                            }
-                                            return (
-                                                <td key={time} className="gantt-cell empty-slot" onClick={() => handleNewBookingClick(ac, time)}></td>
-                                            );
-                                            })}
-                                        </tr>
-                                    )
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    </TabsContent>
-                </Tabs>
-            </CardContent>
-       </Card>
-      </div>
-       <Dialog open={!!newBookingSlot} onOpenChange={handleDialogClose}>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Facility Schedule</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <GanttChart 
+                            resources={facilities}
+                            bookings={[]} // No bookings for facilities yet
+                            onSlotClick={() => { /* TODO */ }}
+                            onBookingClick={() => { /* TODO */ }}
+                            resourceKey="id"
+                            resourceNameKey="name"
+                        />
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
+      </main>
+       <Dialog open={!!newBookingSlot || !!activeFlight} onOpenChange={handleDialogClose}>
         <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Create New Booking</DialogTitle>
-            <DialogDescription>
-                {`Creating a booking for ${newBookingSlot?.aircraft.tailNumber} on ${newBookingSlot ? format(newBookingSlot.date, 'PPP') : ''}`}
-            </DialogDescription>
-          </DialogHeader>
           {newBookingSlot && (
-            <NewBookingForm
-              aircraft={newBookingSlot.aircraft}
-              users={users}
-              hireAndFly={hireAndFly}
-              bookings={bookings}
-              onSubmit={handleBookingSubmit}
-              startTime={newBookingSlot?.time}
-              selectedDate={newBookingSlot?.date}
-            />
+            <>
+              <DialogHeader>
+                <DialogTitle>Create New Booking</DialogTitle>
+                <DialogDescription>
+                    {`Creating a booking for ${newBookingSlot?.aircraft.tailNumber} on ${newBookingSlot ? format(newBookingSlot.date, 'PPP') : ''}`}
+                </DialogDescription>
+              </DialogHeader>
+              <NewBookingForm
+                  aircraft={newBookingSlot.aircraft}
+                  users={users}
+                  hireAndFly={hireAndFly}
+                  bookings={bookings}
+                  onSubmit={handleBookingSubmit}
+                  startTime={newBookingSlot?.time}
+                  selectedDate={newBookingSlot?.date}
+                />
+            </>
           )}
-        </DialogContent>
-      </Dialog>
-      <Dialog open={!!activeFlight} onOpenChange={handleDialogClose}>
-        <DialogContent className="sm:max-w-2xl">
-           {activeFlight && (
+          {activeFlight && (
               <FlightHub 
                 activeFlight={activeFlight}
                 handleChecklistSuccess={handleChecklistSuccess}
