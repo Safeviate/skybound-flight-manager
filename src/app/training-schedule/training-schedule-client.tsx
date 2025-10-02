@@ -530,12 +530,12 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     <>
       <main className="flex flex-col flex-1 p-4 md:p-8">
         <Tabs defaultValue="aircraft">
-            <TabsList>
-                <TabsTrigger value="aircraft">Aircraft Schedule</TabsTrigger>
-                <TabsTrigger value="facilities">Facility Schedule</TabsTrigger>
-            </TabsList>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-6">
-                <Popover>
+            <div className="flex items-center justify-between">
+                <TabsList>
+                    <TabsTrigger value="aircraft">Aircraft Schedule</TabsTrigger>
+                    <TabsTrigger value="facilities">Facility Schedule</TabsTrigger>
+                </TabsList>
+                 <Popover>
                     <PopoverTrigger asChild>
                         <Button
                         variant={"outline"}
@@ -558,14 +558,15 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                         />
                     </PopoverContent>
                 </Popover>
-                <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+            </div>
+           
+            <TabsContent value="aircraft">
+                 <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mt-4">
                     <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-500"></div>Ready for Pre-Flight</div>
                     <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-blue-500"></div>Post-Flight Outstanding</div>
                     <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-gray-400"></div>Completed</div>
                     <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-destructive"></div>In Maintenance</div>
                 </div>
-            </div>
-            <TabsContent value="aircraft">
                 <GanttChart 
                     resources={aircraft} 
                     bookings={filteredBookings}
