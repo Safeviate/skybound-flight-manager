@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -251,11 +250,12 @@ const GanttChart = ({
                                         const variant = getBookingVariant(booking);
                                         return (
                                             <td key={time} colSpan={colSpan} className="p-0 h-[50px]">
+                                                <TooltipProvider>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
                                                         <div 
                                                             onClick={() => onBookingClick(booking)}
-                                                            className={cn('h-full flex items-center p-2 text-white text-xs whitespace-nowrap overflow-hidden', variant.className, variant.isClickable ? 'cursor-pointer' : 'cursor-not-allowed')} style={variant.style}>
+                                                            className={cn('h-full flex items-center p-2 text-white text-xs whitespace-nowrap overflow-hidden', variant.className, (variant.isClickable || booking.status === 'Completed') ? 'cursor-pointer' : 'cursor-not-allowed')} style={variant.style}>
                                                             <div className="flex items-center gap-2">
                                                                 <span>{getBookingLabel(booking)}</span>
                                                             </div>
@@ -265,6 +265,7 @@ const GanttChart = ({
                                                         <BookingTooltipContent booking={booking} />
                                                     </TooltipContent>
                                                 </Tooltip>
+                                                </TooltipProvider>
                                             </td>
                                         )
                                     }
@@ -297,7 +298,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
     const getBookingVariant = useCallback((booking: Booking): { className?: string, style?: React.CSSProperties, isClickable: boolean } => {
     if (booking.status === 'Completed') {
-      return { className: 'bg-gray-400 text-white', isClickable: false };
+      return { className: 'bg-gray-400 text-white', isClickable: true };
     }
     if (booking.purpose === 'Maintenance') {
       return { className: 'bg-destructive text-white', isClickable: false };
@@ -522,7 +523,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   
     try {
         const historyDocRef = doc(collection(db, `companies/${company.id}/aircraft/${activeFlight.aircraft.id}/completed-checklists`));
-        const historyDoc: Omit<CompletedChecklist, 'id'> = {
+        const historyData = {
             aircraftId: activeFlight.aircraft.id,
             aircraftTailNumber: activeFlight.aircraft.tailNumber,
             userId: user.id,
@@ -532,7 +533,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             results: data,
             bookingNumber: activeFlight.booking.bookingNumber,
         };
-        batch.set(historyDocRef, historyDoc);
+        batch.set(historyDocRef, historyData);
 
         if (isPreFlight) {
             batch.update(aircraftRef, { checklistStatus: 'needs-post-flight' });
@@ -770,3 +771,5 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     </>
   );
 }
+
+    

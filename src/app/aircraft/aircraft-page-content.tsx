@@ -649,9 +649,8 @@ export function AircraftPageContent() {
         const bookingForChecklist = bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId);
     
         try {
-            // Action B: Create the CompletedChecklist document for history
             const historyDocRef = doc(collection(db, `companies/${company.id}/aircraft/${selectedAircraftForChecklist.id}/completed-checklists`));
-            const historyDoc: Omit<CompletedChecklist, 'id'> = {
+            const historyData = {
                 aircraftId: selectedAircraftForChecklist.id,
                 aircraftTailNumber: selectedAircraftForChecklist.tailNumber,
                 userId: user.id,
@@ -661,17 +660,16 @@ export function AircraftPageContent() {
                 results: data,
                 bookingNumber: bookingForChecklist?.bookingNumber,
             };
-            batch.set(historyDocRef, historyDoc);
+            batch.set(historyDocRef, historyData);
     
             if (isPreFlight) {
-                // Action A: Update the Booking with startHobbs
                 if (bookingForChecklist) {
                     const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
                     batch.update(bookingRef, { startHobbs: data.hobbs });
                 }
                 batch.update(aircraftRef, { checklistStatus: 'needs-post-flight' });
                 toast({ title: 'Pre-Flight Checklist Submitted' });
-            } else { // POST-FLIGHT LOGIC
+            } else {
                 if (bookingForChecklist) {
                     const flightDuration = bookingForChecklist.startHobbs ? parseFloat((data.hobbs - bookingForChecklist.startHobbs).toFixed(1)) : 0;
                     const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
@@ -698,7 +696,6 @@ export function AircraftPageContent() {
                         }
                     }
                 }
-                // Update aircraft status
                 batch.update(aircraftRef, {
                     checklistStatus: 'ready',
                     activeBookingId: null,
@@ -710,7 +707,7 @@ export function AircraftPageContent() {
     
             await batch.commit();
             setSelectedChecklistAircraftId(null);
-            fetchChecklistHistory(); // Refresh history after submission
+            fetchChecklistHistory();
         } catch (error) {
             console.error("Error submitting checklist:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not submit checklist.' });
@@ -1426,3 +1423,5 @@ export function AircraftPageContent() {
     </main>
   );
 }
+
+    
