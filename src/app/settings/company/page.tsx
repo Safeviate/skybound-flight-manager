@@ -130,49 +130,79 @@ function CompanySettingsPage() {
             <div className="space-y-2">
                 <h3 className="font-semibold text-lg">Checklist Enforcement</h3>
                 <div className="flex items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                    <Label htmlFor="enforce-pre-flight" className="text-base">
-                    Enforce Pre-Flight Checks
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                    Prevent approval of a flight booking until the pre-flight checklist for that specific flight is complete.
-                    </p>
-                </div>
-                <Switch
-                    id="enforce-pre-flight"
-                    checked={settings.enforcePreFlightCheck}
-                    onCheckedChange={() => handleToggle('enforcePreFlightCheck')}
-                />
-                </div>
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                    <Label htmlFor="enforce-post-flight" className="text-base">
-                    Enforce Post-Flight Checks
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                    Prevent approval of a new flight booking until the previous flight's post-flight checklist for that aircraft is complete.
-                    </p>
-                </div>
-                <Switch
-                    id="enforce-post-flight"
-                    checked={settings.enforcePostFlightCheck}
-                    onCheckedChange={() => handleToggle('enforcePostFlightCheck')}
-                />
+                    <div className="space-y-0.5">
+                        <Label htmlFor="enforce-pre-flight" className="text-base">
+                        Enforce Pre-Flight Checks
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                        Prevent approval of a flight booking until the pre-flight checklist for that specific flight is complete.
+                        </p>
+                    </div>
+                    <Switch
+                        id="enforce-pre-flight"
+                        checked={settings.enforcePreFlightCheck}
+                        onCheckedChange={() => handleToggle('enforcePreFlightCheck')}
+                    />
                 </div>
                 <div className="flex items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                    <Label htmlFor="enforce-post-maintenance" className="text-base">
-                    Enforce Post-Maintenance Checks
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                    Prevent an aircraft from being booked if it is in maintenance until a maintenance checklist is completed.
-                    </p>
+                    <div className="space-y-0.5">
+                        <Label htmlFor="require-pre-flight-photos" className="text-base">
+                        Require Pre-Flight Photos
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                        Make left and right side aircraft photos mandatory during pre-flight checks.
+                        </p>
+                    </div>
+                    <Switch
+                        id="require-pre-flight-photos"
+                        checked={settings.requirePreFlightPhotos}
+                        onCheckedChange={() => handleToggle('requirePreFlightPhotos')}
+                    />
                 </div>
-                <Switch
-                    id="enforce-post-maintenance"
-                    checked={settings.enforcePostMaintenanceCheck}
-                    onCheckedChange={() => handleToggle('enforcePostMaintenanceCheck')}
-                />
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="enforce-post-flight" className="text-base">
+                        Enforce Post-Flight Checks
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                        Prevent approval of a new flight booking until the previous flight's post-flight checklist for that aircraft is complete.
+                        </p>
+                    </div>
+                    <Switch
+                        id="enforce-post-flight"
+                        checked={settings.enforcePostFlightCheck}
+                        onCheckedChange={() => handleToggle('enforcePostFlightCheck')}
+                    />
+                </div>
+                 <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="require-post-flight-photos" className="text-base">
+                        Require Post-Flight Photos
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                        Make left and right side aircraft photos mandatory during post-flight checks.
+                        </p>
+                    </div>
+                    <Switch
+                        id="require-post-flight-photos"
+                        checked={settings.requirePostFlightPhotos}
+                        onCheckedChange={() => handleToggle('requirePostFlightPhotos')}
+                    />
+                </div>
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="enforce-post-maintenance" className="text-base">
+                        Enforce Post-Maintenance Checks
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                        Prevent an aircraft from being booked if it is in maintenance until a maintenance checklist is completed.
+                        </p>
+                    </div>
+                    <Switch
+                        id="enforce-post-maintenance"
+                        checked={settings.enforcePostMaintenanceCheck}
+                        onCheckedChange={() => handleToggle('enforcePostMaintenanceCheck')}
+                    />
                 </div>
             </div>
 

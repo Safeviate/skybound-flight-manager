@@ -21,19 +21,19 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSettings } from '@/context/settings-provider';
 
 
-const checklistSchema = z.object({
+const createChecklistSchema = (requirePhotos: boolean) => z.object({
   hobbs: z.coerce.number().min(0.1, { message: "Hobbs meter reading is required." }),
   tacho: z.coerce.number().optional(),
   fuelUplift: z.coerce.number().optional(),
   oilUplift: z.coerce.number().optional(),
-  leftSidePhoto: z.string().min(1, { message: "Photo of the left side is required." }),
-  rightSidePhoto: z.string().min(1, { message: "Photo of the right side is required." }),
+  leftSidePhoto: requirePhotos ? z.string().min(1, { message: "Photo of the left side is required." }) : z.string().optional(),
+  rightSidePhoto: requirePhotos ? z.string().min(1, { message: "Photo of the right side is required." }) : z.string().optional(),
   report: z.string().optional(),
   defectPhoto: z.string().optional(),
   bookingNumber: z.string().optional(),
 });
 
-export type PostFlightChecklistFormValues = z.infer<typeof checklistSchema>;
+export type PostFlightChecklistFormValues = z.infer<ReturnType<typeof createChecklistSchema>>;
 
 interface PostFlightChecklistFormProps {
     aircraft: Aircraft;
@@ -49,6 +49,7 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | 'defectPhoto' | null>(null);
 
+  const checklistSchema = createChecklistSchema(settings.requirePostFlightPhotos);
 
   const form = useForm<PostFlightChecklistFormValues>({
     resolver: zodResolver(checklistSchema),
@@ -194,48 +195,52 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
                                     </FormItem>
                                 )}
                             />
-                            <FormField
-                                control={form.control}
-                                name="leftSidePhoto"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Left Side of Aircraft</FormLabel>
-                                        {watchedValues.leftSidePhoto ? (
-                                            <div className="flex items-center gap-2">
-                                                <ImageIcon className="h-5 w-5 text-green-500" />
-                                                <span className="text-sm text-green-500">Photo captured</span>
-                                                <Button type="button" size="sm" variant="outline" onClick={() => openCamera('leftSidePhoto')}>Retake</Button>
-                                            </div>
-                                        ) : (
-                                            <Button type="button" variant="outline" className="w-full" onClick={() => openCamera('leftSidePhoto')}>
-                                                <Camera className="mr-2" /> Take Photo
-                                            </Button>
-                                        )}
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="rightSidePhoto"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Right Side of Aircraft</FormLabel>
-                                        {watchedValues.rightSidePhoto ? (
-                                            <div className="flex items-center gap-2">
-                                                <ImageIcon className="h-5 w-5 text-green-500" />
-                                                <span className="text-sm text-green-500">Photo captured</span>
-                                                <Button type="button" size="sm" variant="outline" onClick={() => openCamera('rightSidePhoto')}>Retake</Button>
-                                            </div>
-                                        ) : (
-                                            <Button type="button" variant="outline" className="w-full" onClick={() => openCamera('rightSidePhoto')}>
-                                                <Camera className="mr-2" /> Take Photo
-                                            </Button>
-                                        )}
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            {settings.requirePostFlightPhotos && (
+                                <>
+                                <FormField
+                                    control={form.control}
+                                    name="leftSidePhoto"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Left Side of Aircraft</FormLabel>
+                                            {watchedValues.leftSidePhoto ? (
+                                                <div className="flex items-center gap-2">
+                                                    <ImageIcon className="h-5 w-5 text-green-500" />
+                                                    <span className="text-sm text-green-500">Photo captured</span>
+                                                    <Button type="button" size="sm" variant="outline" onClick={() => openCamera('leftSidePhoto')}>Retake</Button>
+                                                </div>
+                                            ) : (
+                                                <Button type="button" variant="outline" className="w-full" onClick={() => openCamera('leftSidePhoto')}>
+                                                    <Camera className="mr-2" /> Take Photo
+                                                </Button>
+                                            )}
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="rightSidePhoto"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Right Side of Aircraft</FormLabel>
+                                            {watchedValues.rightSidePhoto ? (
+                                                <div className="flex items-center gap-2">
+                                                    <ImageIcon className="h-5 w-5 text-green-500" />
+                                                    <span className="text-sm text-green-500">Photo captured</span>
+                                                    <Button type="button" size="sm" variant="outline" onClick={() => openCamera('rightSidePhoto')}>Retake</Button>
+                                                </div>
+                                            ) : (
+                                                <Button type="button" variant="outline" className="w-full" onClick={() => openCamera('rightSidePhoto')}>
+                                                    <Camera className="mr-2" /> Take Photo
+                                                </Button>
+                                            )}
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                </>
+                            )}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <FormField

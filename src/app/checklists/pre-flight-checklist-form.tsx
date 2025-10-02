@@ -22,14 +22,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSettings } from '@/context/settings-provider';
 
 
-const checklistSchema = z.object({
+const createChecklistSchema = (requirePhotos: boolean) => z.object({
   registration: z.string().min(1, { message: "Aircraft registration scan is required." }),
   hobbs: z.coerce.number().min(0.1, { message: "Hobbs meter reading is required." }),
   tacho: z.coerce.number().optional(),
   fuelUplift: z.coerce.number().optional(),
   oilUplift: z.coerce.number().optional(),
-  leftSidePhoto: z.string().min(1, { message: "Photo of the left side is required." }),
-  rightSidePhoto: z.string().min(1, { message: "Photo of the right side is required." }),
+  leftSidePhoto: requirePhotos ? z.string().min(1, { message: "Photo of the left side is required." }) : z.string().optional(),
+  rightSidePhoto: requirePhotos ? z.string().min(1, { message: "Photo of the right side is required." }) : z.string().optional(),
   checklistOnboard: z.boolean(),
   fomOnboard: z.boolean(),
   airworthinessOnboard: z.boolean(),
@@ -51,7 +51,7 @@ const checklistSchema = z.object({
   .refine(data => data.radioLicenseOnboard, { path: ['radioLicenseOnboard'], message: 'This must be checked.' });
 
 
-export type PreFlightChecklistFormValues = z.infer<typeof checklistSchema>;
+export type PreFlightChecklistFormValues = z.infer<ReturnType<typeof createChecklistSchema>>;
 
 interface PreFlightChecklistFormProps {
     aircraft: Aircraft;
@@ -65,6 +65,8 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, ini
   const { settings } = useSettings();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | 'defectPhoto' | null>(null);
+
+  const checklistSchema = createChecklistSchema(settings.requirePreFlightPhotos);
 
   const form = useForm<PreFlightChecklistFormValues>({
     resolver: zodResolver(checklistSchema),
@@ -203,6 +205,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, ini
                         </div>
 
                         {/* Standard Camera Photos */}
+                        {settings.requirePreFlightPhotos && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
@@ -247,6 +250,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, ini
                                 )}
                             />
                         </div>
+                        )}
 
                         {/* Document Checks */}
                         <div className="space-y-4 rounded-lg border p-4">

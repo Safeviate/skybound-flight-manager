@@ -8,6 +8,8 @@ interface Settings {
   enforcePreFlightCheck: boolean;
   enforcePostMaintenanceCheck: boolean;
   useAiChecklists: boolean;
+  requirePreFlightPhotos: boolean;
+  requirePostFlightPhotos: boolean;
   dutyLimitDaily: number;
   dutyLimitWeekly: number;
   dutyLimitMonthly: number;
@@ -29,6 +31,8 @@ const defaultSettings: Settings = {
     enforcePreFlightCheck: true,
     enforcePostMaintenanceCheck: true,
     useAiChecklists: true,
+    requirePreFlightPhotos: true,
+    requirePostFlightPhotos: true,
     dutyLimitDaily: 8,
     dutyLimitWeekly: 30,
     dutyLimitMonthly: 100,
