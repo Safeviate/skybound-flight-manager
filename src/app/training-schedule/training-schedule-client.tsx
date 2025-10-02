@@ -202,8 +202,8 @@ const GanttChart = ({
     };
 
     return (
-        <div className="flex-1 overflow-auto mt-4 border-green-500 border-4">
-            <table className="w-full border-collapse border-4 border-purple-500" style={{ minWidth: '4758px', tableLayout: 'fixed' }}>
+        <div className="flex-1 overflow-auto mt-4">
+            <table className="w-full border-collapse" style={{ minWidth: '4758px', tableLayout: 'fixed' }}>
                 <thead>
                     <tr>
                         <th className="sticky top-0 z-20 bg-card text-center p-2 w-[150px] border-r">Resource</th>
@@ -639,3 +639,5 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     </>
   );
 }
+
+    
