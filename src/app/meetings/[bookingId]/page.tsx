@@ -12,8 +12,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { format, parseISO } from 'date-fns';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export default function MeetingMinutesPage() {
   const params = useParams();
@@ -54,6 +65,18 @@ export default function MeetingMinutesPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!company || !booking) return;
+    try {
+      const docRef = doc(db, `companies/${company.id}/facility-bookings`, booking.id);
+      await updateDoc(docRef, { meetingMinutes: '' });
+      setMinutes('');
+      toast({ title: 'Success', description: 'Meeting minutes have been deleted.' });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not delete minutes.' });
+    }
+  };
+
   if (!booking) {
     return <div className="p-8">Loading...</div>;
   }
@@ -68,10 +91,32 @@ export default function MeetingMinutesPage() {
                     Back to Meetings List
                 </Link>
             </Button>
-            <Button onClick={handleSave}>
-                <Save className="mr-2 h-4 w-4" />
-                Save Minutes
-            </Button>
+            <div className="flex items-center gap-2">
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Minutes
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action will permanently delete the minutes for this meeting. This cannot be undone.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>Yes, delete minutes</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                <Button onClick={handleSave}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Minutes
+                </Button>
+            </div>
         </div>
         <Card>
           <CardHeader>
