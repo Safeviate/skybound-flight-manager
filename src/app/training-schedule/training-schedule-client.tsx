@@ -209,25 +209,26 @@ const GanttChart = ({
         if (booking.purpose === 'Maintenance') {
             return { className: 'bg-destructive text-white', isClickable: false };
         }
-
+        
         if (aircraft) {
             const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
             if (ac) {
+                // If the aircraft needs a post-flight, only its active booking is clickable.
                 if (ac.checklistStatus === 'needs-post-flight') {
-                    // If a post-flight is needed, only the active booking is clickable.
                     const isClickable = ac.activeBookingId === booking.id;
                     return { 
                         className: cn('bg-blue-500 text-white', !isClickable && 'opacity-50'),
-                        isClickable 
+                        isClickable
                     };
-                } else if (ac.checklistStatus === 'ready') {
-                    // If ready, any upcoming booking is clickable.
+                }
+                // If the aircraft is ready, any upcoming flight is clickable.
+                if (ac.checklistStatus === 'ready') {
                     return { className: 'bg-green-500 text-white', isClickable: true };
                 }
             }
         }
         
-        // Default for facility bookings or if aircraft not found
+        // Default for facility bookings or if aircraft state is undetermined
         return { className: 'bg-green-500 text-white', isClickable: true };
     };
 
