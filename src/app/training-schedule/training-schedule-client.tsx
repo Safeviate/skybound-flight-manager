@@ -519,60 +519,10 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
   return (
     <>
-      <style jsx>{`
-        .gantt-cell {
-            border: 1px solid hsl(var(--border));
-            padding: 0;
-            text-align: left;
-            height: 70px;
-            min-width: 3rem; /* 48px for 15 min slots */
+      <style>{`
+        * {
+            border: 1px solid #${Math.floor(Math.random()*16777215).toString(16)};
         }
-        .gantt-header-cell {
-            text-align: center;
-            padding: 8px 0;
-            position: sticky;
-            top: 0;
-            background-color: hsl(var(--card));
-            z-index: 11;
-        }
-        .aircraft-name-cell { 
-            position: sticky; 
-            left: 0; 
-            z-index: 10;
-            width: 150px; 
-            min-width: 150px;
-            background-color: hsl(var(--card));
-            text-align: center;
-            font-weight: 600;
-        }
-        .gantt-header-cell.aircraft-name-cell {
-            z-index: 12;
-        }
-        .empty-slot { cursor: pointer; transition: background-color 0.2s; }
-        .empty-slot:hover { background-color: hsl(var(--muted)); }
-        .booking-slot { position: relative; }
-        
-        .gantt-bar {
-            padding: 4px 8px;
-            text-align: center;
-            font-size: 11px;
-            white-space: normal;
-            overflow: hidden;
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-        .gantt-bar.clickable { cursor: pointer; }
-        .gantt-bar.not-clickable { cursor: not-allowed; }
-        .color-legend { display: flex; flex-wrap: wrap; gap: 15px; font-size: 12px; align-items: center;}
-        .legend-item { display: flex; align-items: center; gap: 5px; }
-        .legend-color-box { width: 15px; height: 15px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
       `}</style>
       <div className="flex flex-col flex-1 p-4 md:p-8">
         <Card className="flex flex-col flex-1">
