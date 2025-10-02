@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -150,6 +151,7 @@ const hourlyTimeSlots = Array.from({ length: 24 }, (_, i) => `${((i + 6) % 24).t
 const GanttChart = ({ 
     resources, 
     bookings, 
+    aircraft,
     onSlotClick,
     onBookingClick,
     resourceKey,
@@ -157,6 +159,7 @@ const GanttChart = ({
 }: { 
     resources: any[], 
     bookings: Booking[], 
+    aircraft?: Aircraft[],
     onSlotClick: (resource: any, time: string) => void,
     onBookingClick: (booking: Booking, isClickable: boolean) => void,
     resourceKey: string,
@@ -203,6 +206,28 @@ const GanttChart = ({
         if (booking.status === 'Completed') {
             return { className: 'bg-gray-400 text-white', isClickable: false };
         }
+        if (booking.purpose === 'Maintenance') {
+            return { className: 'bg-destructive text-white', isClickable: false };
+        }
+
+        if (aircraft) {
+            const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
+            if (ac) {
+                if (ac.checklistStatus === 'needs-post-flight') {
+                    // If a post-flight is needed, only the active booking is clickable.
+                    const isClickable = ac.activeBookingId === booking.id;
+                    return { 
+                        className: cn('bg-blue-500 text-white', !isClickable && 'opacity-50'),
+                        isClickable 
+                    };
+                } else if (ac.checklistStatus === 'ready') {
+                    // If ready, any upcoming booking is clickable.
+                    return { className: 'bg-green-500 text-white', isClickable: true };
+                }
+            }
+        }
+        
+        // Default for facility bookings or if aircraft not found
         return { className: 'bg-green-500 text-white', isClickable: true };
     };
 
@@ -338,7 +363,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     const dayStart = startOfDay(selectedDate);
     return bookings.filter(b => {
         if (b.status === 'Cancelled' || !b.date) return false;
-        if (!b.resourceType || b.resourceType === 'facility') return false; 
+        if (b.resourceType && b.resourceType === 'facility') return false; 
         const bookingStart = parseISO(b.date);
         const bookingEnd = b.endDate ? parseISO(b.endDate) : bookingStart;
         return isWithinInterval(dayStart, { start: startOfDay(bookingStart), end: endOfDay(bookingEnd) });
@@ -573,12 +598,12 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     <>
         <main className="flex-1 p-4 md:p-8">
             <Card>
-                <Tabs defaultValue="aircraft">
+                 <Tabs defaultValue="aircraft">
                     <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                        <TabsList className="grid w-full grid-cols-2 max-w-sm">
-                            <TabsTrigger value="aircraft">Aircraft Schedule</TabsTrigger>
-                            <TabsTrigger value="facilities">Facility Schedule</TabsTrigger>
-                        </TabsList>
+                            <TabsList className="grid w-full grid-cols-2 max-w-sm">
+                                <TabsTrigger value="aircraft">Aircraft Schedule</TabsTrigger>
+                                <TabsTrigger value="facilities">Facility Schedule</TabsTrigger>
+                            </TabsList>
                         <Popover>
                             <PopoverTrigger asChild>
                             <Button
@@ -615,6 +640,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 <GanttChart 
                                     resources={aircraft} 
                                     bookings={dailyAircraftBookings}
+                                    aircraft={aircraft}
                                     onSlotClick={handleNewBookingClick}
                                     onBookingClick={handleBookingClick}
                                     resourceKey="tailNumber"
@@ -637,7 +663,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                             </ScrollArea>
                         </TabsContent>
                     </CardContent>
-                </Tabs>
+                 </Tabs>
             </Card>
         </main>
        <Dialog open={!!newBookingSlot || !!activeFlight} onOpenChange={handleDialogClose}>
