@@ -22,7 +22,7 @@ export default function FlightLogsPage() {
         };
 
         const bookingsQuery = query(
-            collection(db, `companies/${company.id}/bookings`),
+            collection(db, `companies/${company.id}/aircraft-bookings`),
             where('status', '==', 'Completed'),
             orderBy('date', 'desc')
         );

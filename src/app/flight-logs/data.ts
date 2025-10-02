@@ -12,7 +12,7 @@ export async function getFlightLogsPageData(companyId: string): Promise<{ bookin
 
     try {
         const bookingsQuery = query(
-            collection(db, `companies/${companyId}/bookings`), 
+            collection(db, `companies/${companyId}/aircraft-bookings`), 
             where('status', '==', 'Completed'),
             orderBy('date', 'desc')
         );

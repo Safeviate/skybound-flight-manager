@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -13,7 +12,7 @@ export async function getReportsPageData(companyId: string): Promise<{ bookings:
     }
 
     try {
-        const bookingsQuery = query(collection(db, `companies/${companyId}/bookings`), orderBy('date', 'desc'));
+        const bookingsQuery = query(collection(db, `companies/${companyId}/aircraft-bookings`), orderBy('date', 'desc'));
         const aircraftQuery = query(collection(db, `companies/${companyId}/aircraft`));
         const usersQuery = query(collection(db, `companies/${companyId}/users`));
         const studentsQuery = query(collection(db, `companies/${companyId}/students`));

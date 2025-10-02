@@ -70,7 +70,7 @@
       ]
     },
     {
-      "collectionGroup": "bookings",
+      "collectionGroup": "aircraft-bookings",
       "queryScope": "COLLECTION",
       "fields": [
         {

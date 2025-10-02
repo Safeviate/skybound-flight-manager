@@ -12,7 +12,7 @@ export async function getSchedulePageData(companyId: string): Promise<{ aircraft
 
     try {
         const aircraftQuery = query(collection(db, `companies/${companyId}/aircraft`), where('status', '!=', 'Archived'));
-        const aircraftBookingsQuery = query(collection(db, `companies/${companyId}/bookings`));
+        const aircraftBookingsQuery = query(collection(db, `companies/${companyId}/aircraft-bookings`));
         const facilityBookingsQuery = query(collection(db, `companies/${companyId}/facility-bookings`));
         const personnelQuery = query(collection(db, `companies/${companyId}/users`));
         const studentsQuery = query(collection(db, `companies/${companyId}/students`));

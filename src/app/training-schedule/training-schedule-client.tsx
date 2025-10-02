@@ -341,7 +341,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     }
     setLoading(true);
     
-    const aircraftBookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
+    const aircraftBookingsQuery = query(collection(db, `companies/${company.id}/aircraft-bookings`));
     const facilityBookingsQuery = query(collection(db, `companies/${company.id}/facility-bookings`));
 
     const unsubAircraftBookings = onSnapshot(aircraftBookingsQuery, (snapshot) => {
@@ -432,7 +432,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
     try {
         if ('id' in data) { // This is an existing booking
-             const collectionName = data.resourceType === 'facility' ? 'facility-bookings' : 'bookings';
+             const collectionName = data.resourceType === 'facility' ? 'facility-bookings' : 'aircraft-bookings';
              const bookingRef = doc(db, `companies/${company.id}/${collectionName}`, data.id);
              batch.update(bookingRef, data as Partial<Booking>);
              toast({ title: 'Booking Updated', description: 'The booking has been successfully updated.' });
@@ -445,7 +445,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                  bookingData.bookingNumber = `BKNG-${(bookingCount + 1).toString().padStart(4, '0')}`;
             }
 
-            const collectionName = bookingData.resourceType === 'facility' ? 'facility-bookings' : 'bookings';
+            const collectionName = bookingData.resourceType === 'facility' ? 'facility-bookings' : 'aircraft-bookings';
             const bookingRef = doc(db, `companies/${company.id}/${collectionName}`, newBookingId);
             batch.set(bookingRef, bookingData);
 
@@ -501,7 +501,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         return;
     }
     try {
-        const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingId);
+        const bookingRef = doc(db, `companies/${company.id}/aircraft-bookings`, bookingId);
         await updateDoc(bookingRef, { status: 'Cancelled', cancellationReason: reason });
         toast({ title: 'Booking Cancelled', description: `Reason: ${reason}` });
         handleDialogClose();
@@ -518,7 +518,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     const batch = writeBatch(db);
     
     const aircraftRef = doc(db, `companies/${company.id}/aircraft`, activeFlight.aircraft.id);
-    const bookingCollectionName = activeFlight.booking.resourceType === 'facility' ? 'facility-bookings' : 'bookings';
+    const bookingCollectionName = activeFlight.booking.resourceType === 'facility' ? 'facility-bookings' : 'aircraft-bookings';
     const bookingRef = doc(db, `companies/${company.id}/${bookingCollectionName}`, activeFlight.booking.id);
   
     try {
@@ -771,5 +771,3 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     </>
   );
 }
-
-    

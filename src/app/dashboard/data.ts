@@ -12,7 +12,7 @@ export async function getDashboardData(companyId: string): Promise<{ aircraft: A
 
     try {
         const aircraftQuery = query(collection(db, `companies/${companyId}/aircraft`));
-        const bookingsQuery = query(collection(db, `companies/${companyId}/bookings`));
+        const bookingsQuery = query(collection(db, `companies/${companyId}/aircraft-bookings`));
         const usersQuery = query(collection(db, `companies/${companyId}/users`));
         const studentsQuery = query(collection(db, `companies/${companyId}/students`));
 

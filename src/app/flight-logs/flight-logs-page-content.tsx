@@ -53,7 +53,7 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
         return;
     }
     try {
-        const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingId);
+        const bookingRef = doc(db, `companies/${company.id}/aircraft-bookings`, bookingId);
         await deleteDoc(bookingRef);
         onDelete(bookingId);
         toast({ title: 'Log Deleted', description: 'The flight log has been permanently removed.' });

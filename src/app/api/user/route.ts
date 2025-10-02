@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch upcoming bookings for the user
     const bookingsQuery = query(
-        collection(db, `companies/${companyId}/bookings`),
+        collection(db, `companies/${companyId}/aircraft-bookings`),
         and(
             or(
                 where('student', '==', userData.name),
