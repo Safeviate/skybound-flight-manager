@@ -37,4 +37,4 @@ export default function TrainingSchedulePage() {
          />;
 }
 
-TrainingSchedulePage.title = "Training Schedule";
+TrainingSchedulePage.title = "Schedule";

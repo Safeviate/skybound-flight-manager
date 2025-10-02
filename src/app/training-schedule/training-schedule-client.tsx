@@ -280,13 +280,26 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     }
     setLoading(true);
     
-    const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
-    const unsubBookings = onSnapshot(bookingsQuery, (snapshot) => {
-        setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking)));
+    const aircraftBookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
+    const facilityBookingsQuery = query(collection(db, `companies/${company.id}/facility-bookings`));
+
+    const unsubAircraftBookings = onSnapshot(aircraftBookingsQuery, (snapshot) => {
+        const aircraftBookingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+        setBookings(prev => [...aircraftBookingsData, ...prev.filter(b => b.resourceType === 'facility')]);
         setLoading(false);
     }, (error) => {
-        console.error("Error fetching real-time bookings:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not load schedule updates.' });
+        console.error("Error fetching real-time aircraft bookings:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not load aircraft schedule updates.' });
+        setLoading(false);
+    });
+    
+    const unsubFacilityBookings = onSnapshot(facilityBookingsQuery, (snapshot) => {
+        const facilityBookingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+        setBookings(prev => [...facilityBookingsData, ...prev.filter(b => b.resourceType === 'aircraft')]);
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching real-time facility bookings:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not load facility schedule updates.' });
         setLoading(false);
     });
 
@@ -315,7 +328,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     fetchAllUsers();
     
     return () => {
-        unsubBookings();
+        unsubAircraftBookings();
+        unsubFacilityBookings();
         aircraftUnsub();
     };
 }, [company, toast]);
@@ -340,7 +354,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
     try {
         if ('id' in data) { // This is an existing booking
-             const bookingRef = doc(db, `companies/${company.id}/bookings`, data.id);
+             const collectionName = data.resourceType === 'facility' ? 'facility-bookings' : 'bookings';
+             const bookingRef = doc(db, `companies/${company.id}/${collectionName}`, data.id);
              batch.update(bookingRef, data as Partial<Booking>);
              toast({ title: 'Booking Updated', description: 'The booking has been successfully updated.' });
         } else { // This is a new booking
@@ -352,7 +367,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                  bookingData.bookingNumber = `BKNG-${(bookingCount + 1).toString().padStart(4, '0')}`;
             }
 
-            const bookingRef = doc(db, `companies/${company.id}/bookings`, newBookingId);
+            const collectionName = bookingData.resourceType === 'facility' ? 'facility-bookings' : 'bookings';
+            const bookingRef = doc(db, `companies/${company.id}/${collectionName}`, newBookingId);
             batch.set(bookingRef, bookingData);
 
             if (bookingData.resourceType === 'aircraft') {
