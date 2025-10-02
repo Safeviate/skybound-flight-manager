@@ -62,7 +62,8 @@ export async function GET(request: NextRequest) {
     const alertsSnapshot = await getDocs(alertsQuery);
     const allAlerts = alertsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
     const unacknowledgedAlerts = allAlerts.filter(alert => 
-        !alert.readBy.includes(userId) && (!alert.targetUserId || alert.targetUserId === userId)
+        !alert.readBy.some(ack => ack.userId === userId) && 
+        (!alert.targetUserId || alert.targetUserId === userId)
     );
 
     const responsePayload = {

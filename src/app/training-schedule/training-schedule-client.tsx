@@ -440,8 +440,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             const newBookingId = doc(collection(db, 'temp')).id;
             
             const bookingData = { ...data, id: newBookingId, companyId: company.id, status: 'Approved' as const };
-            if (bookingData.purpose !== 'Maintenance') {
-                 const bookingCount = bookings.filter(b => b.bookingNumber).length;
+            if (bookingData.purpose !== 'Maintenance' && bookingData.resourceType === 'aircraft') {
+                 const bookingCount = bookings.filter(b => b.bookingNumber && b.resourceType === 'aircraft').length;
                  bookingData.bookingNumber = `BKNG-${(bookingCount + 1).toString().padStart(4, '0')}`;
             }
 
@@ -537,7 +537,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
         if (isPreFlight) {
             batch.update(aircraftRef, { checklistStatus: 'needs-post-flight' });
-            batch.update(bookingRef, { startHobbs: data.hobbs });
+            batch.update(bookingRef, { startHobbs: data.hobbs, preFlightData: data });
             toast({ title: 'Pre-Flight Checklist Submitted' });
         } else { // POST-FLIGHT LOGIC
             const flightDuration = activeFlight.booking.startHobbs ? parseFloat((data.hobbs - activeFlight.booking.startHobbs).toFixed(1)) : 0;
@@ -555,6 +555,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 flightDuration,
                 fuelUplift: data.fuelUplift,
                 oilUplift: data.oilUplift,
+                postFlightData: data,
             });
     
             if (activeFlight.booking.purpose === 'Training' && activeFlight.booking.studentId && activeFlight.booking.pendingLogEntryId) {

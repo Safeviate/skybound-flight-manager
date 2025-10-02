@@ -39,7 +39,7 @@ export async function getDashboardData(companyId: string, userId: string): Promi
     const today = format(startOfToday(), 'yyyy-MM-dd');
 
     const upcomingBookingsQuery = query(
-      collection(db, `companies/${companyId}/bookings`),
+      collection(db, `companies/${companyId}/aircraft-bookings`),
       and(
         where('date', '>=', today),
         or(
@@ -52,7 +52,7 @@ export async function getDashboardData(companyId: string, userId: string): Promi
     );
 
     const allUserBookingsQuery = query(
-      collection(db, `companies/${companyId}/bookings`),
+      collection(db, `companies/${companyId}/aircraft-bookings`),
       or(
         where('student', '==', userName),
         where('instructor', '==', userName)
