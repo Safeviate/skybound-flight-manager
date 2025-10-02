@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -293,40 +294,45 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const [newBookingSlot, setNewBookingSlot] = useState<{ aircraft?: Aircraft, facility?: Facility, time: string, date: Date } | null>(null);
   const [activeFlight, setActiveFlight] = useState<{ booking: Booking, aircraft: Aircraft } | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  
-  const getBookingVariant = useCallback((booking: Booking): { className?: string, style?: React.CSSProperties, isClickable: boolean } => {
+
+    const getBookingVariant = useCallback((booking: Booking): { className?: string, style?: React.CSSProperties, isClickable: boolean } => {
     if (booking.status === 'Completed') {
-        return { className: 'bg-gray-400 text-white', isClickable: false };
+      return { className: 'bg-gray-400 text-white', isClickable: false };
     }
     if (booking.purpose === 'Maintenance') {
-        return { className: 'bg-destructive text-white', isClickable: false };
+      return { className: 'bg-destructive text-white', isClickable: false };
     }
-
-    if (aircraft) {
-        const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
-        if (ac) {
-            if (ac.checklistStatus === 'needs-post-flight') {
-                const isClickable = ac.activeBookingId === booking.id;
-                return {
-                    className: cn('bg-blue-500 text-white', !isClickable && 'opacity-50'),
-                    isClickable
-                };
-            }
-            if (ac.checklistStatus === 'ready') {
-                const aircraftBookings = bookings.filter(b => b.aircraft === ac.tailNumber && b.status !== 'Cancelled').sort((a,b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
-                const nextBooking = aircraftBookings.find(b => {
-                    const bookingDateTime = parseISO(`${b.date}T${b.startTime}`);
-                    return !isBefore(bookingDateTime, new Date());
-                });
-
-                return { className: 'bg-green-500 text-white', isClickable: !nextBooking || nextBooking.id === booking.id };
-            }
-        }
+    if (booking.purpose === 'Post-Maintenance Flight') {
+      return { className: 'bg-purple-600 text-white', isClickable: true };
     }
     
+    if (aircraft) {
+      const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
+      if (ac) {
+        if (ac.checklistStatus === 'needs-post-flight') {
+          const isClickable = ac.activeBookingId === booking.id;
+          return {
+            className: cn('bg-blue-500 text-white', !isClickable && 'opacity-50'),
+            isClickable
+          };
+        }
+        if (ac.checklistStatus === 'ready') {
+          const aircraftBookings = bookings
+            .filter(b => b.aircraft === ac.tailNumber && b.status !== 'Cancelled' && isWithinInterval(startOfDay(parseISO(b.date)), { start: startOfDay(selectedDate), end: endOfDay(selectedDate) }))
+            .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+          
+          const nextBooking = aircraftBookings.find(b => {
+              const bookingDateTime = parseISO(`${b.date}T${b.startTime}`);
+              return !isBefore(bookingDateTime, new Date());
+          });
+          
+          return { className: 'bg-green-500 text-white', isClickable: !nextBooking || nextBooking.id === booking.id };
+        }
+      }
+    }
     return { className: 'bg-green-500 text-white', isClickable: true };
-  }, [aircraft, bookings]);
-
+  }, [aircraft, bookings, selectedDate]);
+  
   useEffect(() => {
     if (!company) {
         setLoading(false);
@@ -444,7 +450,13 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
             if (bookingData.resourceType === 'aircraft') {
               const aircraftRef = doc(db, `companies/${company.id}/aircraft`, newBookingSlot!.aircraft!.id);
-              batch.update(aircraftRef, { activeBookingId: newBookingId });
+              
+              if (bookingData.purpose === 'Post-Maintenance Flight') {
+                batch.update(aircraftRef, { status: 'Available', checklistStatus: 'ready' });
+              } else {
+                 batch.update(aircraftRef, { activeBookingId: newBookingId });
+              }
+              
 
               if (bookingData.purpose === 'Training' && bookingData.studentId) {
                   const studentRef = doc(db, `companies/${company.id}/students`, bookingData.studentId);
@@ -668,6 +680,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                             <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mt-4">
                                 <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-500"></div>Ready for Pre-Flight</div>
                                 <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-blue-500"></div>Post-Flight Outstanding</div>
+                                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-purple-600"></div>Post-Maintenance</div>
                                 <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-gray-400"></div>Completed</div>
                                 <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-destructive"></div>In Maintenance</div>
                             </div>
