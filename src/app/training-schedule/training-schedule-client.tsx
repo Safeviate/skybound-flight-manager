@@ -208,10 +208,10 @@ const GanttChart = ({
     };
 
     const getBookingLabel = (booking: Booking) => {
-        if (booking.purpose === 'Facility Booking') {
-            return `${booking.title} (${booking.responsiblePerson})`;
-        }
         const bookingNumPart = booking.bookingNumber ? `${booking.bookingNumber} - ` : '';
+        if (booking.purpose === 'Facility Booking') {
+            return `${bookingNumPart}${booking.title} (${booking.responsiblePerson})`;
+        }
         if (booking.purpose === 'Hire and Fly') {
             return `${bookingNumPart}${booking.purpose}: ${booking.pilotName}`;
         }
@@ -454,8 +454,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                  bookingData.bookingNumber = `BKNG-${nextId.toString().padStart(4, '0')}`;
             } else if (bookingData.resourceType === 'facility') {
                  const facilityBookings = bookings.filter(b => b.bookingNumber && b.resourceType === 'facility');
-                 const bookingNumbers = facilityBookings.map(b => parseInt(b.bookingNumber!.split('-')[1], 10));
-                 const nextId = facilityBookings.length > 0 ? Math.max(...bookingNumbers) + 1 : 1;
+                 const bookingNumbers = facilityBookings.map(b => b.bookingNumber!.split('-')[1]).map(n => parseInt(n, 10)).filter(n => !isNaN(n));
+                 const nextId = facilityBookings.length > 0 ? Math.max(0, ...bookingNumbers) + 1 : 1;
                  bookingData.bookingNumber = `FAC-${nextId.toString().padStart(4, '0')}`;
             }
 
