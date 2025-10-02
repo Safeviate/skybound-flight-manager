@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -558,8 +559,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   return (
     <>
       <main className="flex flex-col flex-1 p-4 md:p-8">
-        <Tabs defaultValue="aircraft">
-          <Card>
+        <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <TabsList>
@@ -592,6 +592,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
               </div>
             </CardHeader>
             <CardContent>
+              <Tabs defaultValue="aircraft">
               <TabsContent value="aircraft">
                   <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mt-4">
                       <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-500"></div>Ready for Pre-Flight</div>
@@ -603,7 +604,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                       <ScrollArea>
                         <GanttChart 
                             resources={aircraft} 
-                            bookings={filteredBookings.filter(b => b.resourceType === 'aircraft')}
+                            bookings={filteredBookings.filter(b => !b.resourceType || b.resourceType === 'aircraft')}
                             onSlotClick={handleNewBookingClick}
                             onBookingClick={handleBookingClick}
                             resourceKey="tailNumber"
@@ -628,9 +629,9 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                       </ScrollArea>
                    </div>
               </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
-        </Tabs>
       </main>
        <Dialog open={!!newBookingSlot || !!activeFlight} onOpenChange={handleDialogClose}>
         <DialogContent className="sm:max-w-xl">

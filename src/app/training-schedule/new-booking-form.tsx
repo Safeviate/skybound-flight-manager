@@ -153,6 +153,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
 
     const cleanData = {
         ...data,
+        resourceType: 'aircraft' as const, // Explicitly set resourceType
         student: data.purpose === 'Training' ? data.student : null,
         studentId: data.purpose === 'Training' ? data.studentId : null,
         pilotId: (data.purpose === 'Hire and Fly' || data.purpose === 'Post-Maintenance Flight') ? data.pilotId : null,
