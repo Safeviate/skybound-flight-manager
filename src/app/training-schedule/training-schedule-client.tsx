@@ -520,8 +520,10 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   return (
     <>
       <style>{`
-        * {
-            border: 1px solid #${Math.floor(Math.random()*16777215).toString(16)};
+        .gantt-table,
+        .gantt-table th,
+        .gantt-table td {
+          border: 1px solid #${Math.floor(Math.random()*16777215).toString(16)};
         }
       `}</style>
       <div className="flex flex-col flex-1 p-4 md:p-8">
@@ -569,7 +571,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                             </div>
                         </div>
                         <div className="flex-1 mt-6 overflow-auto rounded-lg border" style={{ minWidth: '0' }}>
-                            <table className="w-full border-collapse" style={{ minWidth: '4758px', tableLayout: 'fixed' }}>
+                            <table className="w-full border-collapse gantt-table" style={{ minWidth: '4758px', tableLayout: 'fixed' }}>
                                 <thead>
                                     <tr>
                                         <th className="gantt-header-cell aircraft-name-cell">Aircraft</th>
