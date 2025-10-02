@@ -339,8 +339,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     const dayStart = startOfDay(selectedDate);
     return bookings.filter(b => {
         if (b.status === 'Cancelled' || !b.date) return false;
-        // This is the key fix: include bookings without a resourceType for backward compatibility.
-        if (b.resourceType && b.resourceType !== 'aircraft') return false; 
+        if (!b.resourceType || b.resourceType !== 'aircraft') return false; 
         const bookingStart = parseISO(b.date);
         const bookingEnd = b.endDate ? parseISO(b.endDate) : bookingStart;
         return isWithinInterval(dayStart, { start: startOfDay(bookingStart), end: endOfDay(bookingEnd) });
@@ -442,79 +441,80 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   }
 
   const handleChecklistSuccess = async (data: PreFlightChecklistFormValues | PostFlightChecklistFormValues) => {
-        if (!activeFlight || !company || !user) return;
-
-        const isPreFlight = 'registration' in data;
-        const batch = writeBatch(db);
-        
-        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, activeFlight.aircraft.id);
-        const bookingRef = doc(db, `companies/${company.id}/bookings`, activeFlight.booking.id);
-        
-        try {
-            if (isPreFlight) {
-                batch.update(aircraftRef, { checklistStatus: 'needs-post-flight' });
-                batch.update(bookingRef, { 
-                    startHobbs: data.hobbs,
-                    preFlightChecklist: {
-                      leftSidePhoto: data.leftSidePhoto,
-                      rightSidePhoto: data.rightSidePhoto,
-                      defectPhoto: data.defectPhoto
-                    }
-                });
-                toast({ title: 'Pre-Flight Checklist Submitted' });
-            } else { // POST-FLIGHT LOGIC
-                const flightDuration = activeFlight.booking.startHobbs ? parseFloat((data.hobbs - activeFlight.booking.startHobbs).toFixed(1)) : 0;
-                
-                batch.update(aircraftRef, {
-                    checklistStatus: 'ready',
-                    activeBookingId: null,
-                    hours: data.hobbs,
-                    currentTachoReading: data.tacho,
-                });
-
-                batch.update(bookingRef, { 
-                    status: 'Completed', 
-                    endHobbs: data.hobbs, 
-                    flightDuration,
-                    fuelUplift: data.fuelUplift,
-                    oilUplift: data.oilUplift,
-                    postFlightChecklist: {
-                        leftSidePhoto: data.leftSidePhoto,
-                        rightSidePhoto: data.rightSidePhoto,
-                        defectPhoto: data.defectPhoto
-                    },
-                });
-
-                if (activeFlight.booking.purpose === 'Training' && activeFlight.booking.studentId && activeFlight.booking.pendingLogEntryId) {
-                    const studentRef = doc(db, `companies/${company.id}/students`, activeFlight.booking.studentId);
-                    const studentSnap = await getDoc(studentRef);
-
-                    if (studentSnap.exists()) {
-                        const studentData = studentSnap.data() as User;
-                        const newTotalHours = (studentData.flightHours || 0) + flightDuration;
-                        
-                        const updatedLogs = studentData.trainingLogs?.map(log => 
-                            log.id === activeFlight.booking.pendingLogEntryId 
-                            ? { ...log, startHobbs: activeFlight.booking.startHobbs, endHobbs: data.hobbs, flightDuration }
-                            : log
-                        ) || [];
-                        
-                        batch.update(studentRef, { 
-                            trainingLogs: updatedLogs,
-                            flightHours: newTotalHours
-                        });
-                    }
-                }
-                toast({ title: 'Post-Flight Checklist Submitted', description: 'Logbook entry created and booking completed.' });
-            }
-            
-            await batch.commit();
-            handleDialogClose();
-        } catch (error) {
-            console.error("Error submitting checklist:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not submit checklist.' });
+    if (!activeFlight || !company || !user) return;
+  
+    const isPreFlight = 'registration' in data;
+    const batch = writeBatch(db);
+    
+    const aircraftRef = doc(db, `companies/${company.id}/aircraft`, activeFlight.aircraft.id);
+    const bookingCollectionName = activeFlight.booking.resourceType === 'facility' ? 'facility-bookings' : 'bookings';
+    const bookingRef = doc(db, `companies/${company.id}/${bookingCollectionName}`, activeFlight.booking.id);
+  
+    try {
+      if (isPreFlight) {
+        batch.update(aircraftRef, { checklistStatus: 'needs-post-flight' });
+        batch.update(bookingRef, {
+          startHobbs: data.hobbs,
+          preFlightChecklist: {
+            leftSidePhoto: data.leftSidePhoto,
+            rightSidePhoto: data.rightSidePhoto,
+            defectPhoto: data.defectPhoto,
+          },
+        });
+        toast({ title: 'Pre-Flight Checklist Submitted' });
+      } else { // POST-FLIGHT LOGIC
+        const flightDuration = activeFlight.booking.startHobbs ? parseFloat((data.hobbs - activeFlight.booking.startHobbs).toFixed(1)) : 0;
+  
+        batch.update(aircraftRef, {
+          checklistStatus: 'ready',
+          activeBookingId: null,
+          hours: data.hobbs,
+          currentTachoReading: data.tacho,
+        });
+  
+        batch.update(bookingRef, {
+          status: 'Completed',
+          endHobbs: data.hobbs,
+          flightDuration,
+          fuelUplift: data.fuelUplift,
+          oilUplift: data.oilUplift,
+          postFlightChecklist: {
+            leftSidePhoto: data.leftSidePhoto,
+            rightSidePhoto: data.rightSidePhoto,
+            defectPhoto: data.defectPhoto,
+          },
+        });
+  
+        if (activeFlight.booking.purpose === 'Training' && activeFlight.booking.studentId && activeFlight.booking.pendingLogEntryId) {
+          const studentRef = doc(db, `companies/${company.id}/students`, activeFlight.booking.studentId);
+          const studentSnap = await getDoc(studentRef);
+  
+          if (studentSnap.exists()) {
+            const studentData = studentSnap.data() as User;
+            const newTotalHours = (studentData.flightHours || 0) + flightDuration;
+  
+            const updatedLogs = studentData.trainingLogs?.map(log =>
+              log.id === activeFlight.booking.pendingLogEntryId
+                ? { ...log, startHobbs: activeFlight.booking.startHobbs, endHobbs: data.hobbs, flightDuration }
+                : log
+            ) || [];
+  
+            batch.update(studentRef, {
+              trainingLogs: updatedLogs,
+              flightHours: newTotalHours,
+            });
+          }
         }
-    };
+        toast({ title: 'Post-Flight Checklist Submitted', description: 'Logbook entry created and booking completed.' });
+      }
+  
+      await batch.commit();
+      handleDialogClose();
+    } catch (error) {
+      console.error("Error submitting checklist:", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not submit checklist.' });
+    }
+  };
   
   const handleNewBookingClick = (resource: Aircraft | Facility, time: string) => {
     const [hour, minute] = time.split(':').map(Number);
@@ -574,8 +574,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
       <main className="flex flex-col flex-1 p-4 md:p-8">
         <Card>
            <Tabs defaultValue="aircraft" className="flex-1 flex flex-col">
-            <CardHeader>
-                <div className="flex items-center justify-between">
+            <CardHeader className="flex flex-row items-center justify-between">
                 <TabsList>
                     <TabsTrigger value="aircraft">Aircraft Schedule</TabsTrigger>
                     <TabsTrigger value="facilities">Facility Schedule</TabsTrigger>
@@ -603,7 +602,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                     />
                     </PopoverContent>
                 </Popover>
-                </div>
             </CardHeader>
             <CardContent>
                 <TabsContent value="aircraft">
