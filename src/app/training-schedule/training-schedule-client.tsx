@@ -294,6 +294,39 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const [activeFlight, setActiveFlight] = useState<{ booking: Booking, aircraft: Aircraft } | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   
+  const getBookingVariant = useCallback((booking: Booking): { className?: string, style?: React.CSSProperties, isClickable: boolean } => {
+    if (booking.status === 'Completed') {
+        return { className: 'bg-gray-400 text-white', isClickable: false };
+    }
+    if (booking.purpose === 'Maintenance') {
+        return { className: 'bg-destructive text-white', isClickable: false };
+    }
+
+    if (aircraft) {
+        const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
+        if (ac) {
+            if (ac.checklistStatus === 'needs-post-flight') {
+                const isClickable = ac.activeBookingId === booking.id;
+                return {
+                    className: cn('bg-blue-500 text-white', !isClickable && 'opacity-50'),
+                    isClickable
+                };
+            }
+            if (ac.checklistStatus === 'ready') {
+                const aircraftBookings = bookings.filter(b => b.aircraft === ac.tailNumber && b.status !== 'Cancelled').sort((a,b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+                const nextBooking = aircraftBookings.find(b => {
+                    const bookingDateTime = parseISO(`${b.date}T${b.startTime}`);
+                    return !isBefore(bookingDateTime, new Date());
+                });
+
+                return { className: 'bg-green-500 text-white', isClickable: !nextBooking || nextBooking.id === booking.id };
+            }
+        }
+    }
+    
+    return { className: 'bg-green-500 text-white', isClickable: true };
+  }, [aircraft, bookings]);
+
   useEffect(() => {
     if (!company) {
         setLoading(false);
@@ -380,37 +413,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     const timeToMinutes = (time: string) => {
         const [hours, minutes] = time.split(':').map(Number);
         return hours * 60 + minutes;
-    };
-
-    const getBookingVariant = (booking: Booking): { className?: string, style?: React.CSSProperties, isClickable: boolean } => {
-        if (booking.status === 'Completed') {
-            return { className: 'bg-gray-400 text-white', isClickable: false };
-        }
-        if (booking.purpose === 'Maintenance') {
-            return { className: 'bg-destructive text-white', isClickable: false };
-        }
-    
-        if (aircraft) {
-            const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
-            if (ac) {
-                 if (ac.checklistStatus === 'needs-post-flight') {
-                    const isClickable = ac.activeBookingId === booking.id;
-                    return {
-                        className: cn('bg-blue-500 text-white', !isClickable && 'opacity-50'),
-                        isClickable
-                    };
-                }
-                if (ac.checklistStatus === 'ready') {
-                    // This booking is clickable only if it's the NEXT booking for this aircraft
-                    const aircraftBookings = bookings.filter(b => b.aircraft === ac.tailNumber && b.status !== 'Cancelled').sort((a,b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
-                    const nextBooking = aircraftBookings.find(b => timeToMinutes(b.startTime) >= timeToMinutes(format(new Date(), 'HH:mm')));
-                    
-                    return { className: 'bg-green-500 text-white', isClickable: !nextBooking || nextBooking.id === booking.id };
-                }
-            }
-        }
-        
-        return { className: 'bg-green-500 text-white', isClickable: true };
     };
 
   const handleBookingSubmit = async (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking) => {
