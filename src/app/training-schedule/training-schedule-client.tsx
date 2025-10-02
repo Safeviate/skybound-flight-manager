@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import type { Aircraft, Booking, User, CompletedChecklist, Alert as AlertType, TrainingLogEntry } from '@/lib/types';
+import type { Aircraft, Booking, User, CompletedChecklist, Alert as AlertType, TrainingLogEntry, Facility } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { NewBookingForm } from './new-booking-form';
 import { useUser } from '@/context/user-provider';
@@ -516,12 +516,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         setActiveFlight({ booking, aircraft: aircraftForBooking });
     }
   };
-  
-  const facilities = [
-    { id: 'sim-1', name: 'Simulator A' },
-    { id: 'brief-1', name: 'Briefing Room 1' },
-    { id: 'class-1', name: 'Classroom Alpha' },
-  ];
 
   if (loading) {
     return (
@@ -535,74 +529,61 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   return (
     <>
       <main className="flex flex-col flex-1 p-4 md:p-8">
-        <Tabs defaultValue="bookings" className="flex flex-col flex-1">
+        <Tabs defaultValue="aircraft">
             <TabsList>
-                <TabsTrigger value="bookings">Bookings</TabsTrigger>
+                <TabsTrigger value="aircraft">Aircraft Schedule</TabsTrigger>
+                <TabsTrigger value="facilities">Facility Schedule</TabsTrigger>
             </TabsList>
-            <TabsContent value="bookings" className="mt-6 flex-1 flex flex-col gap-6">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                            variant={"outline"}
-                            className={cn(
-                                "w-[280px] justify-start text-left font-normal",
-                                !selectedDate && "text-muted-foreground"
-                            )}
-                            data-nosnippet
-                            >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                            <Calendar
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={(date) => setSelectedDate(date || new Date())}
-                            initialFocus
-                            />
-                        </PopoverContent>
-                    </Popover>
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-500"></div>Ready for Pre-Flight</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-blue-500"></div>Post-Flight Outstanding</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-gray-400"></div>Completed</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-destructive"></div>In Maintenance</div>
-                    </div>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-6">
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                        variant={"outline"}
+                        className={cn(
+                            "w-[280px] justify-start text-left font-normal",
+                            !selectedDate && "text-muted-foreground"
+                        )}
+                        data-nosnippet
+                        >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                        <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => setSelectedDate(date || new Date())}
+                        initialFocus
+                        />
+                    </PopoverContent>
+                </Popover>
+                <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-500"></div>Ready for Pre-Flight</div>
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-blue-500"></div>Post-Flight Outstanding</div>
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-gray-400"></div>Completed</div>
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-destructive"></div>In Maintenance</div>
                 </div>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Aircraft Schedule</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <GanttChart 
-                            resources={aircraft} 
-                            bookings={filteredBookings}
-                            onSlotClick={handleNewBookingClick}
-                            onBookingClick={handleBookingClick}
-                            resourceKey="id"
-                            resourceNameKey="tailNumber"
-                        />
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Facility Schedule</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <GanttChart 
-                            resources={facilities}
-                            bookings={[]} // No bookings for facilities yet
-                            onSlotClick={() => { /* TODO */ }}
-                            onBookingClick={() => { /* TODO */ }}
-                            resourceKey="id"
-                            resourceNameKey="name"
-                        />
-                    </CardContent>
-                </Card>
+            </div>
+            <TabsContent value="aircraft">
+                <GanttChart 
+                    resources={aircraft} 
+                    bookings={filteredBookings}
+                    onSlotClick={handleNewBookingClick}
+                    onBookingClick={handleBookingClick}
+                    resourceKey="id"
+                    resourceNameKey="tailNumber"
+                />
+            </TabsContent>
+            <TabsContent value="facilities">
+                <GanttChart 
+                    resources={company?.facilities || []}
+                    bookings={[]} // No bookings for facilities yet
+                    onSlotClick={() => { /* TODO */ }}
+                    onBookingClick={() => { /* TODO */ }}
+                    resourceKey="id"
+                    resourceNameKey="name"
+                />
             </TabsContent>
         </Tabs>
       </main>
@@ -639,5 +620,3 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     </>
   );
 }
-
-    

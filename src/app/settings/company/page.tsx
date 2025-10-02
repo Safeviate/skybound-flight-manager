@@ -9,10 +9,15 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Slider } from '@/components/ui/slider';
-import { Bot, ShieldAlert } from 'lucide-react';
+import { Bot, ShieldAlert, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { RiskAssessmentTool } from '@/app/safety/[reportId]/risk-assessment-tool';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import type { Facility } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const REGULATORY_LIMITS = {
   daily: 8,
@@ -22,8 +27,13 @@ const REGULATORY_LIMITS = {
 
 function CompanySettingsPage() {
   const { settings, setSettings } = useSettings();
-  const { user, loading } = useUser();
+  const { user, company, updateCompany, loading } = useUser();
   const router = useRouter();
+  const { toast } = useToast();
+
+  const [isFacilityDialogOpen, setIsFacilityDialogOpen] = useState(false);
+  const [editingFacility, setEditingFacility] = useState<Facility | null>(null);
+  const [facilityName, setFacilityName] = useState('');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -51,6 +61,51 @@ function CompanySettingsPage() {
   
   const handleSliderChange = (key: 'expiryWarningOrangeDays' | 'expiryWarningYellowDays', value: number[]) => {
       setSettings(prev => ({ ...prev, [key]: value[0] }));
+  };
+
+  const openFacilityDialog = (facility: Facility | null) => {
+    setEditingFacility(facility);
+    setFacilityName(facility ? facility.name : '');
+    setIsFacilityDialogOpen(true);
+  };
+
+  const handleFacilitySave = async () => {
+    if (!company || !facilityName.trim()) return;
+
+    let updatedFacilities = [...(company.facilities || [])];
+
+    if (editingFacility) {
+      // Edit existing facility
+      updatedFacilities = updatedFacilities.map(f => f.id === editingFacility.id ? { ...f, name: facilityName.trim() } : f);
+    } else {
+      // Add new facility
+      const newFacility: Facility = {
+        id: `facility-${Date.now()}`,
+        name: facilityName.trim(),
+      };
+      updatedFacilities.push(newFacility);
+    }
+    
+    const success = await updateCompany(company.id, { facilities: updatedFacilities });
+    if (success) {
+      toast({ title: `Facility ${editingFacility ? 'Updated' : 'Added'}` });
+      setIsFacilityDialogOpen(false);
+      setEditingFacility(null);
+      setFacilityName('');
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to save facility.' });
+    }
+  };
+
+  const handleFacilityDelete = async (facilityId: string) => {
+    if (!company) return;
+    const updatedFacilities = company.facilities?.filter(f => f.id !== facilityId) || [];
+    const success = await updateCompany(company.id, { facilities: updatedFacilities });
+     if (success) {
+      toast({ title: 'Facility Deleted' });
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete facility.' });
+    }
   };
 
   if (loading || !user) {
@@ -217,6 +272,57 @@ function CompanySettingsPage() {
 
             <Separator />
 
+            <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Facilities</h3>
+                 <Card>
+                    <CardHeader className="flex-row justify-between items-center">
+                        <div>
+                        <CardTitle className="text-base">Manage Facilities</CardTitle>
+                        <CardDescription className="text-sm">Add or remove rooms and simulators for scheduling.</CardDescription>
+                        </div>
+                        <Button size="sm" onClick={() => openFacilityDialog(null)}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Facility
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {company?.facilities && company.facilities.length > 0 ? (
+                                    company.facilities.map(facility => (
+                                        <TableRow key={facility.id}>
+                                            <TableCell>{facility.name}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="icon" onClick={() => openFacilityDialog(facility)}>
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => handleFacilityDelete(facility.id)}>
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={2} className="text-center h-24">
+                                            No facilities added yet.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <Separator />
+
              <div className="space-y-4">
                 <h3 className="font-semibold text-lg flex items-center gap-2"><ShieldAlert /> Risk Matrix Configuration</h3>
                 <RiskAssessmentTool readOnly={false} />
@@ -224,6 +330,29 @@ function CompanySettingsPage() {
 
           </CardContent>
         </Card>
+
+        <Dialog open={isFacilityDialogOpen} onOpenChange={setIsFacilityDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{editingFacility ? 'Edit Facility' : 'Add New Facility'}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="facility-name">Facility Name</Label>
+                        <Input
+                            id="facility-name"
+                            value={facilityName}
+                            onChange={(e) => setFacilityName(e.target.value)}
+                            placeholder="e.g., Classroom A, Simulator 2"
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsFacilityDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleFacilitySave}>Save Facility</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
       </main>
   );
 }

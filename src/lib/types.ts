@@ -1,5 +1,4 @@
 
-
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
@@ -50,6 +49,11 @@ export type Feature =
     | 'Bookings'
     | 'AdvancedAnalytics';
 
+export type Facility = {
+  id: string;
+  name: string;
+};
+
 export type Company = {
   id: string;
   name: string;
@@ -58,6 +62,7 @@ export type Company = {
   enabledFeatures?: Feature[];
   logoUrl?: string;
   riskMatrixColors?: Record<string, string>;
+  facilities?: Facility[];
 };
 
 export type AircraftDocument = {
@@ -808,6 +813,3 @@ export const HIRE_AND_FLY_DOCUMENTS = [
   "Identification",
   "Passport",
 ] as const;
-
-
-    
