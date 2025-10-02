@@ -30,6 +30,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface FlightLogsPageContentProps {
   initialBookings: Booking[];
@@ -94,10 +95,12 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
   };
 
   const SortableHeader = ({ label, sortKey }: { label: string, sortKey: keyof Booking }) => (
-    <Button variant="ghost" onClick={() => requestSort(sortKey)} className="px-2 py-1 h-auto">
-        {label}
-        <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig?.key === sortKey ? '' : 'opacity-0 group-hover:opacity-50'}`} />
-    </Button>
+    <div className="flex items-center">
+      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="px-2 py-1 h-auto">
+          {label}
+          <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig?.key === sortKey ? '' : 'opacity-0 group-hover:opacity-50'}`} />
+      </Button>
+    </div>
   );
 
   return (
@@ -122,87 +125,90 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
                 <Download className="mr-2 h-4 w-4" /> Download as PDF
             </Button>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead><SortableHeader label="Booking #" sortKey="bookingNumber" /></TableHead>
-                <TableHead><SortableHeader label="Date" sortKey="date" /></TableHead>
-                <TableHead><SortableHeader label="Aircraft" sortKey="aircraft" /></TableHead>
-                <TableHead><SortableHeader label="Student/Pilot" sortKey="student" /></TableHead>
-                <TableHead><SortableHeader label="Instructor" sortKey="instructor" /></TableHead>
-                <TableHead>Start Hobbs</TableHead>
-                <TableHead>End Hobbs</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Fuel (L)</TableHead>
-                <TableHead>Oil (qts)</TableHead>
-                <TableHead><SortableHeader label="Exercise" sortKey="trainingExercise" /></TableHead>
-                <TableHead>Photos</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.length > 0 ? (
-                items.map((log) => {
-                    const hasPhotos = log.preFlightData?.leftSidePhoto || log.postFlightData?.leftSidePhoto || log.preFlightChecklist?.leftSidePhoto || log.postFlightChecklist?.leftSidePhoto;
-                    return (
-                    <TableRow key={log.id}>
-                        <TableCell className="font-medium">{log.bookingNumber || 'N/A'}</TableCell>
-                        <TableCell>{format(parseISO(log.date), 'dd/MM/yyyy')}</TableCell>
-                        <TableCell>{log.aircraft}</TableCell>
-                        <TableCell>{log.student || log.pilotName || 'N/A'}</TableCell>
-                        <TableCell>{log.instructor || 'N/A'}</TableCell>
-                        <TableCell>{log.startHobbs?.toFixed(1) || '-'}</TableCell>
-                        <TableCell>{log.endHobbs?.toFixed(1) || '-'}</TableCell>
-                        <TableCell>{log.flightDuration?.toFixed(1) || '-'}</TableCell>
-                        <TableCell>{log.fuelUplift?.toFixed(1) || '-'}</TableCell>
-                        <TableCell>{log.oilUplift?.toFixed(1) || '-'}</TableCell>
-                        <TableCell className="max-w-[200px] truncate">{log.trainingExercise || 'N/A'}</TableCell>
-                        <TableCell>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={!hasPhotos}
-                                onClick={() => setViewingPhotosFor(log)}
-                            >
-                                <Eye className="mr-2 h-4 w-4" />
-                                View
-                            </Button>
-                        </TableCell>
-                        <TableCell className="text-right">
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" size="icon">
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete the flight log for booking #{log.bookingNumber}.
-                                    </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(log.id)}>
-                                        Yes, delete log
-                                    </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        </TableCell>
-                    </TableRow>
-                    )
-                })
-              ) : (
+          <ScrollArea>
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={13} className="h-24 text-center">
-                    No completed flight logs found.
-                  </TableCell>
+                  <TableHead><SortableHeader label="Booking #" sortKey="bookingNumber" /></TableHead>
+                  <TableHead><SortableHeader label="Date" sortKey="date" /></TableHead>
+                  <TableHead><SortableHeader label="Aircraft" sortKey="aircraft" /></TableHead>
+                  <TableHead><SortableHeader label="Student/Pilot" sortKey="student" /></TableHead>
+                  <TableHead><SortableHeader label="Instructor" sortKey="instructor" /></TableHead>
+                  <TableHead>Start Hobbs</TableHead>
+                  <TableHead>End Hobbs</TableHead>
+                  <TableHead>Duration</TableHead>
+                  <TableHead>Fuel (L)</TableHead>
+                  <TableHead>Oil (qts)</TableHead>
+                  <TableHead><SortableHeader label="Exercise" sortKey="trainingExercise" /></TableHead>
+                  <TableHead>Photos</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {items.length > 0 ? (
+                  items.map((log) => {
+                      const hasPhotos = log.preFlightData?.leftSidePhoto || log.postFlightData?.leftSidePhoto || log.preFlightChecklist?.leftSidePhoto || log.postFlightChecklist?.leftSidePhoto;
+                      return (
+                      <TableRow key={log.id}>
+                          <TableCell className="font-medium">{log.bookingNumber || 'N/A'}</TableCell>
+                          <TableCell>{format(parseISO(log.date), 'dd/MM/yyyy')}</TableCell>
+                          <TableCell>{log.aircraft}</TableCell>
+                          <TableCell>{log.student || log.pilotName || 'N/A'}</TableCell>
+                          <TableCell>{log.instructor || 'N/A'}</TableCell>
+                          <TableCell>{log.startHobbs?.toFixed(1) || '-'}</TableCell>
+                          <TableCell>{log.endHobbs?.toFixed(1) || '-'}</TableCell>
+                          <TableCell>{log.flightDuration?.toFixed(1) || '-'}</TableCell>
+                          <TableCell>{log.fuelUplift?.toFixed(1) || '-'}</TableCell>
+                          <TableCell>{log.oilUplift?.toFixed(1) || '-'}</TableCell>
+                          <TableCell className="max-w-[200px] truncate">{log.trainingExercise || 'N/A'}</TableCell>
+                          <TableCell>
+                              <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={!hasPhotos}
+                                  onClick={() => setViewingPhotosFor(log)}
+                              >
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View
+                              </Button>
+                          </TableCell>
+                          <TableCell className="text-right">
+                              <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                      <Button variant="destructive" size="icon">
+                                          <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                          This action cannot be undone. This will permanently delete the flight log for booking #{log.bookingNumber}.
+                                      </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDelete(log.id)}>
+                                          Yes, delete log
+                                      </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                  </AlertDialogContent>
+                              </AlertDialog>
+                          </TableCell>
+                      </TableRow>
+                      )
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={13} className="h-24 text-center">
+                      No completed flight logs found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
         </CardContent>
       </Card>
       
