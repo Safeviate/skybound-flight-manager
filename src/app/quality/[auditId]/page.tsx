@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -697,6 +696,19 @@ export default function QualityAuditDetailPage() {
   const [cameraItemId, setCameraItemId] = useState<string | null>(null);
   const [isBackAlertOpen, setIsBackAlertOpen] = useState(false);
 
+  const finalFindingOptions = useMemo(() => 
+    (company?.findingOptions?.length ?? 0) > 0 
+      ? company!.findingOptions! 
+      : [
+          {id: '1', name: 'Compliant'},
+          {id: '2', name: 'Non Compliant'},
+          {id: '3', name: 'Partial'},
+          {id: '4', name: 'Observation'},
+          {id: '5', name: 'Not Applicable'},
+        ],
+    [company?.findingOptions]
+  );
+  
   useEffect(() => {
     if (userLoading) return;
     if (!user) {
@@ -745,18 +757,6 @@ export default function QualityAuditDetailPage() {
 
   const hasUnsavedChanges = JSON.stringify(audit) !== JSON.stringify(savedAudit);
 
-  const finalFindingOptions = useMemo(() => 
-    (company?.findingOptions?.length ?? 0) > 0 
-      ? company!.findingOptions! 
-      : [
-          {id: '1', name: 'Compliant'},
-          {id: '2', name: 'Non Compliant'},
-          {id: '3', name: 'Partial'},
-          {id: '4', name: 'Observation'},
-          {id: '5', name: 'Not Applicable'},
-        ],
-    [company?.findingOptions]
-  );
   
   const handleItemChange = (itemId: string, field: keyof AuditChecklistItem, value: any) => {
     if (!audit) return;
@@ -1149,15 +1149,4 @@ export default function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
-    
-
-    
-
-    
-
-    
-
-
-
-
     
