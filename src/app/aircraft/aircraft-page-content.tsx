@@ -1101,6 +1101,7 @@ export function AircraftPageContent() {
                   onReportIssue={handleReportIssue}
                   initialHobbs={initialHobbs}
                   booking={activeBookingForSelectedAircraft}
+                  onEditBooking={() => {}}
               />
           </>
         );

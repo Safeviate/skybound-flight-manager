@@ -59,9 +59,10 @@ interface PreFlightChecklistFormProps {
     onReportIssue: (aircraftId: string, issueDetails: { title: string, description: string, photo?: string }) => Promise<void>;
     initialHobbs?: number;
     booking?: Booking | null;
+    onEditBooking: () => void;
 }
 
-export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, initialHobbs, booking }: PreFlightChecklistFormProps) {
+export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, initialHobbs, booking, onEditBooking }: PreFlightChecklistFormProps) {
   const { toast } = useToast();
   const { settings } = useSettings();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -142,6 +143,11 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, ini
                         <CardTitle>Pre-Flight Checklist</CardTitle>
                         <CardDescription>Complete all items for {aircraft.tailNumber} before submitting.</CardDescription>
                     </div>
+                     {booking && (
+                        <Button variant="outline" size="sm" type="button" onClick={onEditBooking}>
+                            <Edit className="mr-2 h-4 w-4" /> Edit Booking
+                        </Button>
+                    )}
                 </div>
             </CardHeader>
             <CardContent>
