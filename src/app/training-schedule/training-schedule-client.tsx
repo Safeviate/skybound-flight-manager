@@ -210,13 +210,26 @@ const GanttChart = ({
 
     const getBookingLabel = (booking: Booking) => {
         const bookingNumPart = booking.bookingNumber ? `${booking.bookingNumber} - ` : '';
+        let line1 = '';
+        let line2 = '';
+
         if (booking.purpose === 'Facility Booking') {
-            return `${booking.bookingNumber || ''} - ${booking.title} (${booking.responsiblePerson})`;
+            line1 = `${booking.bookingNumber || ''} - ${booking.title}`;
+            line2 = `(${booking.responsiblePerson})`;
+        } else if (booking.purpose === 'Hire and Fly') {
+            line1 = `${bookingNumPart}${booking.purpose}`;
+            line2 = `${booking.pilotName}`;
+        } else { // Training or other aircraft bookings
+            line1 = `${bookingNumPart}${booking.purpose}`;
+            line2 = `${booking.student} w/ ${booking.instructor}`;
         }
-        if (booking.purpose === 'Hire and Fly') {
-            return `${bookingNumPart}${booking.purpose}: ${booking.pilotName}`;
-        }
-        return `${bookingNumPart}${booking.purpose}: ${booking.student} w/ ${booking.instructor}`;
+
+        return (
+            <div className="flex flex-col">
+                <span className="font-semibold">{line1}</span>
+                <span className="text-xs opacity-90">{line2}</span>
+            </div>
+        );
     };
 
     return (
@@ -258,7 +271,7 @@ const GanttChart = ({
                                                             onClick={() => onBookingClick(booking)}
                                                             className={cn('h-full flex items-center p-2 text-white text-xs whitespace-nowrap overflow-hidden', variant.className, (variant.isClickable || booking.status === 'Completed') ? 'cursor-pointer' : 'cursor-not-allowed')} style={variant.style}>
                                                             <div className="flex items-center gap-2">
-                                                                <span>{getBookingLabel(booking)}</span>
+                                                                {getBookingLabel(booking)}
                                                             </div>
                                                         </div>
                                                     </TooltipTrigger>
