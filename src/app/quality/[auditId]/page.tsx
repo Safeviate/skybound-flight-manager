@@ -695,6 +695,19 @@ export default function QualityAuditDetailPage() {
 
   const hasUnsavedChanges = JSON.stringify(audit) !== JSON.stringify(savedAudit);
 
+  const finalFindingOptions = useMemo(() => 
+    (company?.findingOptions?.length ?? 0) > 0 
+      ? company!.findingOptions! 
+      : [
+          {id: '1', name: 'Compliant'},
+          {id: '2', name: 'Non-compliant'},
+          {id: '3', name: 'Partial'},
+          {id: '4', name: 'Observation'},
+          {id: '5', name: 'Not Applicable'},
+        ],
+    [company?.findingOptions]
+  );
+
   useEffect(() => {
     if (userLoading) return;
     if (!user) {
@@ -862,19 +875,6 @@ export default function QualityAuditDetailPage() {
     }
   };
 
-  const finalFindingOptions = useMemo(() => 
-    (company?.findingOptions?.length ?? 0) > 0 
-      ? company!.findingOptions! 
-      : [
-          {id: '1', name: 'Compliant'},
-          {id: '2', name: 'Non-compliant'},
-          {id: '3', name: 'Partial'},
-          {id: '4', name: 'Observation'},
-          {id: '5', name: 'Not Applicable'},
-        ],
-    [company?.findingOptions]
-  );
-
   if (loading || userLoading) {
     return (
         <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
@@ -1003,7 +1003,7 @@ export default function QualityAuditDetailPage() {
                       <Database className="mr-2 h-4 w-4" />
                       Seed Data
                   </Button>
-                  <Button onClick={() => handleAuditUpdate(audit)}>
+                  <Button onClick={() => handleAuditUpdate(audit, false)}>
                       <Save className="mr-2 h-4 w-4" />
                       Save Progress
                   </Button>
@@ -1018,6 +1018,7 @@ export default function QualityAuditDetailPage() {
                               }
                               const findingInfo = getFindingInfo(item.finding);
                               const levelInfo = getLevelInfo(item.level);
+                              const showLevelSelect = item.finding === 'Non-compliant' || item.finding === 'Partial';
                               return (
                                   <div key={item.id} className="p-4 border rounded-lg space-y-4">
                                       <div>
@@ -1038,19 +1039,21 @@ export default function QualityAuditDetailPage() {
                                                   </SelectContent>
                                               </Select>
                                           </div>
-                                          <div className="space-y-2">
-                                              <Label className="text-sm font-medium">Level</Label>
-                                              <Select value={item.level || ''} onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}>
-                                                  <SelectTrigger>
-                                                      <SelectValue placeholder="Select Level" />
-                                                  </SelectTrigger>
-                                                  <SelectContent>
-                                                      {levelOptions.map(opt => (
-                                                          <SelectItem key={opt} value={opt!}>{opt}</SelectItem>
-                                                      ))}
-                                                  </SelectContent>
-                                              </Select>
-                                          </div>
+                                          {showLevelSelect && (
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-medium">Level</Label>
+                                                <Select value={item.level || ''} onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select Level" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {levelOptions.map(opt => (
+                                                            <SelectItem key={opt} value={opt!}>{opt}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                          )}
                                       </div>
                                       <div className="space-y-2">
                                           <Label className="text-sm font-medium">Reference</Label>
@@ -1090,10 +1093,12 @@ export default function QualityAuditDetailPage() {
                                         </div>
                                         <div className="flex items-center gap-4 text-sm">
                                             <span className="font-semibold">Result:</span>
-                                            <Badge variant={findingInfo.variant} className="whitespace-nowrap">
-                                                {findingInfo.icon}
-                                                <span className="ml-2">{findingInfo.text}</span>
-                                            </Badge>
+                                            {item.finding && (
+                                                <Badge variant={findingInfo.variant} className="whitespace-nowrap">
+                                                    {findingInfo.icon}
+                                                    <span className="ml-2">{findingInfo.text}</span>
+                                                </Badge>
+                                            )}
                                             {levelInfo && (
                                                 <Badge variant={levelInfo.variant} className="whitespace-nowrap">
                                                 {item.level}
