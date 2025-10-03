@@ -77,23 +77,25 @@ const FlightHub = ({
                 </DialogDescription>
             </DialogHeader>
             
-            {activeFlight.aircraft.checklistStatus === 'needs-post-flight' ? (
-                <PostFlightChecklistForm 
-                    onSuccess={handleChecklistSuccess}
-                    aircraft={activeFlight.aircraft}
-                    startHobbs={activeFlight.booking.startHobbs}
-                    onReportIssue={() => {}}
-                />
-            ) : (
-                <PreFlightChecklistForm 
-                    onSuccess={handleChecklistSuccess} 
-                    aircraft={activeFlight.aircraft}
-                    onReportIssue={() => {}}
-                    initialHobbs={activeFlight.aircraft.hours}
-                    booking={activeFlight.booking}
-                    onEditBooking={onEditBooking}
-                />
-            )}
+            <div className="py-4">
+                {activeFlight.aircraft.checklistStatus === 'needs-post-flight' ? (
+                    <PostFlightChecklistForm 
+                        onSuccess={handleChecklistSuccess}
+                        aircraft={activeFlight.aircraft}
+                        startHobbs={activeFlight.booking.startHobbs}
+                        onReportIssue={() => {}}
+                    />
+                ) : (
+                    <PreFlightChecklistForm 
+                        onSuccess={handleChecklistSuccess} 
+                        aircraft={activeFlight.aircraft}
+                        onReportIssue={() => {}}
+                        initialHobbs={activeFlight.aircraft.hours}
+                        booking={activeFlight.booking}
+                        onEditBooking={onEditBooking}
+                    />
+                )}
+            </div>
 
             <DialogFooter className="border-t pt-4">
                 <AlertDialog>
