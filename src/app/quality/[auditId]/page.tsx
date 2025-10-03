@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -358,75 +359,93 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                 <CardDescription>Details of all non-compliant findings from this audit.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {audit.nonConformanceIssues.map(issue => {
-                                    const issueText = `Non-Conformance: ${issue.itemText}\nLevel: ${issue.level}\nRegulation: ${issue.regulationReference}\n\nAuditor Comment:\n${issue.comment}`;
-                                    return (
-                                        <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
-                                                    <p className="font-medium mt-2">{issue.itemText}</p>
-                                                    <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
-                                                    <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
-                                                </div>
-                                                <Dialog>
-                                                    <DialogTrigger asChild>
-                                                        <Button variant="outline" size="sm" className="no-print">
-                                                            <Bot className="mr-2 h-4 w-4" />
-                                                            AI Analysis
-                                                        </Button>
-                                                    </DialogTrigger>
-                                                    <DialogContent className="sm:max-w-2xl">
-                                                         <QualityAuditAnalyzer 
-                                                            auditText={issueText}
-                                                            onCapSuggested={(cap) => {
-                                                                setSuggestedCap(cap);
-                                                                setEditingIssue(issue);
-                                                            }}
-                                                         />
-                                                    </DialogContent>
-                                                </Dialog>
-                                            </div>
-                                            {issue.correctiveActionPlan ? (
-                                                <div className="space-y-4">
-                                                    <h4 className="font-semibold text-sm">Corrective Action Plan</h4>
-                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                                        <div>
-                                                            <p className="font-medium text-muted-foreground">Root Cause</p>
-                                                            <p className="text-justify">{issue.correctiveActionPlan.rootCause}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-medium text-muted-foreground">Corrective Action</p>
-                                                            <p className="text-justify">{issue.correctiveActionPlan.correctiveAction}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-medium text-muted-foreground">Preventative Action</p>
-                                                            <p className="text-justify">{issue.correctiveActionPlan.preventativeAction}</p>
-                                                        </div>
+                                {(() => {
+                                    let questionNumber = 1;
+                                    const itemMap = new Map(audit.checklistItems.map((item, index) => [item.id, index]));
+                                    
+                                    return audit.nonConformanceIssues.map(issue => {
+                                        const originalItemIndex = itemMap.get(issue.id.split('-')[0]);
+                                        let displayQuestionNumber = '';
+
+                                        if (originalItemIndex !== undefined) {
+                                            let qNum = 0;
+                                            for(let i=0; i <= originalItemIndex; i++) {
+                                                if(audit.checklistItems[i].type !== 'Header') {
+                                                    qNum++;
+                                                }
+                                            }
+                                            displayQuestionNumber = `${qNum}. `;
+                                        }
+
+                                        const issueText = `Non-Conformance: ${issue.itemText}\nLevel: ${issue.level}\nRegulation: ${issue.regulationReference}\n\nAuditor Comment:\n${issue.comment}`;
+                                        return (
+                                            <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
+                                                        <p className="font-medium mt-2">{displayQuestionNumber}{issue.itemText}</p>
+                                                        <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
+                                                        <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
                                                     </div>
-                                                    <Table>
-                                                        <TableHeader>
-                                                            <TableRow>
-                                                                <TableHead>Responsible Person</TableHead>
-                                                                <TableHead>Due Date</TableHead>
-                                                                <TableHead>Status</TableHead>
-                                                            </TableRow>
-                                                        </TableHeader>
-                                                        <TableBody>
-                                                            <TableRow>
-                                                                <TableCell>{issue.correctiveActionPlan.responsiblePerson}</TableCell>
-                                                                <TableCell>{issue.correctiveActionPlan.completionDate}</TableCell>
-                                                                <TableCell><Badge variant="outline">{issue.correctiveActionPlan.status}</Badge></TableCell>
-                                                            </TableRow>
-                                                        </TableBody>
-                                                    </Table>
+                                                    <Dialog>
+                                                        <DialogTrigger asChild>
+                                                            <Button variant="outline" size="sm" className="no-print">
+                                                                <Bot className="mr-2 h-4 w-4" />
+                                                                AI Analysis
+                                                            </Button>
+                                                        </DialogTrigger>
+                                                        <DialogContent className="sm:max-w-2xl">
+                                                            <QualityAuditAnalyzer 
+                                                                auditText={issueText}
+                                                                onCapSuggested={(cap) => {
+                                                                    setSuggestedCap(cap);
+                                                                    setEditingIssue(issue);
+                                                                }}
+                                                            />
+                                                        </DialogContent>
+                                                    </Dialog>
                                                 </div>
-                                            ) : (
-                                                <Button onClick={() => setEditingIssue(issue)} className="no-print">Create Corrective Action Plan</Button>
-                                            )}
-                                        </div>
-                                    )
-                                })}
+                                                {issue.correctiveActionPlan ? (
+                                                    <div className="space-y-4">
+                                                        <h4 className="font-semibold text-sm">Corrective Action Plan</h4>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                            <div>
+                                                                <p className="font-medium text-muted-foreground">Root Cause</p>
+                                                                <p className="text-justify">{issue.correctiveActionPlan.rootCause}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-medium text-muted-foreground">Corrective Action</p>
+                                                                <p className="text-justify">{issue.correctiveActionPlan.correctiveAction}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-medium text-muted-foreground">Preventative Action</p>
+                                                                <p className="text-justify">{issue.correctiveActionPlan.preventativeAction}</p>
+                                                            </div>
+                                                        </div>
+                                                        <Table>
+                                                            <TableHeader>
+                                                                <TableRow>
+                                                                    <TableHead>Responsible Person</TableHead>
+                                                                    <TableHead>Due Date</TableHead>
+                                                                    <TableHead>Status</TableHead>
+                                                                </TableRow>
+                                                            </TableHeader>
+                                                            <TableBody>
+                                                                <TableRow>
+                                                                    <TableCell>{issue.correctiveActionPlan.responsiblePerson}</TableCell>
+                                                                    <TableCell>{issue.correctiveActionPlan.completionDate}</TableCell>
+                                                                    <TableCell><Badge variant="outline">{issue.correctiveActionPlan.status}</Badge></TableCell>
+                                                                </TableRow>
+                                                            </TableBody>
+                                                        </Table>
+                                                    </div>
+                                                ) : (
+                                                    <Button onClick={() => setEditingIssue(issue)} className="no-print">Create Corrective Action Plan</Button>
+                                                )}
+                                            </div>
+                                        )
+                                    })
+                                })()}
                             </CardContent>
                         </Card>
                     )}
@@ -438,31 +457,40 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {audit.checklistItems.filter(item => item.finding !== 'Non-compliant' && item.finding !== 'Partial').map(item => {
-                                const { icon, variant, text } = getFindingInfo(item.finding);
-                                return (
-                                    <div key={item.id} className="p-4 border rounded-lg mb-4">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-medium">{item.text}</p>
-                                                <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
+                            {(() => {
+                                let questionNumber = 0;
+                                return audit.checklistItems.map(item => {
+                                    if (item.type !== 'Header') {
+                                        questionNumber++;
+                                    }
+                                    if (item.finding !== 'Non Compliant' && item.finding !== 'Partial') {
+                                        const { icon, variant, text } = getFindingInfo(item.finding);
+                                        return (
+                                            <div key={item.id} className="p-4 border rounded-lg mb-4">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <p className="font-medium">{item.type !== 'Header' && `${questionNumber}. `}{item.text}</p>
+                                                        <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
+                                                    </div>
+                                                    <Badge variant={variant} className="whitespace-nowrap">
+                                                        {icon}
+                                                        <span className="ml-2">{text}</span>
+                                                    </Badge>
+                                                </div>
+                                                {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
+                                                {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
+                                                {item.suggestedImprovement && (
+                                                    <div className="mt-2">
+                                                        <p className="text-xs font-semibold text-primary">Suggested Improvement:</p>
+                                                        <p className="text-sm p-2 bg-primary/10 rounded-md whitespace-pre-wrap">{item.suggestedImprovement}</p>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <Badge variant={variant} className="whitespace-nowrap">
-                                                {icon}
-                                                <span className="ml-2">{text}</span>
-                                            </Badge>
-                                        </div>
-                                        {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
-                                        {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
-                                        {item.suggestedImprovement && (
-                                            <div className="mt-2">
-                                                <p className="text-xs font-semibold text-primary">Suggested Improvement:</p>
-                                                <p className="text-sm p-2 bg-primary/10 rounded-md whitespace-pre-wrap">{item.suggestedImprovement}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                )
-                            })}
+                                        )
+                                    }
+                                    return null;
+                                })
+                            })()}
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -576,6 +604,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                                     "w-full pl-3 text-left font-normal",
                                                                     !field.value && "text-muted-foreground"
                                                                 )}
+                                                                data-nosnippet
                                                                 >
                                                                 {field.value ? (
                                                                     format(field.value, "PPP")
@@ -696,6 +725,7 @@ export default function QualityAuditDetailPage() {
   const [cameraItemId, setCameraItemId] = useState<string | null>(null);
   const [isBackAlertOpen, setIsBackAlertOpen] = useState(false);
 
+  
   const finalFindingOptions = useMemo(() => 
     (company?.findingOptions?.length ?? 0) > 0 
       ? company!.findingOptions! 
