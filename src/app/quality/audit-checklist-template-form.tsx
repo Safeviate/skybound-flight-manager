@@ -1,25 +1,17 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, GripVertical } from 'lucide-react';
 import type { AuditChecklist, AuditChecklistItem, AuditArea, ChecklistItemType } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
@@ -74,10 +66,28 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
     }
   }, [existingTemplate, form]);
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, move } = useFieldArray({
     control: form.control,
     name: 'items',
   });
+  
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    move(draggedIndex, index);
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
 
   const handleFormSubmit = (data: ChecklistFormValues) => {
     const newChecklist = {
@@ -128,8 +138,19 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
                        const itemType = form.watch(`items.${index}.type`);
                        const isHeader = itemType === 'Header';
                        return (
-                            <div key={field.id} className={cn("flex items-start gap-2 p-2 border rounded-md", isHeader && "bg-muted/50")}>
-                                <span className="font-semibold text-sm pt-2">{index + 1}.</span>
+                            <div 
+                                key={field.id} 
+                                className={cn(
+                                    "flex items-center gap-2 p-2 border rounded-md", 
+                                    isHeader && "bg-muted/50",
+                                    draggedIndex === index && 'opacity-50 border-dashed'
+                                )}
+                                draggable
+                                onDragStart={() => handleDragStart(index)}
+                                onDragOver={(e) => handleDragOver(e, index)}
+                                onDragEnd={handleDragEnd}
+                            >
+                                <GripVertical className="h-5 w-5 text-muted-foreground cursor-move shrink-0" />
                                 <div className="flex-1 space-y-2">
                                     <FormField
                                         control={form.control}
