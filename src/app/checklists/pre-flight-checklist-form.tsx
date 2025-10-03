@@ -11,8 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { Bot, Camera, Check, FileCheck, Plane, Hash, Image as ImageIcon, AlertTriangle, Send, Edit } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Bot, Camera, Check, FileCheck, Plane, Hash, Image as ImageIcon, AlertTriangle, Send, Edit, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import type { Aircraft, Booking } from '@/lib/types';
@@ -20,6 +20,19 @@ import { StandardCamera } from '@/components/ui/standard-camera';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSettings } from '@/context/settings-provider';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const deletionReasons = [
+    'Maintenance',
+    'Weather',
+    'Congested Airspace',
+    'No show - Pilot',
+    'No show - Student',
+    'Illness - Pilot',
+    'Illness - Student',
+    'Other',
+];
 
 
 const createChecklistSchema = (requirePhotos: boolean) => z.object({
@@ -57,16 +70,19 @@ interface PreFlightChecklistFormProps {
     aircraft: Aircraft;
     onSuccess: (data: PreFlightChecklistFormValues) => void;
     onReportIssue: (aircraftId: string, issueDetails: { title: string, description: string, photo?: string }) => Promise<void>;
+    onCancelBooking: (bookingId: string, reason: string) => void;
     initialHobbs?: number;
     booking?: Booking | null;
     onEditBooking: () => void;
 }
 
-export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, initialHobbs, booking, onEditBooking }: PreFlightChecklistFormProps) {
+export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, onCancelBooking, initialHobbs, booking, onEditBooking }: PreFlightChecklistFormProps) {
   const { toast } = useToast();
   const { settings } = useSettings();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | 'defectPhoto' | null>(null);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [otherReason, setOtherReason] = useState('');
 
   const checklistSchema = createChecklistSchema(settings.requirePreFlightPhotos);
 
@@ -132,6 +148,12 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, ini
         photo: getValues("defectPhoto"),
     });
   };
+
+  const handleConfirmCancellation = () => {
+    const finalReason = deleteReason === 'Other' ? `Other: ${otherReason}` : deleteReason;
+    if (!finalReason || !booking) return;
+    onCancelBooking(booking.id, finalReason);
+  }
 
   return (
     <Form {...form}>
@@ -269,10 +291,10 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, ini
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField control={form.control} name="checklistOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Aircraft Checklist / POH</FormLabel><FormMessage/></FormItem>)} />
                                 <FormField control={form.control} name="fomOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Flight Ops Manual</FormLabel><FormMessage/></FormItem>)} />
-                                <FormField control={form.control} name="airworthinessOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Certificate of Airworthiness</FormLabel><FormMessage/></FormItem>)} />
+                                <FormField control={form.control} name="airworthinessOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Cert. of Airworthiness</FormLabel><FormMessage/></FormItem>)} />
                                 <FormField control={form.control} name="insuranceOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Insurance Certificate</FormLabel><FormMessage/></FormItem>)} />
                                 <FormField control={form.control} name="releaseToServiceOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Release to Service</FormLabel><FormMessage/></FormItem>)} />
-                                <FormField control={form.control} name="registrationOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Certificate of Registration</FormLabel><FormMessage/></FormItem>)} />
+                                <FormField control={form.control} name="registrationOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Cert. of Registration</FormLabel><FormMessage/></FormItem>)} />
                                 <FormField control={form.control} name="massAndBalanceOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Mass and Balance</FormLabel><FormMessage/></FormItem>)} />
                                 <FormField control={form.control} name="radioLicenseOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Radio Station License</FormLabel><FormMessage/></FormItem>)} />
                             </div>
@@ -312,9 +334,53 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, ini
                                     </FormItem>
                                 )}
                             />
-                            <div className="flex justify-end">
+                            <div className="flex justify-between items-center">
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button type="button" variant="destructive">
+                                            <Trash2 className="mr-2 h-4 w-4"/>
+                                            Cancel Booking
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Reason for Cancellation</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Please select a reason for cancelling this booking. This information is used for reporting.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <div className="py-4 space-y-4">
+                                            <Select value={deleteReason} onValueChange={setDeleteReason}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select a reason..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {deletionReasons.map(reason => (
+                                                        <SelectItem key={reason} value={reason}>{reason}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            {deleteReason === 'Other' && (
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="other-reason">Please specify:</Label>
+                                                    <Textarea
+                                                        id="other-reason"
+                                                        value={otherReason}
+                                                        onChange={(e) => setOtherReason(e.target.value)}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleConfirmCancellation} disabled={!deleteReason || (deleteReason === 'Other' && !otherReason)}>
+                                                Yes, Cancel Booking
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                                 <Button type="button" variant="destructive" onClick={handleIssueSubmit}>
-                                <Send className="mr-2 h-4 w-4"/> Submit Issue Report
+                                    <Send className="mr-2 h-4 w-4"/> Submit Issue Report
                                 </Button>
                             </div>
                         </div>

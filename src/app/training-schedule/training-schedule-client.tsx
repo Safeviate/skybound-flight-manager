@@ -37,17 +37,6 @@ interface TrainingSchedulePageContentProps {
   initialHireAndFly: User[];
 }
 
-const deletionReasons = [
-    'Maintenance',
-    'Weather',
-    'Congested Airspace',
-    'No show - Pilot',
-    'No show - Student',
-    'Illness - Pilot',
-    'Illness - Student',
-    'Other',
-];
-
 const FlightHub = ({
     activeFlight,
     handleChecklistSuccess,
@@ -59,14 +48,6 @@ const FlightHub = ({
     onCancelBooking: (bookingId: string, reason: string) => void,
     onEditBooking: () => void,
 }) => {
-    const [deleteReason, setDeleteReason] = useState('');
-    const [otherReason, setOtherReason] = useState('');
-
-    const handleConfirmCancellation = () => {
-        const finalReason = deleteReason === 'Other' ? `Other: ${otherReason}` : deleteReason;
-        if (!finalReason) return;
-        onCancelBooking(activeFlight.booking.id, finalReason);
-    }
     
     return (
         <>
@@ -90,59 +71,13 @@ const FlightHub = ({
                         onSuccess={handleChecklistSuccess} 
                         aircraft={activeFlight.aircraft}
                         onReportIssue={() => {}}
+                        onCancelBooking={onCancelBooking}
                         initialHobbs={activeFlight.aircraft.hours}
                         booking={activeFlight.booking}
                         onEditBooking={onEditBooking}
                     />
                 )}
             </div>
-
-            <DialogFooter className="border-t pt-4">
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                         <Button type="button" variant="destructive">
-                            <Trash2 className="mr-2 h-4 w-4"/>
-                            Cancel Booking
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Reason for Cancellation</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                Please select a reason for cancelling this booking. This information is used for reporting.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <div className="py-4 space-y-4">
-                            <Select value={deleteReason} onValueChange={setDeleteReason}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a reason..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {deletionReasons.map(reason => (
-                                        <SelectItem key={reason} value={reason}>{reason}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {deleteReason === 'Other' && (
-                                <div className="space-y-2">
-                                    <Label htmlFor="other-reason">Please specify:</Label>
-                                    <Textarea
-                                        id="other-reason"
-                                        value={otherReason}
-                                        onChange={(e) => setOtherReason(e.target.value)}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleConfirmCancellation} disabled={!deleteReason || (deleteReason === 'Other' && !otherReason)}>
-                                Yes, Cancel Booking
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            </DialogFooter>
         </>
     );
 };
