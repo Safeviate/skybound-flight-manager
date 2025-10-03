@@ -447,7 +447,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
              toast({ title: 'Booking Updated', description: 'The booking has been successfully updated.' });
         } else { // This is a new booking
             const newBookingId = doc(collection(db, 'temp')).id;
-            const bookingData = { ...data, id: newBookingId, companyId: company.id, status: 'Approved' as const };
+            let bookingData: any = { ...data, id: newBookingId, companyId: company.id, status: 'Approved' as const };
             
             const collectionName = bookingData.resourceType === 'facility' ? 'facility-bookings' : 'aircraft-bookings';
 
@@ -464,23 +464,26 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             }
 
             const bookingRef = doc(db, `companies/${company.id}/${collectionName}`, newBookingId);
+            
+
+            if (bookingData.resourceType === 'aircraft' && logEntry && bookingData.studentId) {
+                const studentDocRef = doc(db, `companies/${company.id}/students`, bookingData.studentId);
+                batch.update(studentDocRef, {
+                    trainingLogs: arrayUnion(logEntry),
+                    pendingBookingIds: arrayUnion(newBookingId)
+                });
+                bookingData.pendingLogEntryId = logEntry.id;
+            }
+            
             batch.set(bookingRef, bookingData);
 
-            if (bookingData.resourceType === 'aircraft') {
-              const aircraftRef = doc(db, `companies/${company.id}/aircraft`, newBookingSlot!.aircraft!.id);
+            if (bookingData.resourceType === 'aircraft' && newBookingSlot?.aircraft) {
+              const aircraftRef = doc(db, `companies/${company.id}/aircraft`, newBookingSlot.aircraft.id);
               
               if (bookingData.purpose === 'Post-Maintenance Flight') {
                 batch.update(aircraftRef, { status: 'Available', checklistStatus: 'ready' });
               } else {
                  batch.update(aircraftRef, { activeBookingId: newBookingId });
-              }
-
-              if (bookingData.purpose === 'Training' && bookingData.studentId && logEntry) {
-                  const studentDocRef = doc(db, `companies/${company.id}/students`, bookingData.studentId);
-                  batch.update(studentDocRef, {
-                      trainingLogs: arrayUnion(logEntry),
-                      pendingBookingIds: arrayUnion(newBookingId)
-                  });
               }
             }
             
