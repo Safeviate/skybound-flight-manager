@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -13,7 +12,7 @@ import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, quer
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertTriangle, Calendar as CalendarIcon, Search, Trash2 } from 'lucide-react';
+import { Loader2, AlertTriangle, Calendar as CalendarIcon, Search, Trash2, Edit } from 'lucide-react';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -53,10 +52,12 @@ const FlightHub = ({
     activeFlight,
     handleChecklistSuccess,
     onCancelBooking,
+    onEditBooking
 }: {
     activeFlight: { booking: Booking, aircraft: Aircraft },
     handleChecklistSuccess: (data: PreFlightChecklistFormValues | PostFlightChecklistFormValues) => Promise<void>,
     onCancelBooking: (bookingId: string, reason: string) => void,
+    onEditBooking: () => void,
 }) => {
     const [deleteReason, setDeleteReason] = useState('');
     const [otherReason, setOtherReason] = useState('');
@@ -89,6 +90,8 @@ const FlightHub = ({
                     aircraft={activeFlight.aircraft}
                     onReportIssue={() => {}}
                     initialHobbs={activeFlight.aircraft.hours}
+                    booking={activeFlight.booking}
+                    onEditBooking={onEditBooking}
                 />
             )}
 
@@ -646,6 +649,13 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     }
   };
 
+  const handleEditBookingInFlightHub = () => {
+    if (activeFlight) {
+        setEditingBooking(activeFlight.booking);
+        setActiveFlight(null); // Close the FlightHub to open the edit form
+    }
+  }
+
   if (loading) {
     return (
         <div className="flex flex-1 items-center justify-center">
@@ -740,7 +750,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         </main>
        <Dialog open={!!newBookingSlot || !!activeFlight || !!editingBooking} onOpenChange={handleDialogClose}>
         <DialogContent className="sm:max-w-xl">
-          {newBookingSlot?.aircraft && (
+          {newBookingSlot?.aircraft && !editingBooking && (
             <>
               <DialogHeader>
                 <DialogTitle>Create New Booking</DialogTitle>
@@ -759,7 +769,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 />
             </>
           )}
-          {newBookingSlot?.facility && (
+          {newBookingSlot?.facility && !editingBooking && (
             <>
               <DialogHeader>
                 <DialogTitle>Create New Facility Booking</DialogTitle>
@@ -807,11 +817,12 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
               )}
             </>
           )}
-          {activeFlight && (
+          {activeFlight && !editingBooking && (
               <FlightHub 
                 activeFlight={activeFlight}
                 handleChecklistSuccess={handleChecklistSuccess}
                 onCancelBooking={handleBookingDelete}
+                onEditBooking={handleEditBookingInFlightHub}
               />
            )}
         </DialogContent>
