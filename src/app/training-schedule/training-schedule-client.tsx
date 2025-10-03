@@ -696,34 +696,38 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-destructive"></div>In Maintenance</div>
                             </div>
                             <ScrollArea>
-                                <TooltipProvider>
-                                    <GanttChart 
-                                        resources={aircraft} 
-                                        bookings={dailyAircraftBookings}
-                                        aircraft={aircraft}
-                                        onSlotClick={handleNewBookingClick}
-                                        onBookingClick={handleBookingClick}
-                                        resourceKey="tailNumber"
-                                        resourceNameKey="tailNumber"
-                                        getBookingVariant={getBookingVariant}
-                                    />
-                                </TooltipProvider>
+                                <div className="relative">
+                                    <TooltipProvider>
+                                        <GanttChart 
+                                            resources={aircraft} 
+                                            bookings={dailyAircraftBookings}
+                                            aircraft={aircraft}
+                                            onSlotClick={handleNewBookingClick}
+                                            onBookingClick={handleBookingClick}
+                                            resourceKey="tailNumber"
+                                            resourceNameKey="tailNumber"
+                                            getBookingVariant={getBookingVariant}
+                                        />
+                                    </TooltipProvider>
+                                </div>
                                 <ScrollBar orientation="horizontal" />
                             </ScrollArea>
                         </TabsContent>
                         <TabsContent value="facilities">
                             <ScrollArea>
-                                <TooltipProvider>
-                                    <GanttChart 
-                                        resources={company?.facilities || []}
-                                        bookings={dailyFacilityBookings}
-                                        onSlotClick={handleNewBookingClick}
-                                        onBookingClick={handleBookingClick}
-                                        resourceKey="id"
-                                        resourceNameKey="name"
-                                        getBookingVariant={getBookingVariant}
-                                    />
-                                </TooltipProvider>
+                                <div className="relative">
+                                    <TooltipProvider>
+                                        <GanttChart 
+                                            resources={company?.facilities || []}
+                                            bookings={dailyFacilityBookings}
+                                            onSlotClick={handleNewBookingClick}
+                                            onBookingClick={handleBookingClick}
+                                            resourceKey="id"
+                                            resourceNameKey="name"
+                                            getBookingVariant={getBookingVariant}
+                                        />
+                                    </TooltipProvider>
+                                </div>
                                 <ScrollBar orientation="horizontal" />
                             </ScrollArea>
                         </TabsContent>
