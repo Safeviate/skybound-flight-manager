@@ -479,34 +479,38 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {audit.checklistItems.map(item => {
-                                if (item.type === 'Header') {
-                                    return <h3 key={item.id} className="text-lg font-semibold mt-6 mb-2 border-b pb-2">{item.text}</h3>;
-                                }
-                                const { icon, variant, text } = getFindingInfo(item.finding);
-                                return (
-                                    <div key={item.id} className="p-4 border rounded-lg mb-4">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-medium">{item.text}</p>
-                                                <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
+                            {(() => {
+                                let questionNumber = 1;
+                                return audit.checklistItems.map(item => {
+                                    if (item.type === 'Header') {
+                                        return <h3 key={item.id} className="text-lg font-semibold mt-6 mb-2 border-b pb-2">{item.text}</h3>;
+                                    }
+                                    const { icon, variant, text } = getFindingInfo(item.finding);
+                                    const currentQuestionNumber = questionNumber++;
+                                    return (
+                                        <div key={item.id} className="p-4 border rounded-lg mb-4">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <p className="font-medium">{currentQuestionNumber}. {item.text}</p>
+                                                    <p className="text-xs text-muted-foreground ml-5">{item.regulationReference || 'N/A'}</p>
+                                                </div>
+                                                <Badge variant={variant} className="whitespace-nowrap">
+                                                    {icon}
+                                                    <span className="ml-2">{text}</span>
+                                                </Badge>
                                             </div>
-                                            <Badge variant={variant} className="whitespace-nowrap">
-                                                {icon}
-                                                <span className="ml-2">{text}</span>
-                                            </Badge>
+                                            {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
+                                            {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
+                                            {item.suggestedImprovement && (
+                                                <div className="mt-2">
+                                                    <p className="text-xs font-semibold text-primary">Suggested Improvement:</p>
+                                                    <p className="text-sm p-2 bg-primary/10 rounded-md whitespace-pre-wrap">{item.suggestedImprovement}</p>
+                                                </div>
+                                            )}
                                         </div>
-                                        {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
-                                        {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
-                                        {item.suggestedImprovement && (
-                                            <div className="mt-2">
-                                                <p className="text-xs font-semibold text-primary">Suggested Improvement:</p>
-                                                <p className="text-sm p-2 bg-primary/10 rounded-md whitespace-pre-wrap">{item.suggestedImprovement}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                )
-                            })}
+                                    )
+                                })
+                            })()}
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -693,21 +697,6 @@ export default function QualityAuditDetailPage() {
   const [cameraItemId, setCameraItemId] = useState<string | null>(null);
   const [isBackAlertOpen, setIsBackAlertOpen] = useState(false);
 
-  const hasUnsavedChanges = JSON.stringify(audit) !== JSON.stringify(savedAudit);
-
-  const finalFindingOptions = useMemo(() => 
-    (company?.findingOptions?.length ?? 0) > 0 
-      ? company!.findingOptions! 
-      : [
-          {id: '1', name: 'Compliant'},
-          {id: '2', name: 'Non Compliant'},
-          {id: '3', name: 'Partial'},
-          {id: '4', name: 'Observation'},
-          {id: '5', name: 'Not Applicable'},
-        ],
-    [company?.findingOptions]
-  );
-
   useEffect(() => {
     if (userLoading) return;
     if (!user) {
@@ -753,6 +742,21 @@ export default function QualityAuditDetailPage() {
     
     fetchAuditAndPersonnel();
   }, [auditId, user, userLoading, router, toast, company]);
+
+  const hasUnsavedChanges = JSON.stringify(audit) !== JSON.stringify(savedAudit);
+
+  const finalFindingOptions = useMemo(() => 
+    (company?.findingOptions?.length ?? 0) > 0 
+      ? company!.findingOptions! 
+      : [
+          {id: '1', name: 'Compliant'},
+          {id: '2', name: 'Non Compliant'},
+          {id: '3', name: 'Partial'},
+          {id: '4', name: 'Observation'},
+          {id: '5', name: 'Not Applicable'},
+        ],
+    [company?.findingOptions]
+  );
   
   const handleItemChange = (itemId: string, field: keyof AuditChecklistItem, value: any) => {
     if (!audit) return;
@@ -1012,103 +1016,107 @@ export default function QualityAuditDetailPage() {
               <CardContent>
                   {audit.checklistItems && audit.checklistItems.length > 0 ? (
                       <div className="space-y-4">
-                          {audit.checklistItems.map(item => {
-                              if (item.type === 'Header') {
-                                return <h3 key={item.id} className="text-lg font-semibold mt-6 mb-2 border-b pb-2">{item.text}</h3>
-                              }
-                              const findingInfo = getFindingInfo(item.finding);
-                              const levelInfo = getLevelInfo(item.level);
-                              const showLevelSelect = item.finding === 'Non Compliant' || item.finding === 'Partial';
-                              return (
-                                  <div key={item.id} className="p-4 border rounded-lg space-y-4">
-                                      <div>
-                                          <p className="font-medium">{item.text}</p>
-                                          {item.regulationReference && <p className="text-xs text-muted-foreground">Regulation: {item.regulationReference}</p>}
-                                      </div>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                          <div className="space-y-2">
-                                              <Label className="text-sm font-medium">Finding</Label>
-                                              <Select value={item.finding || ''} onValueChange={(value: FindingStatus) => handleItemChange(item.id, 'finding', value)}>
-                                                  <SelectTrigger>
-                                                      <SelectValue placeholder="Select Finding" />
-                                                  </SelectTrigger>
-                                                  <SelectContent>
-                                                      {finalFindingOptions.map(opt => (
-                                                          <SelectItem key={opt.id} value={opt.name}>{opt.name}</SelectItem>
-                                                      ))}
-                                                  </SelectContent>
-                                              </Select>
-                                          </div>
-                                          {showLevelSelect && (
-                                            <div className="space-y-2">
-                                                <Label className="text-sm font-medium">Level</Label>
-                                                <Select value={item.level || ''} onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select Level" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {levelOptions.map(opt => (
-                                                            <SelectItem key={opt} value={opt!}>{opt}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                          {(() => {
+                                let questionNumber = 1;
+                                return audit.checklistItems.map(item => {
+                                    if (item.type === 'Header') {
+                                        return <h3 key={item.id} className="text-lg font-semibold mt-6 mb-2 border-b pb-2">{item.text}</h3>;
+                                    }
+                                    const findingInfo = getFindingInfo(item.finding);
+                                    const levelInfo = getLevelInfo(item.level);
+                                    const showLevelSelect = item.finding === 'Non Compliant' || item.finding === 'Partial';
+                                    const currentQuestionNumber = questionNumber++;
+                                    return (
+                                        <div key={item.id} className="p-4 border rounded-lg space-y-4">
+                                            <div>
+                                                <p className="font-medium">{currentQuestionNumber}. {item.text}</p>
+                                                {item.regulationReference && <p className="text-xs text-muted-foreground ml-5">Regulation: {item.regulationReference}</p>}
                                             </div>
-                                          )}
-                                      </div>
-                                      <div className="space-y-2">
-                                          <Label className="text-sm font-medium">Reference</Label>
-                                          <Textarea
-                                              placeholder="Document references, evidence, etc."
-                                              value={item.reference || ''}
-                                              onChange={(e) => handleItemChange(item.id, 'reference', e.target.value)}
-                                              className="whitespace-pre-wrap"
-                                              />
-                                      </div>
-                                      <div className="space-y-2">
-                                          <Label className="text-sm font-medium">Comment</Label>
-                                          <Textarea
-                                              placeholder="Auditor comments, observations..."
-                                              value={item.comment || ''}
-                                               onChange={(e) => handleItemChange(item.id, 'comment', e.target.value)}
-                                               className="whitespace-pre-wrap"
-                                              />
-                                      </div>
-                                      <div className="space-y-2">
-                                          <Label className="text-sm font-medium">Suggested Improvement</Label>
-                                          <Textarea
-                                              placeholder="Provide a suggestion for improvement..."
-                                              value={item.suggestedImprovement || ''}
-                                               onChange={(e) => handleItemChange(item.id, 'suggestedImprovement', e.target.value)}
-                                               className="whitespace-pre-wrap"
-                                              />
-                                      </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label className="text-sm font-medium">Finding</Label>
+                                                    <Select value={item.finding || ''} onValueChange={(value: FindingStatus) => handleItemChange(item.id, 'finding', value)}>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select Finding" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {finalFindingOptions.map(opt => (
+                                                                <SelectItem key={opt.id} value={opt.name}>{opt.name}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                {showLevelSelect && (
+                                                    <div className="space-y-2">
+                                                        <Label className="text-sm font-medium">Level</Label>
+                                                        <Select value={item.level || ''} onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select Level" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {levelOptions.map(opt => (
+                                                                    <SelectItem key={opt} value={opt!}>{opt}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-medium">Reference</Label>
+                                                <Textarea
+                                                    placeholder="Document references, evidence, etc."
+                                                    value={item.reference || ''}
+                                                    onChange={(e) => handleItemChange(item.id, 'reference', e.target.value)}
+                                                    className="whitespace-pre-wrap"
+                                                    />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-medium">Comment</Label>
+                                                <Textarea
+                                                    placeholder="Auditor comments, observations..."
+                                                    value={item.comment || ''}
+                                                    onChange={(e) => handleItemChange(item.id, 'comment', e.target.value)}
+                                                    className="whitespace-pre-wrap"
+                                                    />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-medium">Suggested Improvement</Label>
+                                                <Textarea
+                                                    placeholder="Provide a suggestion for improvement..."
+                                                    value={item.suggestedImprovement || ''}
+                                                    onChange={(e) => handleItemChange(item.id, 'suggestedImprovement', e.target.value)}
+                                                    className="whitespace-pre-wrap"
+                                                    />
+                                            </div>
 
-                                      <div className="flex items-center justify-between pt-2 border-t">
-                                        <div className="flex items-center gap-2">
-                                            <Button variant="outline" size="sm" onClick={() => setCameraItemId(item.id)}>
-                                                <Camera className="mr-2 h-4 w-4" />
-                                                {item.photo ? 'Retake Photo' : 'Take Photo'}
-                                            </Button>
-                                            {item.photo && <ImageIcon className="h-5 w-5 text-green-500" />}
+                                            <div className="flex items-center justify-between pt-2 border-t">
+                                                <div className="flex items-center gap-2">
+                                                    <Button variant="outline" size="sm" onClick={() => setCameraItemId(item.id)}>
+                                                        <Camera className="mr-2 h-4 w-4" />
+                                                        {item.photo ? 'Retake Photo' : 'Take Photo'}
+                                                    </Button>
+                                                    {item.photo && <ImageIcon className="h-5 w-5 text-green-500" />}
+                                                </div>
+                                                <div className="flex items-center gap-4 text-sm">
+                                                    <span className="font-semibold">Result:</span>
+                                                    {item.finding && (
+                                                        <Badge variant={findingInfo.variant} className="whitespace-nowrap">
+                                                            {findingInfo.icon}
+                                                            <span className="ml-2">{findingInfo.text}</span>
+                                                        </Badge>
+                                                    )}
+                                                    {levelInfo && (
+                                                        <Badge variant={levelInfo.variant} className="whitespace-nowrap">
+                                                        {item.level}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-4 text-sm">
-                                            <span className="font-semibold">Result:</span>
-                                            {item.finding && (
-                                                <Badge variant={findingInfo.variant} className="whitespace-nowrap">
-                                                    {findingInfo.icon}
-                                                    <span className="ml-2">{findingInfo.text}</span>
-                                                </Badge>
-                                            )}
-                                            {levelInfo && (
-                                                <Badge variant={levelInfo.variant} className="whitespace-nowrap">
-                                                {item.level}
-                                                </Badge>
-                                            )}
-                                        </div>
-                                      </div>
-                                  </div>
-                              )
-                          })}
+                                    )
+                                })
+                            })()}
                       </div>
                   ) : (
                       <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed rounded-lg">
@@ -1150,3 +1158,6 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
 
+
+
+    
