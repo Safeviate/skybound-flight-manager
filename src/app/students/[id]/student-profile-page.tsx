@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, Fragment } from 'react';
@@ -1085,12 +1084,9 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 </TableHeader>
                                                 <TableBody>
                                                     {paginatedLogs.length > 0 ? (
-                                                        paginatedLogs.map(log => {
-                                                            const booking = getBookingForLog(log.id);
-                                                            const bookingNumRemark = booking?.bookingNumber ? `Booking: ${booking.bookingNumber}\n` : '';
-                                                            return (
-                                                            <Collapsible asChild key={log.id}>
-                                                                <Fragment>
+                                                        paginatedLogs.map(log => (
+                                                            <Collapsible key={log.id} asChild>
+                                                                <>
                                                                     <TableRow>
                                                                         <TableCell>{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
                                                                         <TableCell>{log.make || 'N/A'}</TableCell>
@@ -1098,7 +1094,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                                         <TableCell>{log.departure || 'N/A'}</TableCell>
                                                                         <TableCell>{log.arrival || 'N/A'}</TableCell>
                                                                         <TableCell>{log.instructorName}</TableCell>
-                                                                        <TableCell className="max-w-[200px] truncate">{bookingNumRemark}{log.remarks || ''}</TableCell>
+                                                                        <TableCell className="max-w-[200px] truncate">{log.remarks || ''}</TableCell>
                                                                         <TableCell>{formatDecimalTime(log.singleEngineTime)}</TableCell>
                                                                         <TableCell>{formatDecimalTime(log.multiEngineTime)}</TableCell>
                                                                         <TableCell>{formatDecimalTime(log.fstdTime)}</TableCell>
@@ -1120,13 +1116,13 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                                             </div>
                                                                         </TableCell>
                                                                     </TableRow>
-                                                                    <CollapsibleContent asChild>
-                                                                        <tr>
-                                                                            <TableCell colSpan={15} className="p-0">
+                                                                    <TableRow>
+                                                                        <TableCell colSpan={16} className="p-0">
+                                                                            <CollapsibleContent>
                                                                                 <div className="p-4 space-y-4 bg-muted/50">
                                                                                     <div>
                                                                                         <h4 className="font-semibold text-sm">Remarks</h4>
-                                                                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{bookingNumRemark}{log.remarks || 'No remarks.'}</p>
+                                                                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{(getBookingForLog(log.id)?.bookingNumber ? `Booking: ${getBookingForLog(log.id)?.bookingNumber}\n` : '')}{log.remarks || 'No remarks.'}</p>
                                                                                     </div>
                                                                                     <Separator />
                                                                                     <div>
@@ -1150,15 +1146,15 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                                                          </div>
                                                                                     </div>
                                                                                 </div>
-                                                                            </TableCell>
-                                                                        </tr>
-                                                                    </CollapsibleContent>
-                                                                </Fragment>
+                                                                            </CollapsibleContent>
+                                                                        </TableCell>
+                                                                    </TableRow>
+                                                                </>
                                                             </Collapsible>
-                                                        )})
+                                                        ))
                                                     ) : (
                                                         <TableRow>
-                                                            <TableCell colSpan={17} className="h-24 text-center">No logbook entries found.</TableCell>
+                                                            <TableCell colSpan={16} className="h-24 text-center">No logbook entries found.</TableCell>
                                                         </TableRow>
                                                     )}
                                                 </TableBody>
@@ -1201,5 +1197,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
+    
 
     
