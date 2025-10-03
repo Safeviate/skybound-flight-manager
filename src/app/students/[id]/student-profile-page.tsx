@@ -1119,9 +1119,9 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                                         </TableCell>
                                                                     </TableRow>
                                                                     <CollapsibleContent asChild>
-                                                                        <tr className="bg-muted/50">
+                                                                        <tr>
                                                                             <TableCell colSpan={15} className="p-0">
-                                                                                <div className="p-4 space-y-4">
+                                                                                <div className="p-4 space-y-4 bg-muted/50">
                                                                                     <div>
                                                                                         <h4 className="font-semibold text-sm">Remarks</h4>
                                                                                         <p className="text-sm text-muted-foreground whitespace-pre-wrap">{bookingNumRemark}{log.remarks || 'No remarks.'}</p>
