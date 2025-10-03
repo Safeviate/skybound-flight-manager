@@ -4,7 +4,7 @@
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy, limit, and, or, doc, getDoc } from 'firebase/firestore';
 import type { Booking, User, SafetyReport, QualityAudit } from '@/lib/types';
-import { format, startOfToday, startOfWeek, startOfMonth, endOfDay } from 'date-fns';
+import { format, startOfToday, startOfWeek, startOfMonth, endOfDay, parseISO } from 'date-fns';
 
 export async function getDashboardData(companyId: string, userId: string): Promise<{ 
     upcomingBookings: Booking[],
