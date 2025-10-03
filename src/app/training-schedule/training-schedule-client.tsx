@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -405,12 +406,10 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
             const bookingRef = doc(db, `companies/${company.id}/${collectionName}`, newBookingId);
             
-
             if (bookingData.resourceType === 'aircraft' && logEntry && bookingData.studentId) {
                 const studentDocRef = doc(db, `companies/${company.id}/students`, bookingData.studentId);
                 batch.update(studentDocRef, {
                     trainingLogs: arrayUnion(logEntry),
-                    pendingBookingIds: arrayUnion(newBookingId)
                 });
                 bookingData.pendingLogEntryId = logEntry.id;
             }

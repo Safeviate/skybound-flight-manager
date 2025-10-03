@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, Fragment } from 'react';
@@ -85,8 +86,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const { toast } = useToast();
     const router = useRouter();
     const [student, setStudent] = useState<StudentUser | null>(initialStudent);
-    const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
-    const [completedBookings, setCompletedBookings] = useState<Booking[]>([]);
     const [bookings, setBookings] = useState<Booking[]>([]);
     
     const [progress, setProgress] = useState(student?.progress || 0);
@@ -122,31 +121,38 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         }
     }, [userLoading, currentUser, router]);
 
-     useEffect(() => {
-        const fetchBookings = async () => {
-            if (!company || !student) return;
-            try {
-                const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`), where('studentId', '==', student.id));
-                const snapshot = await getDocs(bookingsQuery);
-                const allBookings = snapshot.docs.map(doc => ({...doc.data(), id: doc.id} as Booking));
-                setBookings(allBookings);
+    useEffect(() => {
+        if (!company || !student) return;
+        
+        const bookingsQuery = query(
+            collection(db, `companies/${company.id}/aircraft-bookings`), 
+            where('studentId', '==', student.id)
+        );
 
-                const pendingIds = new Set(student.pendingBookingIds || []);
-                setPendingBookings(allBookings.filter(b => pendingIds.has(b.id)));
-                
-                const completed = allBookings.filter(b => b.status === 'Completed' && !pendingIds.has(b.id));
-                setCompletedBookings(completed);
+        const unsubscribe = onSnapshot(bookingsQuery, (snapshot) => {
+            const allBookings = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
+            setBookings(allBookings);
+        }, (error) => {
+            console.error("Error fetching bookings:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not load booking data for this student.' });
+        });
 
-            } catch (error) {
-                console.error("Error fetching bookings:", error);
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not load booking data for this student.' });
-            }
-        };
-
-        if (company && student) {
-            fetchBookings();
-        }
+        return () => unsubscribe();
     }, [student, company, toast]);
+    
+    const { pendingBookings, completedBookings } = useMemo(() => {
+        if (!student) return { pendingBookings: [], completedBookings: [] };
+        
+        const studentLogs = student.trainingLogs || [];
+        const pending = bookings.filter(b => 
+            b.purpose === 'Training' &&
+            b.status === 'Completed' &&
+            studentLogs.some(log => log.id === b.pendingLogEntryId && !log.instructorSignature)
+        );
+        const completed = bookings.filter(b => b.status === 'Completed' && !pending.some(p => p.id === b.id));
+        
+        return { pendingBookings: pending, completedBookings: completed };
+    }, [bookings, student]);
     
     const canEdit = currentUser?.permissions.includes('Super User') || currentUser?.permissions.includes('Students:Edit');
     
@@ -305,12 +311,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             milestoneNotificationsSent: arrayUnion(...newNotifications),
         };
 
-
-        if (fromBookingId) {
-            firestoreUpdate.pendingBookingIds = student?.pendingBookingIds?.filter(id => id !== fromBookingId) || [];
-            setPendingBookings(prev => prev.filter(b => b.id !== fromBookingId));
-        }
-
         if (newLogEntry.studentSignatureRequired) {
             const newAlert: Omit<Alert, 'id'|'number'> = {
                 companyId: company.id,
@@ -370,37 +370,18 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
     const handleDebriefClick = async (booking: Booking) => {
         if (!student?.trainingLogs || !company) return;
-        let bookingData = { ...booking };
-
-        // If the booking doesn't have the pendingLogEntryId, try to refetch it.
-        if (!bookingData.pendingLogEntryId) {
-            const bookingRef = doc(db, `companies/${company.id}/bookings`, booking.id);
-            const bookingSnap = await getDoc(bookingRef);
-            if (bookingSnap.exists()) {
-                bookingData = { ...bookingSnap.data(), id: bookingSnap.id } as Booking;
-            }
-        }
-
-        if (!bookingData.pendingLogEntryId) {
-            toast({
-                variant: 'destructive',
-                title: 'Log Entry Not Found',
-                description: 'Could not find the corresponding log entry for this debrief. Please add it manually.',
-            });
-            return;
-        }
-
-        const logToUpdate = student.trainingLogs.find(log => log.id === bookingData.pendingLogEntryId);
+        
+        const logToUpdate = student.trainingLogs.find(log => log.id === booking.pendingLogEntryId);
 
         if (logToUpdate) {
             setLogToEdit(logToUpdate);
-            setBookingForDebrief(bookingData);
+            setBookingForDebrief(booking);
             setIsDebriefOpen(true);
         } else {
             toast({
                 variant: 'destructive',
                 title: 'Log Entry Not Found',
-                description: `Could not find log entry with ID: ${bookingData.pendingLogEntryId}. Please add it manually.`,
+                description: `Could not find log entry with ID: ${booking.pendingLogEntryId}. Please add it manually.`,
             });
         }
     };
@@ -433,36 +414,31 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     };
     
     const handleDeleteDebrief = async (booking: Booking) => {
-        if (!company || !student || !booking.pendingLogEntryId) return;
+        if (!company || !student) return;
 
-        const batch = writeBatch(db);
+        // This booking might not have a pendingLogEntryId if the creation failed midway
+        const logIdToDelete = booking.pendingLogEntryId;
+
         const studentRef = doc(db, `companies/${company.id}/students`, student.id);
     
-        const updatedPendingBookingIds = student.pendingBookingIds?.filter(id => id !== booking.id);
-        const updatedLogs = student.trainingLogs?.filter(log => log.id !== booking.pendingLogEntryId);
-    
-        batch.update(studentRef, {
-            pendingBookingIds: arrayRemove(booking.id),
-            trainingLogs: updatedLogs || [],
-        });
+        const updatedLogs = logIdToDelete
+            ? student.trainingLogs?.filter(log => log.id !== logIdToDelete)
+            : student.trainingLogs;
     
         try {
-            await batch.commit();
+            await updateDoc(studentRef, { trainingLogs: updatedLogs || [] });
             
-            // Optimistically update the UI to provide immediate feedback
             setStudent(prevStudent => {
                 if (!prevStudent) return null;
                 return {
                     ...prevStudent,
-                    pendingBookingIds: updatedPendingBookingIds,
                     trainingLogs: updatedLogs,
                 };
             });
-            setPendingBookings(prev => prev.filter(b => b.id !== booking.id));
             
             toast({
                 title: "Debrief Cleared",
-                description: `The pending debrief for booking ${booking.bookingNumber} has been removed.`,
+                description: `The draft log entry for booking ${booking.bookingNumber} has been removed.`,
             });
         } catch (error) {
             console.error("Error clearing debrief:", error);
@@ -475,8 +451,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     };
 
     const getBookingForLog = (logId: string) => {
-        return pendingBookings.find(b => b.pendingLogEntryId === logId) || 
-               bookings.find(b => b.pendingLogEntryId === logId);
+        return bookings.find(b => b.pendingLogEntryId === logId);
     };
 
 
@@ -1198,6 +1173,3 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
   );
 }
 
-    
-
-    
