@@ -53,7 +53,7 @@ const getFindingInfo = (finding: FindingStatus | null) => {
     switch (finding) {
         case 'Compliant': return { icon: <CheckCircle className="h-5 w-5 text-green-600" />, variant: 'success' as const, text: 'Compliant' };
         case 'Partial': return { icon: <MinusCircle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const, text: 'Partial Compliance' };
-        case 'Non-compliant': return { icon: <XCircle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const, text: 'Non-compliant' };
+        case 'Non Compliant': return { icon: <XCircle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const, text: 'Non-compliant' };
         case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const, text: 'Observation' };
         case 'Not Applicable': return { icon: <Ban className="h-5 w-5 text-gray-500" />, variant: 'outline' as const, text: 'N/A' };
         default: return { icon: <ListChecks className="h-5 w-5" />, variant: 'outline' as const, text: 'Not Set' };
@@ -700,7 +700,7 @@ export default function QualityAuditDetailPage() {
       ? company!.findingOptions! 
       : [
           {id: '1', name: 'Compliant'},
-          {id: '2', name: 'Non-compliant'},
+          {id: '2', name: 'Non Compliant'},
           {id: '3', name: 'Partial'},
           {id: '4', name: 'Observation'},
           {id: '5', name: 'Not Applicable'},
@@ -791,7 +791,7 @@ export default function QualityAuditDetailPage() {
     const complianceScore = totalApplicableItems > 0 ? Math.round((compliantItems / totalApplicableItems) * 100) : 100;
 
     const nonConformanceIssues = audit.checklistItems
-        .filter(item => item.finding === 'Non-compliant' || item.finding === 'Partial' || item.finding === 'Observation')
+        .filter(item => item.finding === 'Non Compliant' || item.finding === 'Partial' || item.finding === 'Observation')
         .map(item => ({
             id: `${item.id}-${Date.now()}`, // Ensure unique ID for non-conformance issue
             itemText: item.text,
@@ -822,7 +822,7 @@ export default function QualityAuditDetailPage() {
 
     const defaultFindingOptions: FindingOption[] = [
         {id: '1', name: 'Compliant'},
-        {id: '2', name: 'Non-compliant'},
+        {id: '2', name: 'Non Compliant'},
         {id: '3', name: 'Partial'},
         {id: '4', name: 'Observation'},
         {id: '5', name: 'Not Applicable'},
@@ -839,7 +839,7 @@ export default function QualityAuditDetailPage() {
         let reference = 'Checked against Operations Manual Rev 5.1, Section 3.2.';
 
         if ((index + 1) % 5 === 0) {
-            finding = 'Non-compliant';
+            finding = 'Non Compliant';
             level = levelOptions[Math.floor(Math.random() * 3)];
             comment = 'A significant deviation from standard operating procedure was noted during the audit.';
             reference = 'Observed deviation during hangar inspection on Aug 15, 2024.';
@@ -1018,7 +1018,7 @@ export default function QualityAuditDetailPage() {
                               }
                               const findingInfo = getFindingInfo(item.finding);
                               const levelInfo = getLevelInfo(item.level);
-                              const showLevelSelect = item.finding === 'Non-compliant' || item.finding === 'Partial';
+                              const showLevelSelect = item.finding === 'Non Compliant' || item.finding === 'Partial';
                               return (
                                   <div key={item.id} className="p-4 border rounded-lg space-y-4">
                                       <div>
@@ -1148,4 +1148,5 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
