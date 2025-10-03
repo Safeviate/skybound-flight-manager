@@ -269,10 +269,8 @@ const GanttChart = ({
                                                     <TooltipTrigger asChild>
                                                         <div 
                                                             onClick={() => onBookingClick(booking)}
-                                                            className={cn('h-full flex items-center p-2 text-white text-xs whitespace-nowrap overflow-hidden', variant.className, (variant.isClickable || booking.status === 'Completed') ? 'cursor-pointer' : 'cursor-not-allowed')} style={variant.style}>
-                                                            <div className="flex items-center gap-2">
-                                                                {getBookingLabel(booking)}
-                                                            </div>
+                                                            className={cn('h-full flex items-center p-2 text-white text-xs whitespace-nowrap overflow-hidden border-r border-white/20', variant.className, (variant.isClickable || booking.status === 'Completed') ? 'cursor-pointer' : 'cursor-not-allowed')} style={variant.style}>
+                                                            {getBookingLabel(booking)}
                                                         </div>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
