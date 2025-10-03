@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, Fragment } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2, Search, ChevronLeft, ChevronRight, Wind, Users as UsersIcon, Save, Signature, ChevronDown } from 'lucide-react';
+import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2, Search, ChevronLeft, ChevronRight, Wind, Users as UsersIcon, Save, Signature, ChevronDown, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser, Booking, Alert } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -95,6 +96,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const [isLogbookEditOpen, setIsLogbookEditOpen] = useState(false);
     const [bookingForDebrief, setBookingForDebrief] = useState<Booking | null>(null);
     const [logToEdit, setLogToEdit] = useState<TrainingLogEntry | null>(null);
+    const [viewingLog, setViewingLog] = useState<TrainingLogEntry | null>(null);
     const [isBroughtForwardOpen, setIsBroughtForwardOpen] = useState(false);
     const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
     
@@ -142,11 +144,10 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const { pendingBookings, completedBookings } = useMemo(() => {
         if (!student) return { pendingBookings: [], completedBookings: [] };
         
-        const studentLogs = student.trainingLogs || [];
         const pending = bookings.filter(b => 
             b.purpose === 'Training' &&
             b.status === 'Completed' &&
-            studentLogs.some(log => log.id === b.pendingLogEntryId && !log.instructorSignature)
+            !student.trainingLogs?.find(log => log.id === b.pendingLogEntryId)?.instructorSignature
         );
         const completed = bookings.filter(b => b.status === 'Completed' && !pending.some(p => p.id === b.id));
         
@@ -415,7 +416,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const handleDeleteDebrief = async (booking: Booking) => {
         if (!company || !student) return;
 
-        // This booking might not have a pendingLogEntryId if the creation failed midway
         const logIdToDelete = booking.pendingLogEntryId;
 
         const studentRef = doc(db, `companies/${company.id}/students`, student.id);
@@ -772,6 +772,47 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                     />
                 </DialogContent>
             </Dialog>
+            
+            <Dialog open={viewingLog !== null} onOpenChange={() => setViewingLog(null)}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Logbook Entry Details</DialogTitle>
+                        <DialogDescription>Flight on {viewingLog && format(parseISO(viewingLog.date), 'PPP')}</DialogDescription>
+                    </DialogHeader>
+                    {viewingLog && (
+                         <ScrollArea className="max-h-[70vh] pr-4">
+                            <div className="p-4 space-y-4 bg-muted/50 rounded-lg">
+                                <div>
+                                    <h4 className="font-semibold text-sm">Remarks</h4>
+                                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{(getBookingForLog(viewingLog.id)?.bookingNumber ? `Booking: ${getBookingForLog(viewingLog.id)?.bookingNumber}\n` : '')}{viewingLog.remarks || 'No remarks.'}</p>
+                                </div>
+                                <Separator />
+                                <div>
+                                    <h4 className="font-semibold text-sm mb-2">Debrief & Exercises</h4>
+                                    {viewingLog.trainingExercises.map((ex, i) => (
+                                        <div key={i} className="text-sm mb-2 border-b pb-2">
+                                            <div className="flex justify-between items-center">
+                                                <p className="font-medium">{ex.exercise}</p>
+                                                <Badge variant="outline">Rating: {ex.rating}/4</Badge>
+                                            </div>
+                                            {ex.comment && <p className="text-xs text-muted-foreground mt-1 pl-2 border-l-2">{ex.comment}</p>}
+                                        </div>
+                                    ))}
+                                </div>
+                                <Separator />
+                                <div>
+                                    <h4 className="font-semibold text-sm mb-2">Signatures</h4>
+                                    <div className="flex gap-4">
+                                        {viewingLog.instructorSignature && <Image src={viewingLog.instructorSignature} alt="Instructor Signature" width={150} height={75} className="rounded-md border bg-white" />}
+                                        {viewingLog.studentSignature && <Image src={viewingLog.studentSignature} alt="Student Signature" width={150} height={75} className="rounded-md border bg-white" />}
+                                    </div>
+                                </div>
+                            </div>
+                        </ScrollArea>
+                    )}
+                </DialogContent>
+            </Dialog>
+
 
              <Dialog open={isBroughtForwardOpen} onOpenChange={setIsBroughtForwardOpen}>
                 <DialogContent>
@@ -1059,70 +1100,33 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableBody>
                                                     {paginatedLogs.length > 0 ? (
                                                         paginatedLogs.map(log => (
-                                                            <Fragment key={log.id}>
-                                                                <TableRow>
-                                                                    <TableCell>{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                                    <TableCell>{log.make || 'N/A'}</TableCell>
-                                                                    <TableCell>{log.aircraft.replace(log.make || '', '').trim()}</TableCell>
-                                                                    <TableCell>{log.departure || 'N/A'}</TableCell>
-                                                                    <TableCell>{log.arrival || 'N/A'}</TableCell>
-                                                                    <TableCell>{log.instructorName}</TableCell>
-                                                                    <TableCell className="max-w-[200px] truncate">{log.remarks || ''}</TableCell>
-                                                                    <TableCell>{formatDecimalTime(log.singleEngineTime)}</TableCell>
-                                                                    <TableCell>{formatDecimalTime(log.multiEngineTime)}</TableCell>
-                                                                    <TableCell>{formatDecimalTime(log.fstdTime)}</TableCell>
-                                                                    <TableCell>{formatDecimalTime(log.singleTime)}</TableCell>
-                                                                    <TableCell>{formatDecimalTime(log.dualTime)}</TableCell>
-                                                                    <TableCell>{formatDecimalTime(log.nightTime)}</TableCell>
-                                                                    <TableCell>{formatDecimalTime(log.dayTime)}</TableCell>
-                                                                    <TableCell>{formatDecimalTime(log.flightDuration)}</TableCell>
-                                                                    <TableCell>
-                                                                        <div className="flex justify-center gap-1">
-                                                                            <CollapsibleTrigger asChild>
-                                                                                <Button variant="ghost" size="icon" disabled={!log.trainingExercises || log.trainingExercises.length === 0}>
-                                                                                    <ChevronDown className="h-4 w-4" />
-                                                                                </Button>
-                                                                            </CollapsibleTrigger>
-                                                                            <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
-                                                                                <Edit className="h-4 w-4" />
-                                                                            </Button>
-                                                                        </div>
-                                                                    </TableCell>
-                                                                </TableRow>
-                                                                <CollapsibleContent asChild>
-                                                                    <TableRow>
-                                                                        <TableCell colSpan={16} className="p-0">
-                                                                            <div className="p-4 space-y-4 bg-muted/50">
-                                                                                <div>
-                                                                                    <h4 className="font-semibold text-sm">Remarks</h4>
-                                                                                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{(getBookingForLog(log.id)?.bookingNumber ? `Booking: ${getBookingForLog(log.id)?.bookingNumber}\n` : '')}{log.remarks || 'No remarks.'}</p>
-                                                                                </div>
-                                                                                <Separator />
-                                                                                <div>
-                                                                                    <h4 className="font-semibold text-sm mb-2">Debrief & Exercises</h4>
-                                                                                    {log.trainingExercises.map((ex, i) => (
-                                                                                        <div key={i} className="text-sm mb-2 border-b pb-2">
-                                                                                            <div className="flex justify-between items-center">
-                                                                                                <p className="font-medium">{ex.exercise}</p>
-                                                                                                <Badge variant="outline">Rating: {ex.rating}/4</Badge>
-                                                                                            </div>
-                                                                                            {ex.comment && <p className="text-xs text-muted-foreground mt-1 pl-2 border-l-2">{ex.comment}</p>}
-                                                                                        </div>
-                                                                                    ))}
-                                                                                </div>
-                                                                                <Separator />
-                                                                                <div>
-                                                                                    <h4 className="font-semibold text-sm mb-2">Signatures</h4>
-                                                                                    <div className="flex gap-4">
-                                                                                        {log.instructorSignature && <Image src={log.instructorSignature} alt="Instructor Signature" width={150} height={75} className="rounded-md border bg-white" />}
-                                                                                        {log.studentSignature && <Image src={log.studentSignature} alt="Student Signature" width={150} height={75} className="rounded-md border bg-white" />}
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </TableCell>
-                                                                    </TableRow>
-                                                                </CollapsibleContent>
-                                                            </Fragment>
+                                                            <TableRow key={log.id}>
+                                                                <TableCell>{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
+                                                                <TableCell>{log.make || 'N/A'}</TableCell>
+                                                                <TableCell>{log.aircraft.replace(log.make || '', '').trim()}</TableCell>
+                                                                <TableCell>{log.departure || 'N/A'}</TableCell>
+                                                                <TableCell>{log.arrival || 'N/A'}</TableCell>
+                                                                <TableCell>{log.instructorName}</TableCell>
+                                                                <TableCell className="max-w-[200px] truncate">{log.remarks || ''}</TableCell>
+                                                                <TableCell>{formatDecimalTime(log.singleEngineTime)}</TableCell>
+                                                                <TableCell>{formatDecimalTime(log.multiEngineTime)}</TableCell>
+                                                                <TableCell>{formatDecimalTime(log.fstdTime)}</TableCell>
+                                                                <TableCell>{formatDecimalTime(log.singleTime)}</TableCell>
+                                                                <TableCell>{formatDecimalTime(log.dualTime)}</TableCell>
+                                                                <TableCell>{formatDecimalTime(log.nightTime)}</TableCell>
+                                                                <TableCell>{formatDecimalTime(log.dayTime)}</TableCell>
+                                                                <TableCell>{formatDecimalTime(log.flightDuration)}</TableCell>
+                                                                <TableCell>
+                                                                    <div className="flex justify-center gap-1">
+                                                                        <Button variant="ghost" size="icon" onClick={() => setViewingLog(log)}>
+                                                                            <Eye className="h-4 w-4" />
+                                                                        </Button>
+                                                                        <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
+                                                                            <Edit className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </div>
+                                                                </TableCell>
+                                                            </TableRow>
                                                         ))
                                                     ) : (
                                                         <TableRow>
