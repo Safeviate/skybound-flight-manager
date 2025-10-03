@@ -1089,7 +1089,7 @@ export function AircraftPageContent() {
         // This part remains for pre-flight checklists.
         return (
           <>
-              <div className="mb-4">
+              <div className="mb-4 flex justify-between items-center">
                   <Button variant="outline" size="sm" onClick={() => handleAircraftSelected(null)}>
                       <ArrowLeft className="mr-2 h-4 w-4" />
                       Change Aircraft
@@ -1100,6 +1100,7 @@ export function AircraftPageContent() {
                   aircraft={selectedAircraftForChecklist!}
                   onReportIssue={handleReportIssue}
                   initialHobbs={initialHobbs}
+                  booking={activeBookingForSelectedAircraft}
               />
           </>
         );

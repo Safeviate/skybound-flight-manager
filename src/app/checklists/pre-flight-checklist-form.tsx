@@ -11,11 +11,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { Bot, Camera, Check, FileCheck, Plane, Hash, Image as ImageIcon, AlertTriangle, Send } from 'lucide-react';
+import { Bot, Camera, Check, FileCheck, Plane, Hash, Image as ImageIcon, AlertTriangle, Send, Edit } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
-import type { Aircraft } from '@/lib/types';
+import type { Aircraft, Booking } from '@/lib/types';
 import { StandardCamera } from '@/components/ui/standard-camera';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -58,9 +58,10 @@ interface PreFlightChecklistFormProps {
     onSuccess: (data: PreFlightChecklistFormValues) => void;
     onReportIssue: (aircraftId: string, issueDetails: { title: string, description: string, photo?: string }) => Promise<void>;
     initialHobbs?: number;
+    booking?: Booking | null;
 }
 
-export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, initialHobbs }: PreFlightChecklistFormProps) {
+export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, initialHobbs, booking }: PreFlightChecklistFormProps) {
   const { toast } = useToast();
   const { settings } = useSettings();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -136,8 +137,12 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, ini
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
             <CardHeader>
-                <CardTitle>Pre-Flight Checklist</CardTitle>
-                <CardDescription>Complete all items for {aircraft.tailNumber} before submitting.</CardDescription>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle>Pre-Flight Checklist</CardTitle>
+                        <CardDescription>Complete all items for {aircraft.tailNumber} before submitting.</CardDescription>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent>
                 <ScrollArea className="h-[60vh] pr-4">
