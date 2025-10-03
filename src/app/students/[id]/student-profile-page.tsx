@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, Fragment } from 'react';
@@ -22,7 +21,7 @@ import { useUser } from '@/context/user-provider';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useRouter } from 'next/navigation';
-import { doc, updateDoc, arrayUnion, getDoc, collection, query, where, writeBatch, getDocs, addDoc, deleteDoc, arrayRemove } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, getDoc, collection, query, where, writeBatch, getDocs, addDoc, deleteDoc, arrayRemove, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import { useSettings } from '@/context/settings-provider';
@@ -1060,72 +1059,70 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableBody>
                                                     {paginatedLogs.length > 0 ? (
                                                         paginatedLogs.map(log => (
-                                                            <Collapsible key={log.id} asChild>
-                                                                <>
-                                                                    <TableRow>
-                                                                        <TableCell>{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                                        <TableCell>{log.make || 'N/A'}</TableCell>
-                                                                        <TableCell>{log.aircraft.replace(log.make || '', '').trim()}</TableCell>
-                                                                        <TableCell>{log.departure || 'N/A'}</TableCell>
-                                                                        <TableCell>{log.arrival || 'N/A'}</TableCell>
-                                                                        <TableCell>{log.instructorName}</TableCell>
-                                                                        <TableCell className="max-w-[200px] truncate">{log.remarks || ''}</TableCell>
-                                                                        <TableCell>{formatDecimalTime(log.singleEngineTime)}</TableCell>
-                                                                        <TableCell>{formatDecimalTime(log.multiEngineTime)}</TableCell>
-                                                                        <TableCell>{formatDecimalTime(log.fstdTime)}</TableCell>
-                                                                        <TableCell>{formatDecimalTime(log.singleTime)}</TableCell>
-                                                                        <TableCell>{formatDecimalTime(log.dualTime)}</TableCell>
-                                                                        <TableCell>{formatDecimalTime(log.nightTime)}</TableCell>
-                                                                        <TableCell>{formatDecimalTime(log.dayTime)}</TableCell>
-                                                                        <TableCell>{formatDecimalTime(log.flightDuration)}</TableCell>
-                                                                        <TableCell>
-                                                                            <div className="flex justify-center gap-1">
-                                                                                <CollapsibleTrigger asChild>
-                                                                                    <Button variant="ghost" size="icon" disabled={!log.trainingExercises || log.trainingExercises.length === 0}>
-                                                                                        <ChevronDown className="h-4 w-4" />
-                                                                                    </Button>
-                                                                                </CollapsibleTrigger>
-                                                                                <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
-                                                                                    <Edit className="h-4 w-4" />
+                                                            <Fragment key={log.id}>
+                                                                <TableRow>
+                                                                    <TableCell>{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
+                                                                    <TableCell>{log.make || 'N/A'}</TableCell>
+                                                                    <TableCell>{log.aircraft.replace(log.make || '', '').trim()}</TableCell>
+                                                                    <TableCell>{log.departure || 'N/A'}</TableCell>
+                                                                    <TableCell>{log.arrival || 'N/A'}</TableCell>
+                                                                    <TableCell>{log.instructorName}</TableCell>
+                                                                    <TableCell className="max-w-[200px] truncate">{log.remarks || ''}</TableCell>
+                                                                    <TableCell>{formatDecimalTime(log.singleEngineTime)}</TableCell>
+                                                                    <TableCell>{formatDecimalTime(log.multiEngineTime)}</TableCell>
+                                                                    <TableCell>{formatDecimalTime(log.fstdTime)}</TableCell>
+                                                                    <TableCell>{formatDecimalTime(log.singleTime)}</TableCell>
+                                                                    <TableCell>{formatDecimalTime(log.dualTime)}</TableCell>
+                                                                    <TableCell>{formatDecimalTime(log.nightTime)}</TableCell>
+                                                                    <TableCell>{formatDecimalTime(log.dayTime)}</TableCell>
+                                                                    <TableCell>{formatDecimalTime(log.flightDuration)}</TableCell>
+                                                                    <TableCell>
+                                                                        <div className="flex justify-center gap-1">
+                                                                            <CollapsibleTrigger asChild>
+                                                                                <Button variant="ghost" size="icon" disabled={!log.trainingExercises || log.trainingExercises.length === 0}>
+                                                                                    <ChevronDown className="h-4 w-4" />
                                                                                 </Button>
+                                                                            </CollapsibleTrigger>
+                                                                            <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
+                                                                                <Edit className="h-4 w-4" />
+                                                                            </Button>
+                                                                        </div>
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                                <CollapsibleContent asChild>
+                                                                    <TableRow>
+                                                                        <TableCell colSpan={16} className="p-0">
+                                                                            <div className="p-4 space-y-4 bg-muted/50">
+                                                                                <div>
+                                                                                    <h4 className="font-semibold text-sm">Remarks</h4>
+                                                                                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{(getBookingForLog(log.id)?.bookingNumber ? `Booking: ${getBookingForLog(log.id)?.bookingNumber}\n` : '')}{log.remarks || 'No remarks.'}</p>
+                                                                                </div>
+                                                                                <Separator />
+                                                                                <div>
+                                                                                    <h4 className="font-semibold text-sm mb-2">Debrief & Exercises</h4>
+                                                                                    {log.trainingExercises.map((ex, i) => (
+                                                                                        <div key={i} className="text-sm mb-2 border-b pb-2">
+                                                                                            <div className="flex justify-between items-center">
+                                                                                                <p className="font-medium">{ex.exercise}</p>
+                                                                                                <Badge variant="outline">Rating: {ex.rating}/4</Badge>
+                                                                                            </div>
+                                                                                            {ex.comment && <p className="text-xs text-muted-foreground mt-1 pl-2 border-l-2">{ex.comment}</p>}
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                                <Separator />
+                                                                                <div>
+                                                                                    <h4 className="font-semibold text-sm mb-2">Signatures</h4>
+                                                                                    <div className="flex gap-4">
+                                                                                        {log.instructorSignature && <Image src={log.instructorSignature} alt="Instructor Signature" width={150} height={75} className="rounded-md border bg-white" />}
+                                                                                        {log.studentSignature && <Image src={log.studentSignature} alt="Student Signature" width={150} height={75} className="rounded-md border bg-white" />}
+                                                                                    </div>
+                                                                                </div>
                                                                             </div>
                                                                         </TableCell>
                                                                     </TableRow>
-                                                                    <TableRow>
-                                                                        <TableCell colSpan={16} className="p-0">
-                                                                            <CollapsibleContent>
-                                                                                <div className="p-4 space-y-4 bg-muted/50">
-                                                                                    <div>
-                                                                                        <h4 className="font-semibold text-sm">Remarks</h4>
-                                                                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{(getBookingForLog(log.id)?.bookingNumber ? `Booking: ${getBookingForLog(log.id)?.bookingNumber}\n` : '')}{log.remarks || 'No remarks.'}</p>
-                                                                                    </div>
-                                                                                    <Separator />
-                                                                                    <div>
-                                                                                        <h4 className="font-semibold text-sm mb-2">Debrief & Exercises</h4>
-                                                                                        {log.trainingExercises.map((ex, i) => (
-                                                                                            <div key={i} className="text-sm mb-2 border-b pb-2">
-                                                                                                <div className="flex justify-between items-center">
-                                                                                                     <p className="font-medium">{ex.exercise}</p>
-                                                                                                    <Badge variant="outline">Rating: {ex.rating}/4</Badge>
-                                                                                                </div>
-                                                                                                {ex.comment && <p className="text-xs text-muted-foreground mt-1 pl-2 border-l-2">{ex.comment}</p>}
-                                                                                            </div>
-                                                                                        ))}
-                                                                                    </div>
-                                                                                    <Separator />
-                                                                                    <div>
-                                                                                         <h4 className="font-semibold text-sm mb-2">Signatures</h4>
-                                                                                         <div className="flex gap-4">
-                                                                                            {log.instructorSignature && <Image src={log.instructorSignature} alt="Instructor Signature" width={150} height={75} className="rounded-md border bg-white" />}
-                                                                                            {log.studentSignature && <Image src={log.studentSignature} alt="Student Signature" width={150} height={75} className="rounded-md border bg-white" />}
-                                                                                         </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </CollapsibleContent>
-                                                                        </TableCell>
-                                                                    </TableRow>
-                                                                </>
-                                                            </Collapsible>
+                                                                </CollapsibleContent>
+                                                            </Fragment>
                                                         ))
                                                     ) : (
                                                         <TableRow>
@@ -1172,4 +1169,3 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
-
