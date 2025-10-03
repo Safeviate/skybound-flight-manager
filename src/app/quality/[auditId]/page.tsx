@@ -4,7 +4,7 @@
 
 import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem, User, DiscussionEntry, CorrectiveActionPlan, Alert, Department } from '@/lib/types';
+import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem, User, DiscussionEntry, CorrectiveActionPlan, Alert, Department, FindingOption } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -69,7 +69,6 @@ const getLevelInfo = (level: FindingLevel) => {
     }
 };
 
-const findingOptions: FindingStatus[] = ['Compliant', 'Non-compliant', 'Partial', 'Observation', 'Not Applicable'];
 const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
 
 const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit: QualityAudit, onUpdate: (updatedAudit: QualityAudit, showToast?: boolean) => void, personnel: User[], onNavigateBack: () => void }) => {
@@ -694,6 +693,8 @@ export default function QualityAuditDetailPage() {
   const [cameraItemId, setCameraItemId] = useState<string | null>(null);
   const [isBackAlertOpen, setIsBackAlertOpen] = useState(false);
 
+  const findingOptions = company?.findingOptions || [];
+
   const hasUnsavedChanges = JSON.stringify(audit) !== JSON.stringify(savedAudit);
 
   useEffect(() => {
@@ -808,7 +809,14 @@ export default function QualityAuditDetailPage() {
   const handleSeedData = () => {
     if (!audit) return;
 
-    const findingOptions: FindingStatus[] = ['Compliant', 'Non-compliant', 'Partial', 'Observation', 'Not Applicable'];
+    const defaultFindingOptions: FindingOption[] = [
+        {id: '1', name: 'Compliant'},
+        {id: '2', name: 'Non-compliant'},
+        {id: '3', name: 'Partial'},
+        {id: '4', name: 'Observation'},
+        {id: '5', name: 'Not Applicable'},
+    ];
+    const options = (company?.findingOptions?.length ?? 0) > 0 ? company!.findingOptions! : defaultFindingOptions;
     const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
 
     const seededItems = audit.checklistItems.map((item, index) => {
@@ -873,6 +881,7 @@ export default function QualityAuditDetailPage() {
   }
 
   const isAuditClosed = audit.status === 'Closed' || audit.status === 'Archived';
+  const finalFindingOptions = (company?.findingOptions?.length ?? 0) > 0 ? company!.findingOptions! : [{id: '1', name: 'Compliant'}, {id: '2', name: 'Non-compliant'}, {id: '3', name: 'Partial'}, {id: '4', name: 'Observation'}, {id: '5', name: 'Not Applicable'}];
   
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
@@ -1013,8 +1022,8 @@ export default function QualityAuditDetailPage() {
                                                       <SelectValue placeholder="Select Finding" />
                                                   </SelectTrigger>
                                                   <SelectContent>
-                                                      {findingOptions.map(opt => (
-                                                          <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                                      {finalFindingOptions.map(opt => (
+                                                          <SelectItem key={opt.id} value={opt.name}>{opt.name}</SelectItem>
                                                       ))}
                                                   </SelectContent>
                                               </Select>

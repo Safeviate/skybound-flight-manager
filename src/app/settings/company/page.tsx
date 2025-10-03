@@ -15,7 +15,7 @@ import { Bot, ShieldAlert, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { RiskAssessmentTool } from '@/app/safety/[reportId]/risk-assessment-tool';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import type { Facility } from '@/lib/types';
+import type { Facility, FindingOption } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -34,6 +34,10 @@ function CompanySettingsPage() {
   const [isFacilityDialogOpen, setIsFacilityDialogOpen] = useState(false);
   const [editingFacility, setEditingFacility] = useState<Facility | null>(null);
   const [facilityName, setFacilityName] = useState('');
+
+  const [isFindingDialogOpen, setIsFindingDialogOpen] = useState(false);
+  const [editingFinding, setEditingFinding] = useState<FindingOption | null>(null);
+  const [findingName, setFindingName] = useState('');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -105,6 +109,49 @@ function CompanySettingsPage() {
       toast({ title: 'Facility Deleted' });
     } else {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete facility.' });
+    }
+  };
+  
+  const openFindingDialog = (finding: FindingOption | null) => {
+    setEditingFinding(finding);
+    setFindingName(finding ? finding.name : '');
+    setIsFindingDialogOpen(true);
+  };
+
+  const handleFindingSave = async () => {
+    if (!company || !findingName.trim()) return;
+
+    let updatedFindings = [...(company.findingOptions || [])];
+
+    if (editingFinding) {
+      updatedFindings = updatedFindings.map(f => f.id === editingFinding.id ? { ...f, name: findingName.trim() } : f);
+    } else {
+      const newFinding: FindingOption = {
+        id: `finding-${Date.now()}`,
+        name: findingName.trim(),
+      };
+      updatedFindings.push(newFinding);
+    }
+    
+    const success = await updateCompany(company.id, { findingOptions: updatedFindings });
+    if (success) {
+      toast({ title: `Finding Option ${editingFinding ? 'Updated' : 'Added'}` });
+      setIsFindingDialogOpen(false);
+      setEditingFinding(null);
+      setFindingName('');
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to save finding option.' });
+    }
+  };
+
+  const handleFindingDelete = async (findingId: string) => {
+    if (!company) return;
+    const updatedFindings = company.findingOptions?.filter(f => f.id !== findingId) || [];
+    const success = await updateCompany(company.id, { findingOptions: updatedFindings });
+     if (success) {
+      toast({ title: 'Finding Option Deleted' });
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete finding option.' });
     }
   };
 
@@ -350,6 +397,57 @@ function CompanySettingsPage() {
                     </CardContent>
                 </Card>
             </div>
+            
+            <Separator />
+            
+            <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Audit Finding Options</h3>
+                 <Card>
+                    <CardHeader className="flex-row justify-between items-center">
+                        <div>
+                        <CardTitle className="text-base">Manage Finding Options</CardTitle>
+                        <CardDescription className="text-sm">Customize the dropdown options for audit findings.</CardDescription>
+                        </div>
+                        <Button size="sm" onClick={() => openFindingDialog(null)}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Finding
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {company?.findingOptions && company.findingOptions.length > 0 ? (
+                                    company.findingOptions.map(finding => (
+                                        <TableRow key={finding.id}>
+                                            <TableCell>{finding.name}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="icon" onClick={() => openFindingDialog(finding)}>
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => handleFindingDelete(finding.id)}>
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={2} className="text-center h-24">
+                                            No custom finding options added yet. Default values will be used.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </div>
 
             <Separator />
 
@@ -380,6 +478,29 @@ function CompanySettingsPage() {
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsFacilityDialogOpen(false)}>Cancel</Button>
                     <Button onClick={handleFacilitySave}>Save Facility</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+        
+        <Dialog open={isFindingDialogOpen} onOpenChange={setIsFindingDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{editingFinding ? 'Edit Finding Option' : 'Add New Finding Option'}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="finding-name">Finding Name</Label>
+                        <Input
+                            id="finding-name"
+                            value={findingName}
+                            onChange={(e) => setFindingName(e.target.value)}
+                            placeholder="e.g., Compliant, Non-compliant"
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsFindingDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleFindingSave}>Save Option</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

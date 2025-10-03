@@ -55,6 +55,11 @@ export type Facility = {
   name: string;
 };
 
+export type FindingOption = {
+    id: string;
+    name: string;
+};
+
 export type Company = {
   id: string;
   name: string;
@@ -64,6 +69,7 @@ export type Company = {
   logoUrl?: string;
   riskMatrixColors?: Record<string, string>;
   facilities?: Facility[];
+  findingOptions?: FindingOption[];
 };
 
 export type AircraftDocument = {
