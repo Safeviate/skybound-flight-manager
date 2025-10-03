@@ -255,41 +255,44 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         handleUpdate({ endorsements: updatedEndorsements });
     };
 
-    const handleDebriefSubmit = async (newLogEntry: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string, logIdToUpdate?: string) => {
+    const handleDebriefSubmit = async (newLogEntry: Omit<TrainingLogEntry, 'id'> & { studentSignatureRequired?: boolean }, fromBookingId?: string, logIdToUpdate?: string) => {
         if (!company || !student || !currentUser) return;
-
+    
+        const { studentSignatureRequired, ...logData } = newLogEntry;
+    
         let updatedLogs = [...(student.trainingLogs || [])];
         const logId = logIdToUpdate || `log-${Date.now()}`;
-
+    
         if (logIdToUpdate) {
             const index = updatedLogs.findIndex(log => log.id === logIdToUpdate);
             if (index !== -1) {
-                updatedLogs[index] = { ...updatedLogs[index], ...newLogEntry, id: logId };
+                updatedLogs[index] = { ...updatedLogs[index], ...logData, id: logId, studentSignatureRequired };
             } else {
-                 updatedLogs.push({ ...newLogEntry, id: logId });
+                updatedLogs.push({ ...logData, id: logId, studentSignatureRequired });
             }
         } else {
-             updatedLogs.push({ ...newLogEntry, id: logId });
+            updatedLogs.push({ ...logData, id: logId, studentSignatureRequired });
         }
-
+    
         const newTotalHours = updatedLogs.reduce((total, log) => total + (log.flightDuration || 0), 0);
         
         const milestones = [10, 20, 30];
         const notificationsSent = student.milestoneNotificationsSent || [];
         const newNotifications: number[] = [];
-
+    
         for (const milestone of milestones) {
             const threshold = milestone - 1;
             if (newTotalHours >= threshold && !notificationsSent.includes(milestone)) {
                 const headOfTrainingQuery = query(collection(db, `companies/${company.id}/users`), where('role', '==', 'Head Of Training'));
                 const hotSnapshot = await getDocs(headOfTrainingQuery);
                 const hot = hotSnapshot.empty ? null : hotSnapshot.docs[0].data() as StudentUser;
-                const instructor = (await getDocs(query(collection(db, `companies/${company.id}/users`), where('name', '==', student.instructor)))).docs[0]?.data() as StudentUser;
-
+                const instructorDoc = (await getDocs(query(collection(db, `companies/${company.id}/users`), where('name', '==', student.instructor)))).docs[0];
+                const instructor = instructorDoc ? ({ ...instructorDoc.data(), id: instructorDoc.id } as StudentUser) : null;
+    
                 const targetUserIds = [hot?.id, instructor?.id].filter(Boolean) as string[];
-
+    
                 for (const targetId of targetUserIds) {
-                     const newAlert: Omit<Alert, 'id'|'number'> = {
+                    const newAlert: Omit<Alert, 'id'|'number'> = {
                         companyId: company.id,
                         type: 'Task',
                         title: `Milestone Alert: ${student.name}`,
@@ -308,15 +311,17 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         
         const firestoreUpdate: Partial<StudentUser> = {
             trainingLogs: updatedLogs,
-            milestoneNotificationsSent: arrayUnion(...newNotifications),
         };
+        if (newNotifications.length > 0) {
+            firestoreUpdate.milestoneNotificationsSent = arrayUnion(...newNotifications);
+        }
 
-        if (newLogEntry.studentSignatureRequired) {
+        if (studentSignatureRequired) {
             const newAlert: Omit<Alert, 'id'|'number'> = {
                 companyId: company.id,
                 type: 'Signature Request',
                 title: `Debrief Signature Required`,
-                description: `Please review and sign the logbook entry for your flight on ${newLogEntry.date}.`,
+                description: `Please review and sign the logbook entry for your flight on ${logData.date}.`,
                 author: currentUser.name,
                 date: new Date().toISOString(),
                 readBy: [],
@@ -332,7 +337,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         setIsDebriefOpen(false);
         setLogToEdit(null);
         setBookingForDebrief(null);
-
+    
         toast({
             title: logIdToUpdate ? 'Debrief Updated' : 'Instructor Debrief Submitted',
             description: 'The training record has been successfully saved.',
