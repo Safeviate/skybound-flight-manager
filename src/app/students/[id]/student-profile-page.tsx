@@ -1071,6 +1071,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                         <TableHead>DEPART</TableHead>
                                                         <TableHead>ARRIVE</TableHead>
                                                         <TableHead>PIC/INSTR</TableHead>
+                                                        <TableHead>REMARKS</TableHead>
                                                         <TableHead>SE</TableHead>
                                                         <TableHead>ME</TableHead>
                                                         <TableHead>FSTD</TableHead>
@@ -1097,6 +1098,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                                         <TableCell>{log.departure || 'N/A'}</TableCell>
                                                                         <TableCell>{log.arrival || 'N/A'}</TableCell>
                                                                         <TableCell>{log.instructorName}</TableCell>
+                                                                        <TableCell className="max-w-[200px] truncate">{bookingNumRemark}{log.remarks || ''}</TableCell>
                                                                         <TableCell>{formatDecimalTime(log.singleEngineTime)}</TableCell>
                                                                         <TableCell>{formatDecimalTime(log.multiEngineTime)}</TableCell>
                                                                         <TableCell>{formatDecimalTime(log.fstdTime)}</TableCell>
@@ -1132,7 +1134,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                                                         {log.trainingExercises.map((ex, i) => (
                                                                                             <div key={i} className="text-sm mb-2 border-b pb-2">
                                                                                                 <div className="flex justify-between items-center">
-                                                                                                    <p className="font-medium">{ex.exercise}</p>
+                                                                                                     <p className="font-medium">{ex.exercise}</p>
                                                                                                     <Badge variant="outline">Rating: {ex.rating}/4</Badge>
                                                                                                 </div>
                                                                                                 {ex.comment && <p className="text-xs text-muted-foreground mt-1 pl-2 border-l-2">{ex.comment}</p>}
@@ -1199,3 +1201,5 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
+    
