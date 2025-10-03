@@ -38,15 +38,19 @@ export async function getDashboardData(companyId: string, userId: string): Promi
 
     const today = format(startOfToday(), 'yyyy-MM-dd');
 
-    const upcomingBookingsQuery = query(
+    // Refactored queries to avoid composite index requirement for OR operator
+    const upcomingStudentBookingsQuery = query(
       collection(db, `companies/${companyId}/aircraft-bookings`),
-      and(
-        where('date', '>=', today),
-        or(
-          where('student', '==', userName),
-          where('instructor', '==', userName)
-        )
-      ),
+      where('date', '>=', today),
+      where('student', '==', userName),
+      orderBy('date'),
+      orderBy('startTime')
+    );
+
+    const upcomingInstructorBookingsQuery = query(
+      collection(db, `companies/${companyId}/aircraft-bookings`),
+      where('date', '>=', today),
+      where('instructor', '==', userName),
       orderBy('date'),
       orderBy('startTime')
     );
@@ -75,20 +79,33 @@ export async function getDashboardData(companyId: string, userId: string): Promi
     );
 
     const [
-        upcomingBookingsSnap,
+        upcomingStudentBookingsSnap,
+        upcomingInstructorBookingsSnap,
         allUserBookingsSnap,
         openSafetyReportsSnapshot,
         openQualityAuditsSnapshot,
         assignedStudentsSnapshot,
     ] = await Promise.all([
-        getDocs(upcomingBookingsQuery),
+        getDocs(upcomingStudentBookingsQuery),
+        getDocs(upcomingInstructorBookingsQuery),
         getDocs(allUserBookingsQuery),
         user.permissions.includes('Safety:View') ? getDocs(openSafetyReportsQuery) : Promise.resolve({ docs: [] }),
         user.permissions.includes('Quality:View') ? getDocs(openQualityAuditsQuery) : Promise.resolve({ docs: [] }),
         user.role.includes('Instructor') || user.role === 'Chief Flight Instructor' || user.role === 'Head Of Training' ? getDocs(assignedStudentsQuery) : Promise.resolve({ docs: [] }),
     ]);
 
-    const upcomingBookings = upcomingBookingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
+    const studentBookings = upcomingStudentBookingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
+    const instructorBookings = upcomingInstructorBookingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
+    
+    // Merge and de-duplicate the upcoming bookings
+    const upcomingBookingsMap = new Map<string, Booking>();
+    studentBookings.forEach(b => upcomingBookingsMap.set(b.id, b));
+    instructorBookings.forEach(b => upcomingBookingsMap.set(b.id, b));
+    const upcomingBookings = Array.from(upcomingBookingsMap.values()).sort((a,b) => {
+        const dateA = parseISO(a.date + 'T' + a.startTime);
+        const dateB = parseISO(b.date + 'T' + b.startTime);
+        return dateA.getTime() - dateB.getTime();
+    });
     
     const allUserBookings = allUserBookingsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
 
