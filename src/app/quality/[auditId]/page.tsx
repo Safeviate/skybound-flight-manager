@@ -881,7 +881,19 @@ export default function QualityAuditDetailPage() {
   }
 
   const isAuditClosed = audit.status === 'Closed' || audit.status === 'Archived';
-  const finalFindingOptions = (company?.findingOptions?.length ?? 0) > 0 ? company!.findingOptions! : [{id: '1', name: 'Compliant'}, {id: '2', name: 'Non-compliant'}, {id: '3', name: 'Partial'}, {id: '4', name: 'Observation'}, {id: '5', name: 'Not Applicable'}];
+  
+  const finalFindingOptions = useMemo(() => 
+    (company?.findingOptions?.length ?? 0) > 0 
+      ? company!.findingOptions! 
+      : [
+          {id: '1', name: 'Compliant'},
+          {id: '2', name: 'Non-compliant'},
+          {id: '3', name: 'Partial'},
+          {id: '4', name: 'Observation'},
+          {id: '5', name: 'Not Applicable'},
+        ],
+    [company?.findingOptions]
+  );
   
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
@@ -1126,4 +1138,6 @@ export default function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
+    
+
     
