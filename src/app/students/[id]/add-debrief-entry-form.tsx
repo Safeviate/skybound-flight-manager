@@ -337,7 +337,7 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                                     <FormItem>
                                         <FormLabel>Instructor Signature</FormLabel>
                                         <FormControl>
-                                            <SignaturePad onSubmit={field.onChange} />
+                                            <SignaturePad onSubmit={field.onChange} signature={field.value}/>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -351,7 +351,7 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                                         <FormLabel>Student Signature</FormLabel>
                                         <FormControl>
                                             <div className={cn(!isCurrentUserStudent && "opacity-50 pointer-events-none")}>
-                                                <SignaturePad onSubmit={field.onChange} />
+                                                <SignaturePad onSubmit={field.onChange} signature={field.value} />
                                             </div>
                                         </FormControl>
                                         {!isCurrentUserStudent && <FormDescription className="text-destructive">Only the student can sign here.</FormDescription>}

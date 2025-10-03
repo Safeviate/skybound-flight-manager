@@ -5,20 +5,28 @@
 import * as React from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { Button } from '@/components/ui/button';
-import { Eraser, Check } from 'lucide-react';
+import { Eraser, Check, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import Image from 'next/image';
 
 interface SignaturePadProps {
   onSubmit: (signature: string) => void;
   className?: string;
+  signature?: string | null;
 }
 
-export function SignaturePad({ onSubmit, className }: SignaturePadProps) {
+export function SignaturePad({ onSubmit, className, signature: existingSignature }: SignaturePadProps) {
   const sigCanvas = React.useRef<SignatureCanvas>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const [isSignatureEmpty, setIsSignatureEmpty] = React.useState(true);
+  const [isEditing, setIsEditing] = React.useState(!existingSignature);
+
+  React.useEffect(() => {
+    setIsEditing(!existingSignature);
+  }, [existingSignature]);
+  
 
   const handleClear = () => {
     sigCanvas.current?.clear();
@@ -29,6 +37,7 @@ export function SignaturePad({ onSubmit, className }: SignaturePadProps) {
     if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
       const signature = sigCanvas.current.toDataURL('image/png');
       onSubmit(signature);
+      setIsEditing(false);
     }
   };
 
@@ -46,6 +55,8 @@ export function SignaturePad({ onSubmit, className }: SignaturePadProps) {
   };
 
   React.useEffect(() => {
+    if (!isEditing) return;
+
     const resizeCanvas = () => {
         if (sigCanvas.current && containerRef.current) {
             const canvas: HTMLCanvasElement | null = sigCanvas.current.getCanvas();
@@ -70,7 +81,23 @@ export function SignaturePad({ onSubmit, className }: SignaturePadProps) {
     
     window.addEventListener('resize', debouncedResize);
     return () => window.removeEventListener('resize', debouncedResize);
-  }, [isMobile]);
+  }, [isMobile, isEditing]);
+  
+  if (!isEditing && existingSignature) {
+    return (
+        <div className={cn('flex w-full max-w-sm flex-col items-center gap-2', className)}>
+            <div className="w-full rounded-lg border bg-white p-2">
+                <Image src={existingSignature} alt="User signature" width={300} height={150} className="mx-auto" />
+            </div>
+            <div className="flex w-full justify-end">
+                <Button type="button" variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Re-sign
+                </Button>
+            </div>
+        </div>
+    )
+  }
 
   return (
     <div className={cn('flex w-full max-w-sm flex-col items-center gap-2', className)}>
