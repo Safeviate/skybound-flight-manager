@@ -40,6 +40,7 @@ import { cn } from '@/lib/utils';
 export function StudentsPageContent({ initialStudents }: { initialStudents: User[] }) {
   const { toast } = useToast();
   const [students, setStudents] = useState<User[]>(initialStudents);
+  const [instructors, setInstructors] = useState<User[]>([]);
   const { user, company, loading } = useUser();
   const router = useRouter();
   const [isNewStudentOpen, setIsNewStudentOpen] = useState(false);
@@ -48,26 +49,42 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
   const userPermissions = user?.permissions || [];
   const canEdit = userPermissions.includes('Super User') || userPermissions.includes('Students:Edit');
 
+  const fetchStudentsAndInstructors = async () => {
+    if (!company) return;
+    try {
+        const studentsQuery = query(collection(db, `companies/${company.id}/students`));
+        const instructorsQuery = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
+        
+        const [studentsSnapshot, instructorsSnapshot] = await Promise.all([
+            getDocs(studentsQuery),
+            getDocs(instructorsQuery),
+        ]);
+
+        setStudents(studentsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User)));
+        const designatedInstructors = instructorsSnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as User))
+            .filter(u => company.instructorIds?.includes(u.id));
+        setInstructors(designatedInstructors);
+
+    } catch (e) {
+        console.error("Failed to fetch data:", e);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not load student or instructor data.' });
+    }
+  };
+
   useEffect(() => {
-    setStudents(initialStudents);
-  }, [initialStudents]);
+    fetchStudentsAndInstructors();
+  }, [company]);
 
   const activeStudents = useMemo(() => students.filter(s => s.status !== 'Archived'), [students]);
   const archivedStudents = useMemo(() => students.filter(s => s.status === 'Archived'), [students]);
-
-  const fetchStudents = async () => {
-    if (!company) return;
-    const q = query(collection(db, `companies/${company.id}/students`));
-    const snapshot = await getDocs(q);
-    setStudents(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User)));
-  };
 
   const handleUpdateStudent = async (updatedData: User) => {
     if (!company) return;
     try {
         const studentRef = doc(db, `companies/${company.id}/students`, updatedData.id);
         await updateDoc(studentRef, { ...updatedData });
-        fetchStudents();
+        fetchStudentsAndInstructors();
         setEditingStudent(null);
         toast({ title: 'Student Updated', description: `${updatedData.name}'s details have been saved.` });
     } catch (error) {
@@ -265,7 +282,10 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
                             Fill out the form below to add a new student. This will create their user account.
                         </DialogDescription>
                     </DialogHeader>
-                    <NewStudentForm onSuccess={() => { fetchStudents(); setIsNewStudentOpen(false); }} />
+                    <NewStudentForm 
+                        onSuccess={() => { fetchStudentsAndInstructors(); setIsNewStudentOpen(false); }} 
+                        instructors={instructors}
+                    />
                 </DialogContent>
             </Dialog>
           )}
@@ -298,6 +318,7 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
                 <EditStudentForm 
                     student={editingStudent}
                     onUpdate={handleUpdateStudent}
+                    instructors={instructors}
                 />
             </DialogContent>
         </Dialog>

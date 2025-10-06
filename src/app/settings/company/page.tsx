@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useSettings } from '@/context/settings-provider';
@@ -15,9 +16,12 @@ import { Bot, ShieldAlert, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { RiskAssessmentTool } from '@/app/safety/[reportId]/risk-assessment-tool';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import type { Facility, FindingOption } from '@/lib/types';
+import type { Facility, FindingOption, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const REGULATORY_LIMITS = {
   daily: 8,
@@ -38,12 +42,26 @@ function CompanySettingsPage() {
   const [isFindingDialogOpen, setIsFindingDialogOpen] = useState(false);
   const [editingFinding, setEditingFinding] = useState<FindingOption | null>(null);
   const [findingName, setFindingName] = useState('');
+  
+  const [personnel, setPersonnel] = useState<User[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
+  
+  useEffect(() => {
+    const fetchPersonnel = async () => {
+        if (!company) return;
+        const personnelQuery = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
+        const snapshot = await getDocs(personnelQuery);
+        setPersonnel(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
+    };
+    if (company) {
+        fetchPersonnel();
+    }
+  }, [company]);
 
 
   const handleToggle = (key: keyof typeof settings) => {
@@ -152,6 +170,22 @@ function CompanySettingsPage() {
       toast({ title: 'Finding Option Deleted' });
     } else {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete finding option.' });
+    }
+  };
+  
+  const handleInstructorSelection = async (personId: string, isSelected: boolean) => {
+    if (!company) return;
+    
+    const currentIds = company.instructorIds || [];
+    const newIds = isSelected
+        ? [...currentIds, personId]
+        : currentIds.filter(id => id !== personId);
+        
+    const success = await updateCompany(company.id, { instructorIds: newIds });
+    if (success) {
+      toast({ title: 'Instructor List Updated' });
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update instructor list.' });
     }
   };
 
@@ -345,6 +379,36 @@ function CompanySettingsPage() {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+                 <h3 className="font-semibold text-lg">Designate Instructors</h3>
+                 <p className="text-sm text-muted-foreground">
+                    Select which personnel are designated as instructors. This list will be used in all instructor dropdown menus.
+                </p>
+                 <Card>
+                    <CardContent className="pt-6">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {personnel.map((person) => (
+                            <div key={person.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                    id={`instructor-${person.id}`}
+                                    checked={company?.instructorIds?.includes(person.id)}
+                                    onCheckedChange={(checked) => handleInstructorSelection(person.id, !!checked)}
+                                />
+                                <label
+                                    htmlFor={`instructor-${person.id}`}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                    {person.name}
+                                </label>
+                            </div>
+                        ))}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
             <Separator />

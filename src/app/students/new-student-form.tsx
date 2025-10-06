@@ -73,12 +73,12 @@ type StudentFormValues = z.infer<typeof studentFormSchema>;
 
 interface NewStudentFormProps {
     onSuccess: () => void;
+    instructors: User[];
 }
 
-export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
+export function NewStudentForm({ onSuccess, instructors }: NewStudentFormProps) {
   const { user: currentUser, company } = useUser();
   const { settings } = useSettings();
-  const [instructors, setInstructors] = useState<User[]>([]);
   const { toast } = useToast();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoTarget, setPhotoTarget] = useState<string | null>(null);
@@ -132,17 +132,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
     setPhotoTarget(targetField);
     setIsCameraOpen(true);
   };
-  
-  useEffect(() => {
-      const fetchInstructors = async () => {
-          if (!company) return;
-          const q = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
-          const snapshot = await getDocs(q);
-          setInstructors(snapshot.docs.map(doc => doc.data() as User));
-      }
-      fetchInstructors();
-  }, [company]);
-  
+
   async function handleFormSubmit(data: StudentFormValues) {
     if (!company || !currentUser) {
         toast({ variant: 'destructive', title: 'Error', description: 'Company context not found.' });

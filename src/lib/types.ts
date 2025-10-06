@@ -70,6 +70,7 @@ export type Company = {
   riskMatrixColors?: Record<string, string>;
   facilities?: Facility[];
   findingOptions?: FindingOption[];
+  instructorIds?: string[];
 };
 
 export type AircraftDocument = {
