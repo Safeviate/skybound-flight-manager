@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc, where } from 'firebase/firestore';
 import { PlusCircle, Edit, Trash2, Network } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -17,10 +17,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import type { CompanyRole, CompanyDepartment, Permission } from '@/lib/types';
+import type { CompanyRole, CompanyDepartment, Permission, User } from '@/lib/types';
 import { PermissionsListbox } from '@/app/personnel/permissions-listbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ALL_PERMISSIONS } from '@/lib/types';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const itemFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -212,24 +213,28 @@ const ManagementSection = ({ title, items, onUpdate, type, allPermissions, canEd
 };
 
 export default function RolesAndDepartmentsPage() {
-    const { company, user } = useUser();
+    const { company, user, updateCompany } = useUser();
     const { toast } = useToast();
     const [roles, setRoles] = React.useState<CompanyRole[]>([]);
     const [departments, setDepartments] = React.useState<CompanyDepartment[]>([]);
     const [allPermissions, setAllPermissions] = React.useState<Permission[]>(ALL_PERMISSIONS);
+    const [personnel, setPersonnel] = React.useState<User[]>([]);
 
     const fetchData = React.useCallback(async () => {
         if (!company) return;
         try {
             const rolesQuery = query(collection(db, `companies/${company.id}/roles`));
             const deptsQuery = query(collection(db, `companies/${company.id}/departments`));
+            const personnelQuery = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
             
-            const [rolesSnapshot, deptsSnapshot] = await Promise.all([
+            const [rolesSnapshot, deptsSnapshot, personnelSnapshot] = await Promise.all([
                 getDocs(rolesQuery),
                 getDocs(deptsQuery),
+                getDocs(personnelQuery),
             ]);
             setRoles(rolesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyRole)));
             setDepartments(deptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment)));
+            setPersonnel(personnelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
 
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -240,6 +245,22 @@ export default function RolesAndDepartmentsPage() {
     React.useEffect(() => {
         fetchData();
     }, [fetchData]);
+    
+    const handleInstructorSelection = async (personId: string, isSelected: boolean) => {
+        if (!company) return;
+        
+        const currentIds = company.instructorIds || [];
+        const newIds = isSelected
+            ? [...currentIds, personId]
+            : currentIds.filter(id => id !== personId);
+            
+        const success = await updateCompany(company.id, { instructorIds: newIds });
+        if (success) {
+          toast({ title: 'Instructor List Updated' });
+        } else {
+          toast({ variant: 'destructive', title: 'Error', description: 'Failed to update instructor list.' });
+        }
+      };
 
     const canView = user?.permissions.includes('Super User') || user?.permissions.includes('Roles & Departments:View');
     const canEdit = user?.permissions.includes('Super User') || user?.permissions.includes('Roles & Departments:Edit');
@@ -260,7 +281,7 @@ export default function RolesAndDepartmentsPage() {
     }
 
     return (
-        <main className="flex-1 p-4 md:p-8">
+        <main className="flex-1 p-4 md:p-8 space-y-8">
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><Network /> Roles & Departments</CardTitle>
@@ -271,6 +292,32 @@ export default function RolesAndDepartmentsPage() {
                 <CardContent className="grid md:grid-cols-2 gap-8">
                    <ManagementSection title="Roles" items={roles} onUpdate={fetchData} type="roles" allPermissions={allPermissions} canEdit={canEdit} />
                    <ManagementSection title="Departments" items={departments} onUpdate={fetchData} type="departments" allPermissions={allPermissions} canEdit={canEdit} />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Designate Instructors</CardTitle>
+                    <CardDescription>Select which personnel are designated as instructors for student assignments.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {personnel.map((person) => (
+                            <div key={person.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                    id={`instructor-${person.id}`}
+                                    checked={company?.instructorIds?.includes(person.id)}
+                                    onCheckedChange={(checked) => handleInstructorSelection(person.id, !!checked)}
+                                    disabled={!canEdit}
+                                />
+                                <label
+                                    htmlFor={`instructor-${person.id}`}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                    {person.name} <span className="text-muted-foreground text-xs">({person.role})</span>
+                                </label>
+                            </div>
+                        ))}
+                    </div>
                 </CardContent>
             </Card>
         </main>
