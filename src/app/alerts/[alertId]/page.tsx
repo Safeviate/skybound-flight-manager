@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
@@ -75,6 +75,7 @@ export default function AlertDetailPage() {
             setPersonnel([...personnelList, ...studentList]);
 
         } catch (error) {
+            console.error("Error fetching alert details:", error)
             toast({ variant: 'destructive', title: 'Error', description: 'Could not load alert details.' });
         }
     };
