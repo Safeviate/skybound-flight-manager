@@ -40,6 +40,7 @@ const getAlertIcon = (type: Alert['type']) => {
 }
 
 const AlertViewDialog = ({ alert, userMap, onPrint }: { alert: Alert; userMap: Map<string, string>, onPrint: (id: string) => void }) => {
+    const targetUserName = alert.targetUserId ? userMap.get(alert.targetUserId) : null;
     return (
         <DialogContent className="sm:max-w-2xl" id={`alert-${alert.id}`}>
             <ScrollArea className="max-h-[70vh] pr-6">
@@ -71,7 +72,12 @@ const AlertViewDialog = ({ alert, userMap, onPrint }: { alert: Alert; userMap: M
                                 <DialogTitle className="mt-2 text-2xl">{alert.number ? `#${alert.number}`: ''} {alert.title}</DialogTitle>
                                 <DialogDescription>
                                     Issued by {alert.author} on {format(parseISO(alert.date), 'MMMM d, yyyy')}
-                                    {alert.department && alert.department !== 'all' && ` to ${alert.department} Department`}
+                                    {targetUserName
+                                        ? ` to ${targetUserName}`
+                                        : alert.department && alert.department !== 'all'
+                                        ? ` to ${alert.department} Department`
+                                        : ''
+                                    }
                                 </DialogDescription>
                             </div>
                              <Badge variant={getAlertVariant(alert.type)}>{alert.type}</Badge>
@@ -267,11 +273,16 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         </TableRow>
       </TableHeader>
       <TableBody>
-        {alerts.map(alert => (
+        {alerts.map(alert => {
+            const targetUserName = alert.targetUserId ? userMap.get(alert.targetUserId) : null;
+            const departmentDisplay = targetUserName 
+                ? `User: ${targetUserName}` 
+                : (alert.department && alert.department !== 'all' ? alert.department : 'All');
+            return (
           <TableRow key={alert.id}>
             <TableCell>{alert.number}</TableCell>
             <TableCell className="font-medium">{alert.title}</TableCell>
-            <TableCell>{alert.department && alert.department !== 'all' ? alert.department : 'All'}</TableCell>
+            <TableCell>{departmentDisplay}</TableCell>
             <TableCell>{alert.author}</TableCell>
             <TableCell>{format(parseISO(alert.date), 'PPP')}</TableCell>
             <TableCell className="text-right">
@@ -319,7 +330,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
                 )}
             </TableCell>
           </TableRow>
-        ))}
+        )})}
       </TableBody>
     </Table>
   );

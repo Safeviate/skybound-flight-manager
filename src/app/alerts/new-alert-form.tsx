@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import type { Alert, Department, CompanyDepartment } from '@/lib/types';
+import type { Alert, Department, CompanyDepartment, User } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
@@ -37,6 +37,7 @@ const alertFormSchema = z.object({
     message: 'Title must be at least 5 characters.',
   }),
   department: z.string().optional(),
+  targetUserId: z.string().optional(),
   background: z.string().min(10, { message: 'Background must be at least 10 characters.' }),
   purpose: z.string().min(10, { message: 'Purpose must be at least 10 characters.' }),
   instruction: z.string().min(10, { message: 'Instruction must be at least 10 characters.' }),
@@ -54,12 +55,14 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
   const { toast } = useToast();
   const { company } = useUser();
   const [departments, setDepartments] = useState<CompanyDepartment[]>([]);
+  const [personnel, setPersonnel] = useState<User[]>([]);
 
   const form = useForm<AlertFormValues>({
     resolver: zodResolver(alertFormSchema),
     defaultValues: {
       title: '',
       department: '',
+      targetUserId: '',
       background: '',
       purpose: '',
       instruction: '',
@@ -67,17 +70,30 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
   });
 
   useEffect(() => {
-    const fetchDepartments = async () => {
+    const fetchData = async () => {
         if (!company) return;
         try {
             const deptsQuery = query(collection(db, `companies/${company.id}/departments`));
-            const deptsSnapshot = await getDocs(deptsQuery);
+            const usersQuery = query(collection(db, `companies/${company.id}/users`));
+            const studentsQuery = query(collection(db, `companies/${company.id}/students`));
+
+            const [deptsSnapshot, usersSnapshot, studentsSnapshot] = await Promise.all([
+                getDocs(deptsQuery),
+                getDocs(usersQuery),
+                getDocs(studentsQuery)
+            ]);
+            
             setDepartments(deptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment)));
+            
+            const users = usersSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
+            const students = studentsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
+            setPersonnel([...users, ...students]);
+
         } catch (error) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch departments.' });
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch company data.' });
         }
     };
-    fetchDepartments();
+    fetchData();
   }, [company, toast]);
 
   useEffect(() => {
@@ -86,6 +102,7 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
         type: existingAlert.type as 'Red Tag' | 'Yellow Tag',
         title: existingAlert.title,
         department: existingAlert.department,
+        targetUserId: existingAlert.targetUserId,
         background: existingAlert.background,
         purpose: existingAlert.purpose,
         instruction: existingAlert.instruction,
@@ -96,6 +113,7 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
             type: undefined,
             title: '',
             department: '',
+            targetUserId: '',
             background: '',
             purpose: '',
             instruction: '',
@@ -137,29 +155,54 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="department"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Target Department (Optional)</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a department to target" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="all">All Departments</SelectItem>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="department"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Target Department (Optional)</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="All Departments" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    <SelectItem value="">All Departments</SelectItem>
+                    {departments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="targetUserId"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Review by Personnel (Optional)</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="All Personnel" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    <SelectItem value="">All Personnel</SelectItem>
+                    {personnel.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
         <FormField
           control={form.control}
           name="title"
