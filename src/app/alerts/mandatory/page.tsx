@@ -116,8 +116,10 @@ export default function MandatoryAlertsPage() {
                                                 {isAcknowledged ? 'Acknowledged' : (isAcknowledging ? 'Saving...' : 'Acknowledge')}
                                             </Button>
                                         </div>
-                                        <AlertDescription className="mt-2 text-foreground pr-24">
-                                            {alert.description}
+                                        <AlertDescription className="mt-2 text-foreground pr-24 space-y-2">
+                                             {alert.background && <p><strong>Background:</strong> {alert.background}</p>}
+                                             {alert.purpose && <p><strong>Purpose:</strong> {alert.purpose}</p>}
+                                             {alert.instruction && <p><strong>Instruction:</strong> {alert.instruction}</p>}
                                         </AlertDescription>
                                         <p className="text-xs text-muted-foreground mt-2">Issued by {alert.author} on {format(parseISO(alert.date), 'MMM d, yyyy')}</p>
                                     </div>

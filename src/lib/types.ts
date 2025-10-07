@@ -593,13 +593,18 @@ export type Alert = {
   number?: number;
   type: 'Red Tag' | 'Yellow Tag' | 'Task' | 'Signature Request' | 'System Health';
   title: string;
-  description: string;
+  description?: string; // This is now optional as it's replaced by more specific fields
   author: string;
   date: string;
   department?: Department;
   readBy: AlertAcknowledgement[];
   targetUserId?: string;
   relatedLink?: string;
+  // New fields
+  background?: string;
+  purpose?: string;
+  instruction?: string;
+  reviewDate?: string;
 };
 
 export type ComplianceItem = {

@@ -83,13 +83,18 @@ export function MyDashboardPageContent({ initialData }: { initialData: Dashboard
   }
   
   const getAlertStylingAndDescription = (alert: AlertType) => {
+    let description = alert.description || '';
+    if (alert.background) {
+        description = alert.background;
+    }
+    
     if (alert.title.startsWith("Document Expiry:")) {
-        const dateMatch = alert.description.match(/on (\d{4}-\d{2}-\d{2})/);
+        const dateMatch = description.match(/on (\d{4}-\d{2}-\d{2})/);
         if (dateMatch) {
             const expiryDate = parseISO(dateMatch[1]);
             const daysUntil = differenceInDays(expiryDate, new Date());
 
-            const description = daysUntil < 0 
+            description = daysUntil < 0 
                 ? `This document has expired.`
                 : `This document expires in ${daysUntil} days on ${format(expiryDate, 'MMM d, yyyy')}.`;
             
@@ -105,7 +110,7 @@ export function MyDashboardPageContent({ initialData }: { initialData: Dashboard
             return { className, description };
         }
     }
-    return { className: 'bg-background hover:bg-muted/50', description: alert.description };
+    return { className: 'bg-background hover:bg-muted/50', description };
   };
   
   const isLoading = userLoading || dataLoading;

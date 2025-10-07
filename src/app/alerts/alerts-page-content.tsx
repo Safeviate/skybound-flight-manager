@@ -77,8 +77,32 @@ const AlertViewDialog = ({ alert, userMap, onPrint }: { alert: Alert; userMap: M
                              <Badge variant={getAlertVariant(alert.type)}>{alert.type}</Badge>
                         </div>
                     </DialogHeader>
-                    <div className="py-4 space-y-4">
-                        <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md">{alert.description}</p>
+                    <div className="py-4 space-y-6">
+                        {alert.background && (
+                            <div>
+                                <h4 className="font-semibold text-sm mb-1">Background</h4>
+                                <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted rounded-md">{alert.background}</p>
+                            </div>
+                        )}
+                        {alert.purpose && (
+                             <div>
+                                <h4 className="font-semibold text-sm mb-1">Purpose</h4>
+                                <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted rounded-md">{alert.purpose}</p>
+                            </div>
+                        )}
+                        {alert.instruction && (
+                            <div>
+                                <h4 className="font-semibold text-sm mb-1">Instruction / Action Required</h4>
+                                <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted rounded-md">{alert.instruction}</p>
+                            </div>
+                        )}
+                        {alert.reviewDate && (
+                            <div>
+                                <h4 className="font-semibold text-sm mb-1">Review Date</h4>
+                                <p className="text-sm text-muted-foreground">{format(parseISO(alert.reviewDate), 'PPP')}</p>
+                            </div>
+                        )}
+
                         <div>
                             <h4 className="text-sm font-semibold mb-2">Acknowledged By ({alert.readBy.length})</h4>
                             {alert.readBy.length > 0 ? (

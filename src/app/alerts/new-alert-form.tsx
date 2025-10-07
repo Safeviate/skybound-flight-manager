@@ -23,6 +23,10 @@ import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 
 const alertFormSchema = z.object({
@@ -32,10 +36,11 @@ const alertFormSchema = z.object({
   title: z.string().min(5, {
     message: 'Title must be at least 5 characters.',
   }),
-  description: z.string().min(10, {
-    message: 'Description must be at least 10 characters.',
-  }),
   department: z.string().optional(),
+  background: z.string().min(10, { message: 'Background must be at least 10 characters.' }),
+  purpose: z.string().min(10, { message: 'Purpose must be at least 10 characters.' }),
+  instruction: z.string().min(10, { message: 'Instruction must be at least 10 characters.' }),
+  reviewDate: z.date().optional(),
 });
 
 type AlertFormValues = z.infer<typeof alertFormSchema>;
@@ -54,8 +59,10 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
     resolver: zodResolver(alertFormSchema),
     defaultValues: {
       title: '',
-      description: '',
       department: '',
+      background: '',
+      purpose: '',
+      instruction: '',
     },
   });
 
@@ -78,21 +85,31 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
       form.reset({
         type: existingAlert.type as 'Red Tag' | 'Yellow Tag',
         title: existingAlert.title,
-        description: existingAlert.description,
         department: existingAlert.department,
+        background: existingAlert.background,
+        purpose: existingAlert.purpose,
+        instruction: existingAlert.instruction,
+        reviewDate: existingAlert.reviewDate ? parseISO(existingAlert.reviewDate) : undefined,
       });
     } else {
         form.reset({
             type: undefined,
             title: '',
-            description: '',
             department: '',
+            background: '',
+            purpose: '',
+            instruction: '',
+            reviewDate: undefined,
         });
     }
   }, [existingAlert, form]);
 
   function handleFormSubmit(data: AlertFormValues) {
-    onSubmit(data);
+    const dataToSubmit = {
+        ...data,
+        reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
+    }
+    onSubmit(dataToSubmit as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
     form.reset();
   }
 
@@ -158,17 +175,70 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
         />
         <FormField
           control={form.control}
-          name="description"
+          name="background"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>Background</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Provide details about the alert..."
-                  className="min-h-[120px]"
-                  {...field}
-                />
+                <Textarea placeholder="Provide background information..." {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="purpose"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Purpose</FormLabel>
+              <FormControl>
+                <Textarea placeholder="State the purpose of this alert..." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="instruction"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Instruction / Action Required</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Detail the required actions..." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="reviewDate"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Review Date (Optional)</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant={"outline"}
+                      className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                    >
+                      {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               <FormMessage />
             </FormItem>
           )}
