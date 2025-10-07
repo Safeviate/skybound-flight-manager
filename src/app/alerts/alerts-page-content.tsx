@@ -21,7 +21,7 @@ import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const getAlertVariant = (type: Alert['type']) => {
     switch (type) {
@@ -266,85 +266,85 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
   const yellowTagAlerts = alerts.filter(alert => alert.type === 'Yellow Tag');
   
   const AlertTable = ({ alerts }: { alerts: Alert[] }) => (
-    <ScrollArea>
-        <Table>
+    <div className="overflow-x-auto">
+      <Table>
         <TableHeader>
-            <TableRow>
+          <TableRow>
             <TableHead>Number</TableHead>
             <TableHead>Title</TableHead>
             <TableHead>Department</TableHead>
             <TableHead>Issued By</TableHead>
             <TableHead>Date</TableHead>
             <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
+          </TableRow>
         </TableHeader>
         <TableBody>
-            {alerts.map(alert => {
-                const targetUserName = alert.targetUserId ? userMap.get(alert.targetUserId) : null;
-                const departmentDisplay = targetUserName 
-                    ? `User: ${targetUserName}` 
-                    : (alert.department && alert.department !== 'all' ? alert.department : 'All');
-                return (
-            <TableRow key={alert.id}>
-                <TableCell>{alert.number}</TableCell>
-                <TableCell className="font-medium">{alert.title}</TableCell>
-                <TableCell>{departmentDisplay}</TableCell>
-                <TableCell>{alert.author}</TableCell>
-                <TableCell>{format(parseISO(alert.date), 'PPP')}</TableCell>
-                <TableCell className="text-right">
-                <Button variant="outline" size="sm" onClick={() => setViewingAlert(alert)}>
-                    <Eye className="mr-2 h-4 w-4" /> View
-                </Button>
-                {canCreateAlerts && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="ml-2">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem onSelect={() => handleOpenEditDialog(alert)}>
-                                    <Edit className="mr-2 h-4 w-4" /> Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => {
-                                    setViewingAlert(alert);
-                                    // A timeout is needed to allow the dialog to render before printing
-                                    setTimeout(() => handlePrint(`alert-${alert.id}`), 100);
-                                }}>
-                                    <Printer className="mr-2 h-4 w-4" /> Print
-                                </DropdownMenuItem>
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            Delete
-                                        </DropdownMenuItem>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete the alert "{alert.title}".
-                                        </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeleteAlert(alert.id)}>
-                                            Yes, delete alert
-                                        </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+          {alerts.map(alert => {
+              const targetUserName = alert.targetUserId ? userMap.get(alert.targetUserId) : null;
+              const departmentDisplay = targetUserName
+                  ? `User: ${targetUserName}`
+                  : (alert.department && alert.department !== 'all' ? alert.department : 'All');
+              return (
+                <TableRow key={alert.id}>
+                  <TableCell>{alert.number}</TableCell>
+                  <TableCell className="font-medium">{alert.title}</TableCell>
+                  <TableCell>{departmentDisplay}</TableCell>
+                  <TableCell>{alert.author}</TableCell>
+                  <TableCell>{format(parseISO(alert.date), 'PPP')}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="outline" size="sm" onClick={() => setViewingAlert(alert)}>
+                        <Eye className="mr-2 h-4 w-4" /> View
+                    </Button>
+                    {canCreateAlerts && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="ml-2">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onSelect={() => handleOpenEditDialog(alert)}>
+                            <Edit className="mr-2 h-4 w-4" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => {
+                              setViewingAlert(alert);
+                              // A timeout is needed to allow the dialog to render before printing
+                              setTimeout(() => handlePrint(`alert-${alert.id}`), 100);
+                          }}>
+                            <Printer className="mr-2 h-4 w-4" /> Print
+                          </DropdownMenuItem>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the alert "{alert.title}".
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteAlert(alert.id)}>
+                                  Yes, delete alert
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
-                </TableCell>
-            </TableRow>
-            )})}
+                  </TableCell>
+                </TableRow>
+              )
+          })}
         </TableBody>
-        </Table>
-        <ScrollBar orientation="horizontal" />
-    </ScrollArea>
+      </Table>
+    </div>
   );
 
   if (loading || !user) {
