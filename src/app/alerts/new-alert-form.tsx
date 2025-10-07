@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import type { Alert, Department, CompanyDepartment, User } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
@@ -162,14 +162,19 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Target Department (Optional)</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ''}>
+                <Select
+                    onValueChange={(value) => {
+                        field.onChange(value === 'all' ? undefined : value);
+                    }}
+                    value={field.value || 'all'}
+                >
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="All Departments" />
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                    <SelectItem value="">All Departments</SelectItem>
+                    <SelectItem value="all">All Departments</SelectItem>
                     {departments.map((dept) => (
                         <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
                     ))}
@@ -185,14 +190,19 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Review by Personnel (Optional)</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ''}>
+                <Select 
+                    onValueChange={(value) => {
+                        field.onChange(value === 'all' ? undefined : value);
+                    }}
+                    value={field.value || 'all'}
+                >
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="All Personnel" />
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                    <SelectItem value="">All Personnel</SelectItem>
+                    <SelectItem value="all">All Personnel</SelectItem>
                     {personnel.map((p) => (
                         <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                     ))}
