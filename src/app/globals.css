@@ -149,7 +149,7 @@ body {
       display: none !important;
     }
 
-    .print-this, .print-this > [data-radix-scroll-area-viewport] {
+    .print-this {
         display: block !important;
         position: static !important;
         width: 100% !important;
@@ -157,6 +157,12 @@ body {
         overflow: visible !important;
         padding: 0 !important;
         margin: 0 !important;
+    }
+
+    .print-this [data-radix-scroll-area-viewport] {
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
     }
     
     [role="tablist"] {
@@ -202,5 +208,6 @@ body {
         max-height: none !important;
     }
 }
+
 
 
