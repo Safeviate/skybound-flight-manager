@@ -148,19 +148,19 @@ export default function AlertDetailPage() {
             {alert.background && (
                 <div>
                     <h4 className="font-semibold text-lg mb-1">Background</h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted rounded-md">{alert.background}</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted rounded-md break-words">{alert.background}</p>
                 </div>
             )}
             {alert.purpose && (
                  <div>
                     <h4 className="font-semibold text-lg mb-1">Purpose</h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted rounded-md">{alert.purpose}</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted rounded-md break-words">{alert.purpose}</p>
                 </div>
             )}
             {alert.instruction && (
                 <div>
                     <h4 className="font-semibold text-lg mb-1">Instruction / Action Required</h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted rounded-md">{alert.instruction}</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted rounded-md break-words">{alert.instruction}</p>
                 </div>
             )}
             {alert.reviewDate && (
