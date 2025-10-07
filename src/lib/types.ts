@@ -493,15 +493,13 @@ export type AuditChecklistItem = {
 
 export type AuditArea = 'Personnel' | 'Maintenance' | 'Facilities' | 'Records' | 'Management' | 'Ground Ops' | 'Cabin Safety' | 'Security' | 'Occupational Safety' | 'Administration & Management';
 
-export type ChecklistCategory = string;
-
 export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs' | 'Header';
 
 export type AuditChecklist = {
     id: string;
     companyId: string;
     title: string;
-    category: ChecklistCategory;
+    department: string;
     items: AuditChecklistItem[];
 };
 

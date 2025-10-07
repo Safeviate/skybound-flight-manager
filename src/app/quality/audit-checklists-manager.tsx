@@ -10,7 +10,7 @@ import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc, setDoc, where, orderBy, limit } from 'firebase/firestore';
-import type { AuditChecklist as Checklist, QualityAudit, User, AuditArea, Department } from '@/lib/types';
+import type { AuditChecklist as Checklist, QualityAudit, User, AuditArea, Department, CompanyDepartment } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AuditChecklistTemplateForm } from './audit-checklist-template-form';
 import { generateAuditChecklist } from '@/ai/flows/generate-audit-checklist-flow';
@@ -273,6 +273,7 @@ export function AuditChecklistsManager({
 }) {
     const [checklistTemplates, setChecklistTemplates] = useState<Checklist[]>(initialTemplates);
     const [personnel, setPersonnel] = useState<User[]>(initialPersonnel);
+    const [departments, setDepartments] = useState<CompanyDepartment[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState<Checklist | null>(null);
     const { user, company, loading } = useUser();
@@ -280,13 +281,21 @@ export function AuditChecklistsManager({
     const [creationMode, setCreationMode] = useState<'manual' | 'ai' | null>(null);
     const router = useRouter();
 
+    const fetchDepartments = useCallback(async () => {
+        if (!company) return;
+        const deptsQuery = query(collection(db, `companies/${company.id}/departments`));
+        const deptsSnapshot = await getDocs(deptsQuery);
+        setDepartments(deptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment)));
+    }, [company]);
+
+
     const groupedTemplates = useMemo(() => {
         return checklistTemplates.reduce((acc, template) => {
-            const category = template.category || 'Uncategorized';
-            if (!acc[category]) {
-                acc[category] = [];
+            const department = template.department || 'Uncategorized';
+            if (!acc[department]) {
+                acc[department] = [];
             }
-            acc[category].push(template);
+            acc[department].push(template);
             return acc;
         }, {} as Record<string, Checklist[]>);
     }, [checklistTemplates]);
@@ -299,9 +308,10 @@ export function AuditChecklistsManager({
     };
 
     useEffect(() => {
+        fetchDepartments();
         setChecklistTemplates(initialTemplates);
         setPersonnel(initialPersonnel);
-    }, [initialTemplates, initialPersonnel]);
+    }, [initialTemplates, initialPersonnel, fetchDepartments]);
 
 
     const handleStartAudit = async (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'> & { department?: Department }, template: Checklist) => {
@@ -382,7 +392,7 @@ export function AuditChecklistsManager({
             id: `temp-${Date.now()}`,
             companyId: company?.id || '',
             title: data.title,
-            category: 'Uncategorized',
+            department: 'Uncategorized',
             items: data.items.map((item, index) => ({
                 id: `item-${Date.now()}-${index}`,
                 text: item.text,
@@ -438,9 +448,9 @@ export function AuditChecklistsManager({
                         New Checklist Template
                     </Button>
                 </div>
-                 {Object.keys(groupedTemplates).sort().map(category => (
-                    <div key={category} className="mb-8">
-                        <h3 className="text-lg font-semibold mb-2">{category}</h3>
+                 {Object.keys(groupedTemplates).sort().map(department => (
+                    <div key={department} className="mb-8">
+                        <h3 className="text-lg font-semibold mb-2">{department}</h3>
                         <div className="border rounded-md">
                             <Table>
                                 <TableHeader>
@@ -451,8 +461,8 @@ export function AuditChecklistsManager({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {groupedTemplates[category].length > 0 ? (
-                                        groupedTemplates[category].map((template) => (
+                                    {groupedTemplates[department].length > 0 ? (
+                                        groupedTemplates[department].map((template) => (
                                             <TableRow key={template.id}>
                                                 <TableCell className="font-medium">{template.title}</TableCell>
                                                 <TableCell>{template.items.length}</TableCell>
@@ -474,7 +484,7 @@ export function AuditChecklistsManager({
                                     ) : (
                                         <TableRow>
                                             <TableCell colSpan={3} className="h-24 text-center">
-                                                No audit checklist templates found in this category.
+                                                No audit checklist templates found in this department.
                                             </TableCell>
                                         </TableRow>
                                     )}
@@ -501,7 +511,7 @@ export function AuditChecklistsManager({
                             </Button>
                         </div>
                     ) : creationMode === 'manual' ? (
-                        <AuditChecklistTemplateForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate} />
+                        <AuditChecklistTemplateForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate} departments={departments} />
                     ) : creationMode === 'ai' ? (
                         <AiGenerator onGenerated={handleAiGenerated} />
                     ) : null}

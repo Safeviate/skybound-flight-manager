@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlusCircle, Trash2, GripVertical } from 'lucide-react';
-import type { AuditChecklist, AuditChecklistItem, AuditArea, ChecklistItemType } from '@/lib/types';
+import type { AuditChecklist, AuditChecklistItem, ChecklistItemType, CompanyDepartment } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEffect, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,7 +27,7 @@ const auditChecklistFormSchema = z.object({
   title: z.string().min(3, {
     message: 'Title must be at least 3 characters.',
   }),
-  category: z.string().min(1, 'Category is required.'),
+  department: z.string().min(1, 'Department is required.'),
   items: z.array(auditChecklistItemSchema).min(1, {
       message: "You must add at least one checklist item."
   }),
@@ -37,21 +38,21 @@ type ChecklistFormValues = z.infer<typeof auditChecklistFormSchema>;
 interface AuditChecklistTemplateFormProps {
     onSubmit: (data: Omit<AuditChecklist, 'id' | 'companyId' | 'area'>) => void;
     existingTemplate?: AuditChecklist | null;
+    departments: CompanyDepartment[];
 }
 
 const checklistItemTypes: ChecklistItemType[] = ['Checkbox', 'Textbox', 'StandardCamera', 'AICamera-Registration', 'AICamera-Hobbs', 'Header'];
-const checklistCategories = ['Flight Operations', 'Maintenance', 'Ground Handling', 'Safety Management', 'Quality Assurance', 'Administration'];
 
-export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: AuditChecklistTemplateFormProps) {
+export function AuditChecklistTemplateForm({ onSubmit, existingTemplate, departments }: AuditChecklistTemplateFormProps) {
   const form = useForm<ChecklistFormValues>({
     resolver: zodResolver(auditChecklistFormSchema),
     defaultValues: existingTemplate ? {
         title: existingTemplate.title,
-        category: existingTemplate.category,
+        department: existingTemplate.department,
         items: existingTemplate.items.map(item => ({ id: item.id, text: item.text, regulationReference: item.regulationReference || '', type: item.type || 'Checkbox' })),
     } : {
       title: '',
-      category: 'Flight Operations',
+      department: '',
       items: [{ text: '', regulationReference: '', type: 'Checkbox' }],
     },
   });
@@ -60,7 +61,7 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
     if (existingTemplate) {
         form.reset({
             title: existingTemplate.title,
-            category: existingTemplate.category,
+            department: existingTemplate.department,
             items: existingTemplate.items.map(item => ({ id: item.id, text: item.text, regulationReference: item.regulationReference || '', type: item.type || 'Checkbox' })),
         });
     }
@@ -117,13 +118,13 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
             />
              <FormField
                 control={form.control}
-                name="category"
+                name="department"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>Department</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger></FormControl>
-                        <SelectContent>{checklistCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select a department" /></SelectTrigger></FormControl>
+                        <SelectContent>{departments.map(dept => <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>)}</SelectContent>
                     </Select>
                     <FormMessage />
                     </FormItem>
