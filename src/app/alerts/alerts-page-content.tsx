@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -22,6 +21,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import Link from 'next/link';
 
 const getAlertVariant = (type: Alert['type']) => {
     switch (type) {
@@ -31,118 +31,11 @@ const getAlertVariant = (type: Alert['type']) => {
     }
 }
 
-const getAlertIcon = (type: Alert['type']) => {
-    switch (type) {
-        case 'Red Tag': return <AlertTriangle className="h-6 w-6 text-destructive" />;
-        case 'Yellow Tag': return <Info className="h-6 w-6 text-yellow-600" />;
-        default: return null;
-    }
-}
-
-const AlertViewDialog = ({ alert, userMap, onPrint }: { alert: Alert; userMap: Map<string, string>, onPrint: (id: string) => void }) => {
-    const targetUserName = alert.targetUserId ? userMap.get(alert.targetUserId) : null;
-    return (
-        <DialogContent className="sm:max-w-2xl" id={`alert-${alert.id}`}>
-            <ScrollArea className="max-h-[70vh] pr-6">
-                <div className="printable-area space-y-4">
-                    <DialogHeader>
-                        <div className="flex justify-between items-start">
-                            <div className="flex items-center gap-4">
-                                {useUser().company?.logoUrl && (
-                                    <Image
-                                        src={useUser().company!.logoUrl!}
-                                        alt={`${useUser().company!.name} Logo`}
-                                        width={60}
-                                        height={60}
-                                        className="h-16 w-16 rounded-md object-contain"
-                                    />
-                                )}
-                            </div>
-                            <div className="flex-1 text-center">
-                                <DialogTitle>{useUser().company?.name}</DialogTitle>
-                                <DialogDescription>System Alert</DialogDescription>
-                            </div>
-                            <div className="w-16 flex justify-end">
-                                {getAlertIcon(alert.type)}
-                            </div>
-                        </div>
-                         <Separator className="my-4"/>
-                         <div className="flex justify-between items-start text-left">
-                            <div>
-                                <DialogTitle className="mt-2 text-2xl">{alert.number ? `#${alert.number}`: ''} {alert.title}</DialogTitle>
-                                <DialogDescription>
-                                    Issued by {alert.author} on {format(parseISO(alert.date), 'MMMM d, yyyy')}
-                                    {targetUserName
-                                        ? ` to ${targetUserName}`
-                                        : alert.department && alert.department !== 'all'
-                                        ? ` to ${alert.department} Department`
-                                        : ''
-                                    }
-                                </DialogDescription>
-                            </div>
-                             <Badge variant={getAlertVariant(alert.type)}>{alert.type}</Badge>
-                        </div>
-                    </DialogHeader>
-                    <div className="py-4 space-y-6">
-                        {alert.background && (
-                            <div>
-                                <h4 className="font-semibold text-sm mb-1">Background</h4>
-                                <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted rounded-md">{alert.background}</p>
-                            </div>
-                        )}
-                        {alert.purpose && (
-                             <div>
-                                <h4 className="font-semibold text-sm mb-1">Purpose</h4>
-                                <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted rounded-md">{alert.purpose}</p>
-                            </div>
-                        )}
-                        {alert.instruction && (
-                            <div>
-                                <h4 className="font-semibold text-sm mb-1">Instruction / Action Required</h4>
-                                <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted rounded-md">{alert.instruction}</p>
-                            </div>
-                        )}
-                        {alert.reviewDate && (
-                            <div>
-                                <h4 className="font-semibold text-sm mb-1">Review Date</h4>
-                                <p className="text-sm text-muted-foreground">{format(parseISO(alert.reviewDate), 'PPP')}</p>
-                            </div>
-                        )}
-
-                        <div>
-                            <h4 className="text-sm font-semibold mb-2">Acknowledged By ({alert.readBy.length})</h4>
-                            {alert.readBy.length > 0 ? (
-                                <div className="flex flex-wrap gap-2">
-                                {alert.readBy.map((ack, index) => (
-                                    <Badge key={`${ack.userId}-${index}`} variant="secondary">
-                                        {userMap.get(ack.userId) || ack.userId}
-                                        {ack.date ? ` on ${format(parseISO(ack.date), 'PPP p')}` : ''}
-                                    </Badge>
-                                ))}
-                                </div>
-                            ) : (
-                                <p className="text-sm text-muted-foreground">No acknowledgements yet.</p>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </ScrollArea>
-             <DialogFooter className="no-print pt-4 border-t">
-                <Button variant="outline" onClick={() => onPrint(`alert-${alert.id}`)}>
-                    <Printer className="mr-2 h-4 w-4" /> Print
-                </Button>
-            </DialogFooter>
-        </DialogContent>
-    );
-};
-
-
 export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: Alert[], allUsers: User[] }) {
   const { user, company, loading, getUnacknowledgedAlerts } = useUser();
   const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAlert, setEditingAlert] = useState<Alert | null>(null);
-  const [viewingAlert, setViewingAlert] = useState<Alert | null>(null);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -246,27 +139,11 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     }
   };
 
-  const handlePrint = (alertId: string) => {
-    const printableElement = document.getElementById(alertId);
-    if (printableElement) {
-        const parentDialog = printableElement.closest('[role="dialog"]');
-        if (parentDialog) {
-            parentDialog.classList.add('print-this');
-        }
-        document.body.classList.add('printing-alert');
-        window.print();
-        document.body.classList.remove('printing-alert');
-        if (parentDialog) {
-            parentDialog.classList.remove('print-this');
-        }
-    }
-};
-
   const redTagAlerts = alerts.filter(alert => alert.type === 'Red Tag');
   const yellowTagAlerts = alerts.filter(alert => alert.type === 'Yellow Tag');
   
   const AlertTable = ({ alerts }: { alerts: Alert[] }) => (
-    <div className="overflow-x-auto">
+    <ScrollArea>
       <Table>
         <TableHeader>
           <TableRow>
@@ -292,8 +169,10 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
                   <TableCell>{alert.author}</TableCell>
                   <TableCell>{format(parseISO(alert.date), 'PPP')}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={() => setViewingAlert(alert)}>
-                        <Eye className="mr-2 h-4 w-4" /> View
+                    <Button asChild variant="outline" size="sm">
+                        <Link href={`/alerts/${alert.id}`}>
+                          <Eye className="mr-2 h-4 w-4" /> View
+                        </Link>
                     </Button>
                     {canCreateAlerts && (
                       <DropdownMenu>
@@ -305,13 +184,6 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
                         <DropdownMenuContent>
                           <DropdownMenuItem onSelect={() => handleOpenEditDialog(alert)}>
                             <Edit className="mr-2 h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => {
-                              setViewingAlert(alert);
-                              // A timeout is needed to allow the dialog to render before printing
-                              setTimeout(() => handlePrint(`alert-${alert.id}`), 100);
-                          }}>
-                            <Printer className="mr-2 h-4 w-4" /> Print
                           </DropdownMenuItem>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -344,7 +216,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
           })}
         </TableBody>
       </Table>
-    </div>
+    </ScrollArea>
   );
 
   if (loading || !user) {
@@ -412,10 +284,6 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
             </Tabs>
         </CardContent>
       </Card>
-      
-       <Dialog open={!!viewingAlert} onOpenChange={() => setViewingAlert(null)}>
-        {viewingAlert && <AlertViewDialog alert={viewingAlert} userMap={userMap} onPrint={handlePrint} />}
-      </Dialog>
     </main>
   );
 }
