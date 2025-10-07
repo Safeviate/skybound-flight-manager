@@ -247,15 +247,20 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
   };
 
   const handlePrint = (alertId: string) => {
-    const printableArea = document.getElementById(alertId);
-    if (printableArea) {
-      document.body.classList.add('printing-alert');
-      printableArea.classList.add('print-this');
-      window.print();
-      document.body.classList.remove('printing-alert');
-      printableArea.classList.remove('print-this');
+    const printableElement = document.getElementById(alertId);
+    if (printableElement) {
+        const parentDialog = printableElement.closest('[role="dialog"]');
+        if (parentDialog) {
+            parentDialog.classList.add('print-this');
+        }
+        document.body.classList.add('printing-alert');
+        window.print();
+        document.body.classList.remove('printing-alert');
+        if (parentDialog) {
+            parentDialog.classList.remove('print-this');
+        }
     }
-  };
+};
 
   const redTagAlerts = alerts.filter(alert => alert.type === 'Red Tag');
   const yellowTagAlerts = alerts.filter(alert => alert.type === 'Yellow Tag');
@@ -300,7 +305,11 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
                             <DropdownMenuItem onSelect={() => handleOpenEditDialog(alert)}>
                                 <Edit className="mr-2 h-4 w-4" /> Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => handlePrint(`alert-${alert.id}`)}>
+                            <DropdownMenuItem onSelect={() => {
+                                setViewingAlert(alert);
+                                // A timeout is needed to allow the dialog to render before printing
+                                setTimeout(() => handlePrint(`alert-${alert.id}`), 100);
+                            }}>
                                 <Printer className="mr-2 h-4 w-4" /> Print
                             </DropdownMenuItem>
                             <AlertDialog>
