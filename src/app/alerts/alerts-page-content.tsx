@@ -131,10 +131,6 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     if (!user || !company) return;
 
     try {
-      if (editingAlert) {
-        // This case should not happen if "Save Progress" is only for new alerts
-        await handleAlertSubmit(data);
-      } else {
         const alertsCollection = collection(db, 'companies', company.id, 'alerts');
         const q = query(alertsCollection, where('type', '==', data.type), orderBy('number', 'desc'), limit(1));
         const querySnapshot = await getDocs(q);
@@ -158,9 +154,8 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         
         toast({
             title: 'Progress Saved',
-            description: `Your draft alert "${data.title}" has been saved.`,
+            description: `Your draft alert "${data.title}" has been saved. You can continue editing.`,
         });
-      }
     } catch (error) {
         console.error("Error saving alert progress:", error);
         toast({
