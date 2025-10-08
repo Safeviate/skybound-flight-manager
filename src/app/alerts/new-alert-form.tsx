@@ -129,8 +129,11 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
   function handleFormSubmit(data: AlertFormValues) {
     const dataToSubmit = {
         ...data,
-        reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
-    }
+        reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : null,
+        targetUserId: data.targetUserId || null,
+        department: data.department || null,
+        reviewerId: data.reviewerId || null,
+    };
     onSubmit(dataToSubmit as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
     form.reset();
   }
