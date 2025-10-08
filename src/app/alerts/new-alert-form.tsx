@@ -27,6 +27,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 const alertFormSchema = z.object({
@@ -141,182 +142,73 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Alert Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Red Tag">Red Tag (High Priority)</SelectItem>
-                  <SelectItem value="Yellow Tag">Yellow Tag (Standard Priority)</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="grid grid-cols-2 gap-4">
+        <ScrollArea className="h-[65vh] pr-4">
+          <div className="space-y-6">
             <FormField
-            control={form.control}
-            name="department"
-            render={({ field }) => (
+              control={form.control}
+              name="type"
+              render={({ field }) => (
                 <FormItem>
-                <FormLabel>Target Department (Optional)</FormLabel>
-                <Select
-                    onValueChange={(value) => field.onChange(value === 'all' ? '' : value)}
-                    value={field.value || 'all'}
-                >
+                  <FormLabel>Alert Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="All Departments" />
-                    </SelectTrigger>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a type" />
+                      </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                    <SelectItem value="all">All Departments</SelectItem>
-                    {departments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
-                    ))}
+                      <SelectItem value="Red Tag">Red Tag (High Priority)</SelectItem>
+                      <SelectItem value="Yellow Tag">Yellow Tag (Standard Priority)</SelectItem>
                     </SelectContent>
-                </Select>
-                <FormMessage />
+                  </Select>
+                  <FormMessage />
                 </FormItem>
-            )}
+              )}
             />
-            <FormField
-            control={form.control}
-            name="targetUserId"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Target Personnel (Optional)</FormLabel>
-                <Select 
-                    onValueChange={(value) => field.onChange(value === 'all' ? '' : value)}
-                    value={field.value || 'all'}
-                >
-                    <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="All Personnel" />
-                    </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                    <SelectItem value="all">All Personnel</SelectItem>
-                    {personnel.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-        </div>
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Runway 31 Closed" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="background"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Background</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Provide background information..." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="purpose"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Purpose</FormLabel>
-              <FormControl>
-                <Textarea placeholder="State the purpose of this alert..." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="instruction"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Instruction / Action Required</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Detail the required actions..." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-         <div className="grid grid-cols-2 gap-4">
-            <FormField
-            control={form.control}
-            name="reviewDate"
-            render={({ field }) => (
-                <FormItem className="flex flex-col">
-                <FormLabel>Review Date (Optional)</FormLabel>
-                <Popover>
-                    <PopoverTrigger asChild>
-                    <FormControl>
-                        <Button
-                        variant={"outline"}
-                        className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                        >
-                        {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                    </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                    />
-                    </PopoverContent>
-                </Popover>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
+            <div className="grid grid-cols-2 gap-4">
+                <FormField
                 control={form.control}
-                name="reviewerId"
+                name="department"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Reviewer (Optional)</FormLabel>
-                    <Select 
-                        onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
-                        value={field.value || 'none'}
+                    <FormLabel>Target Department (Optional)</FormLabel>
+                    <Select
+                        onValueChange={field.onChange}
+                        value={field.value || ''}
                     >
                         <FormControl>
                         <SelectTrigger>
-                            <SelectValue placeholder="Select a reviewer" />
+                            <SelectValue placeholder="All Departments" />
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
+                        <SelectItem value="">All Departments</SelectItem>
+                        {departments.map((dept) => (
+                            <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="targetUserId"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Target Personnel (Optional)</FormLabel>
+                    <Select 
+                        onValueChange={field.onChange}
+                        value={field.value || ''}
+                    >
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="All Personnel" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        <SelectItem value="">All Personnel</SelectItem>
                         {personnel.map((p) => (
                             <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                         ))}
@@ -325,8 +217,121 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
                     <FormMessage />
                     </FormItem>
                 )}
+                />
+            </div>
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Runway 31 Closed" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-        </div>
+            <FormField
+              control={form.control}
+              name="background"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Background</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Provide background information..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="purpose"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Purpose</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="State the purpose of this alert..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="instruction"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Instruction / Action Required</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Detail the required actions..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <div className="grid grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="reviewDate"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                    <FormLabel>Review Date (Optional)</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button
+                            variant={"outline"}
+                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                            >
+                            {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                        />
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                    control={form.control}
+                    name="reviewerId"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Reviewer (Optional)</FormLabel>
+                        <Select 
+                            onValueChange={field.onChange}
+                            value={field.value || ''}
+                        >
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a reviewer" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {personnel.map((p) => (
+                                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+          </div>
+        </ScrollArea>
         <div className="flex justify-end pt-4">
           <Button type="submit">{existingAlert ? 'Save Changes' : 'Issue Notification'}</Button>
         </div>
