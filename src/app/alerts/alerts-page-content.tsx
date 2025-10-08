@@ -65,15 +65,14 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     setIsDialogOpen(true);
   };
 
-  const handleAlertSubmit = async (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>, shouldClose: boolean) => {
+  const handleAlertSubmit = async (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => {
     if (!user || !company) return;
 
     try {
       if (editingAlert) {
         const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
         await updateDoc(alertRef, data as any);
-        setAlerts(prev => prev.map(a => a.id === editingAlert.id ? { ...a, ...data } : a));
-        setEditingAlert(prev => prev ? { ...prev, ...data } as Alert : null);
+        setAlerts(prev => prev.map(a => a.id === editingAlert.id ? { ...a, ...data } as Alert : a));
         toast({
             title: 'Alert Updated',
             description: `The "${data.title}" alert has been updated.`,
@@ -101,9 +100,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         };
 
         const docRef = await addDoc(alertsCollection, newAlertData);
-        const newAlert = { ...newAlertData, id: docRef.id };
-        setAlerts(prev => [newAlert, ...prev]);
-        setEditingAlert(newAlert); // Keep the new alert in editing state
+        setAlerts(prev => [{ ...newAlertData, id: docRef.id } as Alert, ...prev]);
         toast({
             title: 'Alert Created',
             description: `The "${data.title}" alert has been issued.`,
@@ -118,10 +115,8 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         }
       }
         
-      if (shouldClose) {
-        setIsDialogOpen(false);
-        setEditingAlert(null);
-      }
+      setIsDialogOpen(false);
+      setEditingAlert(null);
     } catch (error) {
         console.error("Error saving alert:", error);
         toast({
@@ -131,6 +126,51 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         });
     }
   }
+
+  const handleSaveProgress = async (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => {
+    if (!user || !company) return;
+
+    try {
+      if (editingAlert) {
+        // This case should not happen if "Save Progress" is only for new alerts
+        await handleAlertSubmit(data);
+      } else {
+        const alertsCollection = collection(db, 'companies', company.id, 'alerts');
+        const q = query(alertsCollection, where('type', '==', data.type), orderBy('number', 'desc'), limit(1));
+        const querySnapshot = await getDocs(q);
+        const lastAlert = querySnapshot.empty ? null : querySnapshot.docs[0].data() as Alert;
+        const newAlertNumber = (lastAlert?.number || 0) + 1;
+
+        const newAlertData: Omit<Alert, 'id'> = {
+            ...data,
+            companyId: company.id,
+            number: newAlertNumber,
+            author: user.name,
+            date: new Date().toISOString(),
+            readBy: [],
+        };
+
+        const docRef = await addDoc(alertsCollection, newAlertData);
+        const newAlert = { ...newAlertData, id: docRef.id } as Alert;
+        
+        setAlerts(prev => [newAlert, ...prev]);
+        setEditingAlert(newAlert); // Keep it in edit mode
+        
+        toast({
+            title: 'Progress Saved',
+            description: `Your draft alert "${data.title}" has been saved.`,
+        });
+      }
+    } catch (error) {
+        console.error("Error saving alert progress:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to save the alert draft.'
+        });
+    }
+  }
+
 
   const redTagAlerts = alerts.filter(alert => alert.type === 'Red Tag');
   const yellowTagAlerts = alerts.filter(alert => alert.type === 'Yellow Tag');
@@ -246,8 +286,8 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
                           </DialogDescription>
                       </DialogHeader>
                       <NewAlertForm 
-                        onSubmit={(data) => handleAlertSubmit(data, true)} 
-                        onSaveProgress={(data) => handleAlertSubmit(data, false)}
+                        onSubmit={handleAlertSubmit} 
+                        onSaveProgress={handleSaveProgress}
                         existingAlert={editingAlert}
                       />
                   </DialogContent>

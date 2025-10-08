@@ -131,10 +131,10 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
   const processData = (data: AlertFormValues) => {
     return {
         ...data,
-        reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
-        targetUserId: data.targetUserId || undefined,
-        department: data.department || undefined,
-        reviewerId: data.reviewerId === 'none' ? undefined : data.reviewerId,
+        reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : null,
+        targetUserId: data.targetUserId || null,
+        department: data.department || null,
+        reviewerId: data.reviewerId === 'none' ? null : data.reviewerId,
     } as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>;
   }
 
@@ -323,7 +323,9 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
           </div>
         </ScrollArea>
         <div className="flex justify-end pt-4 gap-2">
-            <Button type="button" variant="outline" onClick={handleSaveProgress}>Save Progress</Button>
+            {!existingAlert && (
+                <Button type="button" variant="outline" onClick={handleSaveProgress}>Save Progress</Button>
+            )}
             <Button type="submit">{existingAlert ? 'Save Changes' : 'Issue Notification'}</Button>
         </div>
       </form>
