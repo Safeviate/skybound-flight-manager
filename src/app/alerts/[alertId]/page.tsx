@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -87,6 +88,7 @@ export default function AlertDetailPage() {
   }
   
   const targetUserName = alert.targetUserId ? userMap.get(alert.targetUserId) : null;
+  const reviewerName = alert.reviewerId ? userMap.get(alert.reviewerId) : null;
 
   return (
     <main className="flex-1 p-4 md:p-8">
@@ -137,7 +139,7 @@ export default function AlertDetailPage() {
                             ? ` to ${targetUserName}`
                             : alert.department && alert.department !== 'all'
                             ? ` to ${alert.department} Department`
-                            : ''
+                            : ' to All Personnel'
                         }
                     </CardDescription>
                 </div>
@@ -163,10 +165,13 @@ export default function AlertDetailPage() {
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted rounded-md break-words">{alert.instruction}</p>
                 </div>
             )}
-            {alert.reviewDate && (
+            {(alert.reviewDate || reviewerName) && (
                 <div>
-                    <h4 className="font-semibold text-lg mb-1">Review Date</h4>
-                    <p className="text-sm text-muted-foreground">{format(parseISO(alert.reviewDate), 'PPP')}</p>
+                    <h4 className="font-semibold text-lg mb-1">Review Information</h4>
+                     <div className="text-sm text-muted-foreground space-y-1">
+                        {alert.reviewDate && <p><strong>Review Date:</strong> {format(parseISO(alert.reviewDate), 'PPP')}</p>}
+                        {reviewerName && <p><strong>Reviewer:</strong> {reviewerName}</p>}
+                    </div>
                 </div>
             )}
           </CardContent>

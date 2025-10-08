@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -37,6 +38,7 @@ const alertFormSchema = z.object({
   }),
   department: z.string().optional(),
   targetUserId: z.string().optional(),
+  reviewerId: z.string().optional(),
   background: z.string().min(10, { message: 'Background must be at least 10 characters.' }),
   purpose: z.string().min(10, { message: 'Purpose must be at least 10 characters.' }),
   instruction: z.string().min(10, { message: 'Instruction must be at least 10 characters.' }),
@@ -62,6 +64,7 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
       title: '',
       department: '',
       targetUserId: '',
+      reviewerId: '',
       background: '',
       purpose: '',
       instruction: '',
@@ -102,6 +105,7 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
         title: existingAlert.title,
         department: existingAlert.department,
         targetUserId: existingAlert.targetUserId,
+        reviewerId: existingAlert.reviewerId,
         background: existingAlert.background,
         purpose: existingAlert.purpose,
         instruction: existingAlert.instruction,
@@ -113,6 +117,7 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
             title: '',
             department: '',
             targetUserId: '',
+            reviewerId: '',
             background: '',
             purpose: '',
             instruction: '',
@@ -188,7 +193,7 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
             name="targetUserId"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Review by Personnel (Optional)</FormLabel>
+                <FormLabel>Target Personnel (Optional)</FormLabel>
                 <Select 
                     onValueChange={(value) => {
                         field.onChange(value === 'all' ? undefined : value);
@@ -264,37 +269,67 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="reviewDate"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Review Date (Optional)</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+         <div className="grid grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="reviewDate"
+            render={({ field }) => (
+                <FormItem className="flex flex-col">
+                <FormLabel>Review Date (Optional)</FormLabel>
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <FormControl>
+                        <Button
+                        variant={"outline"}
+                        className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                        >
+                        {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                    </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                    />
+                    </PopoverContent>
+                </Popover>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+                control={form.control}
+                name="reviewerId"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Reviewer (Optional)</FormLabel>
+                    <Select 
+                        onValueChange={(value) => {
+                            field.onChange(value === 'none' ? undefined : value);
+                        }}
+                        value={field.value || 'none'}
                     >
-                      {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a reviewer" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {personnel.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
         <div className="flex justify-end pt-4">
           <Button type="submit">{existingAlert ? 'Save Changes' : 'Issue Notification'}</Button>
         </div>

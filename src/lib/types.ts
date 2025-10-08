@@ -7,7 +7,7 @@ export type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow'
 import type { SuggestInvestigationStepsOutput } from '@/ai/flows/suggest-investigation-steps-flow';
 export type { SuggestInvestigationStepsOutput } from '@/ai/flows/suggest-investigation-steps-flow';
 import { PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
-import { PostFlightChecklistFormValues } from '@/app/checklists/post-flight-checklist-form';
+import { PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 
 
 export type Airport = {
@@ -605,6 +605,7 @@ export type Alert = {
   purpose?: string;
   instruction?: string;
   reviewDate?: string;
+  reviewerId?: string;
 };
 
 export type ComplianceItem = {

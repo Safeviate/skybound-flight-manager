@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -104,6 +105,26 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
             title: 'Alert Created',
             description: `The "${data.title}" alert has been issued.`,
         });
+
+        if (newAlertData.reviewerId) {
+            const newAlert: Omit<Alert, 'id'|'number'> = {
+                companyId: company.id,
+                type: 'Task',
+                title: `Review Required: Alert ${newAlertNumber}`,
+                description: `Please review the new alert: "${newAlertData.title}"`,
+                author: 'System',
+                date: new Date().toISOString(),
+                readBy: [],
+                targetUserId: newAlertData.reviewerId,
+                relatedLink: `/alerts/${docRef.id}`,
+            };
+            await addDoc(alertsCollection, newAlert);
+            const reviewerName = userMap.get(newAlertData.reviewerId) || 'the reviewer';
+            toast({
+                title: 'Reviewer Notified',
+                description: `A task has been assigned to ${reviewerName}.`,
+            });
+        }
       }
         
       setIsDialogOpen(false);
