@@ -170,7 +170,7 @@ export default function AlertDetailPage() {
                 </div>
             )}
           </CardContent>
-          <CardFooter>
+          <CardFooter className="no-print">
             <div>
                 <h4 className="text-base font-semibold mb-2">Acknowledged By ({alert.readBy.length})</h4>
                 {alert.readBy.length > 0 ? (
