@@ -8,7 +8,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, Au
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser, Users, Camera, Image as ImageIcon, RotateCw } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser, Users, Camera, Image as ImageIcon, RotateCw, FileUp } from 'lucide-react';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
@@ -712,6 +712,9 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
     );
 };
 
+const MAX_FILE_SIZE = 500000;
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
 export default function QualityAuditDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -900,6 +903,25 @@ export default function QualityAuditDetailPage() {
     }
     setCameraItemId(null);
   };
+  
+  const handleFileChange = useCallback((file: File, itemId: string) => {
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast({ variant: 'destructive', title: 'File too large', description: 'Maximum file size is 500KB.' });
+        return;
+      }
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        toast({ variant: 'destructive', title: 'Invalid file type', description: 'Only JPG, PNG, and WEBP are accepted.' });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        handleItemChange(itemId, 'photo', reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  }, [toast, handleItemChange]);
+
 
   const handleNavigateBack = () => {
     if (hasUnsavedChanges) {
@@ -1056,6 +1078,7 @@ export default function QualityAuditDetailPage() {
                                     const levelInfo = getLevelInfo(item.level);
                                     const showLevelSelect = item.finding === 'Non Compliant' || item.finding === 'Partial';
                                     const currentQuestionNumber = questionNumber++;
+                                    const fileInputId = `file-input-${item.id}`;
                                     return (
                                         <div key={item.id} className="p-4 border rounded-lg space-y-4">
                                             <div>
@@ -1126,6 +1149,19 @@ export default function QualityAuditDetailPage() {
                                                         <Camera className="mr-2 h-4 w-4" />
                                                         {item.photo ? 'Retake Photo' : 'Take Photo'}
                                                     </Button>
+                                                    <Button variant="outline" size="sm" asChild>
+                                                        <label htmlFor={fileInputId} className="cursor-pointer">
+                                                            <FileUp className="mr-2 h-4 w-4" />
+                                                            {item.photo ? 'Change File' : 'Upload File'}
+                                                        </label>
+                                                    </Button>
+                                                    <Input
+                                                        id={fileInputId}
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={(e) => e.target.files && handleFileChange(e.target.files[0], item.id)}
+                                                    />
                                                     {item.photo && <ImageIcon className="h-5 w-5 text-green-500" />}
                                                 </div>
                                                 <div className="flex items-center gap-4 text-sm">
