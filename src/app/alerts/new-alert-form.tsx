@@ -170,9 +170,7 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
                 <FormItem>
                 <FormLabel>Target Department (Optional)</FormLabel>
                 <Select
-                    onValueChange={(value) => {
-                        field.onChange(value === 'all' ? undefined : value);
-                    }}
+                    onValueChange={(value) => field.onChange(value === 'all' ? '' : value)}
                     value={field.value || 'all'}
                 >
                     <FormControl>
@@ -198,9 +196,7 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
                 <FormItem>
                 <FormLabel>Target Personnel (Optional)</FormLabel>
                 <Select 
-                    onValueChange={(value) => {
-                        field.onChange(value === 'all' ? undefined : value);
-                    }}
+                    onValueChange={(value) => field.onChange(value === 'all' ? '' : value)}
                     value={field.value || 'all'}
                 >
                     <FormControl>
@@ -311,9 +307,7 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
                     <FormItem>
                     <FormLabel>Reviewer (Optional)</FormLabel>
                     <Select 
-                        onValueChange={(value) => {
-                            field.onChange(value === 'none' ? undefined : value);
-                        }}
+                        onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
                         value={field.value || 'none'}
                     >
                         <FormControl>
