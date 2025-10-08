@@ -182,7 +182,6 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        <SelectItem value="">All Departments</SelectItem>
                         {departments.map((dept) => (
                             <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
                         ))}
@@ -208,7 +207,6 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        <SelectItem value="">All Personnel</SelectItem>
                         {personnel.map((p) => (
                             <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                         ))}
@@ -319,7 +317,6 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                            <SelectItem value="">None</SelectItem>
                             {personnel.map((p) => (
                                 <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                             ))}
