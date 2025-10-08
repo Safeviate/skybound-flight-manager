@@ -50,10 +50,11 @@ type AlertFormValues = z.infer<typeof alertFormSchema>;
 
 interface NewAlertFormProps {
   onSubmit: (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => void;
+  onSaveProgress: (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => void;
   existingAlert?: Alert | null;
 }
 
-export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
+export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAlertFormProps) {
   const { toast } = useToast();
   const { company } = useUser();
   const [departments, setDepartments] = useState<CompanyDepartment[]>([]);
@@ -126,18 +127,36 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
         });
     }
   }, [existingAlert, form]);
+  
+  const processData = (data: AlertFormValues) => {
+    return {
+        ...data,
+        reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
+        targetUserId: data.targetUserId || undefined,
+        department: data.department || undefined,
+        reviewerId: data.reviewerId === 'none' ? undefined : data.reviewerId,
+    } as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>;
+  }
 
   function handleFormSubmit(data: AlertFormValues) {
-    const dataToSubmit = {
-        ...data,
-        reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : null,
-        targetUserId: data.targetUserId || null,
-        department: data.department || null,
-        reviewerId: data.reviewerId || null,
-    };
-    onSubmit(dataToSubmit as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
+    onSubmit(processData(data));
     form.reset();
   }
+  
+  async function handleSaveProgress() {
+    const isValid = await form.trigger();
+    if (isValid) {
+      const data = form.getValues();
+      onSaveProgress(processData(data));
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Validation Error',
+            description: 'Please fill out all required fields before saving.'
+        });
+    }
+  }
+
 
   return (
     <Form {...form}>
@@ -167,29 +186,20 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
             />
             <div className="grid grid-cols-2 gap-4">
                 <FormField
-                control={form.control}
-                name="department"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Target Department (Optional)</FormLabel>
-                    <Select
-                        onValueChange={field.onChange}
-                        value={field.value || ''}
-                    >
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="All Departments" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {departments.map((dept) => (
-                            <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
+                    control={form.control}
+                    name="department"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Target Department (Optional)</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="All Departments" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                                {departments.map((dept) => (<SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
                 />
                 <FormField
                 control={form.control}
@@ -197,19 +207,10 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Target Personnel (Optional)</FormLabel>
-                    <Select 
-                        onValueChange={field.onChange}
-                        value={field.value || ''}
-                    >
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="All Personnel" />
-                        </SelectTrigger>
-                        </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="All Personnel" /></SelectTrigger></FormControl>
                         <SelectContent>
-                        {personnel.map((p) => (
-                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                        ))}
+                            {personnel.map((p) => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))}
                         </SelectContent>
                     </Select>
                     <FormMessage />
@@ -307,19 +308,11 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Reviewer (Optional)</FormLabel>
-                        <Select 
-                            onValueChange={field.onChange}
-                            value={field.value || ''}
-                        >
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a reviewer" />
-                            </SelectTrigger>
-                            </FormControl>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select a reviewer" /></SelectTrigger></FormControl>
                             <SelectContent>
-                            {personnel.map((p) => (
-                                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                            ))}
+                               <SelectItem value="none">None</SelectItem>
+                               {personnel.map((p) => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))}
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -329,8 +322,9 @@ export function NewAlertForm({ onSubmit, existingAlert }: NewAlertFormProps) {
             </div>
           </div>
         </ScrollArea>
-        <div className="flex justify-end pt-4">
-          <Button type="submit">{existingAlert ? 'Save Changes' : 'Issue Notification'}</Button>
+        <div className="flex justify-end pt-4 gap-2">
+            <Button type="button" variant="outline" onClick={handleSaveProgress}>Save Progress</Button>
+            <Button type="submit">{existingAlert ? 'Save Changes' : 'Issue Notification'}</Button>
         </div>
       </form>
     </Form>

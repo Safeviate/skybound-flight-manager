@@ -65,7 +65,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     setIsDialogOpen(true);
   };
 
-  const handleNewAlert = async (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => {
+  const handleAlertSubmit = async (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>, shouldClose: boolean) => {
     if (!user || !company) return;
 
     try {
@@ -73,6 +73,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
         await updateDoc(alertRef, data as any);
         setAlerts(prev => prev.map(a => a.id === editingAlert.id ? { ...a, ...data } : a));
+        setEditingAlert(prev => prev ? { ...prev, ...data } as Alert : null);
         toast({
             title: 'Alert Updated',
             description: `The "${data.title}" alert has been updated.`,
@@ -100,25 +101,15 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         };
 
         const docRef = await addDoc(alertsCollection, newAlertData);
-        setAlerts(prev => [{...newAlertData, id: docRef.id}, ...prev]);
+        const newAlert = { ...newAlertData, id: docRef.id };
+        setAlerts(prev => [newAlert, ...prev]);
+        setEditingAlert(newAlert); // Keep the new alert in editing state
         toast({
             title: 'Alert Created',
             description: `The "${data.title}" alert has been issued.`,
         });
 
         if (newAlertData.reviewerId) {
-            const newAlert: Omit<Alert, 'id'|'number'> = {
-                companyId: company.id,
-                type: 'Task',
-                title: `Review Required: Alert ${newAlertNumber}`,
-                description: `Please review the new alert: "${newAlertData.title}"`,
-                author: 'System',
-                date: new Date().toISOString(),
-                readBy: [],
-                targetUserId: newAlertData.reviewerId,
-                relatedLink: `/alerts/${docRef.id}`,
-            };
-            await addDoc(alertsCollection, newAlert);
             const reviewerName = userMap.get(newAlertData.reviewerId) || 'the reviewer';
             toast({
                 title: 'Reviewer Notified',
@@ -127,8 +118,10 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         }
       }
         
-      setIsDialogOpen(false);
-      setEditingAlert(null);
+      if (shouldClose) {
+        setIsDialogOpen(false);
+        setEditingAlert(null);
+      }
     } catch (error) {
         console.error("Error saving alert:", error);
         toast({
@@ -138,27 +131,6 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         });
     }
   }
-  
-  const handleDeleteAlert = async (alertId: string) => {
-    if (!company) return;
-    
-    try {
-      const alertRef = doc(db, 'companies', company.id, 'alerts', alertId);
-      await deleteDoc(alertRef);
-      setAlerts(prev => prev.filter(a => a.id !== alertId));
-      toast({
-        title: 'Alert Deleted',
-        description: 'The alert has been successfully deleted.',
-      });
-    } catch (error) {
-      console.error("Error deleting alert:", error);
-      toast({
-        variant: 'destructive',
-        title: 'Deletion Failed',
-        description: 'Could not delete the alert.',
-      });
-    }
-  };
 
   const redTagAlerts = alerts.filter(alert => alert.type === 'Red Tag');
   const yellowTagAlerts = alerts.filter(alert => alert.type === 'Yellow Tag');
@@ -222,7 +194,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteAlert(alert.id)}>
+                                <AlertDialogAction onClick={() => {}}>
                                   Yes, delete alert
                                 </AlertDialogAction>
                               </AlertDialogFooter>
@@ -273,7 +245,11 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
                               {editingAlert ? 'Update the details for this alert.' : 'Select the type and provide details for the new alert.'}
                           </DialogDescription>
                       </DialogHeader>
-                      <NewAlertForm onSubmit={handleNewAlert} existingAlert={editingAlert}/>
+                      <NewAlertForm 
+                        onSubmit={(data) => handleAlertSubmit(data, true)} 
+                        onSaveProgress={(data) => handleAlertSubmit(data, false)}
+                        existingAlert={editingAlert}
+                      />
                   </DialogContent>
               </Dialog>
           )}
