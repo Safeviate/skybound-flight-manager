@@ -69,7 +69,7 @@ const sendEmailFlow = ai.defineFlow(
       </div>
     `;
     
-    const fromAddress = `Safeviate <onboarding@resend.dev>`;
+    const fromAddress = `Safeviate <noreply@safeviate.com>`;
 
     try {
       const { data, error } = await resend.emails.send({
