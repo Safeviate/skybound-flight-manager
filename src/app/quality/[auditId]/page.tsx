@@ -8,7 +8,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, Au
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser, Users, Camera, Image as ImageIcon, RotateCw, FileUp } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser, Users, Camera, Image as ImageIcon, RotateCw, FileUp, Trash2 } from 'lucide-react';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
@@ -791,13 +791,13 @@ export default function QualityAuditDetailPage() {
   const hasUnsavedChanges = JSON.stringify(audit) !== JSON.stringify(savedAudit);
 
   
-  const handleItemChange = (itemId: string, field: keyof AuditChecklistItem, value: any) => {
+  const handleItemChange = useCallback((itemId: string, field: keyof AuditChecklistItem, value: any) => {
     if (!audit) return;
     const updatedItems = audit.checklistItems.map(item => 
         item.id === itemId ? { ...item, [field]: value } : item
     );
-    setAudit({ ...audit, checklistItems: updatedItems });
-  }
+    setAudit(prevAudit => prevAudit ? { ...prevAudit, checklistItems: updatedItems } : null);
+  }, [audit]);
 
   const handleAuditUpdate = async (updatedAudit: QualityAudit, showToast = true) => {
     if (!company) return;
@@ -1152,7 +1152,7 @@ export default function QualityAuditDetailPage() {
                                                     <Button variant="outline" size="sm" asChild>
                                                         <label htmlFor={fileInputId} className="cursor-pointer">
                                                             <FileUp className="mr-2 h-4 w-4" />
-                                                            {item.photo ? 'Change File' : 'Upload File'}
+                                                            {item.photo ? 'Change' : 'Upload'}
                                                         </label>
                                                     </Button>
                                                     <Input
@@ -1162,7 +1162,14 @@ export default function QualityAuditDetailPage() {
                                                         className="hidden"
                                                         onChange={(e) => e.target.files && handleFileChange(e.target.files[0], item.id)}
                                                     />
-                                                    {item.photo && <ImageIcon className="h-5 w-5 text-green-500" />}
+                                                    {item.photo && (
+                                                        <>
+                                                        <ImageIcon className="h-5 w-5 text-green-500" />
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleItemChange(item.id, 'photo', null)}>
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                        </>
+                                                    )}
                                                 </div>
                                                 <div className="flex items-center gap-4 text-sm">
                                                     <span className="font-semibold">Result:</span>
@@ -1216,3 +1223,4 @@ export default function QualityAuditDetailPage() {
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
     
+
