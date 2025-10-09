@@ -361,7 +361,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                             <CardContent>
                                 {(() => {
                                     let questionNumber = 1;
-                                    const itemMap = new Map(audit.checklistItems.map((item, index) => [item.id, index]));
+                                    const itemMap = new Map(audit.checklistItems.map((item, index) => [item.id.split('-')[0], index]));
                                     
                                     return audit.nonConformanceIssues.map(issue => {
                                         const originalItemIndex = itemMap.get(issue.id.split('-')[0]);
@@ -1223,4 +1223,5 @@ export default function QualityAuditDetailPage() {
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
     
+
 
