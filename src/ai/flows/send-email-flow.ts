@@ -69,24 +69,13 @@ const sendEmailFlow = ai.defineFlow(
       </div>
     `;
     
-    // In sandbox mode, Resend only allows sending TO the verified email.
-    // We'll redirect emails to a fixed address and modify the subject for testing.
-    const verifiedEmail = "barry@safeviate.com";
-    let recipient = to;
-    let finalSubject = subject;
-
-    if (process.env.NODE_ENV !== 'production' && to !== verifiedEmail) {
-        recipient = verifiedEmail;
-        finalSubject = `[TEST to: ${to}] ${subject}`;
-    }
-    
     const fromAddress = `${companyName} <onboarding@resend.dev>`;
 
     try {
       const { data, error } = await resend.emails.send({
         from: fromAddress,
-        to: recipient,
-        subject: finalSubject,
+        to: to,
+        subject: subject,
         html: htmlBody,
         headers: {
             'X-Entity-Ref-ID': `${to}-${subject}-${new Date().getTime()}`,
