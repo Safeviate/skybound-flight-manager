@@ -1054,10 +1054,6 @@ export default function QualityAuditDetailPage() {
                           <ArrowLeft className="mr-2 h-4 w-4" />
                           Back to Audits
                       </Button>
-                      <Button onClick={handleSeedData} variant="outline" className="w-full sm:w-auto">
-                          <Database className="mr-2 h-4 w-4" />
-                          Seed Data
-                      </Button>
                       <Button onClick={() => handleAuditUpdate(audit, false)} className="w-full sm:w-auto">
                           <Save className="mr-2 h-4 w-4" />
                           Save Progress
