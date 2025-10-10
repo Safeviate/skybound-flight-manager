@@ -451,12 +451,12 @@ export function AuditChecklistsManager({
                     <div key={department} className="mb-8">
                         <h3 className="text-lg font-semibold mb-2">{department}</h3>
                         <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-                            <Table className="w-full">
+                            <Table className="w-full table-fixed">
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-[60%]">Title</TableHead>
-                                        <TableHead className="w-[100px] text-center">Items</TableHead>
-                                        <TableHead className="text-right w-[220px]">Actions</TableHead>
+                                        <TableHead className="w-[35%]">Title</TableHead>
+                                        <TableHead className="w-[40%] text-center">Items</TableHead>
+                                        <TableHead className="w-[25%] text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
