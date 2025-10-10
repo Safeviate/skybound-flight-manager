@@ -21,7 +21,7 @@ import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import Link from 'next/link';
 
 const getAlertVariant = (type: Alert['type']) => {
@@ -244,6 +244,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
           })}
         </TableBody>
       </Table>
+      <ScrollBar orientation="horizontal" />
     </ScrollArea>
   );
 
