@@ -629,7 +629,7 @@ export function QualityPageContent({
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="flex-wrap justify-start h-auto">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="audits">Audits</TabsTrigger>
               <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
