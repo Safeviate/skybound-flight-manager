@@ -455,9 +455,9 @@ export function AuditChecklistsManager({
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Title</TableHead>
-                                        <TableHead>Items</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
+                                        <TableHead className="w-full">Title</TableHead>
+                                        <TableHead className="w-[100px] text-center">Items</TableHead>
+                                        <TableHead className="w-[220px] text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -465,7 +465,7 @@ export function AuditChecklistsManager({
                                         groupedTemplates[department].map((template) => (
                                             <TableRow key={template.id}>
                                                 <TableCell className="font-medium">{template.title}</TableCell>
-                                                <TableCell>{template.items.length}</TableCell>
+                                                <TableCell className="text-center">{template.items.length}</TableCell>
                                                 <TableCell className="text-right space-x-2">
                                                     <StartAuditDialog 
                                                         template={template} 
@@ -520,3 +520,5 @@ export function AuditChecklistsManager({
         </Card>
     );
 }
+
+    
