@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -9,6 +10,7 @@ import { cn } from '@/lib/utils.tsx';
 import type { AuditScheduleItem, AuditStatus } from '@/lib/types';
 import { Edit, PlusCircle, Save, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 const QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'] as const;
 const STATUS_OPTIONS: AuditStatus[] = ['Scheduled', 'Completed', 'Pending', 'Not Scheduled'];
@@ -87,7 +89,7 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
   };
 
   return (
-    <div className="border rounded-lg overflow-x-auto">
+    <ScrollArea className="w-full whitespace-nowrap rounded-md border">
       <div className="min-w-[800px]">
         <div className="grid bg-muted font-semibold" style={{ gridTemplateColumns: '250px repeat(4, 1fr)' }}>
           <div className="p-3 border-b border-r">Audit Area</div>
@@ -158,6 +160,7 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
             </Button>
         </div>
       </div>
-    </div>
+       <ScrollBar orientation="horizontal" />
+    </ScrollArea>
   );
 }
