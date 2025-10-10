@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Check } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Table,
   TableBody,
@@ -450,13 +450,13 @@ export function AuditChecklistsManager({
                  {Object.keys(groupedTemplates).sort().map(department => (
                     <div key={department} className="mb-8">
                         <h3 className="text-lg font-semibold mb-2">{department}</h3>
-                        <div className="border rounded-md">
-                            <Table className="table-fixed">
+                        <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+                            <Table className="w-full">
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead className="w-[60%]">Title</TableHead>
-                                        <TableHead className="w-[15%] text-center">Items</TableHead>
-                                        <TableHead className="w-[25%] text-right">Actions</TableHead>
+                                        <TableHead className="w-[100px] text-center">Items</TableHead>
+                                        <TableHead className="text-right w-[220px]">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -489,7 +489,8 @@ export function AuditChecklistsManager({
                                     )}
                                 </TableBody>
                             </Table>
-                        </div>
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
                     </div>
                  ))}
             </CardContent>
@@ -519,5 +520,3 @@ export function AuditChecklistsManager({
         </Card>
     );
 }
-
-    
