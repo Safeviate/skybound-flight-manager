@@ -302,47 +302,50 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel }:
                 </div>
             </CardHeader>
             <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[15%]">Regulation</TableHead>
-                            <TableHead className="w-[35%]">Process for Compliance</TableHead>
-                            <TableHead className="w-[15%]">Responsible Manager</TableHead>
-                            <TableHead className="w-[10%]">Last Audit</TableHead>
-                            <TableHead className="w-[10%]">Next Audit</TableHead>
-                            <TableHead className="w-[10%]">Findings</TableHead>
-                            {canEdit && <TableHead className="w-[5%] text-right">Actions</TableHead>}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {complianceItems.length > 0 ? complianceItems.map(item => {
-                            const { lastAuditDate, findings } = getAuditDataForRegulation(item.regulation);
-                            return (
-                            <TableRow key={item.id}>
-                                <TableCell className="font-semibold">{item.regulation}</TableCell>
-                                <TableCell className="whitespace-pre-wrap">{item.process}</TableCell>
-                                <TableCell>{item.responsibleManager}</TableCell>
-                                <TableCell>{lastAuditDate}</TableCell>
-                                <TableCell>{item.nextAuditDate ? format(parseISO(item.nextAuditDate), 'dd MMM yyyy') : 'N/A'}</TableCell>
-                                <TableCell>{findings}</TableCell>
-                                {canEdit && (
-                                    <TableCell className="text-right">
-                                         <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setIsDialogOpen(true); }}>
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteItem(item.id)}>
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
-                                    </TableCell>
-                                )}
-                            </TableRow>
-                        )}) : (
+                <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+                    <Table>
+                        <TableHeader>
                             <TableRow>
-                                <TableCell colSpan={canEdit ? 7 : 6} className="h-24 text-center">No compliance items have been added.</TableCell>
+                                <TableHead className="w-[15%]">Regulation</TableHead>
+                                <TableHead className="w-[35%]">Process for Compliance</TableHead>
+                                <TableHead className="w-[15%]">Responsible Manager</TableHead>
+                                <TableHead className="w-[10%]">Last Audit</TableHead>
+                                <TableHead className="w-[10%]">Next Audit</TableHead>
+                                <TableHead className="w-[10%]">Findings</TableHead>
+                                {canEdit && <TableHead className="w-[5%] text-right">Actions</TableHead>}
                             </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {complianceItems.length > 0 ? complianceItems.map(item => {
+                                const { lastAuditDate, findings } = getAuditDataForRegulation(item.regulation);
+                                return (
+                                <TableRow key={item.id}>
+                                    <TableCell className="font-semibold">{item.regulation}</TableCell>
+                                    <TableCell className="whitespace-pre-wrap">{item.process}</TableCell>
+                                    <TableCell>{item.responsibleManager}</TableCell>
+                                    <TableCell>{lastAuditDate}</TableCell>
+                                    <TableCell>{item.nextAuditDate ? format(parseISO(item.nextAuditDate), 'dd MMM yyyy') : 'N/A'}</TableCell>
+                                    <TableCell>{findings}</TableCell>
+                                    {canEdit && (
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setIsDialogOpen(true); }}>
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" onClick={() => handleDeleteItem(item.id)}>
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        </TableCell>
+                                    )}
+                                </TableRow>
+                            )}) : (
+                                <TableRow>
+                                    <TableCell colSpan={canEdit ? 7 : 6} className="h-24 text-center">No compliance items have been added.</TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                    <ScrollBar orientation="horizontal" />
+                </ScrollArea>
             </CardContent>
         </Card>
     );
@@ -630,13 +633,15 @@ export function QualityPageContent({
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="flex-wrap justify-start h-auto">
+          <div className="flex items-center justify-between mb-4 no-print">
+            <TabsList className="flex-wrap justify-start h-auto">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="audits">Audits</TabsTrigger>
               <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
               <TabsTrigger value="cap-tracker">CAP Tracker</TabsTrigger>
               <TabsTrigger value="coherence-matrix">Coherence Matrix</TabsTrigger>
           </TabsList>
+          </div>
           <TabsContent value="dashboard" className="space-y-8 mt-4">
                <Card>
                   <CardHeader>
@@ -715,7 +720,7 @@ export function QualityPageContent({
                               </Button>
                           </div>
                       </div>
-                       <ScrollArea className="w-full">
+                       <ScrollArea className="w-full whitespace-nowrap rounded-md border">
                         <Table className="min-w-max">
                           <TableHeader>
                               <TableRow>
