@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -1143,7 +1142,7 @@ export default function QualityAuditDetailPage() {
                                                     />
                                             </div>
 
-                                            <div className="flex items-center justify-between pt-2 border-t">
+                                            <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t">
                                                 <div className="flex items-center gap-2">
                                                     <Button variant="outline" size="sm" onClick={() => setCameraItemId(item.id)}>
                                                         <Camera className="mr-2 h-4 w-4" />
@@ -1224,4 +1223,4 @@ export default function QualityAuditDetailPage() {
 QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
-
+    
