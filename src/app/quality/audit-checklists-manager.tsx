@@ -454,8 +454,8 @@ export function AuditChecklistsManager({
                             <Table className="w-full table-fixed">
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-[35%]">Title</TableHead>
-                                        <TableHead className="w-[40%] text-center">Items</TableHead>
+                                        <TableHead className="w-[60%]">Title</TableHead>
+                                        <TableHead className="w-[15%] text-center">Items</TableHead>
                                         <TableHead className="w-[25%] text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -463,7 +463,7 @@ export function AuditChecklistsManager({
                                     {groupedTemplates[department].length > 0 ? (
                                         groupedTemplates[department].map((template) => (
                                             <TableRow key={template.id}>
-                                                <TableCell className="font-medium">{template.title}</TableCell>
+                                                <TableCell className="font-medium whitespace-normal">{template.title}</TableCell>
                                                 <TableCell className="text-center">{template.items.length}</TableCell>
                                                 <TableCell className="text-right space-x-2">
                                                     <StartAuditDialog 
