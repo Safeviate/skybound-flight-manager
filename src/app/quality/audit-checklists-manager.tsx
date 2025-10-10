@@ -463,7 +463,7 @@ export function AuditChecklistsManager({
                                     {groupedTemplates[department].length > 0 ? (
                                         groupedTemplates[department].map((template) => (
                                             <TableRow key={template.id}>
-                                                <TableCell className="font-medium truncate">{template.title}</TableCell>
+                                                <TableCell className="font-medium">{template.title}</TableCell>
                                                 <TableCell className="text-center">{template.items.length}</TableCell>
                                                 <TableCell className="text-right space-x-2">
                                                     <StartAuditDialog 
