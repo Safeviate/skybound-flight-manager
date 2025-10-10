@@ -3,11 +3,11 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem } from '@/lib/types';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft } from 'lucide-react';
@@ -38,6 +38,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { cn } from '@/lib/utils.tsx';
 import { useForm } from 'react-hook-form';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 
 const ComplianceItemForm = ({
@@ -714,7 +715,8 @@ export function QualityPageContent({
                               </Button>
                           </div>
                       </div>
-                      <Table>
+                       <ScrollArea className="w-full">
+                        <Table className="min-w-max">
                           <TableHeader>
                               <TableRow>
                               {showArchived && (
@@ -819,7 +821,9 @@ export function QualityPageContent({
                                   </TableRow>
                               )}
                           </TableBody>
-                      </Table>
+                        </Table>
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
                   </CardContent>
               </Card>
           </TabsContent>
