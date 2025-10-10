@@ -1051,23 +1051,23 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         <TotalTimeCard title="Total Hours" log={totalHoursLog} onEdit={() => {}} isTotal={true} />
                         <Card>
                             <CardHeader>
-                                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                <div className="flex flex-wrap items-center justify-between gap-4">
                                     <div>
                                         <CardTitle>Detailed Logbook for {student.name}</CardTitle>
                                         <CardDescription>
                                             A comprehensive log of all flight activities.
                                         </CardDescription>
                                     </div>
-                                    <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                                    <div className="flex flex-wrap items-center gap-2">
                                          <Button variant="outline" size="sm" onClick={() => setIsBroughtForwardOpen(true)}>
                                             <Edit className="mr-2 h-4 w-4" />
                                             {broughtForwardLog ? 'Edit Hours Brought Forward' : 'Add Hours Brought Forward'}
                                         </Button>
-                                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                                            <Button variant="outline" className="w-full" onClick={handleAddNewLog}>
+                                        <div className="flex items-center gap-2">
+                                            <Button variant="outline" onClick={handleAddNewLog}>
                                                 <PlusCircle className="mr-2 h-4 w-4" /> Add Manual Entry
                                             </Button>
-                                            <Button variant="outline" className="w-full" onClick={handleDownloadLogbook} data-nosnippet><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
+                                            <Button variant="outline" onClick={handleDownloadLogbook} data-nosnippet><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
                                         </div>
                                     </div>
                                 </div>
@@ -1144,7 +1144,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             </Table>
                                             <ScrollBar orientation="horizontal" />
                                         </ScrollArea>
-                                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-2">
+                                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-2">
                                             <div className="flex items-center gap-2">
                                                 <Label htmlFor="sort-order" className="text-sm">Sort by:</Label>
                                                 <Select value={sortOrder} onValueChange={(value: 'newest' | 'oldest') => setSortOrder(value)}>
