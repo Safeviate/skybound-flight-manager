@@ -1047,21 +1047,21 @@ export default function QualityAuditDetailPage() {
           </Card>
 
           <Card>
-              <CardHeader className="flex flex-row justify-between items-center">
+              <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <CardTitle>Audit Checklist</CardTitle>
-                  <div className="flex gap-2">
-                  <Button variant="outline" onClick={handleNavigateBack}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Audits
-                  </Button>
-                  <Button onClick={handleSeedData} variant="outline">
-                      <Database className="mr-2 h-4 w-4" />
-                      Seed Data
-                  </Button>
-                  <Button onClick={() => handleAuditUpdate(audit, false)}>
-                      <Save className="mr-2 h-4 w-4" />
-                      Save Progress
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                      <Button variant="outline" onClick={handleNavigateBack} className="w-full sm:w-auto">
+                          <ArrowLeft className="mr-2 h-4 w-4" />
+                          Back to Audits
+                      </Button>
+                      <Button onClick={handleSeedData} variant="outline" className="w-full sm:w-auto">
+                          <Database className="mr-2 h-4 w-4" />
+                          Seed Data
+                      </Button>
+                      <Button onClick={() => handleAuditUpdate(audit, false)} className="w-full sm:w-auto">
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Progress
+                      </Button>
                   </div>
               </CardHeader>
               <CardContent>
@@ -1141,48 +1141,49 @@ export default function QualityAuditDetailPage() {
                                                     className="whitespace-pre-wrap"
                                                     />
                                             </div>
-
-                                            <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t">
-                                                <div className="flex items-center gap-2">
-                                                    <Button variant="outline" size="sm" onClick={() => setCameraItemId(item.id)}>
-                                                        <Camera className="mr-2 h-4 w-4" />
-                                                        {item.photo ? 'Retake Photo' : 'Take Photo'}
-                                                    </Button>
-                                                    <Button variant="outline" size="sm" asChild>
-                                                        <label htmlFor={fileInputId} className="cursor-pointer">
-                                                            <FileUp className="mr-2 h-4 w-4" />
-                                                            {item.photo ? 'Change' : 'Upload'}
-                                                        </label>
-                                                    </Button>
-                                                    <Input
-                                                        id={fileInputId}
-                                                        type="file"
-                                                        accept="image/*"
-                                                        className="hidden"
-                                                        onChange={(e) => e.target.files && handleFileChange(e.target.files[0], item.id)}
-                                                    />
-                                                    {item.photo && (
-                                                        <>
-                                                        <ImageIcon className="h-5 w-5 text-green-500" />
-                                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleItemChange(item.id, 'photo', null)}>
-                                                            <Trash2 className="h-4 w-4" />
+                                            <div className="space-y-4 pt-4 border-t">
+                                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <Button variant="outline" size="sm" onClick={() => setCameraItemId(item.id)}>
+                                                            <Camera className="mr-2 h-4 w-4" />
+                                                            {item.photo ? 'Retake Photo' : 'Take Photo'}
                                                         </Button>
-                                                        </>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-4 text-sm">
-                                                    <span className="font-semibold">Result:</span>
-                                                    {item.finding && (
-                                                        <Badge variant={findingInfo.variant} className="whitespace-nowrap">
-                                                            {findingInfo.icon}
-                                                            <span className="ml-2">{findingInfo.text}</span>
-                                                        </Badge>
-                                                    )}
-                                                    {levelInfo && (
-                                                        <Badge variant={levelInfo.variant} className="whitespace-nowrap">
-                                                        {item.level}
-                                                        </Badge>
-                                                    )}
+                                                        <Button variant="outline" size="sm" asChild>
+                                                            <label htmlFor={fileInputId} className="cursor-pointer">
+                                                                <FileUp className="mr-2 h-4 w-4" />
+                                                                {item.photo ? 'Change' : 'Upload'}
+                                                            </label>
+                                                        </Button>
+                                                        <Input
+                                                            id={fileInputId}
+                                                            type="file"
+                                                            accept="image/*"
+                                                            className="hidden"
+                                                            onChange={(e) => e.target.files && handleFileChange(e.target.files[0], item.id)}
+                                                        />
+                                                        {item.photo && (
+                                                            <>
+                                                            <ImageIcon className="h-5 w-5 text-green-500" />
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleItemChange(item.id, 'photo', null)}>
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-4 text-sm">
+                                                        <span className="font-semibold">Result:</span>
+                                                        {item.finding && (
+                                                            <Badge variant={findingInfo.variant} className="whitespace-nowrap">
+                                                                {findingInfo.icon}
+                                                                <span className="ml-2">{findingInfo.text}</span>
+                                                            </Badge>
+                                                        )}
+                                                        {levelInfo && (
+                                                            <Badge variant={levelInfo.variant} className="whitespace-nowrap">
+                                                            {item.level}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
