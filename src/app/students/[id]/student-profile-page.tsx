@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, Fragment } from 'react';
@@ -1057,15 +1058,17 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             A comprehensive log of all flight activities.
                                         </CardDescription>
                                     </div>
-                                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                    <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                                          <Button variant="outline" size="sm" onClick={() => setIsBroughtForwardOpen(true)}>
                                             <Edit className="mr-2 h-4 w-4" />
                                             {broughtForwardLog ? 'Edit Hours Brought Forward' : 'Add Hours Brought Forward'}
                                         </Button>
-                                        <Button variant="outline" onClick={handleAddNewLog}>
-                                            <PlusCircle className="mr-2 h-4 w-4" /> Add Manual Entry
-                                        </Button>
-                                        <Button variant="outline" onClick={handleDownloadLogbook} data-nosnippet><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
+                                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                                            <Button variant="outline" className="w-full" onClick={handleAddNewLog}>
+                                                <PlusCircle className="mr-2 h-4 w-4" /> Add Manual Entry
+                                            </Button>
+                                            <Button variant="outline" className="w-full" onClick={handleDownloadLogbook} data-nosnippet><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
+                                        </div>
                                     </div>
                                 </div>
                             </CardHeader>
