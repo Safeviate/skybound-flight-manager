@@ -1142,7 +1142,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             </Table>
                                             <ScrollBar orientation="horizontal" />
                                         </ScrollArea>
-                                        <div className="flex items-center justify-between p-2">
+                                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-2">
                                             <div className="flex items-center gap-2">
                                                 <Label htmlFor="sort-order" className="text-sm">Sort by:</Label>
                                                 <Select value={sortOrder} onValueChange={(value: 'newest' | 'oldest') => setSortOrder(value)}>
@@ -1178,3 +1178,4 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
