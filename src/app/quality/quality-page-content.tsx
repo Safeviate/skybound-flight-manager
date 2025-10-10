@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -142,9 +141,7 @@ const ComplianceItemForm = ({
                                 </Button>
                             </FormControl>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus/>
-                            </PopoverContent>
+                            <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus/></PopoverContent>
                         </Popover>
                         <FormMessage />
                     </FormItem>
@@ -631,7 +628,7 @@ export function QualityPageContent({
     <main className="flex-1 p-4 md:p-8 space-y-8">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex items-center justify-between mb-4 no-print">
-            <TabsList className="grid w-full grid-cols-1 md:grid-cols-5 h-auto md:h-10">
+            <TabsList className="h-auto flex-wrap">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="audits">Audits</TabsTrigger>
               <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
