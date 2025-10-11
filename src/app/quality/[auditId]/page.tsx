@@ -233,40 +233,25 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
     
     return (
         <div id="printable-report-area" className="space-y-6 print:space-y-4">
-            <Dialog open={!!editingIssue} onOpenChange={(isOpen) => { if (!isOpen) { setEditingIssue(null); setSuggestedCap(null); }}}>
-                <DialogContent className="sm:max-w-xl">
-                    <DialogHeader>
-                        <DialogTitle>Corrective Action Plan</DialogTitle>
-                        <DialogDescription>
-                            Create a corrective action plan for the finding: "{editingIssue?.itemText}"
-                        </DialogDescription>
-                    </DialogHeader>
-                    <CorrectiveActionPlanForm 
-                        onSubmit={handleCapSubmit} 
-                        suggestedCap={suggestedCap}
-                    />
-                </DialogContent>
-            </Dialog>
-
-             <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-2 no-print">
-                <Button variant="outline" onClick={onNavigateBack} className="w-full md:w-auto">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-2 no-print">
+                <Button variant="outline" onClick={onNavigateBack} className="w-full">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Audits
                 </Button>
                 {audit.status === 'Closed' && (
-                    <Button variant="outline" onClick={handleReopenAudit} className="w-full md:w-auto">
+                    <Button variant="outline" onClick={handleReopenAudit} className="w-full">
                         <RotateCw className="mr-2 h-4 w-4" /> Reopen Audit
                     </Button>
                 )}
-                <Button variant="outline" onClick={handleRequestSignatures} className="w-full md:w-auto">
+                <Button variant="outline" onClick={handleRequestSignatures} className="w-full">
                     <Signature className="mr-2 h-4 w-4" />
                     Request Signatures
                 </Button>
-                <Button variant="destructive" size="sm" onClick={handleResetSignatures} className="w-full md:w-auto">
+                <Button variant="destructive" size="sm" onClick={handleResetSignatures} className="w-full">
                     <Eraser className="mr-2 h-4 w-4" />
                     Reset Signatures
                 </Button>
-                <Button variant="outline" onClick={() => window.print()} className="w-full md:w-auto">
+                <Button variant="outline" onClick={() => window.print()} className="w-full">
                     <Printer className="mr-2 h-4 w-4" />
                     Print Report
                 </Button>
@@ -1096,7 +1081,7 @@ export default function QualityAuditDetailPage() {
                                                     />
                                             </div>
                                             <div className="space-y-4 pt-4 border-t">
-                                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                                     <div className="flex items-center gap-2">
                                                         <Button variant="outline" size="sm" onClick={() => setCameraItemId(item.id)}>
                                                             <Camera className="mr-2 h-4 w-4" />
