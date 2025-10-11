@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -247,25 +248,25 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                 </DialogContent>
             </Dialog>
 
-             <div className="flex flex-wrap items-center justify-end gap-2 no-print">
-                <Button variant="outline" onClick={onNavigateBack}>
+             <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-2 no-print">
+                <Button variant="outline" onClick={onNavigateBack} className="w-full md:w-auto">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Audits
                 </Button>
                 {audit.status === 'Closed' && (
-                    <Button variant="outline" onClick={handleReopenAudit}>
+                    <Button variant="outline" onClick={handleReopenAudit} className="w-full md:w-auto">
                         <RotateCw className="mr-2 h-4 w-4" /> Reopen Audit
                     </Button>
                 )}
-                <Button variant="outline" onClick={handleRequestSignatures}>
+                <Button variant="outline" onClick={handleRequestSignatures} className="w-full md:w-auto">
                     <Signature className="mr-2 h-4 w-4" />
                     Request Signatures
                 </Button>
-                <Button variant="destructive" size="sm" onClick={handleResetSignatures}>
+                <Button variant="destructive" size="sm" onClick={handleResetSignatures} className="w-full md:w-auto">
                     <Eraser className="mr-2 h-4 w-4" />
                     Reset Signatures
                 </Button>
-                <Button variant="outline" onClick={() => window.print()}>
+                <Button variant="outline" onClick={() => window.print()} className="w-full md:w-auto">
                     <Printer className="mr-2 h-4 w-4" />
                     Print Report
                 </Button>
@@ -850,49 +851,6 @@ export default function QualityAuditDetailPage() {
     toast({
         title: 'Audit Finalized',
         description: `The audit has been closed with a compliance score of ${complianceScore}%.`,
-    });
-  };
-  
-  const handleSeedData = () => {
-    if (!audit) return;
-
-    const defaultFindingOptions: FindingOption[] = [
-        {id: '1', name: 'Compliant'},
-        {id: '2', name: 'Non Compliant'},
-        {id: '3', name: 'Partial'},
-        {id: '4', name: 'Observation'},
-        {id: '5', name: 'Not Applicable'},
-    ];
-    const options = (company?.findingOptions?.length ?? 0) > 0 ? company!.findingOptions! : defaultFindingOptions;
-    const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
-
-    const seededItems = audit.checklistItems.map((item, index) => {
-        if (item.type === 'Header') return item;
-
-        let finding: FindingStatus = 'Compliant';
-        let level: FindingLevel = null;
-        let comment = 'Verified and found to be in full compliance with all relevant regulations.';
-        let reference = 'Checked against Operations Manual Rev 5.1, Section 3.2.';
-
-        if ((index + 1) % 5 === 0) {
-            finding = 'Non Compliant';
-            level = levelOptions[Math.floor(Math.random() * 3)];
-            comment = 'A significant deviation from standard operating procedure was noted during the audit.';
-            reference = 'Observed deviation during hangar inspection on Aug 15, 2024.';
-        } else if ((index + 1) % 7 === 0) {
-            finding = 'Observation';
-            level = 'Observation';
-            comment = 'While technically compliant, the process could be improved for better efficiency and clarity.';
-            reference = 'Auditor discussion with ground crew chief.';
-        }
-
-        return { ...item, finding, level, comment, reference };
-    });
-
-    setAudit({ ...audit, checklistItems: seededItems });
-    toast({
-      title: 'Audit Seeded',
-      description: 'The audit checklist has been pre-filled with sample data.',
     });
   };
 
