@@ -1,9 +1,8 @@
 
-
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -733,8 +732,8 @@ export function SafetyPageContent({
   return (
       <main className="flex-1 p-4 md:p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="flex items-center justify-between mb-4 no-print">
-            <TabsList className="grid w-full grid-cols-1 md:grid-cols-5 h-auto md:h-10">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4 no-print">
+            <TabsList className="grid w-full grid-cols-2 md:flex md:w-auto">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="reports">Safety Reports</TabsTrigger>
               <TabsTrigger value="register">Risk Register</TabsTrigger>
@@ -742,7 +741,7 @@ export function SafetyPageContent({
               <TabsTrigger value="moc">MOC</TabsTrigger>
             </TabsList>
             {activeTab === 'reports' && (
-                <Button asChild>
+                <Button asChild className="w-full md:w-auto">
                     <Link href="/safety/new">
                         <PlusCircle className="mr-2 h-4 w-4" />
                         File New Report
