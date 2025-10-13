@@ -60,6 +60,11 @@ export type FindingOption = {
     name: string;
 };
 
+export type CompanyAuditArea = {
+    id: string;
+    name: string;
+};
+
 export type Company = {
   id: string;
   name: string;
@@ -71,6 +76,7 @@ export type Company = {
   facilities?: Facility[];
   findingOptions?: FindingOption[];
   instructorIds?: string[];
+  auditAreas?: CompanyAuditArea[];
 };
 
 export type AircraftDocument = {
@@ -472,7 +478,7 @@ export type GroupedRisk = {
   risks: Risk[];
 };
 
-export type FindingStatus = 'Compliant' | 'Non-compliant' | 'Partial' | 'Not Applicable' | 'Observation';
+export type FindingStatus = 'Compliant' | 'Non Compliant' | 'Partial' | 'Not Applicable' | 'Observation';
 export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Finding' | 'Observation' | null;
 
 export type AuditChecklistItem = {
@@ -491,7 +497,7 @@ export type AuditChecklistItem = {
     suggestedImprovement?: string;
 }
 
-export type AuditArea = 'Personnel' | 'Maintenance' | 'Facilities' | 'Records' | 'Management' | 'Ground Ops' | 'Cabin Safety' | 'Security' | 'Occupational Safety' | 'Administration & Management';
+export type AuditArea = string;
 
 export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs' | 'Header';
 
@@ -833,3 +839,4 @@ export const HIRE_AND_FLY_DOCUMENTS = [
   "Identification",
   "Passport",
 ] as const;
+

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -17,7 +18,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import type { CompanyRole, CompanyDepartment, Permission, User } from '@/lib/types';
+import type { CompanyRole, CompanyDepartment, Permission, User, CompanyAuditArea } from '@/lib/types';
 import { PermissionsListbox } from '@/app/personnel/permissions-listbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ALL_PERMISSIONS } from '@/lib/types';
@@ -92,11 +93,11 @@ const ItemForm = ({
 };
 
 
-const ManagementSection = ({ title, items, onUpdate, type, allPermissions, canEdit }: { title: string, items: (CompanyRole | CompanyDepartment)[], onUpdate: () => void, type: 'roles' | 'departments', allPermissions: Permission[], canEdit: boolean }) => {
+const ManagementSection = ({ title, items, onUpdate, type, allPermissions, canEdit }: { title: string, items: (CompanyRole | CompanyDepartment | CompanyAuditArea)[], onUpdate: () => void, type: 'roles' | 'departments' | 'audit-areas', allPermissions: Permission[], canEdit: boolean }) => {
     const { company } = useUser();
     const { toast } = useToast();
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-    const [editingItem, setEditingItem] = React.useState<CompanyRole | CompanyDepartment | null>(null);
+    const [editingItem, setEditingItem] = React.useState<CompanyRole | CompanyDepartment | CompanyAuditArea | null>(null);
     const isRole = type === 'roles';
 
     const handleFormSubmit = async (data: ItemFormValues) => {
@@ -115,7 +116,7 @@ const ManagementSection = ({ title, items, onUpdate, type, allPermissions, canEd
             setIsDialogOpen(false);
             setEditingItem(null);
         } catch (e) {
-            toast({ variant: 'destructive', title: 'Error', description: `Failed to save ${title.toLowerCase().slice(0, -1)}.` });
+            toast({ variant: 'destructive', title: 'Error', description: `Failed to save ${type.toLowerCase().slice(0, -1)}.` });
         }
     };
 
@@ -126,11 +127,11 @@ const ManagementSection = ({ title, items, onUpdate, type, allPermissions, canEd
             onUpdate();
             toast({ title: `${title.slice(0, -1)} Deleted` });
         } catch (e) {
-            toast({ variant: 'destructive', title: 'Error', description: `Failed to delete ${title.toLowerCase().slice(0, -1)}.` });
+            toast({ variant: 'destructive', title: 'Error', description: `Failed to delete ${type.toLowerCase().slice(0, -1)}.` });
         }
     };
 
-    const openEditDialog = (item: CompanyRole | CompanyDepartment) => {
+    const openEditDialog = (item: CompanyRole | CompanyDepartment | CompanyAuditArea) => {
         setEditingItem(item);
         setIsDialogOpen(true);
     };
@@ -188,16 +189,16 @@ const ManagementSection = ({ title, items, onUpdate, type, allPermissions, canEd
                                 )}
                             </TableRow>
                         )) : (
-                            <TableRow><TableCell colSpan={isRole ? 3 : 2} className="h-24 text-center">No {type} found.</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={isRole ? 3 : (canEdit ? 2 : 1)} className="h-24 text-center">No {type} found.</TableCell></TableRow>
                         )}
                     </TableBody>
                 </Table>
                  <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingItem(null); }}>
-                    <DialogContent className="sm:max-w-2xl">
+                    <DialogContent className={cn("sm:max-w-md", isRole && "sm:max-w-2xl")}>
                         <DialogHeader>
                             <DialogTitle>{editingItem ? 'Edit' : 'Add'} {title.slice(0, -1)}</DialogTitle>
                         </DialogHeader>
-                        <ScrollArea className="h-[70vh] pr-4">
+                        <ScrollArea className={cn(isRole && "h-[70vh] pr-4")}>
                            <ItemForm 
                                 onSubmit={handleFormSubmit} 
                                 existingItem={editingItem} 
@@ -217,6 +218,7 @@ export default function RolesAndDepartmentsPage() {
     const { toast } = useToast();
     const [roles, setRoles] = React.useState<CompanyRole[]>([]);
     const [departments, setDepartments] = React.useState<CompanyDepartment[]>([]);
+    const [auditAreas, setAuditAreas] = React.useState<CompanyAuditArea[]>([]);
     const [allPermissions, setAllPermissions] = React.useState<Permission[]>(ALL_PERMISSIONS);
     const [personnel, setPersonnel] = React.useState<User[]>([]);
 
@@ -225,15 +227,18 @@ export default function RolesAndDepartmentsPage() {
         try {
             const rolesQuery = query(collection(db, `companies/${company.id}/roles`));
             const deptsQuery = query(collection(db, `companies/${company.id}/departments`));
+            const auditAreasQuery = query(collection(db, `companies/${company.id}/audit-areas`));
             const personnelQuery = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
             
-            const [rolesSnapshot, deptsSnapshot, personnelSnapshot] = await Promise.all([
+            const [rolesSnapshot, deptsSnapshot, auditAreasSnapshot, personnelSnapshot] = await Promise.all([
                 getDocs(rolesQuery),
                 getDocs(deptsQuery),
+                getDocs(auditAreasQuery),
                 getDocs(personnelQuery),
             ]);
             setRoles(rolesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyRole)));
             setDepartments(deptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment)));
+            setAuditAreas(auditAreasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyAuditArea)));
             setPersonnel(personnelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
 
         } catch (error) {
@@ -286,12 +291,15 @@ export default function RolesAndDepartmentsPage() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><Network /> Roles & Departments</CardTitle>
                     <CardDescription>
-                        Manage the roles and departments available for assignment within your company.
+                        Manage the roles, departments, and audit areas available for assignment within your company.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="grid md:grid-cols-2 gap-8">
                    <ManagementSection title="Roles" items={roles} onUpdate={fetchData} type="roles" allPermissions={allPermissions} canEdit={canEdit} />
                    <ManagementSection title="Departments" items={departments} onUpdate={fetchData} type="departments" allPermissions={allPermissions} canEdit={canEdit} />
+                   <div className="md:col-span-2">
+                    <ManagementSection title="Audit Areas" items={auditAreas} onUpdate={fetchData} type="audit-areas" allPermissions={allPermissions} canEdit={canEdit} />
+                   </div>
                 </CardContent>
             </Card>
             <Card>

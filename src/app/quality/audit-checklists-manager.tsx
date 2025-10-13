@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -9,7 +10,7 @@ import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc, setDoc, where, orderBy, limit } from 'firebase/firestore';
-import type { AuditChecklist as Checklist, QualityAudit, User, AuditArea, Department, CompanyDepartment } from '@/lib/types';
+import type { AuditChecklist as Checklist, QualityAudit, User, AuditArea, Department, CompanyDepartment, CompanyAuditArea } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AuditChecklistTemplateForm } from './audit-checklist-template-form';
 import { generateAuditChecklist } from '@/ai/flows/generate-audit-checklist-flow';
@@ -95,9 +96,7 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
     )
 }
 
-const auditAreas: AuditArea[] = ['Maintenance', 'Facilities', 'Records', 'Management', 'Ground Ops'];
-
-const StartAuditDialog = ({ onStart, personnel, template, departments }: { onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'> & { department?: Department }) => void, personnel: User[], template: Checklist, departments: CompanyDepartment[] }) => {
+const StartAuditDialog = ({ onStart, personnel, template, departments, auditAreas }: { onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'> & { department?: Department }) => void, personnel: User[], template: Checklist, departments: CompanyDepartment[], auditAreas: CompanyAuditArea[] }) => {
     const [leadAuditor, setLeadAuditor] = useState('');
     const [auditeeName, setAuditeeName] = useState('');
     const [auditTeam, setAuditTeam] = useState('');
@@ -107,7 +106,7 @@ const StartAuditDialog = ({ onStart, personnel, template, departments }: { onSta
     const [scope, setScope] = useState('');
     const [evidenceReference, setEvidenceReference] = useState('');
     const [isOpen, setIsOpen] = useState(false);
-    const [area, setArea] = useState<AuditArea>('Management');
+    const [area, setArea] = useState<AuditArea>('');
     const [department, setDepartment] = useState<Department>();
     const { user } = useUser();
     
@@ -185,9 +184,9 @@ const StartAuditDialog = ({ onStart, personnel, template, departments }: { onSta
                      <div>
                         <Label>Audit Area</Label>
                          <Select value={area} onValueChange={(v: AuditArea) => setArea(v)}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectTrigger><SelectValue placeholder="Select audit area" /></SelectTrigger>
                             <SelectContent>
-                                {auditAreas.map(area => <SelectItem key={area} value={area}>{area}</SelectItem>)}
+                                {auditAreas.map(areaItem => <SelectItem key={areaItem.id} value={areaItem.name}>{areaItem.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -252,7 +251,7 @@ const StartAuditDialog = ({ onStart, personnel, template, departments }: { onSta
                 </div>
                 </ScrollArea>
                 <div className="pt-4 border-t">
-                    <Button onClick={handleConfirm} disabled={!auditDate || !leadAuditor || !auditeeName || !department} className="w-full">
+                    <Button onClick={handleConfirm} disabled={!auditDate || !leadAuditor || !auditeeName || !department || !area} className="w-full">
                         Confirm and Start Audit
                     </Button>
                 </div>
@@ -263,14 +262,17 @@ const StartAuditDialog = ({ onStart, personnel, template, departments }: { onSta
 
 export function AuditChecklistsManager({ 
     initialTemplates,
-    initialPersonnel
+    initialPersonnel,
+    initialDepartments,
 }: { 
     initialTemplates: Checklist[],
     initialPersonnel: User[],
+    initialDepartments: CompanyDepartment[],
 }) {
     const [checklistTemplates, setChecklistTemplates] = useState<Checklist[]>(initialTemplates);
     const [personnel, setPersonnel] = useState<User[]>(initialPersonnel);
-    const [departments, setDepartments] = useState<CompanyDepartment[]>([]);
+    const [departments, setDepartments] = useState<CompanyDepartment[]>(initialDepartments);
+    const [auditAreas, setAuditAreas] = useState<CompanyAuditArea[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState<Checklist | null>(null);
     const { user, company, loading } = useUser();
@@ -278,11 +280,18 @@ export function AuditChecklistsManager({
     const [creationMode, setCreationMode] = useState<'manual' | 'ai' | null>(null);
     const router = useRouter();
 
-    const fetchDepartments = useCallback(async () => {
+    const fetchCompanyData = useCallback(async () => {
         if (!company) return;
         const deptsQuery = query(collection(db, `companies/${company.id}/departments`));
-        const deptsSnapshot = await getDocs(deptsQuery);
+        const auditAreasQuery = query(collection(db, `companies/${company.id}/audit-areas`));
+        
+        const [deptsSnapshot, auditAreasSnapshot] = await Promise.all([
+            getDocs(deptsQuery),
+            getDocs(auditAreasQuery),
+        ]);
+        
         setDepartments(deptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment)));
+        setAuditAreas(auditAreasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyAuditArea)));
     }, [company]);
 
 
@@ -305,10 +314,11 @@ export function AuditChecklistsManager({
     };
 
     useEffect(() => {
-        fetchDepartments();
+        fetchCompanyData();
         setChecklistTemplates(initialTemplates);
         setPersonnel(initialPersonnel);
-    }, [initialTemplates, initialPersonnel, fetchDepartments]);
+        setDepartments(initialDepartments);
+    }, [initialTemplates, initialPersonnel, initialDepartments, fetchCompanyData]);
 
 
     const handleStartAudit = async (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'> & { department?: Department }, template: Checklist) => {
@@ -469,6 +479,7 @@ export function AuditChecklistsManager({
                                                         onStart={(data) => handleStartAudit(data, template)} 
                                                         personnel={personnel} 
                                                         departments={departments}
+                                                        auditAreas={auditAreas}
                                                     />
                                                     <Button variant="outline" size="sm" onClick={() => handleEdit(template)}>
                                                         <Edit className="mr-2 h-4 w-4" /> Edit
