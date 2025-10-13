@@ -38,7 +38,6 @@ const alertFormSchema = z.object({
     message: 'Title must be at least 5 characters.',
   }),
   department: z.string().optional(),
-  targetUserId: z.string().optional(),
   reviewerId: z.string().optional(),
   background: z.string().min(10, { message: 'Background must be at least 10 characters.' }),
   purpose: z.string().min(10, { message: 'Purpose must be at least 10 characters.' }),
@@ -65,7 +64,6 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
     defaultValues: {
       title: '',
       department: '',
-      targetUserId: '',
       reviewerId: '',
       background: '',
       purpose: '',
@@ -106,7 +104,6 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
         type: existingAlert.type as 'Red Tag' | 'Yellow Tag',
         title: existingAlert.title,
         department: existingAlert.department,
-        targetUserId: existingAlert.targetUserId,
         reviewerId: existingAlert.reviewerId,
         background: existingAlert.background,
         purpose: existingAlert.purpose,
@@ -118,7 +115,6 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
             type: undefined,
             title: '',
             department: '',
-            targetUserId: '',
             reviewerId: '',
             background: '',
             purpose: '',
@@ -132,12 +128,11 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
     const processedData = {
         ...data,
         reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
-        targetUserId: data.targetUserId || undefined,
-        department: data.department || undefined,
+        department: data.department || null,
         reviewerId: data.reviewerId === 'none' ? undefined : data.reviewerId,
     };
     
-    onSubmit(processedData);
+    onSubmit(processedData as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
     form.reset();
   }
   
@@ -148,8 +143,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
       const processedData = {
           ...data,
           reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
-          targetUserId: data.targetUserId || '',
-          department: data.department || '',
+          department: data.department || null,
           reviewerId: data.reviewerId === 'none' ? undefined : data.reviewerId,
       };
       onSaveProgress(processedData as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
@@ -321,5 +315,3 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
     </Form>
   );
 }
-
-    
