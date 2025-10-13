@@ -29,6 +29,10 @@ const getAlertIcon = (type: AlertType['type']) => {
     }
 }
 
+const formatTextForDisplay = (text: string) => {
+    return text.replace(/\n/g, '<br />');
+};
+
 export default function MandatoryAlertsPage() {
   const router = useRouter();
   const { user, loading, getUnacknowledgedAlerts, acknowledgeAlerts } = useUser();
@@ -117,9 +121,9 @@ export default function MandatoryAlertsPage() {
                                             </Button>
                                         </div>
                                         <AlertDescription className="mt-2 text-foreground pr-24 space-y-2">
-                                             {alert.background && <p><strong>Background:</strong> {alert.background}</p>}
-                                             {alert.purpose && <p><strong>Purpose:</strong> {alert.purpose}</p>}
-                                             {alert.instruction && <p><strong>Instruction:</strong> {alert.instruction}</p>}
+                                             {alert.background && <div className="space-y-1"><p className="font-semibold">Background:</p><div dangerouslySetInnerHTML={{ __html: formatTextForDisplay(alert.background) }} /></div>}
+                                             {alert.purpose && <div className="space-y-1"><p className="font-semibold">Purpose:</p><div dangerouslySetInnerHTML={{ __html: formatTextForDisplay(alert.purpose) }} /></div>}
+                                             {alert.instruction && <div className="space-y-1"><p className="font-semibold">Instruction:</p><div dangerouslySetInnerHTML={{ __html: formatTextForDisplay(alert.instruction) }} /></div>}
                                         </AlertDescription>
                                         <p className="text-xs text-muted-foreground mt-2">Issued by {alert.author} on {format(parseISO(alert.date), 'MMM d, yyyy')}</p>
                                     </div>

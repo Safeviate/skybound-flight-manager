@@ -33,6 +33,9 @@ const getAlertIcon = (type: Alert['type']) => {
     }
 }
 
+const formatTextForDisplay = (text: string) => {
+    return text.replace(/\n/g, '<br />');
+};
 
 export default function AlertDetailPage() {
   const params = useParams();
@@ -150,19 +153,19 @@ export default function AlertDetailPage() {
             {alert.background && (
                 <div>
                     <h4 className="font-semibold text-lg mb-1">Background</h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted rounded-md break-words">{alert.background}</p>
+                    <div className="text-sm text-muted-foreground p-3 bg-muted rounded-md break-words" dangerouslySetInnerHTML={{ __html: formatTextForDisplay(alert.background) }} />
                 </div>
             )}
             {alert.purpose && (
                  <div>
                     <h4 className="font-semibold text-lg mb-1">Purpose</h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted rounded-md break-words">{alert.purpose}</p>
+                    <div className="text-sm text-muted-foreground p-3 bg-muted rounded-md break-words" dangerouslySetInnerHTML={{ __html: formatTextForDisplay(alert.purpose) }} />
                 </div>
             )}
             {alert.instruction && (
                 <div>
                     <h4 className="font-semibold text-lg mb-1">Instruction / Action Required</h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted rounded-md break-words">{alert.instruction}</p>
+                    <div className="text-sm text-muted-foreground p-3 bg-muted rounded-md break-words" dangerouslySetInnerHTML={{ __html: formatTextForDisplay(alert.instruction) }} />
                 </div>
             )}
             {(alert.reviewDate || reviewerName) && (
