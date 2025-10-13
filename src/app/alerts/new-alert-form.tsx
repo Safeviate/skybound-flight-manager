@@ -128,18 +128,16 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
     }
   }, [existingAlert, form]);
   
-  const processData = (data: AlertFormValues) => {
-    return {
+  function handleFormSubmit(data: AlertFormValues) {
+    const processedData = {
         ...data,
         reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : null,
         targetUserId: data.targetUserId || null,
         department: data.department || null,
         reviewerId: data.reviewerId === 'none' ? null : data.reviewerId,
     } as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>;
-  }
-
-  function handleFormSubmit(data: AlertFormValues) {
-    onSubmit(processData(data));
+    
+    onSubmit(processedData);
     form.reset();
   }
   
@@ -147,7 +145,14 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
     const isValid = await form.trigger();
     if (isValid) {
       const data = form.getValues();
-      onSaveProgress(processData(data));
+      const processedData = {
+          ...data,
+          reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : null,
+          targetUserId: data.targetUserId || null,
+          department: data.department || null,
+          reviewerId: data.reviewerId === 'none' ? null : data.reviewerId,
+      } as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>;
+      onSaveProgress(processedData);
     } else {
         toast({
             variant: 'destructive',
