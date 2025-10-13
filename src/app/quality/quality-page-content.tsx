@@ -436,7 +436,6 @@ export function QualityPageContent({
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
   const { user, company, loading } = useUser();
   const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [selectedAudits, setSelectedAudits] = useState<string[]>([]);
   
@@ -447,21 +446,23 @@ export function QualityPageContent({
 
   const activeAudits = useMemo(() => audits.filter(audit => audit.status !== 'Archived'), [audits]);
   const archivedAudits = useMemo(() => audits.filter(audit => audit.status === 'Archived'), [audits]);
-
-  const displayedAudits = useMemo(() => showArchived ? archivedAudits : activeAudits, [showArchived, archivedAudits, activeAudits]);
-
-  const filteredAudits = useMemo(() => displayedAudits.filter(audit => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-        audit.id.toLowerCase().includes(searchLower) ||
-        (audit.auditNumber && audit.auditNumber.toLowerCase().includes(searchLower)) ||
-        audit.title.toLowerCase().includes(searchLower) ||
-        audit.auditor.toLowerCase().includes(searchLower) ||
-        audit.status.toLowerCase().includes(searchLower) ||
-        audit.type.toLowerCase().includes(searchLower)
-    );
-  }), [displayedAudits, searchTerm]);
   
+  const reportsControls = useTableControls(activeAudits, {
+    initialSort: { key: 'date', direction: 'desc' },
+    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type'],
+  });
+  
+  const archivedReportsControls = useTableControls(archivedAudits, {
+    initialSort: { key: 'date', direction: 'desc' },
+    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type'],
+  });
+
+  const displayedAudits = useMemo(() => {
+    const controls = showArchived ? archivedReportsControls : reportsControls;
+    return controls.items;
+  }, [showArchived, reportsControls, archivedReportsControls]);
+
+
   useEffect(() => {
     setSelectedAudits([]);
   }, [showArchived]);
@@ -595,7 +596,7 @@ export function QualityPageContent({
   
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-        setSelectedAudits(filteredAudits.map(a => a.id));
+        setSelectedAudits(displayedAudits.map(a => a.id));
     } else {
         setSelectedAudits([]);
     }
@@ -636,9 +637,7 @@ export function QualityPageContent({
   };
 
 
-  const ReportTable = ({ reports }: { reports: QualityAudit[] }) => {
-    const controls = reports.some(r => r.status === 'Archived') ? archivedReportsControls : reportsControls;
-
+  const ReportTable = ({ reports, controls }: { reports: QualityAudit[], controls: ReturnType<typeof useTableControls> }) => {
     return (
       <>
         <div className="flex items-center py-4">
@@ -660,7 +659,7 @@ export function QualityPageContent({
                   <TableHead className="w-12">
                       <Checkbox 
                           onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
-                          checked={selectedAudits.length > 0 && selectedAudits.length === filteredAudits.length}
+                          checked={selectedAudits.length > 0 && selectedAudits.length === displayedAudits.length}
                           aria-label="Select all"
                       />
                   </TableHead>
@@ -677,8 +676,8 @@ export function QualityPageContent({
               </TableRow>
           </TableHeader>
           <TableBody>
-              {filteredAudits.length > 0 ? (
-                  filteredAudits.map(audit => (
+              {controls.items.length > 0 ? (
+                  controls.items.map(audit => (
                   <TableRow key={audit.id} data-state={selectedAudits.includes(audit.id) && "selected"}>
                       {showArchived && (
                           <TableCell>
@@ -757,7 +756,7 @@ export function QualityPageContent({
                   ))
               ) : (
                   <TableRow>
-                      <TableCell colSpan={showArchived ? 8 : 7} className="text-center h-24">
+                      <TableCell colSpan={showArchived ? 9 : 8} className="text-center h-24">
                           No audit reports found.
                       </TableCell>
                   </TableRow>
@@ -831,22 +830,22 @@ export function QualityPageContent({
                   <CardContent>
                     <Tabs defaultValue="active">
                         <TabsList>
-                            <TabsTrigger value="active">Active Audits</TabsTrigger>
-                            <TabsTrigger value="archived">Archived Audits</TabsTrigger>
+                            <TabsTrigger value="active" onClick={() => setShowArchived(false)}>Active Audits</TabsTrigger>
+                            <TabsTrigger value="archived" onClick={() => setShowArchived(true)}>Archived Audits</TabsTrigger>
                         </TabsList>
                         <TabsContent value="active" className="mt-4">
-                            <ReportTable reports={activeAudits} />
+                            <ReportTable reports={activeAudits} controls={reportsControls} />
                         </TabsContent>
                          <TabsContent value="archived" className="mt-4">
                             <div className="flex justify-end mb-4">
-                                {showArchived && selectedAudits.length > 0 && (
+                                {selectedAudits.length > 0 && (
                                     <Button variant="outline" onClick={handleBulkRestore}>
                                         <RotateCw className="mr-2 h-4 w-4" />
                                         Restore Selected ({selectedAudits.length})
                                     </Button>
                                 )}
                             </div>
-                            <ReportTable reports={archivedAudits} />
+                            <ReportTable reports={archivedAudits} controls={archivedReportsControls} />
                         </TabsContent>
                     </Tabs>
                   </CardContent>
