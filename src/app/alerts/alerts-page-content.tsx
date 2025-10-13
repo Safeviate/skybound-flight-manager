@@ -71,8 +71,9 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     try {
       if (editingAlert) {
         const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
-        await updateDoc(alertRef, data as any);
-        setAlerts(prev => prev.map(a => a.id === editingAlert.id ? { ...a, ...data } as Alert : a));
+        const updatedAlertData = { ...editingAlert, ...data };
+        await updateDoc(alertRef, updatedAlertData as any);
+        setAlerts(prev => prev.map(a => a.id === editingAlert.id ? updatedAlertData : a));
         toast({
             title: 'Alert Updated',
             description: `The "${data.title}" alert has been updated.`,
