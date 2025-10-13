@@ -6,7 +6,7 @@ const pwaConfig = withPWA({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: true, // PWA is fully disabled to prevent chunk load errors
+  disable: process.env.NODE_ENV === 'development',
   runtimeCaching: [
     {
       urlPattern: /^https?.*/,
@@ -62,6 +62,5 @@ const nextConfig: NextConfig = {
   }
 };
 
-// PWA is now disabled in all environments by the flag above.
-// The pwaConfig wrapper is kept for potential future use but is currently inactive.
-export default pwaConfig(nextConfig);
+// We apply pwaConfig only in production.
+export default process.env.NODE_ENV === 'development' ? nextConfig : pwaConfig(nextConfig);
