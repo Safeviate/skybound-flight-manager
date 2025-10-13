@@ -561,6 +561,7 @@ export type QualityAudit = {
   auditeePosition?: string | null;
   area: AuditArea;
   department?: Department;
+  aircraftInvolved?: string;
   status: 'Open' | 'Closed' | 'Archived';
   complianceScore: number;
   checklistItems: AuditChecklistItem[];
@@ -839,4 +840,3 @@ export const HIRE_AND_FLY_DOCUMENTS = [
   "Identification",
   "Passport",
 ] as const;
-

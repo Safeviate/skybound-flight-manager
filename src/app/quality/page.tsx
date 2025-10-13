@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import { getQualityPageData } from './data';
 import { QualityPageContent } from './quality-page-content';
-import type { QualityAudit, AuditScheduleItem, AuditChecklist, User, CompanyDepartment } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, AuditChecklist, User, CompanyDepartment, Aircraft } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useState, useEffect } from 'react';
 
@@ -15,7 +16,8 @@ export default function QualityPageContainer() {
         checklistsList: AuditChecklist[],
         personnelList: User[],
         departmentsList: CompanyDepartment[],
-    }>({ auditsList: [], scheduleList: [], checklistsList: [], personnelList: [], departmentsList: [] });
+        aircraftList: Aircraft[],
+    }>({ auditsList: [], scheduleList: [], checklistsList: [], personnelList: [], departmentsList: [], aircraftList: [] });
 
     useEffect(() => {
         async function loadData() {
@@ -35,6 +37,7 @@ export default function QualityPageContainer() {
                 initialChecklists={initialData.checklistsList} 
                 initialPersonnel={initialData.personnelList}
                 initialDepartments={initialData.departmentsList}
+                initialAircraft={initialData.aircraftList}
             />;
 }
 

@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -418,12 +419,14 @@ export function QualityPageContent({
     initialChecklists,
     initialPersonnel,
     initialDepartments,
+    initialAircraft,
 }: {
     initialAudits: QualityAudit[],
     initialSchedule: AuditScheduleItem[],
     initialChecklists: AuditChecklist[],
     initialPersonnel: User[],
     initialDepartments: CompanyDepartment[],
+    initialAircraft: Aircraft[],
 }) {
   const searchParams = useSearchParams();
   const [audits, setAudits] = useState<QualityAudit[]>(initialAudits);
@@ -840,6 +843,7 @@ export function QualityPageContent({
                 initialTemplates={initialChecklists} 
                 initialPersonnel={initialPersonnel}
                 initialDepartments={initialDepartments}
+                initialAircraft={initialAircraft}
               />
           </TabsContent>
           <TabsContent value="cap-tracker" className="mt-4">

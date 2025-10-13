@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -9,7 +10,7 @@ import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc, setDoc, where, orderBy, limit } from 'firebase/firestore';
-import type { AuditChecklist as Checklist, QualityAudit, User, AuditArea, Department, CompanyDepartment, CompanyAuditArea } from '@/lib/types';
+import type { AuditChecklist as Checklist, QualityAudit, User, AuditArea, Department, CompanyDepartment, CompanyAuditArea, Aircraft } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AuditChecklistTemplateForm } from './audit-checklist-template-form';
 import { generateAuditChecklist } from '@/ai/flows/generate-audit-checklist-flow';
@@ -95,7 +96,7 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
     )
 }
 
-const StartAuditDialog = ({ onStart, personnel, template, departments, auditAreas }: { onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'> & { department?: Department }) => void, personnel: User[], template: Checklist, departments: CompanyDepartment[], auditAreas: CompanyAuditArea[] }) => {
+const StartAuditDialog = ({ onStart, personnel, template, departments, auditAreas, aircraft }: { onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'> & { department?: Department }) => void, personnel: User[], template: Checklist, departments: CompanyDepartment[], auditAreas: CompanyAuditArea[], aircraft: Aircraft[] }) => {
     const [leadAuditor, setLeadAuditor] = useState('');
     const [auditeeName, setAuditeeName] = useState('');
     const [auditTeam, setAuditTeam] = useState('');
@@ -107,6 +108,7 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
     const [isOpen, setIsOpen] = useState(false);
     const [area, setArea] = useState<AuditArea>('');
     const [department, setDepartment] = useState<Department>();
+    const [aircraftInvolved, setAircraftInvolved] = useState<string | undefined>();
     const { user } = useUser();
     
     const handleConfirm = () => {
@@ -118,6 +120,7 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
                 auditeeName: auditeeName,
                 area: area,
                 department: department,
+                aircraftInvolved,
                 auditTeam: auditTeam.split(',').map(s => s.trim()).filter(Boolean),
                 auditeeTeam: auditeeTeam.split(',').map(s => s.trim()).filter(Boolean),
                 scope: scope,
@@ -186,6 +189,15 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
                             <SelectTrigger><SelectValue placeholder="Select audit area" /></SelectTrigger>
                             <SelectContent>
                                 {auditAreas.map(areaItem => <SelectItem key={areaItem.id} value={areaItem.name}>{areaItem.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div>
+                        <Label>Audit Aerial Asset</Label>
+                         <Select value={aircraftInvolved} onValueChange={setAircraftInvolved}>
+                            <SelectTrigger><SelectValue placeholder="Select aircraft..."/></SelectTrigger>
+                            <SelectContent>
+                                {aircraft.map(ac => <SelectItem key={ac.id} value={ac.tailNumber}>{ac.tailNumber} ({ac.make} {ac.model})</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -263,10 +275,12 @@ export function AuditChecklistsManager({
     initialTemplates,
     initialPersonnel,
     initialDepartments,
+    initialAircraft,
 }: { 
     initialTemplates: Checklist[],
     initialPersonnel: User[],
     initialDepartments: CompanyDepartment[],
+    initialAircraft: Aircraft[],
 }) {
     const [checklistTemplates, setChecklistTemplates] = useState<Checklist[]>(initialTemplates);
     const [personnel, setPersonnel] = useState<User[]>(initialPersonnel);
@@ -479,6 +493,7 @@ export function AuditChecklistsManager({
                                                         personnel={personnel} 
                                                         departments={departments}
                                                         auditAreas={auditAreas}
+                                                        aircraft={initialAircraft}
                                                     />
                                                     <Button variant="outline" size="sm" onClick={() => handleEdit(template)}>
                                                         <Edit className="mr-2 h-4 w-4" /> Edit
