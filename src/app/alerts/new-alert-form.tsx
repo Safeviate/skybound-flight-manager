@@ -135,7 +135,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
         targetUserId: data.targetUserId || null,
         department: data.department || null,
         reviewerId: data.reviewerId === 'none' ? null : data.reviewerId,
-    } as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>;
+    };
     
     onSubmit(processedData);
     form.reset();
@@ -212,9 +212,10 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Target Personnel (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                         <FormControl><SelectTrigger><SelectValue placeholder="All Personnel" /></SelectTrigger></FormControl>
                         <SelectContent>
+                            <SelectItem value="">All Personnel</SelectItem>
                             {personnel.map((p) => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))}
                         </SelectContent>
                     </Select>
