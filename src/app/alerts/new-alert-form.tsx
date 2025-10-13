@@ -151,8 +151,8 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
           targetUserId: data.targetUserId || undefined,
           department: data.department || undefined,
           reviewerId: data.reviewerId === 'none' ? undefined : data.reviewerId,
-      } as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>;
-      onSaveProgress(processedData);
+      };
+      onSaveProgress(processedData as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
     } else {
         toast({
             variant: 'destructive',
@@ -196,10 +196,9 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Target Department (Optional)</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <Select onValueChange={field.onChange} value={field.value || undefined}>
                             <FormControl><SelectTrigger><SelectValue placeholder="All Departments" /></SelectTrigger></FormControl>
                             <SelectContent>
-                                <SelectItem value="">All Departments</SelectItem>
                                 {departments.map((dept) => (<SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>))}
                             </SelectContent>
                         </Select>
@@ -213,10 +212,9 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Target Personnel (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                    <Select onValueChange={field.onChange} value={field.value || undefined}>
                         <FormControl><SelectTrigger><SelectValue placeholder="All Personnel" /></SelectTrigger></FormControl>
                         <SelectContent>
-                            <SelectItem value="">All Personnel</SelectItem>
                             {personnel.map((p) => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))}
                         </SelectContent>
                     </Select>
@@ -339,3 +337,5 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
     </Form>
   );
 }
+
+    
