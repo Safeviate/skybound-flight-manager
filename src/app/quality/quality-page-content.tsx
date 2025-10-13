@@ -21,7 +21,7 @@ import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { useTableControls } from '@/hooks/use-table-controls.ts';
 import { AuditChecklistsManager } from './audit-checklists-manager';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -838,6 +838,7 @@ export function QualityPageContent({
               <AuditChecklistsManager 
                 initialTemplates={initialChecklists} 
                 initialPersonnel={initialPersonnel}
+                initialDepartments={initialDepartments}
               />
           </TabsContent>
           <TabsContent value="cap-tracker" className="mt-4">

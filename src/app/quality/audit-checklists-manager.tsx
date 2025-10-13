@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -177,7 +176,7 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
                          <Select value={department} onValueChange={(v: Department) => setDepartment(v)}>
                             <SelectTrigger><SelectValue placeholder="Select a department"/></SelectTrigger>
                             <SelectContent>
-                                {departments.map(dept => <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>)}
+                                {departments && departments.map(dept => <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
