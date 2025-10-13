@@ -148,8 +148,8 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
       const processedData = {
           ...data,
           reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
-          targetUserId: data.targetUserId || undefined,
-          department: data.department || undefined,
+          targetUserId: data.targetUserId || '',
+          department: data.department || '',
           reviewerId: data.reviewerId === 'none' ? undefined : data.reviewerId,
       };
       onSaveProgress(processedData as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
@@ -189,7 +189,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
                 <FormField
                     control={form.control}
                     name="department"
@@ -205,22 +205,6 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
                         <FormMessage />
                         </FormItem>
                     )}
-                />
-                <FormField
-                control={form.control}
-                name="targetUserId"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Target Personnel (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || undefined}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="All Personnel" /></SelectTrigger></FormControl>
-                        <SelectContent>
-                            {personnel.map((p) => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
                 />
             </div>
             <FormField
