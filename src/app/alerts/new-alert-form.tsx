@@ -126,11 +126,13 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
   }, [existingAlert, form]);
   
   function handleFormSubmit(data: AlertFormValues) {
-    onSubmit({
+    const finalData = {
         ...data,
         reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
         reviewerId: data.reviewerId === 'none' ? undefined : data.reviewerId,
-    } as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
+        department: data.department || null,
+    };
+    onSubmit(finalData as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
     form.reset();
   }
   
@@ -142,6 +144,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
           ...data,
           reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
           reviewerId: data.reviewerId === 'none' ? undefined : data.reviewerId,
+          department: data.department || null,
        } as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
     } else {
         toast({
@@ -200,10 +203,9 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Target Department (Optional)</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value ?? undefined}>
+                        <Select onValueChange={field.onChange} value={field.value || undefined}>
                             <FormControl><SelectTrigger><SelectValue placeholder="All Departments" /></SelectTrigger></FormControl>
                             <SelectContent>
-                                <SelectItem value="">All Departments</SelectItem>
                                 {departments.map((dept) => (<SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>))}
                             </SelectContent>
                         </Select>
@@ -317,7 +319,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Reviewer (Optional)</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <Select onValueChange={field.onChange} value={field.value || 'none'}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Select a reviewer" /></SelectTrigger></FormControl>
                             <SelectContent>
                                <SelectItem value="none">None</SelectItem>
