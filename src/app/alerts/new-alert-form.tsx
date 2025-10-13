@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,7 +26,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -37,7 +38,7 @@ const alertFormSchema = z.object({
   title: z.string().min(5, {
     message: 'Title must be at least 5 characters.',
   }),
-  department: z.string().optional(),
+  department: z.string().optional().nullable(),
   reviewerId: z.string().optional(),
   background: z.string().min(10, { message: 'Background must be at least 10 characters.' }),
   purpose: z.string().min(10, { message: 'Purpose must be at least 10 characters.' }),
@@ -125,14 +126,11 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
   }, [existingAlert, form]);
   
   function handleFormSubmit(data: AlertFormValues) {
-    const processedData = {
+    onSubmit({
         ...data,
         reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
-        department: data.department || null,
         reviewerId: data.reviewerId === 'none' ? undefined : data.reviewerId,
-    };
-    
-    onSubmit(processedData as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
+    } as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
     form.reset();
   }
   
@@ -140,13 +138,11 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
     const isValid = await form.trigger();
     if (isValid) {
       const data = form.getValues();
-      const processedData = {
+       onSaveProgress({
           ...data,
           reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
-          department: data.department || null,
           reviewerId: data.reviewerId === 'none' ? undefined : data.reviewerId,
-      };
-      onSaveProgress(processedData as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
+       } as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
     } else {
         toast({
             variant: 'destructive',
@@ -155,6 +151,20 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
         });
     }
   }
+
+  const addBulletPoint = (fieldName: keyof AlertFormValues) => {
+    const currentValue = form.getValues(fieldName) as string || '';
+    const newValue = currentValue ? `${currentValue}\n• ` : '• ';
+    form.setValue(fieldName, newValue, { shouldDirty: true });
+    // Focus the textarea after updating
+    const textarea = document.getElementById(fieldName) as HTMLTextAreaElement;
+    if (textarea) {
+        textarea.focus();
+        setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+        }, 0);
+    }
+  };
 
 
   return (
@@ -190,9 +200,10 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Target Department (Optional)</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || undefined}>
+                        <Select onValueChange={field.onChange} value={field.value ?? undefined}>
                             <FormControl><SelectTrigger><SelectValue placeholder="All Departments" /></SelectTrigger></FormControl>
                             <SelectContent>
+                                <SelectItem value="">All Departments</SelectItem>
                                 {departments.map((dept) => (<SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>))}
                             </SelectContent>
                         </Select>
@@ -219,9 +230,14 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
               name="background"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Background</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Background</FormLabel>
+                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => addBulletPoint('background')}>
+                        <List className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <FormControl>
-                    <Textarea placeholder="Provide background information..." {...field} />
+                    <Textarea id="background" placeholder="Provide background information..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -232,9 +248,14 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
               name="purpose"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Purpose</FormLabel>
+                    <div className="flex items-center justify-between">
+                        <FormLabel>Purpose</FormLabel>
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => addBulletPoint('purpose')}>
+                            <List className="h-4 w-4" />
+                        </Button>
+                    </div>
                   <FormControl>
-                    <Textarea placeholder="State the purpose of this alert..." {...field} />
+                    <Textarea id="purpose" placeholder="State the purpose of this alert..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -245,9 +266,14 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
               name="instruction"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Instruction / Action Required</FormLabel>
+                    <div className="flex items-center justify-between">
+                        <FormLabel>Instruction / Action Required</FormLabel>
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => addBulletPoint('instruction')}>
+                            <List className="h-4 w-4" />
+                        </Button>
+                    </div>
                   <FormControl>
-                    <Textarea placeholder="Detail the required actions..." {...field} />
+                    <Textarea id="instruction" placeholder="Detail the required actions..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
