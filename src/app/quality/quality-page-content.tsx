@@ -5,7 +5,7 @@ import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -258,9 +258,15 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel }:
             const { findings, ...itemToSeed } = item;
             batch.set(docRef, {...itemToSeed, companyId: company.id});
         });
-        await batch.commit();
-        fetchData();
-        toast({title: 'Sample Data Seeded', description: 'The coherence matrix has been populated with Part 141 regulations.'})
+        
+        try {
+            await batch.commit();
+            fetchData();
+            toast({title: 'Sample Data Seeded', description: 'The coherence matrix has been populated with Part 141 regulations.'})
+        } catch (error) {
+            console.error("Error seeding coherence matrix:", error);
+            toast({ variant: 'destructive', title: 'Seeding Failed', description: 'Could not seed coherence matrix data.' });
+        }
     };
 
     if (loading) {
@@ -410,11 +416,13 @@ export function QualityPageContent({
     initialSchedule,
     initialChecklists,
     initialPersonnel,
+    initialDepartments,
 }: {
     initialAudits: QualityAudit[],
     initialSchedule: AuditScheduleItem[],
     initialChecklists: AuditChecklist[],
     initialPersonnel: User[],
+    initialDepartments: CompanyDepartment[],
 }) {
   const searchParams = useSearchParams();
   const [audits, setAudits] = useState<QualityAudit[]>(initialAudits);

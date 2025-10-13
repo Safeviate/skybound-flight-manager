@@ -3,11 +3,11 @@
 
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, where } from 'firebase/firestore';
-import type { QualityAudit, AuditScheduleItem, AuditChecklist, User } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, AuditChecklist, User, CompanyDepartment } from '@/lib/types';
 
 export async function getQualityPageData(companyId: string) {
     if (!companyId) {
-        return { auditsList: [], scheduleList: [], checklistsList: [], personnelList: [] };
+        return { auditsList: [], scheduleList: [], checklistsList: [], personnelList: [], departmentsList: [] };
     }
 
     try {
@@ -15,23 +15,26 @@ export async function getQualityPageData(companyId: string) {
         const scheduleQuery = query(collection(db, `companies/${companyId}/audit-schedule-items`));
         const checklistsQuery = query(collection(db, `companies/${companyId}/audit-checklists`));
         const personnelQuery = query(collection(db, `companies/${companyId}/users`), where('role', '!=', 'Student'));
+        const departmentsQuery = query(collection(db, `companies/${companyId}/departments`));
 
-        const [auditsSnapshot, scheduleSnapshot, checklistsSnapshot, personnelSnapshot] = await Promise.all([
+        const [auditsSnapshot, scheduleSnapshot, checklistsSnapshot, personnelSnapshot, departmentsSnapshot] = await Promise.all([
             getDocs(auditsQuery),
             getDocs(scheduleQuery),
             getDocs(checklistsQuery),
             getDocs(personnelQuery),
+            getDocs(departmentsQuery),
         ]);
         
         const auditsList = auditsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QualityAudit));
         const scheduleList = scheduleSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditScheduleItem));
         const checklistsList = checklistsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditChecklist));
         const personnelList = personnelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        const departmentsList = departmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment));
 
-        return { auditsList, scheduleList, checklistsList, personnelList };
+        return { auditsList, scheduleList, checklistsList, personnelList, departmentsList };
     } catch (error) {
         console.error("Failed to fetch quality page data:", error);
         // Return empty arrays to prevent the page from crashing on a DB error.
-        return { auditsList: [], scheduleList: [], checklistsList: [], personnelList: [] };
+        return { auditsList: [], scheduleList: [], checklistsList: [], personnelList: [], departmentsList: [] };
     }
 }

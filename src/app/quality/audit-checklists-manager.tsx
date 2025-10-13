@@ -96,10 +96,8 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
 }
 
 const auditAreas: AuditArea[] = ['Maintenance', 'Facilities', 'Records', 'Management', 'Ground Ops'];
-const companyDepartments: Department[] = ['Flight Operations', 'Ground Operation', 'Administrative', 'Maintenance', 'Cargo'];
 
-
-const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'> & { department?: Department }) => void, personnel: User[], template: Checklist }) => {
+const StartAuditDialog = ({ onStart, personnel, template, departments }: { onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'> & { department?: Department }) => void, personnel: User[], template: Checklist, departments: CompanyDepartment[] }) => {
     const [leadAuditor, setLeadAuditor] = useState('');
     const [auditeeName, setAuditeeName] = useState('');
     const [auditTeam, setAuditTeam] = useState('');
@@ -180,7 +178,7 @@ const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Om
                          <Select value={department} onValueChange={(v: Department) => setDepartment(v)}>
                             <SelectTrigger><SelectValue placeholder="Select a department"/></SelectTrigger>
                             <SelectContent>
-                                {companyDepartments.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
+                                {departments.map(dept => <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -470,6 +468,7 @@ export function AuditChecklistsManager({
                                                         template={template} 
                                                         onStart={(data) => handleStartAudit(data, template)} 
                                                         personnel={personnel} 
+                                                        departments={departments}
                                                     />
                                                     <Button variant="outline" size="sm" onClick={() => handleEdit(template)}>
                                                         <Edit className="mr-2 h-4 w-4" /> Edit

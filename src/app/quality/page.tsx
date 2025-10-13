@@ -3,7 +3,7 @@
 
 import { getQualityPageData } from './data';
 import { QualityPageContent } from './quality-page-content';
-import type { QualityAudit, AuditScheduleItem, AuditChecklist, User } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, AuditChecklist, User, CompanyDepartment } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useState, useEffect } from 'react';
 
@@ -13,8 +13,9 @@ export default function QualityPageContainer() {
         auditsList: QualityAudit[],
         scheduleList: AuditScheduleItem[],
         checklistsList: AuditChecklist[],
-        personnelList: User[]
-    }>({ auditsList: [], scheduleList: [], checklistsList: [], personnelList: [] });
+        personnelList: User[],
+        departmentsList: CompanyDepartment[],
+    }>({ auditsList: [], scheduleList: [], checklistsList: [], personnelList: [], departmentsList: [] });
 
     useEffect(() => {
         async function loadData() {
@@ -33,6 +34,7 @@ export default function QualityPageContainer() {
                 initialSchedule={initialData.scheduleList}
                 initialChecklists={initialData.checklistsList} 
                 initialPersonnel={initialData.personnelList}
+                initialDepartments={initialData.departmentsList}
             />;
 }
 
