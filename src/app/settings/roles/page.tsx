@@ -23,6 +23,7 @@ import { PermissionsListbox } from '@/app/personnel/permissions-listbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ALL_PERMISSIONS } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
 const itemFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -333,3 +334,4 @@ export default function RolesAndDepartmentsPage() {
 }
 
 RolesAndDepartmentsPage.title = "Roles & Departments";
+
