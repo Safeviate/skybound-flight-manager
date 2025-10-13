@@ -636,11 +636,146 @@ export function QualityPageContent({
   };
 
 
+  const ReportTable = ({ reports }: { reports: QualityAudit[] }) => {
+    const controls = reports.some(r => r.status === 'Archived') ? archivedReportsControls : reportsControls;
+
+    return (
+      <>
+        <div className="flex items-center py-4">
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search audits..."
+              value={controls.searchTerm}
+              onChange={(e) => controls.setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+        <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+        <Table>
+          <TableHeader>
+              <TableRow>
+              {showArchived && (
+                  <TableHead className="w-12">
+                      <Checkbox 
+                          onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                          checked={selectedAudits.length > 0 && selectedAudits.length === filteredAudits.length}
+                          aria-label="Select all"
+                      />
+                  </TableHead>
+              )}
+              <TableHead>Audit ID</TableHead>
+              <TableHead>Audit Date</TableHead>
+              <TableHead>Report Heading</TableHead>
+              <TableHead>Area</TableHead>
+              <TableHead>Asset</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Compliance</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+          </TableHeader>
+          <TableBody>
+              {filteredAudits.length > 0 ? (
+                  filteredAudits.map(audit => (
+                  <TableRow key={audit.id} data-state={selectedAudits.includes(audit.id) && "selected"}>
+                      {showArchived && (
+                          <TableCell>
+                              <Checkbox
+                                  checked={selectedAudits.includes(audit.id)}
+                                  onCheckedChange={(checked) => handleSelectOne(audit.id, !!checked)}
+                                  aria-label="Select row"
+                              />
+                          </TableCell>
+                      )}
+                      <TableCell>
+                      <Link href={`/quality/${audit.id}`} className="hover:underline">
+                          {audit.auditNumber || audit.id.substring(0, 8)}
+                      </Link>
+                      </TableCell>
+                      <TableCell>{format(parseISO(audit.date), 'MMM d, yyyy')}</TableCell>
+                      <TableCell>{audit.title}</TableCell>
+                      <TableCell>{audit.area}</TableCell>
+                      <TableCell>{audit.aircraftInvolved || 'N/A'}</TableCell>
+                      <TableCell>{audit.type}</TableCell>
+                      <TableCell>
+                          <div className={`flex items-center gap-1 font-semibold ${getComplianceColor(audit.complianceScore)}`}>
+                              <Percent className="h-4 w-4" />
+                              {audit.complianceScore}%
+                          </div>
+                      </TableCell>
+                      <TableCell>
+                          <Badge variant={getStatusVariant(audit.status)}>{audit.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                          <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                      <span className="sr-only">Actions</span>
+                                  </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent>
+                                  {showArchived ? (
+                                      <>
+                                        <DropdownMenuItem onSelect={() => handleRestoreAudit(audit.id)}>
+                                            <RotateCw className="mr-2 h-4 w-4" />
+                                            Restore
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
+                                                </DropdownMenuItem>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This action cannot be undone. This will permanently delete the audit "{audit.title}" and all its associated data.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteAudit(audit.id)}>Yes, delete audit</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                      </>
+                                  ) : (
+                                      <DropdownMenuItem onSelect={() => handleArchiveAudit(audit.id)}>
+                                          <Archive className="mr-2 h-4 w-4" />
+                                          Archive
+                                      </DropdownMenuItem>
+                                  )}
+                              </DropdownMenuContent>
+                          </DropdownMenu>
+                      </TableCell>
+                  </TableRow>
+                  ))
+              ) : (
+                  <TableRow>
+                      <TableCell colSpan={showArchived ? 8 : 7} className="text-center h-24">
+                          No audit reports found.
+                      </TableCell>
+                  </TableRow>
+              )}
+          </TableBody>
+        </Table>
+        <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      </>
+    );
+  };
+
+
   return (
-    <main className="flex-1 p-4 md:p-8 space-y-8">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="flex items-center justify-between mb-4 no-print">
-            <TabsList className="h-auto flex-wrap">
+      <main className="flex-1 p-4 md:p-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4 no-print">
+            <TabsList className="grid w-full grid-cols-2 md:flex md:w-auto">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="audits">Audits</TabsTrigger>
               <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
@@ -694,147 +829,26 @@ export function QualityPageContent({
                       <CardDescription>Review all completed quality audit reports.</CardDescription>
                   </CardHeader>
                   <CardContent>
-                      <div className="flex items-center justify-between py-4">
-                          <div className="relative w-full max-w-sm">
-                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input
-                              placeholder="Search audits..."
-                              value={searchTerm}
-                              onChange={(e) => setSearchTerm(e.target.value)}
-                              className="pl-10"
-                              />
-                          </div>
-                          <div className="flex items-center gap-2">
-                              {showArchived && selectedAudits.length > 0 && (
-                                   <Button variant="outline" onClick={handleBulkRestore}>
-                                      <RotateCw className="mr-2 h-4 w-4" />
-                                      Restore Selected ({selectedAudits.length})
-                                  </Button>
-                              )}
-                               <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>
-                                  {showArchived ? (
-                                      <>
-                                          <ListChecks className="mr-2 h-4 w-4" />
-                                          Show Active Audits
-                                      </>
-                                  ) : (
-                                      <>
-                                          <Archive className="mr-2 h-4 w-4" />
-                                          Show Archived Audits
-                                      </>
-                                  )}
-                              </Button>
-                          </div>
-                      </div>
-                       <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-                        <Table>
-                          <TableHeader>
-                              <TableRow>
-                              {showArchived && (
-                                  <TableHead className="w-12">
-                                      <Checkbox 
-                                          onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
-                                          checked={selectedAudits.length > 0 && selectedAudits.length === filteredAudits.length}
-                                          aria-label="Select all"
-                                      />
-                                  </TableHead>
-                              )}
-                              <TableHead>Audit ID</TableHead>
-                              <TableHead>Audit Date</TableHead>
-                              <TableHead>Report Heading</TableHead>
-                              <TableHead>Type</TableHead>
-                              <TableHead>Compliance</TableHead>
-                              <TableHead>Status</TableHead>
-                              <TableHead className="text-right">Actions</TableHead>
-                              </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                              {filteredAudits.length > 0 ? (
-                                  filteredAudits.map(audit => (
-                                  <TableRow key={audit.id} data-state={selectedAudits.includes(audit.id) && "selected"}>
-                                      {showArchived && (
-                                          <TableCell>
-                                              <Checkbox
-                                                  checked={selectedAudits.includes(audit.id)}
-                                                  onCheckedChange={(checked) => handleSelectOne(audit.id, !!checked)}
-                                                  aria-label="Select row"
-                                              />
-                                          </TableCell>
-                                      )}
-                                      <TableCell>
-                                      <Link href={`/quality/${audit.id}`} className="hover:underline">
-                                          {audit.auditNumber || audit.id.substring(0, 8)}
-                                      </Link>
-                                      </TableCell>
-                                      <TableCell>{format(parseISO(audit.date), 'MMM d, yyyy')}</TableCell>
-                                      <TableCell>{audit.title}</TableCell>
-                                      <TableCell>{audit.type}</TableCell>
-                                      <TableCell>
-                                          <div className={`flex items-center gap-1 font-semibold ${getComplianceColor(audit.complianceScore)}`}>
-                                              <Percent className="h-4 w-4" />
-                                              {audit.complianceScore}%
-                                          </div>
-                                      </TableCell>
-                                      <TableCell>
-                                          <Badge variant={getStatusVariant(audit.status)}>{audit.status}</Badge>
-                                      </TableCell>
-                                      <TableCell className="text-right">
-                                          <DropdownMenu>
-                                              <DropdownMenuTrigger asChild>
-                                                  <Button variant="ghost" size="icon">
-                                                      <MoreHorizontal className="h-4 w-4" />
-                                                  </Button>
-                                              </DropdownMenuTrigger>
-                                              <DropdownMenuContent>
-                                                  {showArchived ? (
-                                                      <>
-                                                        <DropdownMenuItem onSelect={() => handleRestoreAudit(audit.id)}>
-                                                            <RotateCw className="mr-2 h-4 w-4" />
-                                                            Restore
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        <AlertDialog>
-                                                            <AlertDialogTrigger asChild>
-                                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
-                                                                </DropdownMenuItem>
-                                                            </AlertDialogTrigger>
-                                                            <AlertDialogContent>
-                                                                <AlertDialogHeader>
-                                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                                    <AlertDialogDescription>
-                                                                        This action cannot be undone. This will permanently delete the audit "{audit.title}" and all its associated data.
-                                                                    </AlertDialogDescription>
-                                                                </AlertDialogHeader>
-                                                                <AlertDialogFooter>
-                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                    <AlertDialogAction onClick={() => handleDeleteAudit(audit.id)}>Yes, delete audit</AlertDialogAction>
-                                                                </AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
-                                                      </>
-                                                  ) : (
-                                                      <DropdownMenuItem onSelect={() => handleArchiveAudit(audit.id)}>
-                                                          <Archive className="mr-2 h-4 w-4" />
-                                                          Archive
-                                                      </DropdownMenuItem>
-                                                  )}
-                                              </DropdownMenuContent>
-                                          </DropdownMenu>
-                                      </TableCell>
-                                  </TableRow>
-                                  ))
-                              ) : (
-                                  <TableRow>
-                                      <TableCell colSpan={showArchived ? 8 : 7} className="text-center h-24">
-                                          No audit reports found.
-                                      </TableCell>
-                                  </TableRow>
-                              )}
-                          </TableBody>
-                        </Table>
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
+                    <Tabs defaultValue="active">
+                        <TabsList>
+                            <TabsTrigger value="active">Active Audits</TabsTrigger>
+                            <TabsTrigger value="archived">Archived Audits</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="active" className="mt-4">
+                            <ReportTable reports={activeAudits} />
+                        </TabsContent>
+                         <TabsContent value="archived" className="mt-4">
+                            <div className="flex justify-end mb-4">
+                                {showArchived && selectedAudits.length > 0 && (
+                                    <Button variant="outline" onClick={handleBulkRestore}>
+                                        <RotateCw className="mr-2 h-4 w-4" />
+                                        Restore Selected ({selectedAudits.length})
+                                    </Button>
+                                )}
+                            </div>
+                            <ReportTable reports={archivedAudits} />
+                        </TabsContent>
+                    </Tabs>
                   </CardContent>
               </Card>
           </TabsContent>
