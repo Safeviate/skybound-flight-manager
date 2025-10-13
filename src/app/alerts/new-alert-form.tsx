@@ -131,10 +131,10 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
   function handleFormSubmit(data: AlertFormValues) {
     const processedData = {
         ...data,
-        reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : null,
-        targetUserId: data.targetUserId || null,
-        department: data.department || null,
-        reviewerId: data.reviewerId === 'none' ? null : data.reviewerId,
+        reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
+        targetUserId: data.targetUserId || undefined,
+        department: data.department || undefined,
+        reviewerId: data.reviewerId === 'none' ? undefined : data.reviewerId,
     };
     
     onSubmit(processedData);
@@ -147,10 +147,10 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
       const data = form.getValues();
       const processedData = {
           ...data,
-          reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : null,
-          targetUserId: data.targetUserId || null,
-          department: data.department || null,
-          reviewerId: data.reviewerId === 'none' ? null : data.reviewerId,
+          reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
+          targetUserId: data.targetUserId || undefined,
+          department: data.department || undefined,
+          reviewerId: data.reviewerId === 'none' ? undefined : data.reviewerId,
       } as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>;
       onSaveProgress(processedData);
     } else {
@@ -199,6 +199,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
                         <Select onValueChange={field.onChange} value={field.value || ''}>
                             <FormControl><SelectTrigger><SelectValue placeholder="All Departments" /></SelectTrigger></FormControl>
                             <SelectContent>
+                                <SelectItem value="">All Departments</SelectItem>
                                 {departments.map((dept) => (<SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>))}
                             </SelectContent>
                         </Select>
@@ -215,7 +216,6 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
                     <Select onValueChange={field.onChange} value={field.value ?? ''}>
                         <FormControl><SelectTrigger><SelectValue placeholder="All Personnel" /></SelectTrigger></FormControl>
                         <SelectContent>
-                            <SelectItem value="">All Personnel</SelectItem>
                             {personnel.map((p) => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))}
                         </SelectContent>
                     </Select>
