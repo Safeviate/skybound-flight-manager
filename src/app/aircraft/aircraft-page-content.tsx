@@ -39,59 +39,6 @@ import Loading from '../loading';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 
-const MaintenanceDialog = ({ aircraft, onSave, onCancel }: { aircraft: Aircraft, onSave: (aircraftId: string, startDate: string, endDate: string) => void, onCancel: () => void }) => {
-    const [startDate, setStartDate] = useState<Date | undefined>(aircraft.maintenanceStartDate ? parseISO(aircraft.maintenanceStartDate) : new Date());
-    const [endDate, setEndDate] = useState<Date | undefined>(aircraft.maintenanceEndDate ? parseISO(aircraft.maintenanceEndDate) : new Date());
-
-    const handleSave = () => {
-        if (startDate && endDate) {
-            onSave(aircraft.id, format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'));
-        }
-    };
-    
-    return (
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Set Maintenance Period for {aircraft.tailNumber}</DialogTitle>
-                <DialogDescription>
-                    The aircraft will be marked as 'In Maintenance' and unavailable for booking during this period.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="grid grid-cols-2 gap-4 py-4">
-                <div className="space-y-2">
-                    <Label>Start Date</Label>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {startDate ? format(startDate, 'PPP') : 'Select start date'}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus/></PopoverContent>
-                    </Popover>
-                </div>
-                 <div className="space-y-2">
-                    <Label>End Date</Label>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {endDate ? format(endDate, 'PPP') : 'Select end date'}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus/></PopoverContent>
-                    </Popover>
-                </div>
-            </div>
-            <DialogFooter>
-                <Button variant="outline" onClick={onCancel}>Cancel</Button>
-                <Button onClick={handleSave}>Save Maintenance Period</Button>
-            </DialogFooter>
-        </DialogContent>
-    );
-};
-
-
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
     if (!companyId || !aircraftId) return [];
     const historyRef = collection(db, `companies/${companyId}/aircraft/${aircraftId}/completed-checklists`);
@@ -446,7 +393,6 @@ export function AircraftPageContent() {
     const [externalContacts, setExternalContacts] = useState<ExternalContact[]>([]);
     const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
     const [editingAircraft, setEditingAircraft] = useState<Aircraft | null>(null);
-    const [maintenanceAircraft, setMaintenanceAircraft] = useState<Aircraft | null>(null);
     const { user, company, loading: userLoading } = useUser();
     const { toast } = useToast();
     const { settings } = useSettings();
@@ -544,26 +490,6 @@ export function AircraftPageContent() {
     const handleEdit = (aircraft: Aircraft) => {
         setEditingAircraft(aircraft);
         setIsNewAircraftDialogOpen(true);
-    };
-
-    const handleSetMaintenance = async (aircraftId: string, startDate: string, endDate: string) => {
-        if (!company) return;
-        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraftId);
-        try {
-            await updateDoc(aircraftRef, { 
-                status: 'In Maintenance',
-                maintenanceStartDate: startDate,
-                maintenanceEndDate: endDate,
-            });
-            setMaintenanceAircraft(null);
-            toast({
-                title: 'Aircraft In Maintenance',
-                description: `The aircraft is now marked as unavailable from ${startDate} to ${endDate}.`,
-            });
-        } catch(error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not set maintenance status.' });
-        }
     };
     
     const handleReturnToService = async (aircraft: Aircraft) => {
@@ -831,11 +757,7 @@ export function AircraftPageContent() {
                                                     <DropdownMenuItem onClick={() => handleReturnToService(ac)}>
                                                         <Check className="mr-2 h-4 w-4" /> Return to Service
                                                     </DropdownMenuItem>
-                                                ) : (
-                                                    <DropdownMenuItem onClick={() => setMaintenanceAircraft(ac)}>
-                                                        <Wrench className="mr-2 h-4 w-4" /> Set Maintenance
-                                                    </DropdownMenuItem>
-                                                )}
+                                                ) : null}
                                                 {isSuperUser && ac.checklistStatus === 'needs-post-flight' && (
                                                     <DropdownMenuItem onClick={() => handleClearPostFlight(ac)}>
                                                         <ListChecks className="mr-2 h-4 w-4" /> Clear Post-Flight
@@ -1416,17 +1338,6 @@ export function AircraftPageContent() {
                 </DialogContent>
              </Dialog>
         )}
-        {maintenanceAircraft && (
-            <Dialog open={!!maintenanceAircraft} onOpenChange={() => setMaintenanceAircraft(null)}>
-                <MaintenanceDialog 
-                    aircraft={maintenanceAircraft} 
-                    onSave={handleSetMaintenance} 
-                    onCancel={() => setMaintenanceAircraft(null)} 
-                />
-            </Dialog>
-        )}
     </main>
   );
 }
-
-    
