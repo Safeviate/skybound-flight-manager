@@ -65,6 +65,11 @@ export type CompanyAuditArea = {
     name: string;
 };
 
+export type BookingPurpose = {
+  id: string;
+  name: string;
+};
+
 export type Company = {
   id: string;
   name: string;
@@ -75,6 +80,7 @@ export type Company = {
   riskMatrixColors?: Record<string, string>;
   facilities?: Facility[];
   findingOptions?: FindingOption[];
+  bookingPurposes?: BookingPurpose[];
   instructorIds?: string[];
   auditAreas?: CompanyAuditArea[];
 };
@@ -106,8 +112,8 @@ export type Aircraft = {
   next50HourInspection?: number;
   next100HourInspection?: number;
   totalTimeInService?: number;
-  maintenanceStartDate?: string;
-  maintenanceEndDate?: string;
+  maintenanceStartDate?: string | null;
+  maintenanceEndDate?: string | null;
 };
 
 export type Endorsement = {
@@ -301,7 +307,7 @@ export type Booking = {
   pilotId?: string | null;
   pilotName?: string | null;
   instructor?: string | null;
-  purpose: 'Training' | 'Hire and Fly' | 'Post-Maintenance Flight' | 'Facility Booking' | 'Maintenance';
+  purpose: 'Training' | 'Hire and Fly' | 'Post-Maintenance Flight' | 'Facility Booking' | 'Maintenance' | string;
   status: 'Approved' | 'Completed' | 'Cancelled';
   flightDuration?: number;
   maintenanceType?: string | null;

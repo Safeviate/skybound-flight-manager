@@ -17,9 +17,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
+import { useUser } from '@/context/user-provider';
 
 const bookingFormSchema = z.object({
-  purpose: z.enum(['Training', 'Hire and Fly', 'Post-Maintenance Flight']),
+  purpose: z.string().min(1, 'Please select a purpose.'),
   aircraft: z.string(),
   date: z.string(),
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
@@ -33,6 +34,8 @@ const bookingFormSchema = z.object({
   pilotName: z.string().optional(),
   instructor: z.string().optional(),
   maintenanceType: z.string().optional(),
+  maintenanceStartDate: z.string().optional(),
+  maintenanceEndDate: z.string().optional(),
   bookingNumber: z.string().optional(),
   trainingExercise: z.string().optional(),
 }).refine(data => {
@@ -80,6 +83,7 @@ const deletionReasons = [
 ];
 
 export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit, onDelete, existingBooking, startTime, selectedDate }: NewBookingFormProps) {
+  const { company } = useUser();
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
@@ -113,6 +117,8 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
       pilotName: existingBooking?.pilotName || undefined,
       instructor: existingBooking?.instructor || undefined,
       maintenanceType: existingBooking?.maintenanceType || undefined,
+      maintenanceStartDate: existingBooking?.maintenanceStartDate || undefined,
+      maintenanceEndDate: existingBooking?.maintenanceEndDate || undefined,
       bookingNumber: existingBooking?.bookingNumber || undefined,
       departure: existingBooking?.departure || '',
       arrival: existingBooking?.arrival || '',
@@ -125,6 +131,17 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
   const students = useMemo(() => users.filter(u => u.role === 'Student'), [users]);
   const instructors = useMemo(() => users.filter(u => u.role !== 'Student' && u.role !== 'Hire and Fly'), [users]);
   const personnel = useMemo(() => users.filter(u => u.role !== 'Student'), [users]);
+  
+  const bookingPurposes = useMemo(() => {
+    const standardPurposes = [
+      { id: 'Training', name: 'Training' },
+      { id: 'Hire and Fly', name: 'Hire and Fly' },
+      { id: 'Post-Maintenance Flight', name: 'Post-Maintenance Flight' },
+      { id: 'Maintenance', name: 'Maintenance' },
+    ];
+    const customPurposes = company?.bookingPurposes || [];
+    return [...standardPurposes, ...customPurposes];
+  }, [company?.bookingPurposes]);
 
 
   function handleFormSubmit(data: BookingFormValues) {
@@ -167,7 +184,9 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
         pilotId: (data.purpose === 'Hire and Fly' || data.purpose === 'Post-Maintenance Flight') ? data.pilotId : null,
         pilotName: (data.purpose === 'Hire and Fly' || data.purpose === 'Post-Maintenance Flight') ? data.pilotName : null,
         instructor: data.purpose === 'Training' ? data.instructor : null,
-        maintenanceType: null,
+        maintenanceType: data.purpose === 'Maintenance' ? data.maintenanceType : null,
+        maintenanceStartDate: data.purpose === 'Maintenance' ? data.maintenanceStartDate : null,
+        maintenanceEndDate: data.purpose === 'Maintenance' ? data.maintenanceEndDate : null,
         trainingExercise: data.purpose === 'Training' ? data.trainingExercise : null,
         endDate: format(bookingEndDate, 'yyyy-MM-dd'),
     };
@@ -201,9 +220,9 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
                   <SelectTrigger><SelectValue placeholder="Select a purpose" /></SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Training">Training</SelectItem>
-                  <SelectItem value="Hire and Fly">Hire and Fly</SelectItem>
-                  <SelectItem value="Post-Maintenance Flight">Post-Maintenance Flight</SelectItem>
+                   {bookingPurposes.map(p => (
+                    <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -211,34 +230,65 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
           )}
         />
         
-        <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="departure"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Departure</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., KPAO" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="arrival"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Arrival</FormLabel>
-                   <FormControl>
-                    <Input placeholder="e.g., KSQL" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+        {purpose === 'Maintenance' ? (
+             <div className="grid grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="maintenanceStartDate"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Start Date</FormLabel>
+                            <FormControl>
+                                <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="maintenanceEndDate"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>End Date</FormLabel>
+                            <FormControl>
+                                <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+        ) : (
+             <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="departure"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Departure</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., KPAO" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="arrival"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Arrival</FormLabel>
+                       <FormControl>
+                        <Input placeholder="e.g., KSQL" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+        )}
 
         {purpose === 'Training' && (
           <div className="space-y-4 p-4 border rounded-lg">
@@ -345,35 +395,56 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
                 />
             </div>
         )}
-
-        <div className="grid grid-cols-2 gap-4">
+        
+        {purpose === 'Maintenance' && (
+          <div className="p-4 border rounded-lg space-y-4">
              <FormField
-                control={form.control}
-                name="startTime"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Start Time</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
+              control={form.control}
+              name="maintenanceType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Maintenance Type / Description</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., 100-Hour Inspection" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            <FormField
-                control={form.control}
-                name="endTime"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>End Time</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </div>
+          </div>
+        )}
+
+
+        {purpose !== 'Maintenance' && (
+             <div className="grid grid-cols-2 gap-4">
+                 <FormField
+                    control={form.control}
+                    name="startTime"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Start Time</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="endTime"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>End Time</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+        )}
         <div className="flex justify-between items-center pt-4">
            {existingBooking && onDelete && (
                 <AlertDialog>

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useSettings } from '@/context/settings-provider';
@@ -15,7 +16,7 @@ import { Bot, ShieldAlert, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { RiskAssessmentTool } from '@/app/safety/[reportId]/risk-assessment-tool';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import type { Facility, FindingOption } from '@/lib/types';
+import type { Facility, FindingOption, BookingPurpose } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -38,6 +39,11 @@ function CompanySettingsPage() {
   const [isFindingDialogOpen, setIsFindingDialogOpen] = useState(false);
   const [editingFinding, setEditingFinding] = useState<FindingOption | null>(null);
   const [findingName, setFindingName] = useState('');
+  
+  const [isPurposeDialogOpen, setIsPurposeDialogOpen] = useState(false);
+  const [editingPurpose, setEditingPurpose] = useState<BookingPurpose | null>(null);
+  const [purposeName, setPurposeName] = useState('');
+
 
   useEffect(() => {
     if (!loading && !user) {
@@ -154,6 +160,49 @@ function CompanySettingsPage() {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete finding option.' });
     }
   };
+  
+  const openPurposeDialog = (purpose: BookingPurpose | null) => {
+    setEditingPurpose(purpose);
+    setPurposeName(purpose ? purpose.name : '');
+    setIsPurposeDialogOpen(true);
+  };
+  
+  const handlePurposeSave = async () => {
+      if (!company || !purposeName.trim()) return;
+      let updatedPurposes = [...(company.bookingPurposes || [])];
+
+      if (editingPurpose) {
+          updatedPurposes = updatedPurposes.map(p => p.id === editingPurpose.id ? { ...p, name: purposeName.trim() } : p);
+      } else {
+          const newPurpose: BookingPurpose = {
+              id: `purpose-${Date.now()}`,
+              name: purposeName.trim(),
+          };
+          updatedPurposes.push(newPurpose);
+      }
+
+      const success = await updateCompany(company.id, { bookingPurposes: updatedPurposes });
+      if (success) {
+          toast({ title: `Booking Purpose ${editingPurpose ? 'Updated' : 'Added'}` });
+          setIsPurposeDialogOpen(false);
+          setEditingPurpose(null);
+          setPurposeName('');
+      } else {
+          toast({ variant: 'destructive', title: 'Error', description: 'Failed to save booking purpose.' });
+      }
+  };
+  
+  const handlePurposeDelete = async (purposeId: string) => {
+      if (!company) return;
+      const updatedPurposes = company.bookingPurposes?.filter(p => p.id !== purposeId) || [];
+      const success = await updateCompany(company.id, { bookingPurposes: updatedPurposes });
+      if (success) {
+          toast({ title: 'Booking Purpose Deleted' });
+      } else {
+          toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete booking purpose.' });
+      }
+  };
+
 
   if (loading || !user) {
     return (
@@ -448,6 +497,57 @@ function CompanySettingsPage() {
                     </CardContent>
                 </Card>
             </div>
+            
+            <Separator />
+
+            <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Booking Purposes</h3>
+                <Card>
+                    <CardHeader className="flex-row justify-between items-center">
+                        <div>
+                            <CardTitle className="text-base">Manage Booking Purposes</CardTitle>
+                            <CardDescription className="text-sm">Customize the dropdown options for the booking purpose.</CardDescription>
+                        </div>
+                        <Button size="sm" onClick={() => openPurposeDialog(null)}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Purpose
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {company?.bookingPurposes && company.bookingPurposes.length > 0 ? (
+                                    company.bookingPurposes.map(purpose => (
+                                        <TableRow key={purpose.id}>
+                                            <TableCell>{purpose.name}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="icon" onClick={() => openPurposeDialog(purpose)}>
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => handlePurposeDelete(purpose.id)}>
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={2} className="text-center h-24">
+                                            No custom booking purposes added yet.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </div>
 
             <Separator />
 
@@ -501,6 +601,29 @@ function CompanySettingsPage() {
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsFindingDialogOpen(false)}>Cancel</Button>
                     <Button onClick={handleFindingSave}>Save Option</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+        
+        <Dialog open={isPurposeDialogOpen} onOpenChange={setIsPurposeDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{editingPurpose ? 'Edit Booking Purpose' : 'Add New Booking Purpose'}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="purpose-name">Purpose Name</Label>
+                        <Input
+                            id="purpose-name"
+                            value={purposeName}
+                            onChange={(e) => setPurposeName(e.target.value)}
+                            placeholder="e.g., Flight Review, Discovery Flight"
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsPurposeDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handlePurposeSave}>Save Purpose</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
