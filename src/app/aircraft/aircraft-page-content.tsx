@@ -403,6 +403,9 @@ export function AircraftPageContent() {
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     const [allChecklists, setAllChecklists] = useState<Map<string, CompletedChecklist[]>>(new Map());
     const [dataLoading, setDataLoading] = useState(true);
+    const [maintenanceAircraft, setMaintenanceAircraft] = useState<Aircraft | null>(null);
+    const [maintenanceStartDate, setMaintenanceStartDate] = useState<Date | undefined>();
+    const [maintenanceEndDate, setMaintenanceEndDate] = useState<Date | undefined>();
 
     const fetchChecklistHistory = useCallback(async () => {
         if (!company) return;
@@ -490,6 +493,25 @@ export function AircraftPageContent() {
     const handleEdit = (aircraft: Aircraft) => {
         setEditingAircraft(aircraft);
         setIsNewAircraftDialogOpen(true);
+    };
+
+    const handleSetMaintenance = async () => {
+        if (!maintenanceAircraft || !company || !maintenanceStartDate || !maintenanceEndDate) return;
+        
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, maintenanceAircraft.id);
+        await updateDoc(aircraftRef, { 
+            status: 'In Maintenance',
+            maintenanceStartDate: format(maintenanceStartDate, 'yyyy-MM-dd'),
+            maintenanceEndDate: format(maintenanceEndDate, 'yyyy-MM-dd'),
+        });
+        
+        setMaintenanceAircraft(null);
+        setMaintenanceStartDate(undefined);
+        setMaintenanceEndDate(undefined);
+        toast({
+            title: 'Aircraft Set for Maintenance',
+            description: `${maintenanceAircraft.tailNumber} is now marked as In Maintenance.`,
+        });
     };
     
     const handleReturnToService = async (aircraft: Aircraft) => {
@@ -757,7 +779,11 @@ export function AircraftPageContent() {
                                                     <DropdownMenuItem onClick={() => handleReturnToService(ac)}>
                                                         <Check className="mr-2 h-4 w-4" /> Return to Service
                                                     </DropdownMenuItem>
-                                                ) : null}
+                                                ) : (
+                                                    <DropdownMenuItem onSelect={() => setMaintenanceAircraft(ac)}>
+                                                        <Wrench className="mr-2 h-4 w-4" /> Set Maintenance
+                                                    </DropdownMenuItem>
+                                                )}
                                                 {isSuperUser && ac.checklistStatus === 'needs-post-flight' && (
                                                     <DropdownMenuItem onClick={() => handleClearPostFlight(ac)}>
                                                         <ListChecks className="mr-2 h-4 w-4" /> Clear Post-Flight
@@ -1338,6 +1364,45 @@ export function AircraftPageContent() {
                 </DialogContent>
              </Dialog>
         )}
+        <Dialog open={!!maintenanceAircraft} onOpenChange={() => setMaintenanceAircraft(null)}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Set Maintenance Period for {maintenanceAircraft?.tailNumber}</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-2 gap-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="start-date">Start Date</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !maintenanceStartDate && "text-muted-foreground")}>
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {maintenanceStartDate ? format(maintenanceStartDate, "PPP") : <span>Pick start date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={maintenanceStartDate} onSelect={setMaintenanceStartDate} initialFocus /></PopoverContent>
+                        </Popover>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="end-date">End Date</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !maintenanceEndDate && "text-muted-foreground")}>
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {maintenanceEndDate ? format(maintenanceEndDate, "PPP") : <span>Pick end date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={maintenanceEndDate} onSelect={setMaintenanceEndDate} initialFocus /></PopoverContent>
+                        </Popover>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setMaintenanceAircraft(null)}>Cancel</Button>
+                    <Button onClick={handleSetMaintenance}>Set Maintenance</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </main>
   );
 }
+
+    
