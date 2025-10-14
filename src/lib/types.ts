@@ -174,6 +174,7 @@ export type Permission =
   | 'Aircraft:View'
   | 'Aircraft:Edit'
   | 'Aircraft:UpdateHobbs'
+  | 'Aircraft:Maintenance'
   | 'TechnicalLog:View'
   | 'Students:View'
   | 'Students:Edit'
@@ -206,6 +207,7 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Aircraft:View',
     'Aircraft:Edit',
     'Aircraft:UpdateHobbs',
+    'Aircraft:Maintenance',
     'TechnicalLog:View',
     'Students:View',
     'Students:Edit',
