@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format, addDays, isBefore, setHours, setMinutes } from 'date-fns';
-import type { Aircraft, User, Booking, Role, TrainingLogEntry } from '@/lib/types';
+import type { Aircraft, User, Booking, Role, TrainingLogEntry, BookingPurpose } from '@/lib/types';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -169,12 +168,16 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
       data = {...data, pendingLogEntryId: newLogId} as BookingFormValues & {pendingLogEntryId: string}
     }
 
-
     const bookingStartDate = new Date(data.date);
     let bookingEndDate = bookingStartDate;
     if (data.endTime < data.startTime) {
         bookingEndDate = addDays(bookingStartDate, 1);
     }
+    
+    if (data.purpose === 'Maintenance' && data.maintenanceStartDate) {
+        data.date = data.maintenanceStartDate;
+    }
+
 
     const cleanData = {
         ...data,
@@ -268,7 +271,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
                     <FormItem>
                       <FormLabel>Departure</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., KPAO" {...field} />
+                        <Input placeholder="e.g., KPAO" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -281,7 +284,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
                     <FormItem>
                       <FormLabel>Arrival</FormLabel>
                        <FormControl>
-                        <Input placeholder="e.g., KSQL" {...field} />
+                        <Input placeholder="e.g., KSQL" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -333,7 +336,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
                     <FormItem>
                         <FormLabel>Training Exercise</FormLabel>
                         <FormControl>
-                            <Textarea placeholder="e.g., Stalls and spins, short field landings..." {...field} />
+                            <Textarea placeholder="e.g., Stalls and spins, short field landings..." {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -405,7 +408,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
                 <FormItem>
                   <FormLabel>Maintenance Type / Description</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., 100-Hour Inspection" {...field} />
+                    <Input placeholder="e.g., 100-Hour Inspection" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -424,7 +427,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
                         <FormItem>
                         <FormLabel>Start Time</FormLabel>
                         <FormControl>
-                          <Input type="time" {...field} />
+                          <Input type="time" {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -437,7 +440,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
                         <FormItem>
                         <FormLabel>End Time</FormLabel>
                         <FormControl>
-                          <Input type="time" {...field} />
+                          <Input type="time" {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
