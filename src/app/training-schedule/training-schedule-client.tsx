@@ -355,9 +355,9 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         return bookings.filter(b => {
             if (b.status === 'Cancelled' || !b.date) return false;
             if (b.resourceType && b.resourceType === 'facility') return false;
-            const bookingStart = parseISO(b.date);
-            const bookingEnd = b.endDate ? parseISO(b.endDate) : bookingStart;
-            return isWithinInterval(dayStart, { start: startOfDay(bookingStart), end: endOfDay(bookingEnd) });
+            const bookingStart = startOfDay(parseISO(b.date));
+            const bookingEnd = b.endDate ? endOfDay(parseISO(b.endDate)) : endOfDay(bookingStart);
+            return isWithinInterval(dayStart, { start: bookingStart, end: bookingEnd });
         });
     }, [bookings, selectedDate]);
 
