@@ -22,8 +22,8 @@ const bookingFormSchema = z.object({
   purpose: z.string().min(1, 'Please select a purpose.'),
   aircraft: z.string(),
   date: z.string(),
-  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
-  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
+  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }).optional(),
+  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }).optional(),
   departure: z.string().optional(),
   arrival: z.string().optional(),
   // Conditional fields
@@ -53,6 +53,14 @@ const bookingFormSchema = z.object({
 }, {
     message: "A pilot is required for this booking type.",
     path: ["pilotName"],
+}).refine(data => {
+    if (data.purpose !== 'Maintenance') {
+        return !!data.startTime && !!data.endTime;
+    }
+    return true;
+}, {
+    message: "Start and End time are required for this booking type.",
+    path: ["startTime"],
 });
 
 
@@ -170,7 +178,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
 
     const bookingStartDate = new Date(data.date);
     let bookingEndDate = bookingStartDate;
-    if (data.endTime < data.startTime) {
+    if (data.endTime && data.startTime && data.endTime < data.startTime) {
         bookingEndDate = addDays(bookingStartDate, 1);
     }
     
