@@ -22,8 +22,8 @@ const bookingFormSchema = z.object({
   purpose: z.string().min(1, 'Please select a purpose.'),
   aircraft: z.string(),
   date: z.string(),
-  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
-  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
   departure: z.string().optional(),
   arrival: z.string().optional(),
   // Conditional fields
@@ -53,6 +53,30 @@ const bookingFormSchema = z.object({
 }, {
     message: "A pilot is required for this booking type.",
     path: ["pilotName"],
+}).refine(data => {
+    if (data.purpose === 'Maintenance') {
+        return !!data.maintenanceStartDate && !!data.maintenanceEndDate;
+    }
+    return true;
+}, {
+    message: "Start and End date are required for Maintenance bookings.",
+    path: ["maintenanceStartDate"],
+}).refine(data => {
+    if (data.purpose !== 'Maintenance') {
+        return !!data.startTime && /^([01]\d|2[0-3]):([0-5]\d)$/.test(data.startTime);
+    }
+    return true;
+}, {
+    message: "Please enter a valid start time.",
+    path: ["startTime"],
+}).refine(data => {
+    if (data.purpose !== 'Maintenance') {
+        return !!data.endTime && /^([01]\d|2[0-3]):([0-5]\d)$/.test(data.endTime);
+    }
+    return true;
+}, {
+    message: "Please enter a valid end time.",
+    path: ["endTime"],
 });
 
 
@@ -125,13 +149,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
       arrival: existingBooking?.arrival || '',
       trainingExercise: existingBooking?.trainingExercise || '',
     });
-
-    if (purpose === 'Maintenance') {
-        form.setValue('startTime', '00:00');
-        form.setValue('endTime', '23:59');
-    }
-
-  }, [existingBooking, aircraft, startTime, form, selectedDate, purpose]);
+  }, [existingBooking, aircraft, startTime, form, selectedDate]);
   
   const students = useMemo(() => users.filter(u => u.role === 'Student'), [users]);
   const instructors = useMemo(() => users.filter(u => u.role !== 'Student' && u.role !== 'Hire and Fly'), [users]);
@@ -174,12 +192,15 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
       data = {...data, pendingLogEntryId: newLogId} as BookingFormValues & {pendingLogEntryId: string}
     }
 
-    let bookingStartDate = new Date(data.date);
-    if(data.purpose === 'Maintenance' && data.maintenanceStartDate) {
-        bookingStartDate = new Date(data.maintenanceStartDate);
-        data.date = data.maintenanceStartDate;
+    if (data.purpose === 'Maintenance') {
+        data.startTime = '00:00';
+        data.endTime = '23:59';
+        if (data.maintenanceStartDate) {
+            data.date = data.maintenanceStartDate;
+        }
     }
 
+    let bookingStartDate = new Date(data.date);
     let bookingEndDate = data.maintenanceEndDate ? new Date(data.maintenanceEndDate) : bookingStartDate;
     if (data.endTime && data.startTime && data.endTime < data.startTime) {
         bookingEndDate = addDays(bookingStartDate, 1);
@@ -509,3 +530,5 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
     </Form>
   );
 }
+
+    
