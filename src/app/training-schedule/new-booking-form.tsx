@@ -22,8 +22,8 @@ const bookingFormSchema = z.object({
   purpose: z.string().min(1, 'Please select a purpose.'),
   aircraft: z.string(),
   date: z.string(),
-  startTime: z.string().optional(),
-  endTime: z.string().optional(),
+  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid start time." }),
+  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid end time." }),
   departure: z.string().optional(),
   arrival: z.string().optional(),
   // Conditional fields
@@ -53,30 +53,6 @@ const bookingFormSchema = z.object({
 }, {
     message: "A pilot is required for this booking type.",
     path: ["pilotName"],
-}).refine(data => {
-    if (data.purpose === 'Maintenance') {
-        return !!data.maintenanceStartDate && !!data.maintenanceEndDate;
-    }
-    return true;
-}, {
-    message: "Start and End date are required for Maintenance bookings.",
-    path: ["maintenanceStartDate"],
-}).refine(data => {
-    if (data.purpose !== 'Maintenance') {
-        return !!data.startTime && /^([01]\d|2[0-3]):([0-5]\d)$/.test(data.startTime);
-    }
-    return true;
-}, {
-    message: "Please enter a valid start time.",
-    path: ["startTime"],
-}).refine(data => {
-    if (data.purpose !== 'Maintenance') {
-        return !!data.endTime && /^([01]\d|2[0-3]):([0-5]\d)$/.test(data.endTime);
-    }
-    return true;
-}, {
-    message: "Please enter a valid end time.",
-    path: ["endTime"],
 });
 
 
@@ -191,13 +167,9 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
       
       data = {...data, pendingLogEntryId: newLogId} as BookingFormValues & {pendingLogEntryId: string}
     }
-
-    if (data.purpose === 'Maintenance') {
-        data.startTime = '00:00';
-        data.endTime = '23:59';
-        if (data.maintenanceStartDate) {
-            data.date = data.maintenanceStartDate;
-        }
+    
+    if (data.purpose === 'Maintenance' && data.maintenanceStartDate) {
+      data.date = data.maintenanceStartDate;
     }
 
     let bookingStartDate = new Date(data.date);
@@ -260,7 +232,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
           )}
         />
         
-        {purpose === 'Maintenance' ? (
+        {purpose === 'Maintenance' && (
              <div className="grid grid-cols-2 gap-4">
                 <FormField
                     control={form.control}
@@ -289,7 +261,9 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
                     )}
                 />
             </div>
-        ) : (
+        )}
+
+        {purpose !== 'Maintenance' && (
              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -444,37 +418,34 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
           </div>
         )}
 
-
-        {purpose !== 'Maintenance' && (
-             <div className="grid grid-cols-2 gap-4">
-                 <FormField
-                    control={form.control}
-                    name="startTime"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Start Time</FormLabel>
-                        <FormControl>
-                          <Input type="time" {...field} value={field.value ?? ''} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="endTime"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>End Time</FormLabel>
-                        <FormControl>
-                          <Input type="time" {...field} value={field.value ?? ''} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
-        )}
+        <div className="grid grid-cols-2 gap-4">
+             <FormField
+                control={form.control}
+                name="startTime"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Start Time</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="endTime"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>End Time</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
         <div className="flex justify-between items-center pt-4">
            {existingBooking && onDelete && (
                 <AlertDialog>
@@ -530,5 +501,3 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
     </Form>
   );
 }
-
-    
