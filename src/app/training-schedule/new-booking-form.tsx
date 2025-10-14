@@ -22,8 +22,8 @@ const bookingFormSchema = z.object({
   purpose: z.string().min(1, 'Please select a purpose.'),
   aircraft: z.string(),
   date: z.string(),
-  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }).optional(),
-  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }).optional(),
+  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
+  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
   departure: z.string().optional(),
   arrival: z.string().optional(),
   // Conditional fields
@@ -53,14 +53,6 @@ const bookingFormSchema = z.object({
 }, {
     message: "A pilot is required for this booking type.",
     path: ["pilotName"],
-}).refine(data => {
-    if (data.purpose !== 'Maintenance') {
-        return !!data.startTime && !!data.endTime;
-    }
-    return true;
-}, {
-    message: "Start and End time are required for this booking type.",
-    path: ["startTime"],
 });
 
 
@@ -111,6 +103,8 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
     return () => clearInterval(timer);
   }, []);
 
+  const purpose = form.watch('purpose');
+
   useEffect(() => {
     form.reset({
       aircraft: existingBooking?.aircraft || aircraft.tailNumber,
@@ -124,17 +118,21 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
       pilotName: existingBooking?.pilotName || '',
       instructor: existingBooking?.instructor || '',
       maintenanceType: existingBooking?.maintenanceType || '',
-      maintenanceStartDate: existingBooking?.maintenanceStartDate || '',
-      maintenanceEndDate: existingBooking?.maintenanceEndDate || '',
+      maintenanceStartDate: existingBooking?.maintenanceStartDate || format(selectedDate || new Date(), 'yyyy-MM-dd'),
+      maintenanceEndDate: existingBooking?.maintenanceEndDate || format(selectedDate || new Date(), 'yyyy-MM-dd'),
       bookingNumber: existingBooking?.bookingNumber || '',
       departure: existingBooking?.departure || '',
       arrival: existingBooking?.arrival || '',
       trainingExercise: existingBooking?.trainingExercise || '',
     });
-  }, [existingBooking, aircraft, startTime, form, selectedDate]);
-  
-  const purpose = form.watch('purpose');
 
+    if (purpose === 'Maintenance') {
+        form.setValue('startTime', '00:00');
+        form.setValue('endTime', '23:59');
+    }
+
+  }, [existingBooking, aircraft, startTime, form, selectedDate, purpose]);
+  
   const students = useMemo(() => users.filter(u => u.role === 'Student'), [users]);
   const instructors = useMemo(() => users.filter(u => u.role !== 'Student' && u.role !== 'Hire and Fly'), [users]);
   const personnel = useMemo(() => users.filter(u => u.role !== 'Student'), [users]);
@@ -176,17 +174,17 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
       data = {...data, pendingLogEntryId: newLogId} as BookingFormValues & {pendingLogEntryId: string}
     }
 
-    const bookingStartDate = new Date(data.date);
-    let bookingEndDate = bookingStartDate;
+    let bookingStartDate = new Date(data.date);
+    if(data.purpose === 'Maintenance' && data.maintenanceStartDate) {
+        bookingStartDate = new Date(data.maintenanceStartDate);
+        data.date = data.maintenanceStartDate;
+    }
+
+    let bookingEndDate = data.maintenanceEndDate ? new Date(data.maintenanceEndDate) : bookingStartDate;
     if (data.endTime && data.startTime && data.endTime < data.startTime) {
         bookingEndDate = addDays(bookingStartDate, 1);
     }
     
-    if (data.purpose === 'Maintenance' && data.maintenanceStartDate) {
-        data.date = data.maintenanceStartDate;
-    }
-
-
     const cleanData = {
         ...data,
         resourceType: 'aircraft' as const,
@@ -250,7 +248,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
                         <FormItem>
                             <FormLabel>Start Date</FormLabel>
                             <FormControl>
-                                <Input type="date" {...field} />
+                                <Input type="date" {...field} value={field.value ?? ''} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -263,7 +261,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
                         <FormItem>
                             <FormLabel>End Date</FormLabel>
                             <FormControl>
-                                <Input type="date" {...field} />
+                                <Input type="date" {...field} value={field.value ?? ''} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
