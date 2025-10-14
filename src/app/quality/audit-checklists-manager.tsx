@@ -112,7 +112,7 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
     const { user } = useUser();
     
     const handleConfirm = () => {
-        if (auditDate && user && department) {
+        if (auditDate && user) {
             onStart({
                 date: format(auditDate, 'yyyy-MM-dd'),
                 type: auditType,
@@ -262,7 +262,7 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
                 </div>
                 </ScrollArea>
                 <div className="pt-4 border-t">
-                    <Button onClick={handleConfirm} disabled={!auditDate || !leadAuditor || !auditeeName || !department || !area} className="w-full">
+                    <Button onClick={handleConfirm} className="w-full">
                         Confirm and Start Audit
                     </Button>
                 </div>
@@ -335,14 +335,14 @@ export function AuditChecklistsManager({
 
 
     const handleStartAudit = async (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'> & { department?: Department }, template: Checklist) => {
-        if (!company || !user || !data.department) return;
+        if (!company || !user) return;
         
         try {
             const auditsCollection = collection(db, `companies/${company.id}/quality-audits`);
             
-            const deptCode = data.department.substring(0, 2).toUpperCase();
+            const deptCode = data.department ? data.department.substring(0, 2).toUpperCase() : 'GN';
             const typeCode = data.type.substring(0, 1).toUpperCase();
-            const areaCode = data.area.substring(0, 2).toUpperCase();
+            const areaCode = data.area ? data.area.substring(0, 2).toUpperCase() : 'GN';
             const auditPrefix = `${deptCode}-${typeCode}-${areaCode}-`;
 
             const q = query(
