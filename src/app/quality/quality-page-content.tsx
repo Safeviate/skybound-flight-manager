@@ -6,7 +6,7 @@ import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -430,10 +430,12 @@ export function QualityPageContent({
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const tabFromUrl = searchParams.get('tab');
+
   const [audits, setAudits] = useState<QualityAudit[]>(initialAudits);
   const [schedule, setSchedule] = useState<AuditScheduleItem[]>(initialSchedule);
   const [auditAreas, setAuditAreas] = useState<string[]>(INITIAL_AUDIT_AREAS);
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
   const { user, company, loading } = useUser();
   const { toast } = useToast();
   const [showArchived, setShowArchived] = useState(false);
@@ -449,24 +451,13 @@ export function QualityPageContent({
   
   const reportsControls = useTableControls(activeAudits, {
     initialSort: { key: 'date', direction: 'desc' },
-    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type'],
+    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department'],
   });
   
   const archivedReportsControls = useTableControls(archivedAudits, {
     initialSort: { key: 'date', direction: 'desc' },
-    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type'],
+    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department'],
   });
-
-  const displayedAudits = useMemo(() => {
-    const controls = showArchived ? archivedReportsControls : reportsControls;
-    return controls.items;
-  }, [showArchived, reportsControls, archivedReportsControls]);
-
-
-  useEffect(() => {
-    setSelectedAudits([]);
-  }, [showArchived]);
-
 
   const getStatusVariant = (status: QualityAudit['status']) => {
     switch (status) {
@@ -594,9 +585,9 @@ export function QualityPageContent({
     }
   };
   
-  const handleSelectAll = (checked: boolean) => {
+  const handleSelectAll = (checked: boolean, controls: ReturnType<typeof useTableControls>) => {
     if (checked) {
-        setSelectedAudits(displayedAudits.map(a => a.id));
+        setSelectedAudits(controls.items.map(a => a.id));
     } else {
         setSelectedAudits([]);
     }
@@ -659,8 +650,8 @@ export function QualityPageContent({
               {showArchived && (
                   <TableHead className="w-12">
                       <Checkbox 
-                          onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
-                          checked={selectedAudits.length > 0 && selectedAudits.length === displayedAudits.length}
+                          onCheckedChange={(checked) => handleSelectAll(Boolean(checked), controls)}
+                          checked={selectedAudits.length > 0 && selectedAudits.length === controls.items.length}
                           aria-label="Select all"
                       />
                   </TableHead>
@@ -758,7 +749,7 @@ export function QualityPageContent({
               ) : (
                   <TableRow>
                       <TableCell colSpan={showArchived ? 10 : 9} className="text-center h-24">
-                          No audit reports found.
+                          No audit reports found in this department.
                       </TableCell>
                   </TableRow>
               )}
@@ -843,7 +834,7 @@ export function QualityPageContent({
                             </div>
                         </div>
                         <TabsContent value="active" className="mt-4 space-y-8">
-                            {Object.keys(groupedActiveAudits).sort().map(department => (
+                             {Object.keys(groupedActiveAudits).sort().map(department => (
                                 <div key={department}>
                                     <h3 className="text-lg font-semibold mb-2">{department}</h3>
                                     <ReportTable reports={groupedActiveAudits[department]} controls={reportsControls} showArchived={false} />
