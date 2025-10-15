@@ -13,7 +13,7 @@ import type { QualityAudit, NonConformanceIssue, CorrectiveActionPlan, Correctiv
 import { AlertTriangle, CheckCircle, Clock, Edit, PlusCircle, Trash2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { CorrectiveActionPlanForm } from './[auditId]/corrective-action-plan-form';
@@ -241,10 +241,10 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
         <DialogContent className="sm:max-w-3xl">
             <DialogHeader>
                 <DialogTitle>Corrective Action Plans for Finding</DialogTitle>
-                 <div className="text-sm text-muted-foreground">
-                    <p className="font-medium">{viewingFinding?.finding.itemText}</p>
-                    <p className="text-xs">{viewingFinding?.finding.regulationReference}</p>
-                </div>
+                <DialogDescription>
+                    <div className="font-medium">{viewingFinding?.finding.itemText}</div>
+                    <div className="text-xs text-muted-foreground">{viewingFinding?.finding.regulationReference}</div>
+                </DialogDescription>
             </DialogHeader>
             <ScrollArea className="max-h-[70vh] pr-6">
                 <div className="py-4 space-y-4">
@@ -294,15 +294,19 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
         <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
                 <DialogTitle>{editingPlan ? 'Edit' : 'Create'} Corrective Action Plan</DialogTitle>
+                 <DialogDescription>
+                    Define a root cause and the actions needed to address it.
+                </DialogDescription>
             </DialogHeader>
-            <CorrectiveActionPlanForm 
-                onSubmit={handleCapSubmit} 
-                personnel={personnel}
-                existingPlan={editingPlan}
-            />
+             <ScrollArea className="h-[70vh] pr-4">
+                <CorrectiveActionPlanForm 
+                    onSubmit={handleCapSubmit} 
+                    personnel={personnel}
+                    existingPlan={editingPlan}
+                />
+            </ScrollArea>
         </DialogContent>
     </Dialog>
     </>
   );
 }
-
