@@ -217,27 +217,18 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
                 <DialogHeader>
                     <DialogTitle>Corrective Action Plan for Finding</DialogTitle>
                     <DialogDescription asChild>
-                        <div>
+                         <div>
                             <div className="font-medium">{editingFinding?.finding.itemText}</div>
                             <div className="text-xs text-muted-foreground">{editingFinding?.finding.regulationReference}</div>
                         </div>
                     </DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="max-h-[70vh] pr-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="md:col-span-2">
-                            <CorrectiveActionPlanForm 
-                                onSubmit={handleCapSubmit} 
-                                suggestedCap={suggestedCap}
-                            />
-                        </div>
-                        <div className="md:col-span-2 space-y-4 p-4 border-t">
-                            <h3 className="font-semibold flex items-center gap-2"><Bot /> AI Assistant</h3>
-                            <QualityAuditAnalyzer 
-                                auditText={`Non-Conformance: ${editingFinding?.finding.itemText}\nLevel: ${editingFinding?.finding.level}\nRegulation: ${editingFinding?.finding.regulationReference}\n\nAuditor Comment:\n${editingFinding?.finding.comment}`}
-                                onCapSuggested={(cap) => setSuggestedCap(cap)}
-                            />
-                        </div>
+                    <div className="py-4">
+                        <CorrectiveActionPlanForm 
+                            onSubmit={handleCapSubmit} 
+                            suggestedCap={suggestedCap}
+                        />
                     </div>
                 </ScrollArea>
             </DialogContent>
