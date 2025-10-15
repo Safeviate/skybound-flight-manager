@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -45,6 +44,7 @@ import { RiskRegister } from './risk-register';
 import { RiskAssessmentTool } from './[reportId]/risk-assessment-tool';
 import { getSafetyPageData } from './data';
 import { NewMocForm } from './new-moc-form';
+import { getRiskLevel } from '@/lib/utils';
 
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
