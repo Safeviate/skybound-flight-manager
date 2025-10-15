@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -662,68 +663,71 @@ export function SafetyPageContent({
   
   const MocTable = ({ mocs, canEdit, onDelete }: { mocs: ManagementOfChange[], canEdit: boolean, onDelete: (id: string) => void }) => {
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>MOC #</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Proposed By</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {mocs.length > 0 ? (
-                    mocs.map(moc => (
-                        <TableRow key={moc.id}>
-                            <TableCell>{moc.mocNumber}</TableCell>
-                            <TableCell>{moc.title}</TableCell>
-                            <TableCell>{moc.proposedBy}</TableCell>
-                            <TableCell>{format(parseISO(moc.proposalDate), 'MMM d, yyyy')}</TableCell>
-                            <TableCell><Badge>{moc.status}</Badge></TableCell>
-                             <TableCell className="text-right space-x-2">
-                                <Button asChild variant="outline" size="sm">
-                                    <Link href={`/safety/moc/${moc.id}`}>
-                                        <FileText className="mr-2 h-4 w-4" />
-                                        View
-                                    </Link>
-                                </Button>
-                                {canEdit && (
-                                     <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                             <Button variant="destructive" size="icon">
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This will permanently delete the MOC record "{moc.title}". This action cannot be undone.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => onDelete(moc.id)}>
-                                                    Yes, Delete
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                )}
+        <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>MOC #</TableHead>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Proposed By</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {mocs.length > 0 ? (
+                        mocs.map(moc => (
+                            <TableRow key={moc.id}>
+                                <TableCell>{moc.mocNumber}</TableCell>
+                                <TableCell>{moc.title}</TableCell>
+                                <TableCell>{moc.proposedBy}</TableCell>
+                                <TableCell>{format(parseISO(moc.proposalDate), 'MMM d, yyyy')}</TableCell>
+                                <TableCell><Badge>{moc.status}</Badge></TableCell>
+                                <TableCell className="text-right space-x-2">
+                                    <Button asChild variant="outline" size="sm">
+                                        <Link href={`/safety/moc/${moc.id}`}>
+                                            <FileText className="mr-2 h-4 w-4" />
+                                            View
+                                        </Link>
+                                    </Button>
+                                    {canEdit && (
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="destructive" size="icon">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will permanently delete the MOC record "{moc.title}". This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => onDelete(moc.id)}>
+                                                        Yes, Delete
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    )}
+                                </TableCell>
+                            </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                            <TableCell colSpan={6} className="h-24 text-center">
+                                No Management of Change records found.
                             </TableCell>
                         </TableRow>
-                    ))
-                ) : (
-                    <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">
-                            No Management of Change records found.
-                        </TableCell>
-                    </TableRow>
-                )}
-            </TableBody>
-        </Table>
+                    )}
+                </TableBody>
+            </Table>
+            <ScrollBar orientation="horizontal" />
+        </ScrollArea>
     )
   }
 
