@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,8 +22,8 @@ const bookingFormSchema = z.object({
   purpose: z.string().min(1, 'Please select a purpose.'),
   aircraft: z.string(),
   date: z.string(),
-  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid start time." }),
-  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid end time." }),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
   departure: z.string().optional(),
   arrival: z.string().optional(),
   // Conditional fields
@@ -54,6 +53,14 @@ const bookingFormSchema = z.object({
 }, {
     message: "A pilot is required for this booking type.",
     path: ["pilotName"],
+}).refine(data => {
+    if (data.purpose !== 'Maintenance') {
+        return !!data.startTime && !!data.endTime;
+    }
+    return true;
+}, {
+    message: "Start and End time are required.",
+    path: ["startTime"],
 });
 
 
@@ -169,14 +176,18 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
       data = {...data, pendingLogEntryId: newLogId} as BookingFormValues & {pendingLogEntryId: string}
     }
     
-    if (data.purpose === 'Maintenance' && data.maintenanceStartDate) {
-      data.date = data.maintenanceStartDate;
-    }
+    let bookingStartDate, bookingEndDate;
 
-    let bookingStartDate = new Date(data.date);
-    let bookingEndDate = data.maintenanceEndDate ? new Date(data.maintenanceEndDate) : bookingStartDate;
-    if (data.endTime && data.startTime && data.endTime < data.startTime) {
-        bookingEndDate = addDays(bookingStartDate, 1);
+    if (data.purpose === 'Maintenance') {
+        bookingStartDate = data.maintenanceStartDate ? new Date(data.maintenanceStartDate) : new Date(data.date);
+        bookingEndDate = data.maintenanceEndDate ? new Date(data.maintenanceEndDate) : bookingStartDate;
+        data.startTime = '00:00';
+        data.endTime = '23:59';
+    } else {
+        bookingStartDate = new Date(data.date);
+        bookingEndDate = (data.endTime && data.startTime && data.endTime < data.startTime) 
+            ? addDays(bookingStartDate, 1) 
+            : bookingStartDate;
     }
     
     const cleanData = {
@@ -188,10 +199,10 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
         pilotName: (data.purpose === 'Hire and Fly' || data.purpose === 'Post-Maintenance Flight') ? data.pilotName : null,
         instructor: data.purpose === 'Training' ? data.instructor : null,
         maintenanceType: data.purpose === 'Maintenance' ? data.maintenanceType : null,
-        maintenanceStartDate: data.purpose === 'Maintenance' ? data.maintenanceStartDate : null,
-        maintenanceEndDate: data.purpose === 'Maintenance' ? data.maintenanceEndDate : null,
-        trainingExercise: data.purpose === 'Training' ? data.trainingExercise : null,
+        date: format(bookingStartDate, 'yyyy-MM-dd'),
         endDate: format(bookingEndDate, 'yyyy-MM-dd'),
+        maintenanceStartDate: undefined, // Clear these as they are now handled by date/endDate
+        maintenanceEndDate: undefined,
     };
     
     if (existingBooking) {
@@ -265,34 +276,64 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
         )}
 
         {purpose !== 'Maintenance' && (
-             <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="departure"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Departure</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., KPAO" {...field} value={field.value ?? ''} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="arrival"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Arrival</FormLabel>
-                       <FormControl>
-                        <Input placeholder="e.g., KSQL" {...field} value={field.value ?? ''} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+             <>
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                    control={form.control}
+                    name="departure"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Departure</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., KPAO" {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                    control={form.control}
+                    name="arrival"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Arrival</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., KSQL" {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="startTime"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Start Time</FormLabel>
+                            <FormControl>
+                            <Input type="time" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="endTime"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>End Time</FormLabel>
+                            <FormControl>
+                            <Input type="time" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+             </>
         )}
 
         {purpose === 'Training' && (
@@ -419,34 +460,6 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
-             <FormField
-                control={form.control}
-                name="startTime"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Start Time</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="endTime"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>End Time</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </div>
         <div className="flex justify-between items-center pt-4">
            {existingBooking && onDelete && (
                 <AlertDialog>

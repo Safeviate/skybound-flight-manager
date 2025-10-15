@@ -161,6 +161,9 @@ const GanttChart = ({
         } else if (booking.purpose === 'Hire and Fly') {
             line1 = `${bookingNumPart}${booking.purpose}`;
             line2 = `${booking.pilotName}`;
+        } else if (booking.purpose === 'Maintenance') {
+            line1 = `Maintenance`;
+            line2 = `${booking.maintenanceType}`;
         } else { // Training or other aircraft bookings
             line1 = `${bookingNumPart}${booking.purpose}`;
             line2 = `${booking.student} w/ ${booking.instructor}`;
@@ -186,59 +189,48 @@ const GanttChart = ({
                 <tbody>
                     {resources.map(resource => {
                         const renderedSlots = new Set();
-                        const maintenanceAircraft = resource.status === 'In Maintenance' && aircraft ? resource as Aircraft : null;
-                        const isUnderMaintenance = maintenanceAircraft && maintenanceAircraft.maintenanceStartDate && maintenanceAircraft.maintenanceEndDate && isWithinInterval(selectedDate, { start: parseISO(maintenanceAircraft.maintenanceStartDate), end: parseISO(maintenanceAircraft.maintenanceEndDate) });
-                        
                         return (
                         <tr key={resource[resourceKey]}>
                             <td className="sticky left-0 z-10 bg-card font-medium text-center p-2 w-[150px] border-r">{resource[resourceNameKey]}</td>
-                            {isUnderMaintenance ? (
-                                <td colSpan={timeSlots.length} className="p-0 h-[50px]">
-                                    <div className="h-full flex items-center justify-center p-2 text-white text-xs whitespace-nowrap overflow-hidden bg-destructive">
-                                        In Maintenance until {format(parseISO(maintenanceAircraft.maintenanceEndDate!), 'PPP')}
-                                    </div>
-                                </td>
-                            ) : (
-                                timeSlots.map(time => {
-                                    if (renderedSlots.has(time)) return null;
+                            {timeSlots.map(time => {
+                                if (renderedSlots.has(time)) return null;
 
-                                    const booking = getBookingForSlot(resource[resourceKey], time);
-                                    if (booking) {
-                                        const colSpan = calculateColSpan(booking, time);
-                                        if (colSpan > 0) {
-                                            const startTimeInMinutes = timeToMinutes(booking.startTime);
-                                            for (let i = 1; i < colSpan; i++) {
-                                                const nextSlotTimeInMinutes = startTimeInMinutes + i * 15;
-                                                const nextHour = Math.floor(nextSlotTimeInMinutes / 60);
-                                                const nextMinute = nextSlotTimeInMinutes % 60;
-                                                renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:${nextMinute.toString().padStart(2, '0')}`);
-                                            }
-                                            const variant = getBookingVariant(booking);
-                                            return (
-                                                <td key={time} colSpan={colSpan} className="p-0 h-[50px]">
-                                                    <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <div 
-                                                                onClick={() => onBookingClick(booking)}
-                                                                className={cn('h-full flex items-center p-2 text-white text-xs whitespace-nowrap overflow-hidden border-r border-white/20', variant.className, (variant.isClickable || booking.status === 'Completed') ? 'cursor-pointer' : 'cursor-not-allowed')} style={variant.style}>
-                                                                {getBookingLabel(booking)}
-                                                            </div>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <BookingTooltipContent booking={booking} />
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                    </TooltipProvider>
-                                                </td>
-                                            )
+                                const booking = getBookingForSlot(resource[resourceKey], time);
+                                if (booking) {
+                                    const colSpan = calculateColSpan(booking, time);
+                                    if (colSpan > 0) {
+                                        const startTimeInMinutes = timeToMinutes(booking.startTime);
+                                        for (let i = 1; i < colSpan; i++) {
+                                            const nextSlotTimeInMinutes = startTimeInMinutes + i * 15;
+                                            const nextHour = Math.floor(nextSlotTimeInMinutes / 60);
+                                            const nextMinute = nextSlotTimeInMinutes % 60;
+                                            renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:${nextMinute.toString().padStart(2, '0')}`);
                                         }
+                                        const variant = getBookingVariant(booking);
+                                        return (
+                                            <td key={time} colSpan={colSpan} className="p-0 h-[50px]">
+                                                <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div 
+                                                            onClick={() => onBookingClick(booking)}
+                                                            className={cn('h-full flex items-center p-2 text-white text-xs whitespace-nowrap overflow-hidden border-r border-white/20', variant.className, (variant.isClickable || booking.status === 'Completed') ? 'cursor-pointer' : 'cursor-not-allowed')} style={variant.style}>
+                                                            {getBookingLabel(booking)}
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <BookingTooltipContent booking={booking} />
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                                </TooltipProvider>
+                                            </td>
+                                        )
                                     }
-                                    return (
-                                        <td key={time} className="h-[50px] p-0 border hover:bg-primary/10 cursor-pointer" onClick={() => onSlotClick(resource, time)}></td>
-                                    );
-                                })
-                            )}
+                                }
+                                return (
+                                    <td key={time} className="h-[50px] p-0 border hover:bg-primary/10 cursor-pointer" onClick={() => onSlotClick(resource, time)}></td>
+                                );
+                            })}
                         </tr>
                         )
                     })}
@@ -272,7 +264,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             return { className: 'bg-gray-400 text-white', isClickable: true };
         }
         if (booking.purpose === 'Maintenance') {
-            return { className: 'bg-destructive text-white', isClickable: false };
+            return { className: 'bg-destructive text-white', isClickable: true };
         }
         if (booking.purpose === 'Post-Maintenance Flight') {
             return { className: 'bg-purple-600 text-white', isClickable: true };
@@ -363,29 +355,24 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 }, [company, toast]);
 
     const dailyAircraftBookings = useMemo(() => {
-        const dayStart = startOfDay(selectedDate);
         return bookings.filter(b => {
             if (b.status === 'Cancelled' || !b.date) return false;
             if (b.resourceType && b.resourceType === 'facility') return false;
             
-            // For single day bookings
-            if (!b.endDate || b.date === b.endDate) {
-                return isWithinInterval(parseISO(b.date), { start: startOfDay(selectedDate), end: endOfDay(selectedDate) });
-            }
+            const bookingStart = startOfDay(parseISO(b.date));
+            const bookingEnd = b.endDate ? endOfDay(parseISO(b.endDate)) : endOfDay(bookingStart);
             
-            // For multi-day bookings
-            return isWithinInterval(selectedDate, { start: startOfDay(parseISO(b.date)), end: endOfDay(parseISO(b.endDate)) });
+            return isWithinInterval(selectedDate, { start: bookingStart, end: bookingEnd });
         });
     }, [bookings, selectedDate]);
 
     const dailyFacilityBookings = useMemo(() => {
-        const dayStart = startOfDay(selectedDate);
         return bookings.filter(b => {
             if (b.status === 'Cancelled' || !b.date) return false;
             if (b.resourceType !== 'facility') return false;
-            const bookingStart = parseISO(b.date);
-            const bookingEnd = b.endDate ? parseISO(b.endDate) : bookingStart;
-            return isWithinInterval(dayStart, { start: startOfDay(bookingStart), end: endOfDay(bookingEnd) });
+            const bookingStart = startOfDay(parseISO(b.date));
+            const bookingEnd = b.endDate ? endOfDay(parseISO(b.endDate)) : endOfDay(bookingStart);
+            return isWithinInterval(selectedDate, { start: bookingStart, end: bookingEnd });
         });
     }, [bookings, selectedDate]);
   
@@ -785,5 +772,3 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     </>
   );
 }
-
-    
