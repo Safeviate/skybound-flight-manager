@@ -241,9 +241,11 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
         <DialogContent className="sm:max-w-3xl">
             <DialogHeader>
                 <DialogTitle>Corrective Action Plans for Finding</DialogTitle>
-                <DialogDescription>
-                    <div className="font-medium">{viewingFinding?.finding.itemText}</div>
-                    <div className="text-xs text-muted-foreground">{viewingFinding?.finding.regulationReference}</div>
+                <DialogDescription asChild>
+                    <div>
+                        <div className="font-medium">{viewingFinding?.finding.itemText}</div>
+                        <div className="text-xs text-muted-foreground">{viewingFinding?.finding.regulationReference}</div>
+                    </div>
                 </DialogDescription>
             </DialogHeader>
             <ScrollArea className="max-h-[70vh] pr-6">
@@ -264,7 +266,9 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
                                     <ul className="list-disc pl-5 text-sm space-y-2 mt-2">
                                         {plan.actions.map(action => (
                                             <li key={action.id}>
-                                                {action.action}
+                                                <span className={action.status === 'Closed' ? "line-through text-muted-foreground" : ""}>
+                                                    {action.action}
+                                                </span>
                                                 <div className="text-xs text-muted-foreground">
                                                     {action.responsiblePerson} - Due: {format(parseISO(action.completionDate), 'PPP')} - <Badge variant={getStatusVariant(action.status)} className="h-auto py-0 px-1.5">{action.status}</Badge>
                                                 </div>
