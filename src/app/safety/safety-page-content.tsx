@@ -36,7 +36,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { cn, getRiskLevel } from '@/lib/utils.tsx';
+import { cn } from '@/lib/utils.tsx';
 import { useForm } from 'react-hook-form';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -564,7 +564,7 @@ export function SafetyPageContent({
     );
   };
   
-  const ReportTable = ({ reports, isArchivedTable = false }: { reports: SafetyReport[], isArchivedTable?: boolean }) => {
+  const ReportTable = ({ reports: reportList, isArchivedTable = false }: { reports: SafetyReport[], isArchivedTable?: boolean }) => {
     const controls = isArchivedTable ? archivedReportsControls : reportsControls;
 
     return (
@@ -795,16 +795,13 @@ export function SafetyPageContent({
           <TabsContent value="register">
             <RiskRegister risks={risks} onUpdate={fetchData} />
           </TabsContent>
-          <TabsContent value="spis">
-            <div className="border-4 border-teal-500 p-4 rounded-lg relative mt-6">
-              <div className="absolute -top-3 left-4 bg-background px-2 text-teal-500 font-semibold text-sm">Safety Performance</div>
-              <SafetyPerformanceIndicators 
-                  reports={safetyReports} 
-                  spiConfigs={spiConfigs} 
-                  onConfigChange={setSpiConfigs} 
-                  monthlyFlightHours={monthlyFlightHours}
-              />
-            </div>
+          <TabsContent value="spis" className="mt-4">
+            <SafetyPerformanceIndicators 
+                reports={safetyReports} 
+                spiConfigs={spiConfigs} 
+                onConfigChange={setSpiConfigs} 
+                monthlyFlightHours={monthlyFlightHours}
+            />
           </TabsContent>
            <TabsContent value="moc">
               <Card>
