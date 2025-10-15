@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -742,7 +743,7 @@ export function SafetyPageContent({
               <TabsTrigger value="register">Risk Register</TabsTrigger>
               <TabsTrigger value="spis">SPIs</TabsTrigger>
               <TabsTrigger value="moc">MOC</TabsTrigger>
-            </TabsList>
+          </TabsList>
             {activeTab === 'reports' && (
                 <Button asChild className="w-full md:w-auto">
                     <Link href="/safety/new">
@@ -780,7 +781,7 @@ export function SafetyPageContent({
           </TabsContent>
 
           <TabsContent value="register">
-             <RiskRegister risks={risks} onUpdate={fetchData} />
+            <RiskRegister risks={risks} onUpdate={fetchData} />
           </TabsContent>
           <TabsContent value="spis">
             <div className="border-4 border-teal-500 p-4 rounded-lg relative mt-6">
