@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -218,8 +217,8 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
                 <DialogHeader>
                     <DialogTitle>Corrective Action Plan for Finding</DialogTitle>
                     <DialogDescription>
-                        <p className="font-medium">{editingFinding?.finding.itemText}</p>
-                        <p className="text-xs text-muted-foreground">{editingFinding?.finding.regulationReference}</p>
+                        <div className="font-medium">{editingFinding?.finding.itemText}</div>
+                        <div className="text-xs text-muted-foreground">{editingFinding?.finding.regulationReference}</div>
                     </DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="max-h-[70vh] pr-4">
