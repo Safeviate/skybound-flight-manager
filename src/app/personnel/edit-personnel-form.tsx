@@ -172,9 +172,9 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
             documents: formDocs,
             permissions: personnel.permissions || [],
             visibleMenuItems: personnel.visibleMenuItems || availableNavItems.map(i => i.label),
-            nextOfKinName: personnel.nextOfKinName || '',
-            nextOfKinRelation: personnel.nextOfKinRelation || '',
-            nextOfKinPhone: personnel.nextOfKinPhone || '',
+            nextOfKinName: personnel.nextOfKinName ?? '',
+            nextOfKinRelation: personnel.nextOfKinRelation ?? '',
+            nextOfKinPhone: personnel.nextOfKinPhone ?? '',
         });
     }
   }, [personnel, roles, departments, form]);
@@ -183,13 +183,14 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
   const selectedRole = form.watch('role');
 
   useEffect(() => {
-    if (selectedRole && roles.length > 0) {
-      const roleData = roles.find(r => r.name === selectedRole);
-      if (roleData) {
-        form.setValue('permissions', roleData.permissions || ROLE_PERMISSIONS[selectedRole as keyof typeof ROLE_PERMISSIONS] || []);
-      }
+    if (selectedRole && roles.length > 0 && form.formState.isDirty && form.formState.dirtyFields.role) {
+        const roleData = roles.find(r => r.name === selectedRole);
+        if (roleData) {
+            form.setValue('permissions', roleData.permissions || ROLE_PERMISSIONS[selectedRole as keyof typeof ROLE_PERMISSIONS] || []);
+        }
     }
   }, [selectedRole, roles, form]);
+
 
   const isInstructorRole = selectedRole === 'Instructor';
 
