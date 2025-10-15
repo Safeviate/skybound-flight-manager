@@ -564,8 +564,8 @@ export function SafetyPageContent({
     );
   };
   
-  const ReportTable = ({ reports }: { reports: SafetyReport[] }) => {
-    const controls = reports.some(r => r.status === 'Archived') ? archivedReportsControls : reportsControls;
+  const ReportTable = ({ reports, isArchivedTable = false }: { reports: SafetyReport[], isArchivedTable?: boolean }) => {
+    const controls = isArchivedTable ? archivedReportsControls : reportsControls;
 
     return (
       <>
@@ -633,16 +633,15 @@ export function SafetyPageContent({
                             View & Investigate
                             </Link>
                         </DropdownMenuItem>
-                        {report.status !== 'Archived' && user.permissions.includes('Super User') && (
-                            <DropdownMenuItem onClick={() => handleArchiveReport(report.id)}>
-                                <Archive className="mr-2 h-4 w-4" />
-                                Archive
-                            </DropdownMenuItem>
-                        )}
-                        {report.status === 'Archived' && user.permissions.includes('Super User') && (
-                            <DropdownMenuItem onClick={() => handleReactivateReport(report.id)}>
+                        {isArchivedTable ? (
+                             <DropdownMenuItem onClick={() => handleReactivateReport(report.id)}>
                                 <RotateCw className="mr-2 h-4 w-4" />
                                 Reactivate
+                            </DropdownMenuItem>
+                        ) : (
+                             <DropdownMenuItem onClick={() => handleArchiveReport(report.id)}>
+                                <Archive className="mr-2 h-4 w-4" />
+                                Archive
                             </DropdownMenuItem>
                         )}
                         </DropdownMenuContent>
@@ -757,14 +756,6 @@ export function SafetyPageContent({
                 </TabsList>
                 <ScrollBar orientation="horizontal" />
             </ScrollArea>
-            {activeTab === 'reports' && (
-                <Button asChild className="w-full md:w-auto">
-                    <Link href="/safety/new">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        File New Report
-                    </Link>
-                </Button>
-            )}
           </div>
           <TabsContent value="dashboard">
             <SafetyDashboard reports={safetyReports} risks={risks} />
@@ -772,21 +763,29 @@ export function SafetyPageContent({
 
           <TabsContent value="reports">
             <Card>
-              <CardHeader>
-                <CardTitle>Filed Safety Reports</CardTitle>
-                <CardDescription>Incidents and hazards reported by personnel.</CardDescription>
+              <CardHeader className="flex-row justify-between items-start">
+                  <div>
+                    <CardTitle>Filed Safety Reports</CardTitle>
+                    <CardDescription>Incidents and hazards reported by personnel.</CardDescription>
+                  </div>
+                  <Button asChild>
+                    <Link href="/safety/new">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        File New Report
+                    </Link>
+                </Button>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="active">
                     <TabsList>
-                        <TabsTrigger value="active">Active Reports</TabsTrigger>
-                        <TabsTrigger value="archived">Archived Reports</TabsTrigger>
+                        <TabsTrigger value="active">Active Reports ({activeReports.length})</TabsTrigger>
+                        <TabsTrigger value="archived">Archived Reports ({archivedReports.length})</TabsTrigger>
                     </TabsList>
                     <TabsContent value="active">
                         <ReportTable reports={activeReports} />
                     </TabsContent>
                     <TabsContent value="archived">
-                        <ReportTable reports={archivedReports} />
+                        <ReportTable reports={archivedReports} isArchivedTable />
                     </TabsContent>
                 </Tabs>
               </CardContent>
