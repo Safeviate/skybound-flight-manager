@@ -84,7 +84,7 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="w-full">
+        <ScrollArea className="w-full whitespace-nowrap rounded-md border">
             <Table>
             <TableHeader>
                 <TableRow>
@@ -148,4 +148,3 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
     </>
   );
 }
-
