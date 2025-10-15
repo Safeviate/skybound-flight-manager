@@ -112,22 +112,20 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
     const { user } = useUser();
     
     const handleConfirm = () => {
-        if (auditDate && user && department) {
-            onStart({
-                date: format(auditDate, 'yyyy-MM-dd'),
-                type: auditType,
-                auditor: leadAuditor,
-                auditeeName: auditeeName,
-                area: area,
-                department: department,
-                aircraftInvolved,
-                auditTeam: auditTeam.split(',').map(s => s.trim()).filter(Boolean),
-                auditeeTeam: auditeeTeam.split(',').map(s => s.trim()).filter(Boolean),
-                scope: scope,
-                evidenceReference: evidenceReference,
-            });
-            setIsOpen(false);
-        }
+        onStart({
+            date: auditDate ? format(auditDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+            type: auditType,
+            auditor: leadAuditor,
+            auditeeName: auditeeName,
+            area: area,
+            department: department,
+            aircraftInvolved,
+            auditTeam: auditTeam.split(',').map(s => s.trim()).filter(Boolean),
+            auditeeTeam: auditeeTeam.split(',').map(s => s.trim()).filter(Boolean),
+            scope: scope,
+            evidenceReference: evidenceReference,
+        });
+        setIsOpen(false);
     };
 
     return (
@@ -262,7 +260,7 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
                 </div>
                 </ScrollArea>
                 <div className="pt-4 border-t">
-                    <Button onClick={handleConfirm} disabled={!auditDate || !leadAuditor || !auditeeName || !department || !area} className="w-full">
+                    <Button onClick={handleConfirm} className="w-full">
                         Confirm and Start Audit
                     </Button>
                 </div>
