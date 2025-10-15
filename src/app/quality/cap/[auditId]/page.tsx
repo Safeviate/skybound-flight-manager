@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, getDocs, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 import { CorrectiveActionPlanForm } from './form';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc } from 'firebase/firestore';
 
 export default function CreateCapPage() {
   const params = useParams();
@@ -154,4 +154,3 @@ export default function CreateCapPage() {
 }
 
 CreateCapPage.title = 'Create Corrective Action Plan';
-
