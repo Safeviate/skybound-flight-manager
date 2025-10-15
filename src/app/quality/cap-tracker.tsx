@@ -57,18 +57,6 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
     }
   }
 
-  const getFindingLevelBadge = (finding: NonConformanceIssue): { variant: 'destructive' | 'warning' | 'orange' | 'secondary' | 'outline', text: string } => {
-    if (finding.finding === 'Observation') {
-        return { variant: 'secondary', text: 'OBS' };
-    }
-    switch (finding.level) {
-        case 'Level 1 Finding': return { variant: 'warning', text: 'L1' };
-        case 'Level 2 Finding': return { variant: 'orange', text: 'L2' };
-        case 'Level 3 Finding': return { variant: 'destructive', text: 'L3' };
-        default: return { variant: 'outline', text: 'N/A' };
-    }
-  }
-
   const handleManagePlanClick = (auditId: string) => {
     router.push(`/quality/cap/${auditId}`);
   };
@@ -88,63 +76,54 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
             <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead className="w-1/4">Audit</TableHead>
-                    <TableHead className="w-3/4">Non-Conformance Findings</TableHead>
+                    <TableHead className="w-[30%]">Audit</TableHead>
+                    <TableHead className="w-[15%]">Findings</TableHead>
+                    <TableHead className="w-[15%]">Status</TableHead>
+                    <TableHead className="w-[40%]" />
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {groupedFindings.length > 0 ? (
                 groupedFindings.map(item => {
+                    const allActions = item.findings.flatMap(f => f.correctiveActionPlans || []).flatMap(p => p.actions);
+                    const openActions = allActions.filter(a => a.status === 'Open').length;
+                    const inProgressActions = allActions.filter(a => a.status === 'In Progress').length;
+
+                    let overallStatus = 'No Plan';
+                    if (allActions.length > 0) {
+                        if (openActions > 0 || inProgressActions > 0) {
+                            overallStatus = 'Open';
+                        } else {
+                            overallStatus = 'Closed';
+                        }
+                    }
+
                     return (
                         <TableRow key={item.auditId}>
-                            <TableCell className="align-top py-4">
+                            <TableCell className="align-middle py-4">
                                 <Link href={`/quality/${item.auditId}`} className="hover:underline text-primary">
-                                    <div className="font-medium">{item.auditTitle}</div>
+                                    <div className="font-medium whitespace-normal">{item.auditTitle}</div>
                                     <div className="text-xs text-muted-foreground">{item.auditNumber || item.auditId.substring(0,8) + '...'}</div>
                                 </Link>
                             </TableCell>
-                            <TableCell className="p-0">
-                                <div className="divide-y">
-                                    {item.findings.map((finding) => {
-                                        const caps = finding.correctiveActionPlans || [];
-                                        const allActions = caps.flatMap(cap => cap.actions);
-                                        const openActions = allActions.filter(a => a.status === 'Open').length;
-                                        const inProgressActions = allActions.filter(a => a.status === 'In Progress').length;
-                                        let overallStatus = 'No Plan';
-                                        if (allActions.length > 0) {
-                                            if (openActions > 0 || inProgressActions > 0) {
-                                                overallStatus = 'Open';
-                                            } else {
-                                                overallStatus = 'Closed';
-                                            }
-                                        }
-
-                                        return (
-                                            <div key={finding.id} className="flex items-center justify-between p-3">
-                                                <div className="flex items-start gap-2">
-                                                    <Badge variant="outline" className="text-muted-foreground">
-                                                        {finding.regulationReference || 'N/A'}
-                                                    </Badge>
-                                                    <p className="font-semibold whitespace-normal">{finding.itemText}</p>
-                                                </div>
-                                                <div className="flex items-center gap-4">
-                                                    <Badge variant={getStatusVariant(overallStatus)} className="w-24 justify-center">{overallStatus}</Badge>
-                                                    <Button variant="outline" size="sm" onClick={() => handleManagePlanClick(item.auditId)}>
-                                                        <Edit className="mr-2 h-3 w-3" />
-                                                        Manage Plans
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
+                             <TableCell className="align-middle">
+                                <Badge variant="destructive">{item.findings.length} Finding(s)</Badge>
+                             </TableCell>
+                            <TableCell className="align-middle">
+                                <Badge variant={getStatusVariant(overallStatus)} className="w-24 justify-center">{overallStatus}</Badge>
+                            </TableCell>
+                            <TableCell className="align-middle text-right">
+                                <Button variant="outline" size="sm" onClick={() => handleManagePlanClick(item.auditId)}>
+                                    <Edit className="mr-2 h-3 w-3" />
+                                    Manage Plans
+                                </Button>
                             </TableCell>
                         </TableRow>
                     )
                 })
                 ) : (
                 <TableRow>
-                    <TableCell colSpan={2} className="h-24 text-center">
+                    <TableCell colSpan={4} className="h-24 text-center">
                     No non-conformance findings or corrective action plans found.
                     </TableCell>
                 </TableRow>
