@@ -14,6 +14,8 @@ import { ArrowLeft, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 import { CorrectiveActionPlanForm } from './form';
 import { addDoc } from 'firebase/firestore';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 export default function CreateCapPage() {
   const params = useParams();
@@ -133,12 +135,35 @@ export default function CreateCapPage() {
           </Link>
         </Button>
         <Card>
+            <CardHeader>
+                <CardTitle>Non-Conformance Finding</CardTitle>
+                <CardDescription>
+                    This Corrective Action Plan addresses the following finding from audit {audit.auditNumber}.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="p-4 border rounded-lg space-y-3 bg-muted/50">
+                    <div className="flex justify-between items-start">
+                        <p className="font-medium pr-4">{finding.itemText}</p>
+                        <Badge variant={finding.level === 'Level 3 Finding' ? 'destructive' : 'warning'}>{finding.level}</Badge>
+                    </div>
+                    {finding.regulationReference && (
+                        <p className="text-xs text-muted-foreground">Regulation: {finding.regulationReference}</p>
+                    )}
+                    <Separator />
+                     <div>
+                        <h4 className="font-semibold text-sm">Auditor Comment</h4>
+                        <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{finding.comment || 'No comment provided.'}</p>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+
+        <Card>
           <CardHeader>
             <CardTitle>Create Corrective Action Plan</CardTitle>
             <CardDescription>
-              For finding: <span className="font-semibold">{finding.itemText}</span>
-              <br />
-              From audit: <span className="font-semibold">{audit.title} ({audit.auditNumber})</span>
+                Define the root cause and the specific corrective and preventative actions to be taken.
             </CardDescription>
           </CardHeader>
           <CardContent>
