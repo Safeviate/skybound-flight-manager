@@ -103,9 +103,12 @@ export function RiskRegister({ risks, onUpdate }: RiskRegisterProps) {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue={HAZARD_AREAS[0]}>
+          <ScrollArea className="w-full whitespace-nowrap">
             <TabsList>
                 {HAZARD_AREAS.map(area => <TabsTrigger key={area} value={area}>{area}</TabsTrigger>)}
             </TabsList>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
             {HAZARD_AREAS.map(area => {
                 const areaRisks = risks.filter(r => r.hazardArea === area && r.status === 'Open');
                 return (
