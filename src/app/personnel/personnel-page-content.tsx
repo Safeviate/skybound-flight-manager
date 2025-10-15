@@ -19,7 +19,7 @@ import { collection, query, where, getDocs, doc, setDoc, updateDoc, deleteDoc } 
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { resetUserPasswordAndSendWelcomeEmail } from '@/app/actions';
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EditPersonnelForm } from './edit-personnel-form';
 import { useSettings } from '@/context/settings-provider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
