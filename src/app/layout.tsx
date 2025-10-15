@@ -1,9 +1,7 @@
 import type {Metadata} from 'next';
 import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
-import { AppContent } from './app-content';
+import { ClientProviders } from './client-providers';
 import { Inter } from 'next/font/google';
-import { Providers } from './providers';
 
 
 const inter = Inter({
@@ -34,12 +32,9 @@ export default function RootLayout({
           <meta name="theme-color" content="#2563eb" />
       </head>
       <body>
-          <Providers>
-            <AppContent>
-              {children}
-            </AppContent>
-            <Toaster />
-          </Providers>
+          <ClientProviders>
+            {children}
+          </ClientProviders>
       </body>
     </html>
   );

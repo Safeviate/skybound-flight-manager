@@ -4,16 +4,19 @@ import { UserProvider } from '@/context/user-provider';
 import { SettingsProvider } from '@/context/settings-provider';
 import { ScaleProvider } from '@/context/scale-provider';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { AppContent } from './app-content';
+import { Toaster } from '@/components/ui/toaster';
 
-// This component is deprecated and will be removed in a future update.
-// Please use ClientProviders from './client-providers' instead.
-export function Providers({ children }: { children: React.ReactNode }) {
+export function ClientProviders({ children }: { children: React.ReactNode }) {
     return (
         <UserProvider>
             <SettingsProvider>
               <ScaleProvider>
                 <SidebarProvider>
-                  {children}
+                  <AppContent>
+                    {children}
+                  </AppContent>
+                  <Toaster />
                 </SidebarProvider>
               </ScaleProvider>
             </SettingsProvider>
