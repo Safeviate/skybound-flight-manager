@@ -22,6 +22,8 @@ import { db } from '@/lib/firebase';
 import type { Alert } from '@/lib/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useRouter } from 'next/navigation';
+import { CorrectiveActionPlanForm } from './cap/[auditId]/form';
+
 
 interface CapItem {
   auditId: string;
@@ -35,7 +37,7 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
 
   const allFindings = React.useMemo(() => {
     return audits
-      .filter(audit => audit.status !== 'Archived')
+      .filter(audit => audit.status !== 'Archived' && audit.nonConformanceIssues.length > 0)
       .flatMap(audit =>
         (audit.nonConformanceIssues || []).map(issue => ({
           auditId: audit.id,
@@ -68,7 +70,7 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
   }
 
   const handleManagePlanClick = (item: CapItem) => {
-    router.push(`/quality/cap/${item.auditId}?findingId=${item.finding.id}`);
+    router.push(`/quality/cap/${item.auditId}`);
   };
 
 
@@ -124,7 +126,7 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
                             <TableCell className="text-right">
                                 <Button variant="secondary" size="sm" onClick={() => handleManagePlanClick(item)}>
                                     <Edit className="mr-2 h-3 w-3" />
-                                    {caps.length > 0 ? 'Manage Plans' : 'Create Plan'}
+                                    Manage Plans
                                 </Button>
                             </TableCell>
                         </TableRow>
@@ -146,3 +148,4 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
     </>
   );
 }
+
