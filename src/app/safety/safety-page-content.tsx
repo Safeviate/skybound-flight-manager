@@ -569,80 +569,83 @@ export function SafetyPageContent({
             />
           </div>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead><SortableHeader label="Report #" sortKey="reportNumber" /></TableHead>
-              <TableHead className="hidden md:table-cell"><SortableHeader label="Occurrence Date" sortKey="occurrenceDate" /></TableHead>
-              <TableHead>Report</TableHead>
-              <TableHead className="hidden lg:table-cell">Department</TableHead>
-              <TableHead className="hidden lg:table-cell">Aircraft</TableHead>
-              <TableHead className="hidden xl:table-cell">Location</TableHead>
-              <TableHead><SortableHeader label="Status" sortKey="status" /></TableHead>
-              <TableHead className="text-right no-print">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {controls.items.map((report) => (
-              <TableRow key={report.id}>
-                <TableCell>
-                  <Link href={`/safety/${report.id}`} className="hover:underline">
-                    {report.reportNumber}
-                  </Link>
-                </TableCell>
-                <TableCell className="hidden md:table-cell">{report.occurrenceDate}</TableCell>
-                <TableCell className="max-w-xs font-medium truncate">
-                  {report.heading}
-                </TableCell>
-                <TableCell className="hidden lg:table-cell">{report.department}</TableCell>
-                <TableCell className="hidden lg:table-cell">{report.aircraftInvolved || 'N/A'}</TableCell>
-                <TableCell className="hidden xl:table-cell">
-                  {report.location && (
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3 text-muted-foreground" />
-                      {report.location}
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
-                </TableCell>
-                <TableCell className="text-right no-print">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Actions</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/safety/${report.id}`}>
-                          View & Investigate
-                        </Link>
-                      </DropdownMenuItem>
-                      {report.status !== 'Archived' && user.permissions.includes('Super User') && (
-                        <DropdownMenuItem onClick={() => handleArchiveReport(report.id)}>
-                            <Archive className="mr-2 h-4 w-4" />
-                            Archive
+        <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+            <Table>
+            <TableHeader>
+                <TableRow>
+                <TableHead><SortableHeader label="Report #" sortKey="reportNumber" /></TableHead>
+                <TableHead className="hidden md:table-cell"><SortableHeader label="Occurrence Date" sortKey="occurrenceDate" /></TableHead>
+                <TableHead>Report</TableHead>
+                <TableHead className="hidden lg:table-cell">Department</TableHead>
+                <TableHead className="hidden lg:table-cell">Aircraft</TableHead>
+                <TableHead className="hidden xl:table-cell">Location</TableHead>
+                <TableHead><SortableHeader label="Status" sortKey="status" /></TableHead>
+                <TableHead className="text-right no-print">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {controls.items.map((report) => (
+                <TableRow key={report.id}>
+                    <TableCell>
+                    <Link href={`/safety/${report.id}`} className="hover:underline">
+                        {report.reportNumber}
+                    </Link>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">{report.occurrenceDate}</TableCell>
+                    <TableCell className="max-w-xs font-medium truncate">
+                    {report.heading}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">{report.department}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{report.aircraftInvolved || 'N/A'}</TableCell>
+                    <TableCell className="hidden xl:table-cell">
+                    {report.location && (
+                        <div className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3 text-muted-foreground" />
+                        {report.location}
+                        </div>
+                    )}
+                    </TableCell>
+                    <TableCell>
+                    <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right no-print">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Actions</span>
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/safety/${report.id}`}>
+                            View & Investigate
+                            </Link>
                         </DropdownMenuItem>
-                      )}
-                      {report.status === 'Archived' && user.permissions.includes('Super User') && (
-                        <DropdownMenuItem onClick={() => handleReactivateReport(report.id)}>
-                            <RotateCw className="mr-2 h-4 w-4" />
-                            Reactivate
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        {controls.items.length === 0 && (
-          <div className="text-center text-muted-foreground py-10">No reports found.</div>
-        )}
+                        {report.status !== 'Archived' && user.permissions.includes('Super User') && (
+                            <DropdownMenuItem onClick={() => handleArchiveReport(report.id)}>
+                                <Archive className="mr-2 h-4 w-4" />
+                                Archive
+                            </DropdownMenuItem>
+                        )}
+                        {report.status === 'Archived' && user.permissions.includes('Super User') && (
+                            <DropdownMenuItem onClick={() => handleReactivateReport(report.id)}>
+                                <RotateCw className="mr-2 h-4 w-4" />
+                                Reactivate
+                            </DropdownMenuItem>
+                        )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    </TableCell>
+                </TableRow>
+                ))}
+            </TableBody>
+            </Table>
+            {controls.items.length === 0 && (
+                <div className="text-center text-muted-foreground py-10">No reports found.</div>
+            )}
+            <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </>
     );
   };
