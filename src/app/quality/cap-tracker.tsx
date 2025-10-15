@@ -216,9 +216,11 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>Corrective Action Plan for Finding</DialogTitle>
-                    <DialogDescription>
-                        <div className="font-medium">{editingFinding?.finding.itemText}</div>
-                        <div className="text-xs text-muted-foreground">{editingFinding?.finding.regulationReference}</div>
+                    <DialogDescription asChild>
+                        <div>
+                            <div className="font-medium">{editingFinding?.finding.itemText}</div>
+                            <div className="text-xs text-muted-foreground">{editingFinding?.finding.regulationReference}</div>
+                        </div>
                     </DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="max-h-[70vh] pr-4">
