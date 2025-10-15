@@ -451,12 +451,12 @@ export function QualityPageContent({
   
   const reportsControls = useTableControls(activeAudits, {
     initialSort: { key: 'date', direction: 'desc' },
-    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department'],
+    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department', 'auditeeName'],
   });
   
   const archivedReportsControls = useTableControls(archivedAudits, {
     initialSort: { key: 'date', direction: 'desc' },
-    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department'],
+    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department', 'auditeeName'],
   });
 
   const getStatusVariant = (status: QualityAudit['status']) => {
@@ -659,6 +659,7 @@ export function QualityPageContent({
               <TableHead>Audit ID</TableHead>
               <TableHead>Audit Date</TableHead>
               <TableHead>Report Heading</TableHead>
+              <TableHead>Auditee</TableHead>
               <TableHead>Area</TableHead>
               <TableHead>Asset</TableHead>
               <TableHead>Type</TableHead>
@@ -687,6 +688,7 @@ export function QualityPageContent({
                       </TableCell>
                       <TableCell>{format(parseISO(audit.date), 'MMM d, yyyy')}</TableCell>
                       <TableCell>{audit.title}</TableCell>
+                      <TableCell>{audit.auditeeName || 'N/A'}</TableCell>
                       <TableCell>{audit.area}</TableCell>
                       <TableCell>{audit.aircraftInvolved || 'N/A'}</TableCell>
                       <TableCell>{audit.type}</TableCell>
@@ -748,7 +750,7 @@ export function QualityPageContent({
                   ))
               ) : (
                   <TableRow>
-                      <TableCell colSpan={showArchived ? 10 : 9} className="text-center h-24">
+                      <TableCell colSpan={showArchived ? 11 : 10} className="text-center h-24">
                           No audit reports found in this department.
                       </TableCell>
                   </TableRow>
