@@ -17,6 +17,7 @@ import { addDoc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { format, parseISO } from 'date-fns';
 
 export default function CreateCapPage() {
   const params = useParams();
@@ -30,6 +31,7 @@ export default function CreateCapPage() {
   const [personnel, setPersonnel] = React.useState<User[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [editingFinding, setEditingFinding] = React.useState<NonConformanceIssue | null>(null);
+  const [editingPlan, setEditingPlan] = React.useState<CorrectiveActionPlan | null>(null);
 
   React.useEffect(() => {
     if (!company || !auditId) return;
@@ -85,14 +87,23 @@ export default function CreateCapPage() {
             await addDoc(alertsCollection, newAlert);
         }
     }
-
-    const newPlan: CorrectiveActionPlan = {
-      id: `cap-${Date.now()}`,
-      ...newPlanData,
-    };
     
-    const updatedPlans = [...(editingFinding.correctiveActionPlans || []), newPlan];
+    let updatedPlans: CorrectiveActionPlan[];
 
+    if (editingPlan) {
+        // Update existing plan
+        updatedPlans = (editingFinding.correctiveActionPlans || []).map(p =>
+            p.id === editingPlan.id ? { ...p, ...newPlanData } : p
+        );
+    } else {
+        // Add new plan
+        const newPlan: CorrectiveActionPlan = {
+          id: `cap-${Date.now()}`,
+          ...newPlanData,
+        };
+        updatedPlans = [...(editingFinding.correctiveActionPlans || []), newPlan];
+    }
+    
     const updatedIssues = audit.nonConformanceIssues.map(issue => 
         issue.id === editingFinding.id 
         ? { ...issue, correctiveActionPlans: updatedPlans } 
@@ -103,8 +114,9 @@ export default function CreateCapPage() {
     try {
         await updateDoc(auditRef, { nonConformanceIssues: updatedIssues });
         setAudit(prev => prev ? { ...prev, nonConformanceIssues: updatedIssues } : null);
-        toast({ title: 'Corrective Action Plan Saved' });
+        toast({ title: `Corrective Action Plan ${editingPlan ? 'Updated' : 'Saved'}` });
         setEditingFinding(null); // Close dialog on success
+        setEditingPlan(null);
     } catch(e) {
         console.error(e);
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to save CAP.' });
@@ -159,18 +171,29 @@ export default function CreateCapPage() {
                                      <div className="mt-4 space-y-2">
                                         <h4 className="font-semibold text-sm">Existing Corrective Action Plans:</h4>
                                         {finding.correctiveActionPlans.map(plan => (
-                                            <div key={plan.id} className="p-2 border rounded-md text-xs">
-                                                <p><span className="font-medium">Root Cause:</span> {plan.rootCause}</p>
-                                                <p><span className="font-medium">Actions:</span> {plan.actions.length}</p>
+                                            <div key={plan.id} className="p-3 border rounded-lg bg-background">
+                                                <div className="flex justify-between items-start">
+                                                    <p className="text-sm font-medium text-destructive">Root Cause: <span className="font-normal text-foreground">{plan.rootCause}</span></p>
+                                                </div>
+                                                <Separator className="my-2" />
+                                                <ul className="space-y-1">
+                                                    {plan.actions.map(action => (
+                                                        <li key={action.id} className="text-xs text-muted-foreground">
+                                                            <span className="font-semibold text-foreground mr-2">{action.isPreventative ? 'Preventative:' : 'Corrective:'}</span>
+                                                            {action.action}
+                                                            <span className="font-medium text-foreground ml-2">({action.responsiblePerson} - Due: {format(parseISO(action.completionDate), 'PPP')})</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
                                             </div>
                                         ))}
                                     </div>
                                 )}
                             </CardContent>
                             <CardFooter>
-                                <Button size="sm" onClick={() => setEditingFinding(finding)}>
+                                <Button size="sm" onClick={() => { setEditingFinding(finding); setEditingPlan(null); }}>
                                     <PlusCircle className="mr-2 h-4 w-4" />
-                                    {finding.correctiveActionPlans && finding.correctiveActionPlans.length > 0 ? 'Add Another CAP' : 'Create Corrective Action Plan'}
+                                    Add Another CAP
                                 </Button>
                             </CardFooter>
                         </Card>
@@ -195,6 +218,7 @@ export default function CreateCapPage() {
           <CorrectiveActionPlanForm
               onSubmit={handleCapSubmit}
               personnel={personnel}
+              existingPlan={editingPlan}
             />
         </DialogContent>
       </Dialog>
