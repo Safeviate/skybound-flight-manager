@@ -8,7 +8,7 @@ import { db } from '@/lib/firebase';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import type { QualityAudit, NonConformanceIssue, CorrectiveActionPlan, User, Alert } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -16,7 +16,7 @@ import { CorrectiveActionPlanForm } from './form';
 import { addDoc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 export default function CreateCapPage() {
   const params = useParams();
@@ -47,6 +47,7 @@ export default function CreateCapPage() {
           toast({ variant: 'destructive', title: 'Error', description: 'Audit not found.' });
         }
         
+        // Fetch personnel
         const personnelQuery = collection(db, `companies/${company.id}/users`);
         const personnelSnapshot = await getDocs(personnelQuery);
         setPersonnel(personnelSnapshot.docs.map(doc => doc.data() as User));
@@ -202,4 +203,3 @@ export default function CreateCapPage() {
 }
 
 CreateCapPage.title = 'Create Corrective Action Plan';
-
