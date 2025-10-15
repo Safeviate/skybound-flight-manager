@@ -9,10 +9,20 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { format, parseISO, differenceInDays } from 'date-fns';
-import type { QualityAudit, NonConformanceIssue } from '@/lib/types';
+import type { QualityAudit, NonConformanceIssue, CorrectiveActionPlan, User } from '@/lib/types';
 import { AlertTriangle, CheckCircle, Clock, Edit } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/context/user-provider';
+import { CorrectiveActionPlanForm } from './[auditId]/corrective-action-plan-form';
+import type { GenerateQualityCapOutput } from '@/ai/flows/generate-quality-cap-flow';
+import { QualityAuditAnalyzer } from './quality-audit-analyzer';
+import { Bot } from 'lucide-react';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { Alert } from '@/lib/types';
 
 interface CapItem {
   auditId: string;
@@ -21,7 +31,12 @@ interface CapItem {
   finding: NonConformanceIssue;
 }
 
-export function CapTracker({ audits }: { audits: QualityAudit[] }) {
+export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: QualityAudit[], personnel: User[], onUpdateAudit: (updatedAudit: Partial<QualityAudit>) => void }) {
+  const { user, company } = useUser();
+  const { toast } = useToast();
+  const [editingFinding, setEditingFinding] = React.useState<CapItem | null>(null);
+  const [suggestedCap, setSuggestedCap] = React.useState<GenerateQualityCapOutput | null>(null);
+
   const allFindings = React.useMemo(() => {
     return audits
       .filter(audit => audit.status !== 'Archived')
@@ -62,6 +77,43 @@ export function CapTracker({ audits }: { audits: QualityAudit[] }) {
         case 'Level 3 Finding': return { variant: 'destructive', text: 'L3' };
         default: return { variant: 'outline', text: 'N/A' };
     }
+  }
+  
+  const handleCapSubmit = async (data: CorrectiveActionPlan) => {
+    if (!editingFinding || !company || !user) return;
+
+    const responsibleUser = personnel.find(p => p.name === data.responsiblePerson);
+    if (responsibleUser) {
+         const newAlert: Omit<Alert, 'id' | 'number'> = {
+            companyId: company.id,
+            type: 'Task',
+            title: `Audit CAP Assigned: ${editingFinding.auditNumber || editingFinding.auditId.substring(0,8)}`,
+            description: `Action required for finding: "${editingFinding.finding.itemText}"`,
+            author: user.name, 
+            date: new Date().toISOString(),
+            readBy: [],
+            targetUserId: responsibleUser.id,
+            relatedLink: `/quality/${editingFinding.auditId}`,
+        };
+        const alertsCollection = collection(db, `companies/${company.id}/alerts`);
+        await addDoc(alertsCollection, newAlert);
+        toast({ title: 'Task Assigned', description: `An alert has been sent to ${responsibleUser.name}.`});
+    }
+
+    const auditToUpdate = audits.find(a => a.id === editingFinding.auditId);
+    if (!auditToUpdate) return;
+    
+    const updatedIssues = auditToUpdate.nonConformanceIssues.map(issue => 
+        issue.id === editingFinding.finding.id ? { ...issue, correctiveActionPlan: data } : issue
+    );
+
+    onUpdateAudit({ id: auditToUpdate.id, nonConformanceIssues: updatedIssues });
+    setEditingFinding(null);
+    setSuggestedCap(null);
+    toast({
+        title: 'Corrective Action Plan Saved',
+        description: 'The CAP has been added to the finding.'
+    })
   }
 
   return (
@@ -140,12 +192,10 @@ export function CapTracker({ audits }: { audits: QualityAudit[] }) {
                                 {cap ? (
                                     <Badge variant={getStatusVariant(cap.status)}>{cap.status}</Badge>
                                 ) : (
-                                    <Link href={`/quality/${item.auditId}`}>
-                                        <Button variant="secondary" size="sm">
-                                            <Edit className="mr-2 h-3 w-3" />
-                                            Create CAP
-                                        </Button>
-                                    </Link>
+                                    <Button variant="secondary" size="sm" onClick={() => setEditingFinding(item)}>
+                                        <Edit className="mr-2 h-3 w-3" />
+                                        Create CAP
+                                    </Button>
                                 )}
                             </TableCell>
                         </TableRow>
@@ -163,6 +213,32 @@ export function CapTracker({ audits }: { audits: QualityAudit[] }) {
             <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </CardContent>
+       <Dialog open={!!editingFinding} onOpenChange={() => { setEditingFinding(null); setSuggestedCap(null); }}>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Corrective Action Plan for Finding</DialogTitle>
+                    <DialogDescription>
+                        <p className="font-medium">{editingFinding?.finding.itemText}</p>
+                        <p className="text-xs text-muted-foreground">{editingFinding?.finding.regulationReference}</p>
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                        <CorrectiveActionPlanForm 
+                            onSubmit={handleCapSubmit} 
+                            suggestedCap={suggestedCap}
+                        />
+                    </div>
+                    <div className="md:col-span-2 space-y-4 p-4 border-t">
+                        <h3 className="font-semibold flex items-center gap-2"><Bot /> AI Assistant</h3>
+                        <QualityAuditAnalyzer 
+                            auditText={`Non-Conformance: ${editingFinding?.finding.itemText}\nLevel: ${editingFinding?.finding.level}\nRegulation: ${editingFinding?.finding.regulationReference}\n\nAuditor Comment:\n${editingFinding?.finding.comment}`}
+                            onCapSuggested={(cap) => setSuggestedCap(cap)}
+                        />
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
     </Card>
   );
 }

@@ -458,6 +458,13 @@ export function QualityPageContent({
     initialSort: { key: 'date', direction: 'desc' },
     searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department', 'auditeeName'],
   });
+  
+  const handleAuditUpdate = (updatedData: Partial<QualityAudit>) => {
+    if (!updatedData.id) return;
+    setAudits(prev => prev.map(a => a.id === updatedData.id ? { ...a, ...updatedData } : a));
+    // The actual database update is now handled within the detail page, this just updates the list view
+  };
+
 
   const getStatusVariant = (status: QualityAudit['status']) => {
     switch (status) {
@@ -878,7 +885,7 @@ export function QualityPageContent({
               />
           </TabsContent>
           <TabsContent value="cap-tracker" className="mt-4">
-              <CapTracker audits={audits} />
+              <CapTracker audits={audits} personnel={initialPersonnel} onUpdateAudit={handleAuditUpdate} />
           </TabsContent>
           <TabsContent value="coherence-matrix" className="mt-4">
             <ScrollArea className="w-full whitespace-nowrap">

@@ -94,35 +94,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
         setIsDiscussionDialogOpen(true);
     };
 
-    const handleCapSubmit = async (data: CorrectiveActionPlan) => {
-        if (!editingIssue || !company || !user) return;
-
-        const responsibleUser = personnel.find(p => p.name === data.responsiblePerson);
-        if (responsibleUser) {
-             const newAlert: Omit<Alert, 'id' | 'number'> = {
-                companyId: company.id,
-                type: 'Task',
-                title: `Audit CAP Assigned: ${audit.id.substring(0,8)}`,
-                description: `Action required for finding: "${editingIssue.itemText}"`,
-                author: user.name, 
-                date: new Date().toISOString(),
-                readBy: [],
-                targetUserId: responsibleUser.id,
-                relatedLink: `/quality/${audit.id}`,
-            };
-            const alertsCollection = collection(db, `companies/${company.id}/alerts`);
-            await addDoc(alertsCollection, newAlert);
-            toast({ title: 'Task Assigned', description: `An alert has been sent to ${responsibleUser.name}.`});
-        }
-        
-        const updatedIssues = audit.nonConformanceIssues.map(issue => 
-            issue.id === editingIssue.id ? { ...issue, correctiveActionPlan: data } : issue
-        );
-
-        onUpdate({ ...audit, nonConformanceIssues: updatedIssues }, true);
-        setEditingIssue(null);
-    }
-
     const handleNewDiscussionMessage = async (data: DiscussionFormValues) => {
         if (!user || !audit || !company) {
             return;
@@ -424,9 +395,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                             </TableBody>
                                                         </Table>
                                                     </div>
-                                                ) : (
-                                                    <Button onClick={() => setEditingIssue(issue)} className="no-print">Create Corrective Action Plan</Button>
-                                                )}
+                                                ) : null}
                                             </div>
                                         )
                                     })
@@ -693,22 +662,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                     </div>
                 </CardContent>
             </Card>
-            {/* Corrective Action Plan Dialog */}
-            <Dialog open={!!editingIssue} onOpenChange={(open) => {if (!open) { setEditingIssue(null); setSuggestedCap(null); }}}>
-                <DialogContent className="sm:max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Corrective Action Plan for Finding</DialogTitle>
-                        <DialogDescription>
-                            <p className="font-medium">{editingIssue?.itemText}</p>
-                            <p className="text-xs text-muted-foreground">{editingIssue?.regulationReference}</p>
-                        </DialogDescription>
-                    </DialogHeader>
-                    <CorrectiveActionPlanForm 
-                        onSubmit={handleCapSubmit} 
-                        suggestedCap={suggestedCap}
-                    />
-                </DialogContent>
-            </Dialog>
         </div>
     );
 };
