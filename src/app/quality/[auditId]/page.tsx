@@ -693,6 +693,22 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                     </div>
                 </CardContent>
             </Card>
+            {/* Corrective Action Plan Dialog */}
+            <Dialog open={!!editingIssue} onOpenChange={(open) => {if (!open) { setEditingIssue(null); setSuggestedCap(null); }}}>
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Corrective Action Plan for Finding</DialogTitle>
+                        <DialogDescription>
+                            <p className="font-medium">{editingIssue?.itemText}</p>
+                            <p className="text-xs text-muted-foreground">{editingIssue?.regulationReference}</p>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <CorrectiveActionPlanForm 
+                        onSubmit={handleCapSubmit} 
+                        suggestedCap={suggestedCap}
+                    />
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
