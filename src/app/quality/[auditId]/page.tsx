@@ -72,15 +72,13 @@ const getLevelInfo = (level: FindingLevel) => {
 const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
 
 const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit: QualityAudit, onUpdate: (updatedAudit: QualityAudit, showToast?: boolean) => void, personnel: User[], onNavigateBack: () => void }) => {
-    const [editingIssue, setEditingIssue] = React.useState<NonConformanceIssue | null>(null);
-    const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
-    const [suggestedCap, setSuggestedCap] = React.useState<GenerateQualityCapOutput | null>(null);
     const { user, company } = useUser();
     const { toast } = useToast();
     const discussionForm = useForm<DiscussionFormValues>({
         resolver: zodResolver(discussionFormSchema),
     });
 
+    const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
     const [isSigning, setIsSigning] = React.useState(false);
 
     const availableRecipients = React.useMemo(() => {
@@ -344,34 +342,34 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                         <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
                                                     </div>
                                                 </div>
-                                                {issue.correctiveActionPlans && issue.correctiveActionPlans.length > 0 ? (
-                                                    <div className="space-y-4">
-                                                        <h4 className="font-semibold text-sm">Corrective Action Plan(s)</h4>
-                                                        {issue.correctiveActionPlans.map((plan, planIndex) => (
-                                                            <div key={planIndex} className="p-3 border rounded-md space-y-2 bg-background">
-                                                                <div>
-                                                                    <p className="font-medium text-muted-foreground text-sm">Root Cause</p>
-                                                                    <p className="text-sm">{plan.rootCause}</p>
-                                                                </div>
-                                                                <div>
-                                                                    <p className="font-medium text-muted-foreground text-sm">Actions</p>
-                                                                    <ul className="list-disc pl-5 text-sm">
-                                                                        {plan.actions.map(action => (
-                                                                            <li key={action.id} className="mb-1">
-                                                                                <span className={cn(action.status === 'Closed' && "line-through text-muted-foreground")}>
-                                                                                    {action.action}
-                                                                                </span>
-                                                                                <div className="text-xs text-muted-foreground">
-                                                                                    {action.responsiblePerson} - Due: {action.completionDate} - <Badge variant={action.status === 'Closed' ? 'success' : 'warning'} className="h-auto py-0 px-1.5">{action.status}</Badge>
-                                                                                </div>
-                                                                            </li>
-                                                                        ))}
-                                                                    </ul>
-                                                                </div>
-                                                            </div>
-                                                        ))}
+                                               {issue.correctiveActionPlans && issue.correctiveActionPlans.length > 0 && (
+                                                <div className="space-y-4">
+                                                  <h4 className="font-semibold text-sm">Corrective Action Plan(s)</h4>
+                                                  {issue.correctiveActionPlans.map((plan, planIndex) => (
+                                                    <div key={planIndex} className="p-3 border rounded-md space-y-2 bg-background">
+                                                      <div>
+                                                        <p className="font-medium text-muted-foreground text-sm">Root Cause</p>
+                                                        <p className="text-sm">{plan.rootCause}</p>
+                                                      </div>
+                                                      <div>
+                                                        <p className="font-medium text-muted-foreground text-sm">Actions</p>
+                                                        <ul className="list-disc pl-5 text-sm">
+                                                          {plan.actions.map(action => (
+                                                            <li key={action.id} className="mb-1">
+                                                              <span className={cn(action.status === 'Closed' && "line-through text-muted-foreground")}>
+                                                                {action.action}
+                                                              </span>
+                                                              <div className="text-xs text-muted-foreground">
+                                                                {action.responsiblePerson} - Due: {format(parseISO(action.completionDate), 'PPP')} - <Badge variant={action.status === 'Closed' ? 'success' : 'warning'} className="h-auto py-0 px-1.5">{action.status}</Badge>
+                                                              </div>
+                                                            </li>
+                                                          ))}
+                                                        </ul>
+                                                      </div>
                                                     </div>
-                                                ) : null}
+                                                  ))}
+                                                </div>
+                                              )}
                                             </div>
                                         )
                                     })

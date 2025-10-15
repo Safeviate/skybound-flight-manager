@@ -448,6 +448,7 @@ export type CorrectiveAction = {
 };
 
 export type CorrectiveActionPlan = {
+  id: string;
   rootCause: string;
   actions: CorrectiveAction[];
 };

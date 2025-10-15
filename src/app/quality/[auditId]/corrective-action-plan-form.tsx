@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -48,7 +49,7 @@ const capFormSchema = z.object({
 type CapFormValues = z.infer<typeof capFormSchema>;
 
 interface CorrectiveActionPlanFormProps {
-    onSubmit: (rootCause: string, actions: Omit<CorrectiveAction, 'id'>[]) => void;
+    onSubmit: (data: Omit<CorrectiveActionPlan, 'id'>) => void;
     personnel: User[];
     existingPlan?: CorrectiveActionPlan | null;
 }
@@ -58,9 +59,12 @@ export function CorrectiveActionPlanForm({ onSubmit, personnel, existingPlan }: 
   
   const form = useForm<CapFormValues>({
     resolver: zodResolver(capFormSchema),
-    defaultValues: {
-      rootCause: existingPlan?.rootCause || '',
-      actions: existingPlan?.actions.map(a => ({...a, completionDate: parseISO(a.completionDate)})) || [{
+    defaultValues: existingPlan ? {
+        rootCause: existingPlan.rootCause,
+        actions: existingPlan.actions.map(a => ({...a, completionDate: parseISO(a.completionDate)}))
+    } : {
+      rootCause: '',
+      actions: [{
           action: '',
           isPreventative: false,
           responsiblePerson: '',
@@ -69,6 +73,16 @@ export function CorrectiveActionPlanForm({ onSubmit, personnel, existingPlan }: 
       }],
     },
   });
+  
+  useEffect(() => {
+    if (existingPlan) {
+        form.reset({
+            rootCause: existingPlan.rootCause,
+            actions: existingPlan.actions.map(a => ({...a, completionDate: parseISO(a.completionDate)}))
+        });
+    }
+  }, [existingPlan, form]);
+
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -76,11 +90,15 @@ export function CorrectiveActionPlanForm({ onSubmit, personnel, existingPlan }: 
   });
 
   function handleFormSubmit(data: CapFormValues) {
-    const actionsToSave = data.actions.map(a => ({
+    const planToSave = {
+      ...data,
+      actions: data.actions.map(a => ({
         ...a,
+        id: a.id || `action-${Date.now()}`,
         completionDate: format(a.completionDate, 'yyyy-MM-dd'),
-    }));
-    onSubmit(data.rootCause, actionsToSave);
+      })),
+    };
+    onSubmit(planToSave);
   }
 
   return (
