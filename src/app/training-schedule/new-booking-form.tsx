@@ -13,15 +13,19 @@ import type { Aircraft, User, Booking, Role, TrainingLogEntry, BookingPurpose } 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { useUser } from '@/context/user-provider';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+
 
 const bookingFormSchema = z.object({
   purpose: z.string().min(1, 'Please select a purpose.'),
   aircraft: z.string(),
   date: z.string(),
+  endDate: z.string().optional(),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
   departure: z.string().optional(),
@@ -33,8 +37,6 @@ const bookingFormSchema = z.object({
   pilotName: z.string().optional(),
   instructor: z.string().optional(),
   maintenanceType: z.string().optional(),
-  maintenanceStartDate: z.string().optional(),
-  maintenanceEndDate: z.string().optional(),
   bookingNumber: z.string().optional(),
   trainingExercise: z.string().optional(),
 }).refine(data => {
@@ -117,6 +119,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
     form.reset({
       aircraft: existingBooking?.aircraft || aircraft.tailNumber,
       date: existingBooking?.date || format(selectedDate || new Date(), 'yyyy-MM-dd'),
+      endDate: existingBooking?.endDate || undefined,
       startTime: existingBooking?.startTime || startTime || '',
       endTime: existingBooking?.endTime || '',
       purpose: existingBooking?.purpose || '',
@@ -126,8 +129,6 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
       pilotName: existingBooking?.pilotName || '',
       instructor: existingBooking?.instructor || '',
       maintenanceType: existingBooking?.maintenanceType || '',
-      maintenanceStartDate: existingBooking?.maintenanceStartDate || format(selectedDate || new Date(), 'yyyy-MM-dd'),
-      maintenanceEndDate: existingBooking?.maintenanceEndDate || format(addDays(selectedDate || new Date(), 1), 'yyyy-MM-dd'),
       bookingNumber: existingBooking?.bookingNumber || '',
       departure: existingBooking?.departure || '',
       arrival: existingBooking?.arrival || '',
@@ -176,20 +177,6 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
       data = {...data, pendingLogEntryId: newLogId} as BookingFormValues & {pendingLogEntryId: string}
     }
     
-    let bookingStartDate, bookingEndDate;
-
-    if (data.purpose === 'Maintenance') {
-        bookingStartDate = data.maintenanceStartDate ? new Date(data.maintenanceStartDate) : new Date(data.date);
-        bookingEndDate = data.maintenanceEndDate ? new Date(data.maintenanceEndDate) : bookingStartDate;
-        data.startTime = '00:00';
-        data.endTime = '23:59';
-    } else {
-        bookingStartDate = new Date(data.date);
-        bookingEndDate = (data.endTime && data.startTime && data.endTime < data.startTime) 
-            ? addDays(bookingStartDate, 1) 
-            : bookingStartDate;
-    }
-    
     const cleanData = {
         ...data,
         resourceType: 'aircraft' as const,
@@ -199,10 +186,6 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
         pilotName: (data.purpose === 'Hire and Fly' || data.purpose === 'Post-Maintenance Flight') ? data.pilotName : null,
         instructor: data.purpose === 'Training' ? data.instructor : null,
         maintenanceType: data.purpose === 'Maintenance' ? data.maintenanceType : null,
-        date: format(bookingStartDate, 'yyyy-MM-dd'),
-        endDate: format(bookingEndDate, 'yyyy-MM-dd'),
-        maintenanceStartDate: undefined, // Clear these as they are now handled by date/endDate
-        maintenanceEndDate: undefined,
     };
     
     if (existingBooking) {
@@ -244,36 +227,34 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
           )}
         />
         
-        {purpose === 'Maintenance' && (
-             <div className="grid grid-cols-2 gap-4">
-                <FormField
-                    control={form.control}
-                    name="maintenanceStartDate"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Start Date</FormLabel>
-                            <FormControl>
-                                <Input type="date" {...field} value={field.value ?? ''} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="maintenanceEndDate"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>End Date</FormLabel>
-                            <FormControl>
-                                <Input type="date" {...field} value={field.value ?? ''} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
-        )}
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Start Date</FormLabel>
+                        <FormControl>
+                            <Input type="date" {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>End Date (Optional)</FormLabel>
+                        <FormControl>
+                            <Input type="date" {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
 
         {purpose !== 'Maintenance' && (
              <>

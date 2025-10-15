@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,6 +20,8 @@ import { cn } from '@/lib/utils';
 
 const facilityBookingSchema = z.object({
   title: z.string().min(3, 'A title for the event is required.'),
+  date: z.string(),
+  endDate: z.string().optional(),
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
   responsiblePerson: z.string().min(1, 'Please select a responsible person.'),
@@ -74,6 +75,8 @@ export function NewFacilityBookingForm({ facility, users, onSubmit, onDelete, st
 
   useEffect(() => {
     form.reset({
+      date: existingBooking?.date || format(selectedDate || new Date(), 'yyyy-MM-dd'),
+      endDate: existingBooking?.endDate || undefined,
       startTime: existingBooking?.startTime || startTime || '',
       endTime: existingBooking?.endTime || '',
       title: existingBooking?.title || '',
@@ -136,6 +139,32 @@ export function NewFacilityBookingForm({ facility, users, onSubmit, onDelete, st
           )}
         />
         <div className="grid grid-cols-2 gap-4">
+             <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Start Date</FormLabel>
+                        <FormControl>
+                            <Input type="date" {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>End Date (Optional)</FormLabel>
+                        <FormControl>
+                            <Input type="date" {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
           <FormField
             control={form.control}
             name="startTime"
