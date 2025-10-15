@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -117,8 +118,8 @@ export function RiskRegister({ risks, onUpdate }: RiskRegisterProps) {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                    <TableHead className="w-1/4">Hazard</TableHead>
-                                    <TableHead className="w-1/4">Risk</TableHead>
+                                    <TableHead className="w-[30%]">Hazard</TableHead>
+                                    <TableHead className="w-[30%]">Risk</TableHead>
                                     <TableHead>Initial Score</TableHead>
                                     <TableHead>Mitigated Score</TableHead>
                                     <TableHead>Level</TableHead>
