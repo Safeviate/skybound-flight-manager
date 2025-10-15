@@ -1,9 +1,8 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,88 +17,70 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import type { CorrectiveActionPlan, User, Role } from '@/lib/types';
+import type { CorrectiveAction, CorrectiveActionPlan, User, Role } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Trash2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import type { GenerateQualityCapOutput } from '@/ai/flows/generate-quality-cap-flow';
 
+
+const actionSchema = z.object({
+  id: z.string().optional(),
+  action: z.string().min(10, 'Action description is required.'),
+  isPreventative: z.boolean().default(false),
+  responsiblePerson: z.string().min(1, 'Responsible person is required.'),
+  completionDate: z.date(),
+  status: z.enum(['Open', 'Closed', 'In Progress']).default('Open'),
+});
 
 const capFormSchema = z.object({
   rootCause: z.string().min(10, {
     message: 'Root cause must be at least 10 characters long.',
   }),
-  correctiveAction: z.string().min(10, {
-    message: 'Corrective action must be at least 10 characters long.',
-  }),
-  preventativeAction: z.string().min(10, {
-    message: 'Preventative action must be at least 10 characters long.',
-  }),
-  responsiblePerson: z.string({
-    required_error: 'Please select a responsible person.',
-  }),
-  completionDate: z.date({
-    required_error: 'A completion date is required.',
-  }),
+  actions: z.array(actionSchema).min(1, 'At least one corrective action is required.'),
 });
 
 type CapFormValues = z.infer<typeof capFormSchema>;
 
 interface CorrectiveActionPlanFormProps {
-    onSubmit: (data: CorrectiveActionPlan) => void;
-    suggestedCap?: GenerateQualityCapOutput | null;
+    onSubmit: (rootCause: string, actions: Omit<CorrectiveAction, 'id'>[]) => void;
+    personnel: User[];
+    existingPlan?: CorrectiveActionPlan | null;
 }
 
-export function CorrectiveActionPlanForm({ onSubmit, suggestedCap }: CorrectiveActionPlanFormProps) {
+export function CorrectiveActionPlanForm({ onSubmit, personnel, existingPlan }: CorrectiveActionPlanFormProps) {
   const { toast } = useToast();
-  const { company } = useUser();
-  const [personnel, setPersonnel] = useState<User[]>([]);
-
+  
   const form = useForm<CapFormValues>({
     resolver: zodResolver(capFormSchema),
     defaultValues: {
-      completionDate: new Date(),
+      rootCause: existingPlan?.rootCause || '',
+      actions: existingPlan?.actions.map(a => ({...a, completionDate: parseISO(a.completionDate)})) || [{
+          action: '',
+          isPreventative: false,
+          responsiblePerson: '',
+          completionDate: new Date(),
+          status: 'Open',
+      }],
     },
   });
 
-  useEffect(() => {
-    if (suggestedCap) {
-      form.setValue('rootCause', suggestedCap.rootCause);
-      form.setValue('correctiveAction', suggestedCap.correctiveAction);
-      form.setValue('preventativeAction', suggestedCap.preventativeAction);
-    }
-  }, [suggestedCap, form]);
-
-  useEffect(() => {
-    const fetchPersonnel = async () => {
-        if (!company) return;
-        const q = query(collection(db, `companies/${company.id}/users`));
-        const snapshot = await getDocs(q);
-        setPersonnel(snapshot.docs.map(doc => ({...doc.data(), id: doc.id} as User)));
-    }
-    fetchPersonnel();
-  }, [company]);
-  
-  const uniquePersonnel = personnel.filter((person, index, self) =>
-    index === self.findIndex((p) => (
-      p.id === person.id
-    ))
-  );
-
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'actions',
+  });
 
   function handleFormSubmit(data: CapFormValues) {
-    const newCap: CorrectiveActionPlan = {
-      ...data,
-      completionDate: format(data.completionDate, 'yyyy-MM-dd'),
-      status: 'Open',
-    };
-    onSubmit(newCap);
+    const actionsToSave = data.actions.map(a => ({
+        ...a,
+        completionDate: format(a.completionDate, 'yyyy-MM-dd'),
+    }));
+    onSubmit(data.rootCause, actionsToSave);
   }
 
   return (
@@ -121,105 +102,105 @@ export function CorrectiveActionPlanForm({ onSubmit, suggestedCap }: CorrectiveA
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="correctiveAction"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Corrective Action</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Detail the specific action to be taken to correct the issue..."
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="preventativeAction"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Preventative Action</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Detail the action to be taken to prevent recurrence..."
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="grid grid-cols-2 gap-4">
-            <FormField
-            control={form.control}
-            name="responsiblePerson"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Responsible Person</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a person" />
-                    </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                    {uniquePersonnel.map((person) => (
-                        <SelectItem key={person.id} value={`${person.name} (${person.department || person.role})`}>
-                            {person.name} ({person.department || person.role})
-                        </SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-                control={form.control}
-                name="completionDate"
-                render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                        <FormLabel>Target Completion Date</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                >
-                                {field.value ? (
-                                    format(field.value, "PPP")
-                                ) : (
-                                    <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) =>
-                                    date < new Date()
-                                }
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
+        
+        <div className="space-y-4">
+            <FormLabel>Corrective & Preventative Actions</FormLabel>
+            {fields.map((field, index) => (
+                <div key={field.id} className="p-4 border rounded-lg space-y-3 relative">
+                    <FormField
+                        control={form.control}
+                        name={`actions.${index}.action`}
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="sr-only">Action</FormLabel>
+                                <FormControl>
+                                    <Textarea placeholder="Describe the action..." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name={`actions.${index}.isPreventative`}
+                        render={({ field }) => (
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                <FormControl>
+                                    <Input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)} className="h-4 w-4" />
+                                </FormControl>
+                                <FormLabel className="font-normal">This is a preventative action</FormLabel>
+                            </FormItem>
+                        )}
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name={`actions.${index}.responsiblePerson`}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="sr-only">Responsible Person</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Select person" /></SelectTrigger></FormControl>
+                                        <SelectContent>
+                                            {personnel.map((person) => (
+                                                <SelectItem key={person.id} value={person.name}>{person.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name={`actions.${index}.completionDate`}
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <FormLabel className="sr-only">Completion Date</FormLabel>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button
+                                            variant={"outline"}
+                                            className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                                            >
+                                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                            </Button>
+                                        </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                     <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2"
+                        onClick={() => remove(index)}
+                        disabled={fields.length <= 1}
+                    >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                </div>
+            ))}
+             <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => append({ action: '', isPreventative: false, responsiblePerson: '', completionDate: new Date(), status: 'Open' })}
+            >
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Action
+            </Button>
+             {form.formState.errors.actions && <FormMessage>{form.formState.errors.actions.message}</FormMessage>}
         </div>
+       
         <div className="flex justify-end pt-4">
           <Button type="submit">Save Corrective Action Plan</Button>
         </div>

@@ -8,8 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { format, parseISO, differenceInDays } from 'date-fns';
-import type { QualityAudit, NonConformanceIssue, CorrectiveActionPlan, User } from '@/lib/types';
-import { AlertTriangle, CheckCircle, Clock, Edit } from 'lucide-react';
+import type { QualityAudit, NonConformanceIssue, CorrectiveAction, User } from '@/lib/types';
+import { AlertTriangle, CheckCircle, Clock, Edit, PlusCircle, Trash2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -17,7 +17,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { CorrectiveActionPlanForm } from './[auditId]/corrective-action-plan-form';
 import type { GenerateQualityCapOutput } from '@/ai/flows/generate-quality-cap-flow';
-import { QualityAuditAnalyzer } from './quality-audit-analyzer';
 import { Bot } from 'lucide-react';
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -34,7 +33,6 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
   const { user, company } = useUser();
   const { toast } = useToast();
   const [editingFinding, setEditingFinding] = React.useState<CapItem | null>(null);
-  const [suggestedCap, setSuggestedCap] = React.useState<GenerateQualityCapOutput | null>(null);
 
   const allFindings = React.useMemo(() => {
     return audits
@@ -78,37 +76,44 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
     }
   }
   
-  const handleCapSubmit = async (data: CorrectiveActionPlan) => {
+  const handleCapSubmit = async (rootCause: string, actions: Omit<CorrectiveAction, 'id'>[]) => {
     if (!editingFinding || !company || !user) return;
 
-    const responsibleUser = personnel.find(p => p.name === data.responsiblePerson);
-    if (responsibleUser) {
-         const newAlert: Omit<Alert, 'id' | 'number'> = {
-            companyId: company.id,
-            type: 'Task',
-            title: `Audit CAP Assigned: ${editingFinding.auditNumber || editingFinding.auditId.substring(0,8)}`,
-            description: `Action required for finding: "${editingFinding.finding.itemText}"`,
-            author: user.name, 
-            date: new Date().toISOString(),
-            readBy: [],
-            targetUserId: responsibleUser.id,
-            relatedLink: `/quality/${editingFinding.auditId}`,
-        };
-        const alertsCollection = collection(db, `companies/${company.id}/alerts`);
-        await addDoc(alertsCollection, newAlert);
-        toast({ title: 'Task Assigned', description: `An alert has been sent to ${responsibleUser.name}.`});
+    for (const action of actions) {
+        const responsibleUser = personnel.find(p => p.name === action.responsiblePerson);
+        if (responsibleUser) {
+            const newAlert: Omit<Alert, 'id' | 'number'> = {
+                companyId: company.id,
+                type: 'Task',
+                title: `Audit CAP Assigned: ${editingFinding.auditNumber || editingFinding.auditId.substring(0,8)}`,
+                description: `Action required for finding: "${editingFinding.finding.itemText}"`,
+                author: user.name, 
+                date: new Date().toISOString(),
+                readBy: [],
+                targetUserId: responsibleUser.id,
+                relatedLink: `/quality/${editingFinding.auditId}`,
+            };
+            const alertsCollection = collection(db, `companies/${company.id}/alerts`);
+            await addDoc(alertsCollection, newAlert);
+        }
     }
+    toast({ title: 'Tasks Assigned', description: `Alerts have been sent to responsible personnel.`});
+    
 
     const auditToUpdate = audits.find(a => a.id === editingFinding.auditId);
     if (!auditToUpdate) return;
     
+    const newCorrectiveActionPlan = {
+        rootCause,
+        actions: actions.map(a => ({ ...a, id: `action-${Date.now()}-${Math.random()}` })),
+    };
+
     const updatedIssues = auditToUpdate.nonConformanceIssues.map(issue => 
-        issue.id === editingFinding.finding.id ? { ...issue, correctiveActionPlan: data } : issue
+        issue.id === editingFinding.finding.id ? { ...issue, correctiveActionPlan: newCorrectiveActionPlan } : issue
     );
 
     onUpdateAudit({ id: auditToUpdate.id, nonConformanceIssues: updatedIssues });
     setEditingFinding(null);
-    setSuggestedCap(null);
     toast({
         title: 'Corrective Action Plan Saved',
         description: 'The CAP has been added to the finding.'
@@ -139,7 +144,6 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
                 {allFindings.length > 0 ? (
                 allFindings.map(item => {
                     const cap = item.finding.correctiveActionPlan;
-                    const isOverdue = cap && cap.status !== 'Closed' && differenceInDays(new Date(), parseISO(cap.completionDate)) > 0;
                     const levelBadge = getFindingLevelBadge(item.finding);
                     
                     return (
@@ -164,12 +168,10 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
                                             <p>{cap.rootCause}</p>
                                         </div>
                                         <div>
-                                            <p className="font-medium text-muted-foreground">Corrective Action</p>
-                                            <p>{cap.correctiveAction}</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-muted-foreground">Preventative Action</p>
-                                            <p>{cap.preventativeAction}</p>
+                                            <p className="font-medium text-muted-foreground">Actions</p>
+                                            <ul className="list-disc pl-5">
+                                              {cap.actions.map(action => <li key={action.id}>{action.action}</li>)}
+                                            </ul>
                                         </div>
                                     </div>
                                 ) : (
@@ -178,18 +180,35 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
                                     </div>
                                 )}
                             </TableCell>
-                            <TableCell>{cap?.responsiblePerson || 'N/A'}</TableCell>
                             <TableCell>
-                                {cap ? (
-                                    <Badge variant={getOverdueVariant(cap.completionDate)}>
-                                        {isOverdue && <Clock className="mr-1 h-3 w-3" />}
-                                        {format(parseISO(cap.completionDate), 'MMM d, yyyy')}
-                                    </Badge>
+                               {cap ? (
+                                    <ul className="text-xs list-disc list-inside">
+                                        {cap.actions.map(action => <li key={action.id}>{action.responsiblePerson}</li>)}
+                                    </ul>
                                 ) : 'N/A'}
                             </TableCell>
                             <TableCell>
                                 {cap ? (
-                                    <Badge variant={getStatusVariant(cap.status)}>{cap.status}</Badge>
+                                     <ul className="text-xs list-disc list-inside">
+                                        {cap.actions.map(action => (
+                                            <li key={action.id}>
+                                                <Badge variant={getOverdueVariant(action.completionDate)}>
+                                                    {action.completionDate ? format(parseISO(action.completionDate), 'MMM d, yyyy') : 'N/A'}
+                                                </Badge>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : 'N/A'}
+                            </TableCell>
+                            <TableCell>
+                                {cap ? (
+                                    <ul className="text-xs list-disc list-inside">
+                                        {cap.actions.map(action => (
+                                            <li key={action.id}>
+                                                <Badge variant={getStatusVariant(action.status)}>{action.status}</Badge>
+                                            </li>
+                                        ))}
+                                    </ul>
                                 ) : (
                                     <Button variant="secondary" size="sm" onClick={() => setEditingFinding(item)}>
                                         <Edit className="mr-2 h-3 w-3" />
@@ -212,7 +231,7 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
             <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </CardContent>
-       <Dialog open={!!editingFinding} onOpenChange={() => { setEditingFinding(null); setSuggestedCap(null); }}>
+       <Dialog open={!!editingFinding} onOpenChange={() => setEditingFinding(null)}>
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>Corrective Action Plan for Finding</DialogTitle>
@@ -227,7 +246,8 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
                     <div className="py-4">
                         <CorrectiveActionPlanForm 
                             onSubmit={handleCapSubmit} 
-                            suggestedCap={suggestedCap}
+                            personnel={personnel}
+                            existingPlan={editingFinding?.finding.correctiveActionPlan}
                         />
                     </div>
                 </ScrollArea>

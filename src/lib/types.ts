@@ -442,107 +442,16 @@ export type CorrectiveAction = {
     id: string;
     action: string;
     responsiblePerson: string;
-    deadline: string;
-    status: 'Not Started' | 'In Progress' | 'Completed';
-    comments?: TaskComment[];
-    extensionRequestReason?: string;
-    requestedDeadline?: string;
-    extensionStatus?: 'Pending' | 'Approved' | 'Rejected' | null;
-}
-
-export type RiskLikelihood = 'Frequent' | 'Occasional' | 'Remote' | 'Improbable' | 'Extremely Improbable';
-export type RiskSeverity = 'Catastrophic' | 'Hazardous' | 'Major' | 'Minor' | 'Negligible';
-export type RiskStatus = 'Open' | 'Mitigated' | 'Closed';
-
-export type Risk = {
-  id: string;
-  companyId: string;
-  description: string;
-  hazard: string;
-  risk: string;
-  consequences: string[];
-  likelihood: RiskLikelihood;
-  severity: RiskSeverity;
-  riskScore: number;
-  residualLikelihood?: RiskLikelihood;
-  residualSeverity?: RiskSeverity;
-  residualRiskScore?: number;
-  mitigation: string;
-  status: RiskStatus;
-  existingMitigation?: string;
-  proposedMitigation?: string;
-  dateIdentified: string;
-  hazardArea: string;
-  process: string;
-  riskOwner?: string;
-  reviewDate?: string;
-  reportNumber?: string;
+    completionDate: string;
+    status: 'Open' | 'Closed' | 'In Progress';
+    isPreventative: boolean;
 };
-
-export type GroupedRisk = {
-  area: string;
-  risks: Risk[];
-};
-
-export type FindingStatus = 'Compliant' | 'Non Compliant' | 'Partial' | 'Not Applicable' | 'Observation';
-export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Finding' | 'Observation' | null;
-
-export type AuditChecklistItem = {
-    id: string;
-    text: string;
-    type?: ChecklistItemType;
-    finding: FindingStatus | null;
-    level: FindingLevel;
-    observation?: string;
-    findingNotes?: string;
-    evidence?: string;
-    regulationReference?: string;
-    reference?: string;
-    comment?: string;
-    photo?: string;
-    suggestedImprovement?: string;
-}
-
-export type AuditArea = string;
-
-export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs' | 'Header';
-
-export type AuditChecklist = {
-    id: string;
-    companyId: string;
-    title: string;
-    department: string;
-    items: AuditChecklistItem[];
-};
-
-export type CompletedChecklistItemResult = {
-    itemId: string;
-    itemText: string;
-    completed: boolean;
-    value?: any;
-};
-
-export type CompletedChecklist = {
-    id: string;
-    aircraftId: string;
-    aircraftTailNumber: string;
-    userId: string;
-    userName: string;
-    dateCompleted: string;
-    type: 'Pre-Flight' | 'Post-Flight';
-    results: any; // Can be PreFlightChecklistFormValues or PostFlightChecklistFormValues
-    bookingNumber?: string;
-};
-
 
 export type CorrectiveActionPlan = {
   rootCause: string;
-  correctiveAction: string;
-  preventativeAction: string;
-  responsiblePerson: string;
-  completionDate: string;
-  status: 'Open' | 'Closed' | 'In Progress';
+  actions: CorrectiveAction[];
 };
+
 
 export type NonConformanceIssue = {
   id: string;
