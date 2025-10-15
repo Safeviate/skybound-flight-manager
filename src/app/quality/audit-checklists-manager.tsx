@@ -112,22 +112,6 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
     const { user } = useUser();
     
     const handleConfirm = () => {
-<<<<<<< HEAD
-        onStart({
-            date: auditDate ? format(auditDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
-            type: auditType,
-            auditor: leadAuditor,
-            auditeeName: auditeeName,
-            area: area,
-            department: department,
-            aircraftInvolved,
-            auditTeam: auditTeam.split(',').map(s => s.trim()).filter(Boolean),
-            auditeeTeam: auditeeTeam.split(',').map(s => s.trim()).filter(Boolean),
-            scope: scope,
-            evidenceReference: evidenceReference,
-        });
-        setIsOpen(false);
-=======
         if (auditDate && user) {
             onStart({
                 date: format(auditDate, 'yyyy-MM-dd'),
@@ -144,7 +128,6 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
             });
             setIsOpen(false);
         }
->>>>>>> c07ba4a7a3d9e240ca50e89c6069f7c49a13b45f
     };
 
     return (
