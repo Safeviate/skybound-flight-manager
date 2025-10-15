@@ -461,7 +461,7 @@ export type NonConformanceIssue = {
   level: FindingLevel;
   comment?: string;
   reference?: string;
-  correctiveActionPlan?: CorrectiveActionPlan | null;
+  correctiveActionPlans?: CorrectiveActionPlan[];
 };
 
 export type QualityAudit = {

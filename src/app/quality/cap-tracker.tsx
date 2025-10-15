@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -8,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { format, parseISO, differenceInDays } from 'date-fns';
-import type { QualityAudit, NonConformanceIssue, CorrectiveAction, User } from '@/lib/types';
+import type { QualityAudit, NonConformanceIssue, CorrectiveActionPlan, CorrectiveAction, User } from '@/lib/types';
 import { AlertTriangle, CheckCircle, Clock, Edit, PlusCircle, Trash2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -76,10 +77,10 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
     }
   }
   
-  const handleCapSubmit = async (rootCause: string, actions: Omit<CorrectiveAction, 'id'>[]) => {
+  const handleCapSubmit = async (newPlan: CorrectiveActionPlan) => {
     if (!editingFinding || !company || !user) return;
 
-    for (const action of actions) {
+    for (const action of newPlan.actions) {
         const responsibleUser = personnel.find(p => p.name === action.responsiblePerson);
         if (responsibleUser) {
             const newAlert: Omit<Alert, 'id' | 'number'> = {
@@ -103,13 +104,12 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
     const auditToUpdate = audits.find(a => a.id === editingFinding.auditId);
     if (!auditToUpdate) return;
     
-    const newCorrectiveActionPlan = {
-        rootCause,
-        actions: actions.map(a => ({ ...a, id: `action-${Date.now()}-${Math.random()}` })),
-    };
+    const existingPlans = editingFinding.finding.correctiveActionPlans || [];
 
     const updatedIssues = auditToUpdate.nonConformanceIssues.map(issue => 
-        issue.id === editingFinding.finding.id ? { ...issue, correctiveActionPlan: newCorrectiveActionPlan } : issue
+        issue.id === editingFinding.finding.id 
+        ? { ...issue, correctiveActionPlans: [...existingPlans, newPlan] } 
+        : issue
     );
 
     onUpdateAudit({ id: auditToUpdate.id, nonConformanceIssues: updatedIssues });
@@ -134,16 +134,15 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
             <TableHeader>
                 <TableRow>
                 <TableHead>Audit</TableHead>
-                <TableHead>Finding &amp; Corrective Action Plan</TableHead>
-                <TableHead>Responsible Person</TableHead>
-                <TableHead>Due Date</TableHead>
+                <TableHead>Finding &amp; Corrective Action Plan(s)</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {allFindings.length > 0 ? (
                 allFindings.map(item => {
-                    const cap = item.finding.correctiveActionPlan;
+                    const caps = item.finding.correctiveActionPlans || [];
                     const levelBadge = getFindingLevelBadge(item.finding);
                     
                     return (
@@ -154,67 +153,52 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
                                     <div className="text-xs text-muted-foreground">{item.auditNumber || item.auditId.substring(0,8) + '...'}</div>
                                 </Link>
                             </TableCell>
-                            <TableCell className="max-w-sm">
+                            <TableCell className="max-w-xl">
                                 <div className="flex items-start gap-2">
                                     <Badge variant={levelBadge.variant}>{levelBadge.text}</Badge>
                                     <p className="font-semibold">{item.finding.itemText}</p>
                                 </div>
                                 <p className="text-xs text-muted-foreground mb-2 pl-8">{item.finding.regulationReference}</p>
                                 <Separator />
-                                {cap ? (
-                                    <div className="space-y-2 mt-2 text-xs">
-                                        <div>
-                                            <p className="font-medium text-muted-foreground">Root Cause</p>
-                                            <p>{cap.rootCause}</p>
+                                {caps.length > 0 ? (
+                                    caps.map((cap, index) => (
+                                        <div key={index} className="space-y-2 mt-2 text-xs border-l-2 pl-4 py-2">
+                                            <div>
+                                                <p className="font-medium text-muted-foreground">Root Cause</p>
+                                                <p>{cap.rootCause}</p>
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-muted-foreground">Actions</p>
+                                                <ul className="list-disc pl-5">
+                                                  {cap.actions.map(action => (
+                                                      <li key={action.id}>
+                                                        {action.action} (
+                                                        <span className="italic">{action.responsiblePerson}, due {format(parseISO(action.completionDate), 'dd MMM yyyy')}</span>
+                                                      )
+                                                      </li>
+                                                  ))}
+                                                </ul>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-medium text-muted-foreground">Actions</p>
-                                            <ul className="list-disc pl-5">
-                                              {cap.actions.map(action => <li key={action.id}>{action.action}</li>)}
-                                            </ul>
-                                        </div>
-                                    </div>
+                                    ))
                                 ) : (
                                     <div className="mt-2 text-xs text-muted-foreground italic">
-                                        Corrective action plan pending.
+                                        No corrective action plans yet.
                                     </div>
                                 )}
                             </TableCell>
                             <TableCell>
-                               {cap ? (
-                                    <ul className="text-xs list-disc list-inside">
-                                        {cap.actions.map(action => <li key={action.id}>{action.responsiblePerson}</li>)}
-                                    </ul>
-                                ) : 'N/A'}
+                                {caps.flatMap(cap => cap.actions).map(action => (
+                                    <div key={action.id} className="mb-1">
+                                        <Badge variant={getStatusVariant(action.status)}>{action.status}</Badge>
+                                    </div>
+                                ))}
                             </TableCell>
-                            <TableCell>
-                                {cap ? (
-                                     <ul className="text-xs list-disc list-inside">
-                                        {cap.actions.map(action => (
-                                            <li key={action.id}>
-                                                <Badge variant={getOverdueVariant(action.completionDate)}>
-                                                    {action.completionDate ? format(parseISO(action.completionDate), 'MMM d, yyyy') : 'N/A'}
-                                                </Badge>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : 'N/A'}
-                            </TableCell>
-                            <TableCell>
-                                {cap ? (
-                                    <ul className="text-xs list-disc list-inside">
-                                        {cap.actions.map(action => (
-                                            <li key={action.id}>
-                                                <Badge variant={getStatusVariant(action.status)}>{action.status}</Badge>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <Button variant="secondary" size="sm" onClick={() => setEditingFinding(item)}>
-                                        <Edit className="mr-2 h-3 w-3" />
-                                        Create CAP
-                                    </Button>
-                                )}
+                            <TableCell className="text-right">
+                                <Button variant="secondary" size="sm" onClick={() => setEditingFinding(item)}>
+                                    <Edit className="mr-2 h-3 w-3" />
+                                    {caps.length > 0 ? 'Edit/Add Plan' : 'Create CAP'}
+                                </Button>
                             </TableCell>
                         </TableRow>
                     )
@@ -236,18 +220,27 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
                 <DialogHeader>
                     <DialogTitle>Corrective Action Plan for Finding</DialogTitle>
                     <DialogDescription asChild>
-                         <div>
+                        <div>
                             <div className="font-medium">{editingFinding?.finding.itemText}</div>
                             <div className="text-xs text-muted-foreground">{editingFinding?.finding.regulationReference}</div>
                         </div>
                     </DialogDescription>
                 </DialogHeader>
-                <ScrollArea className="max-h-[70vh] pr-4">
-                    <div className="py-4">
+                <ScrollArea className="max-h-[70vh]">
+                    <div className="py-4 pr-6">
                         <CorrectiveActionPlanForm 
                             onSubmit={handleCapSubmit} 
                             personnel={personnel}
-                            existingPlan={editingFinding?.finding.correctiveActionPlan}
+                            existingPlans={editingFinding?.finding.correctiveActionPlans}
+                            onUpdatePlans={(updatedPlans) => {
+                                if (!editingFinding) return;
+                                const auditToUpdate = audits.find(a => a.id === editingFinding.auditId);
+                                if (!auditToUpdate) return;
+                                const updatedIssues = auditToUpdate.nonConformanceIssues.map(issue => 
+                                    issue.id === editingFinding.finding.id ? { ...issue, correctiveActionPlans: updatedPlans } : issue
+                                );
+                                onUpdateAudit({ id: auditToUpdate.id, nonConformanceIssues: updatedIssues });
+                            }}
                         />
                     </div>
                 </ScrollArea>

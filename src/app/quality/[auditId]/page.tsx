@@ -343,57 +343,33 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                         <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
                                                         <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
                                                     </div>
-                                                    <Dialog>
-                                                        <DialogTrigger asChild>
-                                                            <Button variant="outline" size="sm" className="no-print">
-                                                                <Bot className="mr-2 h-4 w-4" />
-                                                                AI Analysis
-                                                            </Button>
-                                                        </DialogTrigger>
-                                                        <DialogContent className="sm:max-w-2xl">
-                                                            <QualityAuditAnalyzer 
-                                                                auditText={issueText}
-                                                                onCapSuggested={(cap) => {
-                                                                    setSuggestedCap(cap);
-                                                                    setEditingIssue(issue);
-                                                                }}
-                                                            />
-                                                        </DialogContent>
-                                                    </Dialog>
                                                 </div>
-                                                {issue.correctiveActionPlan ? (
+                                                {issue.correctiveActionPlans && issue.correctiveActionPlans.length > 0 ? (
                                                     <div className="space-y-4">
-                                                        <h4 className="font-semibold text-sm">Corrective Action Plan</h4>
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                                            <div>
-                                                                <p className="font-medium text-muted-foreground">Root Cause</p>
-                                                                <p className="text-justify">{issue.correctiveActionPlan.rootCause}</p>
+                                                        <h4 className="font-semibold text-sm">Corrective Action Plan(s)</h4>
+                                                        {issue.correctiveActionPlans.map((plan, planIndex) => (
+                                                            <div key={planIndex} className="p-3 border rounded-md space-y-2 bg-background">
+                                                                <div>
+                                                                    <p className="font-medium text-muted-foreground text-sm">Root Cause</p>
+                                                                    <p className="text-sm">{plan.rootCause}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-medium text-muted-foreground text-sm">Actions</p>
+                                                                    <ul className="list-disc pl-5 text-sm">
+                                                                        {plan.actions.map(action => (
+                                                                            <li key={action.id} className="mb-1">
+                                                                                <span className={cn(action.status === 'Closed' && "line-through text-muted-foreground")}>
+                                                                                    {action.action}
+                                                                                </span>
+                                                                                <div className="text-xs text-muted-foreground">
+                                                                                    {action.responsiblePerson} - Due: {action.completionDate} - <Badge variant={action.status === 'Closed' ? 'success' : 'warning'} className="h-auto py-0 px-1.5">{action.status}</Badge>
+                                                                                </div>
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                </div>
                                                             </div>
-                                                            <div>
-                                                                <p className="font-medium text-muted-foreground">Corrective Action</p>
-                                                                <p className="text-justify">{issue.correctiveActionPlan.correctiveAction}</p>
-                                                            </div>
-                                                            <div>
-                                                                <p className="font-medium text-muted-foreground">Preventative Action</p>
-                                                                <p className="text-justify">{issue.correctiveActionPlan.preventativeAction}</p>
-                                                            </div>
-                                                        </div>
-                                                        <Table>
-                                                            <TableHeader>
-                                                                <TableRow>
-                                                                    <TableHead>Responsible Person</TableHead>
-                                                                    <TableHead>Due Date</TableHead>
-                                                                    <TableHead>Status</TableHead>
-                                                                </TableRow>
-                                                            </TableHeader>
-                                                            <TableBody>
-                                                                <TableRow>
-                                                                    <TableCell>{issue.correctiveActionPlan.responsiblePerson}</TableCell>
-                                                                    <TableCell>{issue.correctiveActionPlan.completionDate}</TableCell>
-                                                                    <TableCell><Badge variant="outline">{issue.correctiveActionPlan.status}</Badge></TableCell>
-                                                                </TableRow>
-                                                            </TableBody>
-                                                        </Table>
+                                                        ))}
                                                     </div>
                                                 ) : null}
                                             </div>
@@ -791,7 +767,7 @@ export default function QualityAuditDetailPage() {
             level: item.level!,
             comment: item.comment,
             reference: item.reference,
-            correctiveActionPlan: null,
+            correctiveActionPlans: [],
         }));
 
     const finalAudit: QualityAudit = {
