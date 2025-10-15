@@ -46,8 +46,22 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
         setPersonnel(initialPersonnel);
     }, [initialPersonnel]);
 
+    const groupPersonnelByDepartment = (personnelList: PersonnelUser[]) => {
+        return personnelList.reduce((acc, person) => {
+            const department = person.department || 'Uncategorized';
+            if (!acc[department]) {
+                acc[department] = [];
+            }
+            acc[department].push(person);
+            return acc;
+        }, {} as Record<string, PersonnelUser[]>);
+    };
+
     const activePersonnel = useMemo(() => personnel.filter(p => p.status !== 'Archived'), [personnel]);
     const archivedPersonnel = useMemo(() => personnel.filter(p => p.status === 'Archived'), [personnel]);
+    
+    const groupedActivePersonnel = useMemo(() => groupPersonnelByDepartment(activePersonnel), [activePersonnel]);
+    const groupedArchivedPersonnel = useMemo(() => groupPersonnelByDepartment(archivedPersonnel), [archivedPersonnel]);
 
     const fetchPersonnel = async () => {
         if (!company) return;
@@ -147,9 +161,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
 
     const PersonnelCardList = ({ list, isArchived }: { list: PersonnelUser[], isArchived?: boolean }) => (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {list.map(person => {
-                const departmentOrRole = person.department || person.role;
-                return (
+            {list.map(person => (
                 <Card key={person.id} className="flex flex-col">
                     <CardHeader>
                             <div className="flex justify-between items-start">
@@ -161,53 +173,31 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                             </div>
                             {canEdit && (
                                 <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
+                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                     <DropdownMenuContent>
-                                        <DropdownMenuItem onSelect={() => setEditingPersonnel(person)}>
-                                            <Edit className="mr-2 h-4 w-4" /> Edit
-                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => setEditingPersonnel(person)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => handleSendWelcomeEmail(person)}><Mail className="mr-2 h-4 w-4" /> Send Welcome Email</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => handleSendPasswordReset(person)}><KeyRound className="mr-2 h-4 w-4" /> Send Password Reset</DropdownMenuItem>
+                                        <DropdownMenuSeparator />
                                         {isArchived ? (
                                             <>
-                                                <DropdownMenuItem onClick={() => handleStatusChange(person.id, 'Active')}>
-                                                    <RotateCw className="mr-2 h-4 w-4" /> Reactivate
-                                                </DropdownMenuItem>
-                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={() => handleStatusChange(person.id, 'Active')}><RotateCw className="mr-2 h-4 w-4" /> Reactivate</DropdownMenuItem>
                                                 <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
-                                                        </DropdownMenuItem>
-                                                    </AlertDialogTrigger>
+                                                    <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem></AlertDialogTrigger>
                                                     <AlertDialogContent>
                                                         <AlertDialogHeader>
                                                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                This will permanently delete {person.name} from the system. This action cannot be undone.
-                                                            </AlertDialogDescription>
+                                                            <AlertDialogDescription>This will permanently delete {person.name}.</AlertDialogDescription>
                                                         </AlertDialogHeader>
                                                         <AlertDialogFooter>
                                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => handleDeletePersonnel(person.id)}>Yes, Delete Personnel</AlertDialogAction>
+                                                            <AlertDialogAction onClick={() => handleDeletePersonnel(person.id)}>Delete</AlertDialogAction>
                                                         </AlertDialogFooter>
                                                     </AlertDialogContent>
                                                 </AlertDialog>
                                             </>
                                         ) : (
-                                            <>
-                                                <DropdownMenuItem onSelect={() => handleSendWelcomeEmail(person)}>
-                                                    <Mail className="mr-2 h-4 w-4" /> Send Welcome Email
-                                                </DropdownMenuItem>
-                                                 <DropdownMenuItem onSelect={() => handleSendPasswordReset(person)}>
-                                                    <KeyRound className="mr-2 h-4 w-4" /> Send Password Reset
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleStatusChange(person.id, 'Archived')}>
-                                                    <Archive className="mr-2 h-4 w-4" /> Archive
-                                                </DropdownMenuItem>
-                                            </>
+                                            <DropdownMenuItem onClick={() => handleStatusChange(person.id, 'Archived')}><Archive className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
                                         )}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -215,9 +205,9 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-3 text-sm flex-grow">
+                        <p className="font-semibold">{person.department}</p>
+                        <Separator />
                         <div className="space-y-2 text-sm">
-                            <p className="font-semibold">{departmentOrRole}</p>
-                            <Separator />
                             <div className="flex items-center gap-2">
                                     <Mail className="h-4 w-4 text-muted-foreground" />
                                     <span>{person.email || 'No email on file'}</span>
@@ -234,7 +224,14 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                         </Button>
                     </CardFooter>
                 </Card>
-            )})}
+            ))}
+        </div>
+    );
+    
+    const DepartmentGroup = ({ departmentName, personnelList, isArchived }: { departmentName: string, personnelList: PersonnelUser[], isArchived?: boolean }) => (
+        <div className="space-y-4">
+            <h2 className="text-xl font-semibold tracking-tight">{departmentName}</h2>
+            <PersonnelCardList list={personnelList} isArchived={isArchived} />
         </div>
     );
 
@@ -272,11 +269,21 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                     <TabsTrigger value="active">Active Staff ({activePersonnel.length})</TabsTrigger>
                     <TabsTrigger value="archived">Archived Staff ({archivedPersonnel.length})</TabsTrigger>
                 </TabsList>
-                <TabsContent value="active" className="mt-4">
-                    <PersonnelCardList list={activePersonnel} />
+                <TabsContent value="active" className="mt-4 space-y-8">
+                    {Object.keys(groupedActivePersonnel).sort().map(dept => (
+                        <DepartmentGroup key={dept} departmentName={dept} personnelList={groupedActivePersonnel[dept]} />
+                    ))}
+                    {Object.keys(groupedActivePersonnel).length === 0 && (
+                        <div className="text-center text-muted-foreground py-10">No active personnel found.</div>
+                    )}
                 </TabsContent>
-                <TabsContent value="archived" className="mt-4">
-                    <PersonnelCardList list={archivedPersonnel} isArchived />
+                <TabsContent value="archived" className="mt-4 space-y-8">
+                    {Object.keys(groupedArchivedPersonnel).sort().map(dept => (
+                        <DepartmentGroup key={dept} departmentName={dept} personnelList={groupedArchivedPersonnel[dept]} isArchived />
+                    ))}
+                     {Object.keys(groupedArchivedPersonnel).length === 0 && (
+                        <div className="text-center text-muted-foreground py-10">No archived personnel found.</div>
+                    )}
                 </TabsContent>
             </Tabs>
           </CardContent>
