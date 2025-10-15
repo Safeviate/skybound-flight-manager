@@ -120,7 +120,7 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
                 auditeeName: auditeeName,
                 area: area,
                 department: department,
-                aircraftInvolved,
+                aircraftInvolved: aircraftInvolved || null, // Ensure null instead of undefined
                 auditTeam: auditTeam.split(',').map(s => s.trim()).filter(Boolean),
                 auditeeTeam: auditeeTeam.split(',').map(s => s.trim()).filter(Boolean),
                 scope: scope,
