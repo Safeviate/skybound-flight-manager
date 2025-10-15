@@ -29,23 +29,23 @@ interface CapItem {
   auditId: string;
   auditNumber?: string;
   auditTitle: string;
-  finding: NonConformanceIssue;
+  findings: NonConformanceIssue[];
 }
 
 export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: QualityAudit[], personnel: User[], onUpdateAudit: (updatedAudit: Partial<QualityAudit>) => void }) {
   const router = useRouter();
 
-  const allFindings = React.useMemo(() => {
-    return audits
-      .filter(audit => audit.status !== 'Archived' && audit.nonConformanceIssues.length > 0)
-      .flatMap(audit =>
-        (audit.nonConformanceIssues || []).map(issue => ({
-          auditId: audit.id,
-          auditNumber: audit.auditNumber,
-          auditTitle: audit.title,
-          finding: issue,
-        }))
-      );
+  const groupedFindings = React.useMemo(() => {
+    const auditsWithFindings = audits.filter(
+      audit => audit.status !== 'Archived' && audit.nonConformanceIssues && audit.nonConformanceIssues.length > 0
+    );
+
+    return auditsWithFindings.map(audit => ({
+      auditId: audit.id,
+      auditNumber: audit.auditNumber,
+      auditTitle: audit.title,
+      findings: audit.nonConformanceIssues,
+    }));
   }, [audits]);
   
   const getStatusVariant = (status: string | undefined) => {
@@ -69,8 +69,8 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
     }
   }
 
-  const handleManagePlanClick = (item: CapItem) => {
-    router.push(`/quality/cap/${item.auditId}`);
+  const handleManagePlanClick = (auditId: string) => {
+    router.push(`/quality/cap/${auditId}`);
   };
 
 
@@ -88,53 +88,63 @@ export function CapTracker({ audits, personnel, onUpdateAudit }: { audits: Quali
             <Table>
             <TableHeader>
                 <TableRow>
-                <TableHead>Audit</TableHead>
-                <TableHead>Finding &amp; Corrective Action Plan(s)</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="w-1/4">Audit</TableHead>
+                    <TableHead className="w-3/4">Non-Conformance Findings</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {allFindings.length > 0 ? (
-                allFindings.map(item => {
-                    const caps = item.finding.correctiveActionPlans || [];
-                    const levelBadge = getFindingLevelBadge(item.finding);
-                    
+                {groupedFindings.length > 0 ? (
+                groupedFindings.map(item => {
                     return (
-                        <TableRow key={`${item.auditId}-${item.finding.id}`}>
-                            <TableCell>
+                        <TableRow key={item.auditId}>
+                            <TableCell className="align-top py-4">
                                 <Link href={`/quality/${item.auditId}`} className="hover:underline text-primary">
                                     <div className="font-medium">{item.auditTitle}</div>
                                     <div className="text-xs text-muted-foreground">{item.auditNumber || item.auditId.substring(0,8) + '...'}</div>
                                 </Link>
                             </TableCell>
-                            <TableCell className="max-w-xl">
-                                <div className="flex items-start gap-2">
-                                    <Badge variant={levelBadge.variant}>{levelBadge.text}</Badge>
-                                    <p className="font-semibold">{item.finding.itemText}</p>
+                            <TableCell className="p-0">
+                                <div className="divide-y">
+                                    {item.findings.map((finding) => {
+                                        const caps = finding.correctiveActionPlans || [];
+                                        const allActions = caps.flatMap(cap => cap.actions);
+                                        const openActions = allActions.filter(a => a.status === 'Open').length;
+                                        const inProgressActions = allActions.filter(a => a.status === 'In Progress').length;
+                                        let overallStatus = 'No Plan';
+                                        if (allActions.length > 0) {
+                                            if (openActions > 0 || inProgressActions > 0) {
+                                                overallStatus = 'Open';
+                                            } else {
+                                                overallStatus = 'Closed';
+                                            }
+                                        }
+
+                                        return (
+                                            <div key={finding.id} className="flex items-center justify-between p-3">
+                                                <div className="flex items-start gap-2">
+                                                    <Badge variant="outline" className="text-muted-foreground">
+                                                        {finding.regulationReference || 'N/A'}
+                                                    </Badge>
+                                                    <p className="font-semibold whitespace-normal">{finding.itemText}</p>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <Badge variant={getStatusVariant(overallStatus)} className="w-24 justify-center">{overallStatus}</Badge>
+                                                    <Button variant="outline" size="sm" onClick={() => handleManagePlanClick(item.auditId)}>
+                                                        <Edit className="mr-2 h-3 w-3" />
+                                                        Manage Plans
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
                                 </div>
-                                <p className="text-xs text-muted-foreground mb-2 pl-8">{item.finding.regulationReference}</p>
-                            </TableCell>
-                            <TableCell>
-                                {caps.flatMap(cap => cap.actions).map(action => (
-                                    <div key={action.id} className="mb-1">
-                                        <Badge variant={getStatusVariant(action.status)}>{action.status}</Badge>
-                                    </div>
-                                ))}
-                                {caps.length === 0 && <Badge variant="outline">No Plan</Badge>}
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="secondary" size="sm" onClick={() => handleManagePlanClick(item)}>
-                                    <Edit className="mr-2 h-3 w-3" />
-                                    Manage Plans
-                                </Button>
                             </TableCell>
                         </TableRow>
                     )
                 })
                 ) : (
                 <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={2} className="h-24 text-center">
                     No non-conformance findings or corrective action plans found.
                     </TableCell>
                 </TableRow>
