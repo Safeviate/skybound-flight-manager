@@ -151,7 +151,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
   }, [company, toast]);
 
   useEffect(() => {
-    if (personnel) {
+    if (personnel && roles.length > 0 && departments.length > 0) {
         const existingDocs = personnel.documents || [];
         const formDocs = ALL_DOCUMENTS.map(docType => {
             const existing = existingDocs.find(d => d.type === docType);
@@ -177,7 +177,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
             nextOfKinPhone: personnel.nextOfKinPhone || '',
         });
     }
-  }, [personnel, form]);
+  }, [personnel, roles, departments, form]);
 
 
   const selectedRole = form.watch('role');
@@ -186,7 +186,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
     if (selectedRole && roles.length > 0) {
       const roleData = roles.find(r => r.name === selectedRole);
       if (roleData) {
-        form.setValue('permissions', roleData.permissions || []);
+        form.setValue('permissions', roleData.permissions || ROLE_PERMISSIONS[selectedRole as keyof typeof ROLE_PERMISSIONS] || []);
       }
     }
   }, [selectedRole, roles, form]);
@@ -270,3 +270,5 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
     </>
   );
 }
+
+    
