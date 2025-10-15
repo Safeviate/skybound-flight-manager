@@ -1,45 +1,49 @@
 
-
 'use client';
 
 import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, MoreHorizontal, MapPin, Edit, Printer, ArrowUpDown, Search, TrendingUp, AlertTriangle, CheckCircle, Clock, Archive, RotateCw, Shield, FileText, Trash2 } from 'lucide-react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, GroupedRisk, Booking } from '@/lib/types';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
+import { format, parseISO, startOfMonth, differenceInDays, isAfter } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import type { SafetyReport, Risk, GroupedRisk, Department, Booking, ManagementOfChange } from '@/lib/types';
-import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
+import { AuditSchedule } from '../quality/audit-schedule';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
-import { format, parseISO, startOfMonth, differenceInDays } from 'date-fns';
-import Link from 'next/link';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { db } from '@/lib/firebase';
+import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch, deleteDoc, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { REPORT_TYPE_DEPARTMENT_MAPPING } from '@/lib/types';
+import Link from 'next/link';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useTableControls } from '@/hooks/use-table-controls.ts';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, ReferenceLine } from 'recharts';
+import { AuditChecklistsManager } from '../quality/audit-checklists-manager';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { CapTracker } from '../quality/cap-tracker';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { complianceData as seedComplianceData } from '@/lib/data-provider';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { cn } from '@/lib/utils.tsx';
+import { useForm } from 'react-hook-form';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { EditSpiForm, type SpiConfig } from './edit-spi-form';
-import { useRouter } from 'next/navigation';
-import { db } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch, deleteDoc } from 'firebase/firestore';
 import { RiskRegister } from './risk-register';
 import { RiskAssessmentTool } from './[reportId]/risk-assessment-tool';
 import { getSafetyPageData } from './data';
 import { NewMocForm } from './new-moc-form';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
@@ -420,6 +424,7 @@ export function SafetyPageContent({
     initialMoc: ManagementOfChange[],
 }) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const tabFromUrl = searchParams.get('tab');
 
   const [safetyReports, setSafetyReports] = useState<SafetyReport[]>(initialReports);
@@ -430,7 +435,6 @@ export function SafetyPageContent({
   const { user, company, loading } = useUser();
   const { toast } = useToast();
   const [isNewMocOpen, setIsNewMocOpen] = useState(false);
-  const router = useRouter();
   
   const fetchData = React.useCallback(async () => {
     if (!company) return;
@@ -737,13 +741,16 @@ export function SafetyPageContent({
       <main className="flex-1 p-4 md:p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4 no-print">
-            <TabsList className="grid w-full grid-cols-2 md:flex md:w-auto">
-              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-              <TabsTrigger value="reports">Safety Reports</TabsTrigger>
-              <TabsTrigger value="register">Risk Register</TabsTrigger>
-              <TabsTrigger value="spis">SPIs</TabsTrigger>
-              <TabsTrigger value="moc">MOC</TabsTrigger>
-          </TabsList>
+            <ScrollArea className="w-full whitespace-nowrap">
+                <TabsList>
+                    <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                    <TabsTrigger value="reports">Safety Reports</TabsTrigger>
+                    <TabsTrigger value="register">Risk Register</TabsTrigger>
+                    <TabsTrigger value="spis">SPIs</TabsTrigger>
+                    <TabsTrigger value="moc">MOC</TabsTrigger>
+                </TabsList>
+                <ScrollBar orientation="horizontal" />
+            </ScrollArea>
             {activeTab === 'reports' && (
                 <Button asChild className="w-full md:w-auto">
                     <Link href="/safety/new">
