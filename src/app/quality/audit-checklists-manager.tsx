@@ -112,6 +112,7 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
     const { user } = useUser();
     
     const handleConfirm = () => {
+<<<<<<< HEAD
         onStart({
             date: auditDate ? format(auditDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
             type: auditType,
@@ -126,6 +127,24 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
             evidenceReference: evidenceReference,
         });
         setIsOpen(false);
+=======
+        if (auditDate && user) {
+            onStart({
+                date: format(auditDate, 'yyyy-MM-dd'),
+                type: auditType,
+                auditor: leadAuditor,
+                auditeeName: auditeeName,
+                area: area,
+                department: department,
+                aircraftInvolved,
+                auditTeam: auditTeam.split(',').map(s => s.trim()).filter(Boolean),
+                auditeeTeam: auditeeTeam.split(',').map(s => s.trim()).filter(Boolean),
+                scope: scope,
+                evidenceReference: evidenceReference,
+            });
+            setIsOpen(false);
+        }
+>>>>>>> c07ba4a7a3d9e240ca50e89c6069f7c49a13b45f
     };
 
     return (
@@ -333,14 +352,14 @@ export function AuditChecklistsManager({
 
 
     const handleStartAudit = async (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'> & { department?: Department }, template: Checklist) => {
-        if (!company || !user || !data.department) return;
+        if (!company || !user) return;
         
         try {
             const auditsCollection = collection(db, `companies/${company.id}/quality-audits`);
             
-            const deptCode = data.department.substring(0, 2).toUpperCase();
+            const deptCode = data.department ? data.department.substring(0, 2).toUpperCase() : 'GN';
             const typeCode = data.type.substring(0, 1).toUpperCase();
-            const areaCode = data.area.substring(0, 2).toUpperCase();
+            const areaCode = data.area ? data.area.substring(0, 2).toUpperCase() : 'GN';
             const auditPrefix = `${deptCode}-${typeCode}-${areaCode}-`;
 
             const q = query(

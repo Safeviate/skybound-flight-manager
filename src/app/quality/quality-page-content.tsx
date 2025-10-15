@@ -6,7 +6,7 @@ import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -429,11 +429,13 @@ export function QualityPageContent({
     initialAircraft: Aircraft[],
 }) {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const tabFromUrl = searchParams.get('tab');
+
   const [audits, setAudits] = useState<QualityAudit[]>(initialAudits);
   const [schedule, setSchedule] = useState<AuditScheduleItem[]>(initialSchedule);
   const [auditAreas, setAuditAreas] = useState<string[]>(INITIAL_AUDIT_AREAS);
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
   const { user, company, loading } = useUser();
   const { toast } = useToast();
   const [showArchived, setShowArchived] = useState(false);
@@ -449,24 +451,13 @@ export function QualityPageContent({
   
   const reportsControls = useTableControls(activeAudits, {
     initialSort: { key: 'date', direction: 'desc' },
-    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type'],
+    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department'],
   });
   
   const archivedReportsControls = useTableControls(archivedAudits, {
     initialSort: { key: 'date', direction: 'desc' },
-    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type'],
+    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department'],
   });
-
-  const displayedAudits = useMemo(() => {
-    const controls = showArchived ? archivedReportsControls : reportsControls;
-    return controls.items;
-  }, [showArchived, reportsControls, archivedReportsControls]);
-
-
-  useEffect(() => {
-    setSelectedAudits([]);
-  }, [showArchived]);
-
 
   const getStatusVariant = (status: QualityAudit['status']) => {
     switch (status) {
@@ -594,9 +585,9 @@ export function QualityPageContent({
     }
   };
   
-  const handleSelectAll = (checked: boolean) => {
+  const handleSelectAll = (checked: boolean, controls: ReturnType<typeof useTableControls>) => {
     if (checked) {
-        setSelectedAudits(displayedAudits.map(a => a.id));
+        setSelectedAudits(controls.items.map(a => a.id));
     } else {
         setSelectedAudits([]);
     }
@@ -636,30 +627,31 @@ export function QualityPageContent({
     return 'text-red-600';
   };
 
+  const groupAuditsByDepartment = (audits: QualityAudit[]) => {
+    return audits.reduce((acc, audit) => {
+      const department = audit.department || 'Uncategorized';
+      if (!acc[department]) {
+        acc[department] = [];
+      }
+      acc[department].push(audit);
+      return acc;
+    }, {} as Record<string, QualityAudit[]>);
+  };
+  
+  const groupedActiveAudits = useMemo(() => groupAuditsByDepartment(reportsControls.items), [reportsControls.items]);
+  const groupedArchivedAudits = useMemo(() => groupAuditsByDepartment(archivedReportsControls.items), [archivedReportsControls.items]);
 
-  const ReportTable = ({ reports, controls }: { reports: QualityAudit[], controls: ReturnType<typeof useTableControls> }) => {
+
+  const ReportTable = ({ reports, controls, showArchived }: { reports: QualityAudit[], controls: ReturnType<typeof useTableControls>, showArchived: boolean }) => {
     return (
-      <>
-        <div className="flex items-center py-4">
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search audits..."
-              value={controls.searchTerm}
-              onChange={(e) => controls.setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-        <ScrollArea className="w-full whitespace-nowrap rounded-md border">
         <Table>
           <TableHeader>
               <TableRow>
               {showArchived && (
                   <TableHead className="w-12">
                       <Checkbox 
-                          onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
-                          checked={selectedAudits.length > 0 && selectedAudits.length === displayedAudits.length}
+                          onCheckedChange={(checked) => handleSelectAll(Boolean(checked), controls)}
+                          checked={selectedAudits.length > 0 && selectedAudits.length === controls.items.length}
                           aria-label="Select all"
                       />
                   </TableHead>
@@ -676,8 +668,8 @@ export function QualityPageContent({
               </TableRow>
           </TableHeader>
           <TableBody>
-              {controls.items.length > 0 ? (
-                  controls.items.map(audit => (
+              {reports.length > 0 ? (
+                  reports.map(audit => (
                   <TableRow key={audit.id} data-state={selectedAudits.includes(audit.id) && "selected"}>
                       {showArchived && (
                           <TableCell>
@@ -756,16 +748,13 @@ export function QualityPageContent({
                   ))
               ) : (
                   <TableRow>
-                      <TableCell colSpan={showArchived ? 9 : 8} className="text-center h-24">
-                          No audit reports found.
+                      <TableCell colSpan={showArchived ? 10 : 9} className="text-center h-24">
+                          No audit reports found in this department.
                       </TableCell>
                   </TableRow>
               )}
           </TableBody>
         </Table>
-        <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-      </>
     );
   };
 
@@ -833,10 +822,29 @@ export function QualityPageContent({
                             <TabsTrigger value="active" onClick={() => setShowArchived(false)}>Active Audits</TabsTrigger>
                             <TabsTrigger value="archived" onClick={() => setShowArchived(true)}>Archived Audits</TabsTrigger>
                         </TabsList>
-                        <TabsContent value="active" className="mt-4">
-                            <ReportTable reports={activeAudits} controls={reportsControls} />
+                         <div className="flex items-center py-4">
+                            <div className="relative w-full max-w-sm">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                placeholder="Search audits..."
+                                value={showArchived ? archivedReportsControls.searchTerm : reportsControls.searchTerm}
+                                onChange={(e) => showArchived ? archivedReportsControls.setSearchTerm(e.target.value) : reportsControls.setSearchTerm(e.target.value)}
+                                className="pl-10"
+                                />
+                            </div>
+                        </div>
+                        <TabsContent value="active" className="mt-4 space-y-8">
+                             {Object.keys(groupedActiveAudits).sort().map(department => (
+                                <div key={department}>
+                                    <h3 className="text-lg font-semibold mb-2">{department}</h3>
+                                    <ReportTable reports={groupedActiveAudits[department]} controls={reportsControls} showArchived={false} />
+                                </div>
+                            ))}
+                            {Object.keys(groupedActiveAudits).length === 0 && (
+                                <div className="text-center text-muted-foreground py-10">No active reports found.</div>
+                            )}
                         </TabsContent>
-                         <TabsContent value="archived" className="mt-4">
+                         <TabsContent value="archived" className="mt-4 space-y-8">
                             <div className="flex justify-end mb-4">
                                 {selectedAudits.length > 0 && (
                                     <Button variant="outline" onClick={handleBulkRestore}>
@@ -845,7 +853,15 @@ export function QualityPageContent({
                                     </Button>
                                 )}
                             </div>
-                            <ReportTable reports={archivedAudits} controls={archivedReportsControls} />
+                            {Object.keys(groupedArchivedAudits).sort().map(department => (
+                                <div key={department}>
+                                    <h3 className="text-lg font-semibold mb-2">{department}</h3>
+                                    <ReportTable reports={groupedArchivedAudits[department]} controls={archivedReportsControls} showArchived={true} />
+                                </div>
+                            ))}
+                            {Object.keys(groupedArchivedAudits).length === 0 && (
+                                <div className="text-center text-muted-foreground py-10">No archived reports found.</div>
+                            )}
                         </TabsContent>
                     </Tabs>
                   </CardContent>
