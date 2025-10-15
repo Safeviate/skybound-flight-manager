@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -119,7 +120,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
       instructor: existingBooking?.instructor || '',
       maintenanceType: existingBooking?.maintenanceType || '',
       maintenanceStartDate: existingBooking?.maintenanceStartDate || format(selectedDate || new Date(), 'yyyy-MM-dd'),
-      maintenanceEndDate: existingBooking?.maintenanceEndDate || format(selectedDate || new Date(), 'yyyy-MM-dd'),
+      maintenanceEndDate: existingBooking?.maintenanceEndDate || format(addDays(selectedDate || new Date(), 1), 'yyyy-MM-dd'),
       bookingNumber: existingBooking?.bookingNumber || '',
       departure: existingBooking?.departure || '',
       arrival: existingBooking?.arrival || '',

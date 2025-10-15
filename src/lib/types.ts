@@ -1,5 +1,3 @@
-
-
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
@@ -848,5 +846,3 @@ export const HIRE_AND_FLY_DOCUMENTS = [
   "Identification",
   "Passport",
 ] as const;
-
-    
