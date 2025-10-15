@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -19,6 +18,7 @@ import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, addDoc, collection, updateDoc, deleteDoc } from 'firebase/firestore';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 
 const HAZARD_AREAS = [
@@ -110,58 +110,61 @@ export function RiskRegister({ risks, onUpdate }: RiskRegisterProps) {
                 const areaRisks = risks.filter(r => r.hazardArea === area && r.status === 'Open');
                 return (
                     <TabsContent key={area} value={area}>
-                         <Table>
-                            <TableHeader>
-                                <TableRow>
-                                <TableHead className="w-1/4">Hazard</TableHead>
-                                <TableHead className="w-1/4">Risk</TableHead>
-                                <TableHead>Initial Score</TableHead>
-                                <TableHead>Mitigated Score</TableHead>
-                                <TableHead>Level</TableHead>
-                                {canEdit && <TableHead className="text-right">Actions</TableHead>}
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {areaRisks.length > 0 ? (
-                                    areaRisks.map(risk => (
-                                        <TableRow key={risk.id}>
-                                            <TableCell className="font-medium">{risk.hazard}</TableCell>
-                                            <TableCell>{risk.risk}</TableCell>
-                                            <TableCell>
-                                                <Badge style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity, company?.riskMatrixColors), color: 'black' }}>
-                                                    {risk.riskScore}
-                                                </Badge>
-                                            </TableCell>
-                                             <TableCell>
-                                                {risk.residualRiskScore !== undefined ? (
-                                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.residualLikelihood, risk.residualSeverity, company?.riskMatrixColors), color: 'black' }}>
-                                                        {risk.residualRiskScore}
-                                                    </Badge>
-                                                ) : (
-                                                    <Badge variant="outline">N/A</Badge>
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline">{getRiskLevel(risk.residualRiskScore ?? risk.riskScore)}</Badge>
-                                            </TableCell>
-                                            {canEdit && (
-                                                <TableCell className="text-right">
-                                                    <Button variant="ghost" size="sm" onClick={() => openEditDialog(risk)}>
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button>
-                                                </TableCell>
-                                            )}
-                                        </TableRow>
-                                    ))
-                                ) : (
+                         <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+                            <Table>
+                                <TableHeader>
                                     <TableRow>
-                                        <TableCell colSpan={canEdit ? 6 : 5} className="h-24 text-center">
-                                            No open risks in this area.
-                                        </TableCell>
+                                    <TableHead className="w-1/4">Hazard</TableHead>
+                                    <TableHead className="w-1/4">Risk</TableHead>
+                                    <TableHead>Initial Score</TableHead>
+                                    <TableHead>Mitigated Score</TableHead>
+                                    <TableHead>Level</TableHead>
+                                    {canEdit && <TableHead className="text-right">Actions</TableHead>}
                                     </TableRow>
-                                )}
-                            </TableBody>
-                         </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {areaRisks.length > 0 ? (
+                                        areaRisks.map(risk => (
+                                            <TableRow key={risk.id}>
+                                                <TableCell className="font-medium whitespace-normal">{risk.hazard}</TableCell>
+                                                <TableCell className="whitespace-normal">{risk.risk}</TableCell>
+                                                <TableCell>
+                                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity, company?.riskMatrixColors), color: 'black' }}>
+                                                        {risk.riskScore}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {risk.residualRiskScore !== undefined ? (
+                                                        <Badge style={{ backgroundColor: getRiskScoreColor(risk.residualLikelihood, risk.residualSeverity, company?.riskMatrixColors), color: 'black' }}>
+                                                            {risk.residualRiskScore}
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="outline">N/A</Badge>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline">{getRiskLevel(risk.residualRiskScore ?? risk.riskScore)}</Badge>
+                                                </TableCell>
+                                                {canEdit && (
+                                                    <TableCell className="text-right">
+                                                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(risk)}>
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                    </TableCell>
+                                                )}
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={canEdit ? 6 : 5} className="h-24 text-center">
+                                                No open risks in this area.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                            <ScrollBar orientation="horizontal" />
+                         </ScrollArea>
                     </TabsContent>
                 )
             })}
