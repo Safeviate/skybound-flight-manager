@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -35,7 +36,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { cn } from '@/lib/utils.tsx';
+import { cn, getRiskLevel } from '@/lib/utils.tsx';
 import { useForm } from 'react-hook-form';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -401,7 +402,12 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
                             <Bar dataKey="count" name="Number of Risks">
                                 {riskLevelsData.map((entry, index) => {
                                     const score = {Low: 1, Medium: 5, High: 10, Extreme: 4}[entry.name] || 1;
-                                    return <Cell key={`cell-${index}`} fill={getRiskScoreColor(score)} />
+                                    return <Cell key={`cell-${index}`} fill={cn(
+                                        entry.name === 'Low' && 'hsl(var(--success))',
+                                        entry.name === 'Medium' && 'hsl(var(--warning))',
+                                        entry.name === 'High' && 'hsl(var(--orange))',
+                                        entry.name === 'Extreme' && 'hsl(var(--destructive))',
+                                    )} />
                                 })}
                             </Bar>
                         </BarChart>
