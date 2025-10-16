@@ -163,7 +163,7 @@ export const getRiskScoreColorWithOpacity = (score: number | null | undefined, o
 
 // Fatigue Risk Management
 export const calculateFlightHours = (bookings: Booking[], periodInDays: number): number => {
-  const today = startOfDay(new Date('2024-08-15'));
+  const today = startOfDay(new Date());
   const startDate = subDays(today, periodInDays - 1);
   
   const relevantBookings = bookings.filter(booking => {
