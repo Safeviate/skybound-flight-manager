@@ -16,7 +16,7 @@ import { Loader2, AlertTriangle, Calendar as CalendarIcon, Search, Trash2, Edit 
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { format, parseISO, setHours, setMinutes, isBefore, addDays, startOfDay, endOfDay, isWithinInterval, isSameDay, add, sub } from 'date-fns';
+import { format, parseISO, setHours, setMinutes, isBefore, addDays, startOfDay, endOfDay, isWithinInterval, isSameDay, add, sub, isAfter } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useSettings } from '@/context/settings-provider';
@@ -390,7 +390,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 bookingEnd = addDays(bookingEnd, 1);
             }
 
-            // Check if the booking interval overlaps with the Gantt chart view interval
             return isWithinInterval(bookingStart, { start: sub(startOfView, {days: 1}), end: endOfView }) ||
                    isWithinInterval(bookingEnd, { start: startOfView, end: add(endOfView, {days: 1}) }) ||
                    (isBefore(bookingStart, startOfView) && isAfter(bookingEnd, endOfView));
