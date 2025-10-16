@@ -16,7 +16,7 @@ import { Loader2, AlertTriangle, Calendar as CalendarIcon, Search, Trash2, Edit 
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { format, parseISO, setHours, setMinutes, isBefore, addDays, startOfDay, endOfDay, isWithinInterval, isSameDay, add, sub, isAfter } from 'date-fns';
+import { format, parse, parseISO, setHours, setMinutes, isBefore, addDays, startOfDay, endOfDay, isWithinInterval, isSameDay, add, sub, isAfter } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useSettings } from '@/context/settings-provider';
@@ -162,10 +162,15 @@ const GanttChart = ({
         const visibleBookingEnd = isBefore(bookingEnd, viewEnd) ? bookingEnd : viewEnd;
         
         let startTimeToRender;
-        if (isBefore(bookingStart, viewStart)) {
-            startTimeToRender = '06:00';
+        const bookingStartInMinutes = timeToMinutes(format(visibleBookingStart, 'HH:mm'));
+        const slotTimeInMinutes = timeToMinutes(time);
+
+        if (isBefore(bookingStart, viewStart) && time === '06:00') {
+             startTimeToRender = '06:00';
+        } else if (bookingStartInMinutes === slotTimeInMinutes) {
+             startTimeToRender = time;
         } else {
-            startTimeToRender = booking.startTime;
+            return 0;
         }
 
         if (time !== startTimeToRender) return 0;
@@ -395,11 +400,10 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 bookingEnd = addDays(bookingEnd, 1);
             }
             
-            const bookingInterval = { start: bookingStart, end: bookingEnd };
             const viewInterval = { start: sub(startOfView, {days: 1}), end: add(endOfView, {days: 1}) };
 
-            return isWithinInterval(bookingStart, viewInterval) || 
-                   isWithinInterval(bookingEnd, viewInterval) ||
+            return isWithinInterval(bookingStart, { start: sub(startOfView, {days: 1}), end: endOfView }) ||
+                   isWithinInterval(bookingEnd, { start: startOfView, end: add(endOfView, {days: 1}) }) ||
                    (isBefore(bookingStart, startOfView) && isAfter(bookingEnd, endOfView));
         });
     }, [bookings, selectedDate]);
@@ -415,11 +419,9 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             let bookingEnd = parseISO(`${b.endDate || b.date}T${b.endTime}`);
             if (isBefore(bookingEnd, bookingStart)) bookingEnd = addDays(bookingEnd, 1);
 
-            const viewInterval = { start: startOfView, end: endOfView };
-
-            return isWithinInterval(bookingStart, viewInterval) || 
-                   isWithinInterval(bookingEnd, viewInterval) ||
-                   (isBefore(bookingStart, startOfView) && isAfter(bookingEnd, startOfView));
+            return isWithinInterval(bookingStart, { start: sub(startOfView, {days: 1}), end: endOfView }) ||
+                   isWithinInterval(bookingEnd, { start: startOfView, end: add(endOfView, {days: 1}) }) ||
+                   (isBefore(bookingStart, startOfView) && isAfter(bookingEnd, endOfView));
         });
     }, [bookings, selectedDate]);
   
