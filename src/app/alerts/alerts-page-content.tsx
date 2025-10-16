@@ -74,14 +74,21 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         if (editingAlert) {
             const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
             
-            const dataToSave: Partial<Alert> = {
+            const dataToSave = {
                 ...formData,
-                reviewDate: formData.reviewDate instanceof Date ? format(formData.reviewDate, 'yyyy-MM-dd') : null,
-                targetUserId: formData.targetType === 'user' ? formData.targetUserId : null,
-                department: formData.targetType === 'department' ? (formData.department || 'all') : null,
+                reviewDate: formData.reviewDate ? format(formData.reviewDate, 'yyyy-MM-dd') : null,
             };
+
+            // Explicitly set fields to null if they are not part of the current targetType
+            if (dataToSave.targetType === 'user') {
+                dataToSave.department = null;
+            } else {
+                dataToSave.targetUserId = null;
+            }
             
             delete (dataToSave as any).targetType;
+
+            // Ensure no undefined values are being sent to Firestore
             Object.keys(dataToSave).forEach(key => {
                 if (dataToSave[key as keyof typeof dataToSave] === undefined) {
                     delete dataToSave[key as keyof typeof dataToSave];
@@ -136,7 +143,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
                 description: `The "${formData.title}" alert has been issued.`,
             });
     
-            if (newAlertData.reviewerId) {
+            if (newAlertData.reviewerId && newAlertData.reviewerId !== 'none') {
                 const reviewerName = userMap.get(newAlertData.reviewerId) || 'the reviewer';
                 toast({
                     title: 'Reviewer Notified',
@@ -203,7 +210,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     <ScrollArea>
       <Table>
         <TableHeader>
-          <TableRow className="border-b-0">
+          <TableRow>
             <TableHead>Number</TableHead>
             <TableHead>Title</TableHead>
             <TableHead>Department</TableHead>
@@ -278,17 +285,14 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
   );
 
   const DepartmentGroup = ({ title, alerts }: { title: string, alerts: Alert[] }) => (
-    <Collapsible defaultOpen={true} className="space-y-2">
-        <CollapsibleTrigger className="w-full">
-            <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted">
-                <h3 className="text-lg font-semibold">{title} ({alerts.length})</h3>
-                <ChevronDown className="h-5 w-5" />
-            </div>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
+    <Card>
+        <CardHeader>
+            <CardTitle>{title} ({alerts.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
             <AlertTable alerts={alerts} />
-        </CollapsibleContent>
-    </Collapsible>
+        </CardContent>
+    </Card>
   );
 
   const renderTabContent = (alerts: Alert[]) => {
@@ -302,10 +306,8 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
       }
       return (
           <div className="space-y-4">
-              {Object.keys(groupedAlerts).sort().map((department, index) => (
-                  <React.Fragment key={department}>
-                      <DepartmentGroup title={department} alerts={groupedAlerts[department]} />
-                  </React.Fragment>
+              {Object.keys(groupedAlerts).sort().map((department) => (
+                  <DepartmentGroup key={department} title={department} alerts={groupedAlerts[department]} />
               ))}
           </div>
       );
