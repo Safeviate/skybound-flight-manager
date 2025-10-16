@@ -16,7 +16,7 @@ import { Loader2, AlertTriangle, Calendar as CalendarIcon, Search, Trash2, Edit 
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { format, parseISO, setHours, setMinutes, isBefore, addDays, startOfDay, endOfDay, isWithinInterval, isSameDay, add, sub, isAfter } from 'date-fns';
+import { format, parseISO, setHours, setMinutes, isBefore, addDays, startOfDay, endOfDay, isWithinInterval, isSameDay, add, sub, isAfter, startOfYesterday } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useSettings } from '@/context/settings-provider';
@@ -128,9 +128,9 @@ const GanttChart = ({
         const [hours, minutes] = time.split(':').map(Number);
         return hours * 60 + minutes;
     }
-
+    
     const getBookingForSlot = (resourceIdentifier: string, time: string) => {
-        const slotTimeInMinutes = timeToMinutes(time);
+        const slotDateTime = setMinutes(setHours(startOfDay(selectedDate), parseInt(time.split(':')[0], 10)), parseInt(time.split(':')[1], 10));
         
         return bookings.find(b => {
             const bookingResourceIdentifier = b.resourceType === 'facility' ? b.facilityId : b.aircraft;
@@ -139,36 +139,39 @@ const GanttChart = ({
             const bookingStartDateTime = parseISO(`${b.date}T${b.startTime}`);
             let bookingEndDateTime = parseISO(`${b.endDate || b.date}T${b.endTime}`);
             
-            // Adjust for bookings ending at midnight or later
             if (isBefore(bookingEndDateTime, bookingStartDateTime)) {
                 bookingEndDateTime = addDays(bookingEndDateTime, 1);
             }
             
-            const slotDateTime = parseISO(`${selectedDate.toISOString().split('T')[0]}T${time}`);
-
-            // The slot time needs to be adjusted for the next day if it's before 6 AM
-            const slotHour = parseInt(time.split(':')[0], 10);
-            const correctedSlotDateTime = slotHour < 6 
-                ? addDays(slotDateTime, 1)
-                : slotDateTime;
-                
-            return isWithinInterval(correctedSlotDateTime, { start: bookingStartDateTime, end: bookingEndDateTime });
+            const slotDateTimeForCheck = parseInt(time.split(':')[0], 10) < 6 ? addDays(slotDateTime, 1) : slotDateTime;
+            
+            return isWithinInterval(slotDateTimeForCheck, { start: bookingStartDateTime, end: bookingEndDateTime });
         });
     };
 
     const calculateColSpan = (booking: Booking, time: string) => {
-        const slotTimeInMinutes = timeToMinutes(time);
-        let startTimeInMinutes = timeToMinutes(booking.startTime);
+        const viewStart = setHours(startOfDay(selectedDate), 6);
+        const viewEnd = addDays(viewStart, 1);
 
-        if (slotTimeInMinutes !== startTimeInMinutes) return 0;
+        const bookingStart = parseISO(`${booking.date}T${booking.startTime}`);
+        let bookingEnd = parseISO(`${booking.endDate || booking.date}T${booking.endTime}`);
+        if(isBefore(bookingEnd, bookingStart)) bookingEnd = addDays(bookingEnd, 1);
 
-        let endTimeInMinutes = timeToMinutes(booking.endTime);
+        const visibleBookingStart = isAfter(bookingStart, viewStart) ? bookingStart : viewStart;
+        const visibleBookingEnd = isBefore(bookingEnd, viewEnd) ? bookingEnd : viewEnd;
         
-        if (endTimeInMinutes < startTimeInMinutes) { // Overnight booking
-            endTimeInMinutes += 24 * 60;
+        const startTimeInMinutes = timeToMinutes(time);
+        
+        let effectiveStartTimeInMinutes;
+        if (isAfter(bookingStart, viewStart)) {
+            effectiveStartTimeInMinutes = timeToMinutes(booking.startTime);
+        } else {
+            effectiveStartTimeInMinutes = timeToMinutes('06:00');
         }
 
-        const durationInMinutes = endTimeInMinutes - startTimeInMinutes;
+        if (startTimeInMinutes !== effectiveStartTimeInMinutes) return 0;
+        
+        const durationInMinutes = (visibleBookingEnd.getTime() - visibleBookingStart.getTime()) / (1000 * 60);
         return Math.ceil(durationInMinutes / 15);
     };
 
@@ -221,7 +224,15 @@ const GanttChart = ({
                                 if (booking) {
                                     const colSpan = calculateColSpan(booking, time);
                                     if (colSpan > 0) {
-                                        const startTimeInMinutes = timeToMinutes(booking.startTime);
+                                        let startTimeToRender;
+                                        if (isBefore(parseISO(`${booking.date}T${booking.startTime}`), setHours(startOfDay(selectedDate), 6))) {
+                                            startTimeToRender = '06:00';
+                                        } else {
+                                            startTimeToRender = booking.startTime;
+                                        }
+
+                                        const startTimeInMinutes = timeToMinutes(startTimeToRender);
+
                                         for (let i = 1; i < colSpan; i++) {
                                             const nextSlotTimeInMinutes = startTimeInMinutes + i * 15;
                                             const nextHour = Math.floor(nextSlotTimeInMinutes / 60) % 24;
@@ -299,7 +310,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         if (!ac) return { className: 'bg-gray-500', isClickable: false };
 
         const todaysAircraftBookings = bookings
-            .filter(b => b.aircraft === ac.tailNumber && isWithinInterval(startOfDay(parseISO(b.date)), { start: startOfDay(selectedDate), end: endOfDay(selectedDate) }) && b.status !== 'Cancelled')
+            .filter(b => b.aircraft === ac.tailNumber && isSameDay(parseISO(b.date), selectedDate) && b.status !== 'Cancelled')
             .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
         
         const activeBookingForAircraft = todaysAircraftBookings.find(b => b.status !== 'Completed');
@@ -378,8 +389,9 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
     const dailyAircraftBookings = useMemo(() => {
         const startOfView = setHours(startOfDay(selectedDate), 6);
-        const endOfView = setMinutes(setHours(addDays(startOfDay(selectedDate), 1), 5), 59);
-
+        const endOfView = addDays(startOfView, 1);
+        const viewInterval = { start: startOfView, end: endOfView };
+        
         return bookings.filter(b => {
             if (b.status === 'Cancelled' || !b.date || b.resourceType !== 'aircraft') return false;
             
@@ -390,15 +402,16 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 bookingEnd = addDays(bookingEnd, 1);
             }
 
-            return isWithinInterval(bookingStart, { start: sub(startOfView, {days: 1}), end: endOfView }) ||
-                   isWithinInterval(bookingEnd, { start: startOfView, end: add(endOfView, {days: 1}) }) ||
-                   (isBefore(bookingStart, startOfView) && isAfter(bookingEnd, endOfView));
+            return isWithinInterval(bookingStart, viewInterval) || 
+                   isWithinInterval(bookingEnd, viewInterval) ||
+                   (isBefore(bookingStart, startOfView) && isAfter(bookingEnd, startOfView));
         });
     }, [bookings, selectedDate]);
 
     const dailyFacilityBookings = useMemo(() => {
         const startOfView = setHours(startOfDay(selectedDate), 6);
-        const endOfView = setMinutes(setHours(addDays(startOfDay(selectedDate), 1), 5), 59);
+        const endOfView = addDays(startOfView, 1);
+        const viewInterval = { start: startOfView, end: endOfView };
 
         return bookings.filter(b => {
             if (b.status === 'Cancelled' || !b.date || b.resourceType !== 'facility') return false;
@@ -407,9 +420,9 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             let bookingEnd = parseISO(`${b.endDate || b.date}T${b.endTime}`);
             if (isBefore(bookingEnd, bookingStart)) bookingEnd = addDays(bookingEnd, 1);
 
-            return isWithinInterval(bookingStart, { start: sub(startOfView, {days: 1}), end: endOfView }) ||
-                   isWithinInterval(bookingEnd, { start: startOfView, end: add(endOfView, {days: 1}) }) ||
-                   (isBefore(bookingStart, startOfView) && isAfter(bookingEnd, endOfView));
+            return isWithinInterval(bookingStart, viewInterval) || 
+                   isWithinInterval(bookingEnd, viewInterval) ||
+                   (isBefore(bookingStart, startOfView) && isAfter(bookingEnd, startOfView));
         });
     }, [bookings, selectedDate]);
   
@@ -425,11 +438,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         if ('id' in data) { // This is an existing booking
              const collectionName = data.resourceType === 'facility' ? 'facility-bookings' : 'aircraft-bookings';
              const bookingRef = doc(db, `companies/${company.id}/${collectionName}`, data.id);
-             batch.update(bookingRef, data as Partial<Booking>);
+             batch.update(bookingRef, { ...data, endDate: data.endDate || null });
              toast({ title: 'Booking Updated', description: 'The booking has been successfully updated.' });
         } else { // This is a new booking
             const newBookingId = doc(collection(db, 'temp')).id;
-            let bookingData: any = { ...data, id: newBookingId, companyId: company.id, status: 'Approved' as const };
+            let bookingData: any = { ...data, id: newBookingId, companyId: company.id, status: 'Approved' as const, endDate: data.endDate || null };
             
             const collectionName = bookingData.resourceType === 'facility' ? 'facility-bookings' : 'aircraft-bookings';
 
