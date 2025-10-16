@@ -16,7 +16,7 @@ import { Loader2, AlertTriangle, Calendar as CalendarIcon, Search, Trash2, Edit 
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { format, parseISO, setHours, setMinutes, isBefore, addDays, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
+import { format, parseISO, setHours, setMinutes, isBefore, addDays, startOfDay, endOfDay, isWithinInterval, isSameDay } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useSettings } from '@/context/settings-provider';
@@ -135,17 +135,40 @@ const GanttChart = ({
             const bookingResourceIdentifier = b.resourceType === 'facility' ? b.facilityId : b.aircraft;
             if (bookingResourceIdentifier !== resourceIdentifier) return false;
             if (b.status === 'Cancelled') return false; 
-            const startTimeInMinutes = timeToMinutes(b.startTime);
-            const endTimeInMinutes = timeToMinutes(b.endTime);
-            return slotTimeInMinutes >= startTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
+            
+            const bookingDate = parseISO(b.date);
+            const isBookingForSelectedDate = isSameDay(bookingDate, selectedDate);
+            const isBookingOvernightFromPrevious = b.endDate && !isSameDay(bookingDate, parseISO(b.endDate)) && isSameDay(selectedDate, parseISO(b.endDate));
+
+            let startTimeInMinutes = timeToMinutes(b.startTime);
+            let endTimeInMinutes = timeToMinutes(b.endTime);
+
+            if (isBookingOvernightFromPrevious) {
+                startTimeInMinutes = 0; // Starts at midnight
+            }
+            
+            if (isBookingForSelectedDate || isBookingOvernightFromPrevious) {
+                return slotTimeInMinutes >= startTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
+            }
+            
+            return false;
         });
     };
 
     const calculateColSpan = (booking: Booking, time: string) => {
-        const startTimeInMinutes = timeToMinutes(booking.startTime);
+        let startTimeInMinutes = timeToMinutes(booking.startTime);
         const slotTimeInMinutes = timeToMinutes(time);
+        const bookingDate = parseISO(booking.date);
+
+        const isOvernightFromPrevious = booking.endDate && !isSameDay(bookingDate, parseISO(booking.endDate)) && isSameDay(selectedDate, parseISO(booking.endDate));
+
+        if (isOvernightFromPrevious) {
+            startTimeInMinutes = 0; // Starts at midnight for the Gantt chart
+        }
+
         if (startTimeInMinutes !== slotTimeInMinutes) return 0;
-        const endTimeInMinutes = timeToMinutes(booking.endTime);
+
+        let endTimeInMinutes = timeToMinutes(booking.endTime);
         const durationInMinutes = endTimeInMinutes - startTimeInMinutes;
         return Math.ceil(durationInMinutes / 15);
     };
@@ -355,25 +378,50 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 }, [company, toast]);
 
     const dailyAircraftBookings = useMemo(() => {
-        return bookings.filter(b => {
-            if (b.status === 'Cancelled' || !b.date) return false;
-            if (b.resourceType && b.resourceType === 'facility') return false;
+        const dailyBookings: Booking[] = [];
+        bookings.forEach(b => {
+            if (b.status === 'Cancelled' || !b.date) return;
+            if (b.resourceType === 'facility') return;
+
+            const bookingStart = parseISO(b.date);
+            if (isSameDay(selectedDate, bookingStart)) {
+                dailyBookings.push(b);
+            }
             
-            const bookingStart = startOfDay(parseISO(b.date));
-            const bookingEnd = b.endDate ? endOfDay(parseISO(b.endDate)) : endOfDay(bookingStart);
-            
-            return isWithinInterval(selectedDate, { start: bookingStart, end: bookingEnd });
+            if (b.endDate && !isSameDay(bookingStart, parseISO(b.endDate))) {
+                const bookingEnd = parseISO(b.endDate);
+                 if (isSameDay(selectedDate, bookingEnd)) {
+                    // This booking ends today, but started yesterday.
+                    // Create a "phantom" booking for today's part of the event.
+                    dailyBookings.push({
+                        ...b,
+                        startTime: '00:00',
+                    });
+                }
+            }
         });
+        return dailyBookings;
     }, [bookings, selectedDate]);
 
     const dailyFacilityBookings = useMemo(() => {
-        return bookings.filter(b => {
-            if (b.status === 'Cancelled' || !b.date) return false;
-            if (b.resourceType !== 'facility') return false;
-            const bookingStart = startOfDay(parseISO(b.date));
-            const bookingEnd = b.endDate ? endOfDay(parseISO(b.endDate)) : endOfDay(bookingStart);
-            return isWithinInterval(selectedDate, { start: bookingStart, end: bookingEnd });
+        const dailyBookings: Booking[] = [];
+        bookings.forEach(b => {
+            if (b.status === 'Cancelled' || !b.date) return;
+            if (b.resourceType !== 'facility') return;
+
+            const bookingStart = parseISO(b.date);
+            if (isSameDay(selectedDate, bookingStart)) {
+                dailyBookings.push(b);
+            }
+            
+            if (b.endDate && !isSameDay(bookingStart, parseISO(b.endDate))) {
+                const bookingEnd = parseISO(b.endDate);
+                 if (isSameDay(selectedDate, bookingEnd)) {
+                    dailyBookings.push({ ...b, startTime: '00:00' });
+                }
+            }
         });
+        return dailyBookings;
     }, [bookings, selectedDate]);
   
   const handleBookingSubmit = async (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking, studentRef?: any, logEntry?: TrainingLogEntry) => {
