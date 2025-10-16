@@ -32,7 +32,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 const alertFormSchema = z.object({
-  type: z.enum(['Red Tag', 'Yellow Tag'], {
+  type: z.enum(['Red Tag', 'Yellow Tag', 'General Notice'], {
     required_error: 'Please select an alert type.',
   }),
   title: z.string().min(5, {
@@ -102,7 +102,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
   useEffect(() => {
     if (existingAlert) {
       form.reset({
-        type: existingAlert.type as 'Red Tag' | 'Yellow Tag',
+        type: existingAlert.type as 'Red Tag' | 'Yellow Tag' | 'General Notice',
         title: existingAlert.title,
         department: existingAlert.department,
         reviewerId: existingAlert.reviewerId,
@@ -190,6 +190,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
                     <SelectContent>
                       <SelectItem value="Red Tag">Red Tag (High Priority)</SelectItem>
                       <SelectItem value="Yellow Tag">Yellow Tag (Standard Priority)</SelectItem>
+                      <SelectItem value="General Notice">General Notice / SOP</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

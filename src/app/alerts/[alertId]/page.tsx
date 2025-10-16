@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -29,6 +30,7 @@ const getAlertIcon = (type: Alert['type']) => {
     switch (type) {
         case 'Red Tag': return <AlertTriangle className="h-6 w-6 text-destructive" />;
         case 'Yellow Tag': return <Info className="h-6 w-6 text-yellow-600" />;
+        case 'General Notice': return <BellRing className="h-6 w-6 text-primary" />;
         default: return <BellRing className="h-6 w-6 text-primary" />;
     }
 }

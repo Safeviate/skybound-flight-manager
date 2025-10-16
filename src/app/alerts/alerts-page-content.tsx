@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -178,6 +179,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
 
   const redTagAlerts = alerts.filter(alert => alert.type === 'Red Tag');
   const yellowTagAlerts = alerts.filter(alert => alert.type === 'Yellow Tag');
+  const generalNotices = alerts.filter(alert => alert.type === 'General Notice');
   
   const AlertTable = ({ alerts }: { alerts: Alert[] }) => (
     <ScrollArea>
@@ -304,6 +306,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
                 <TabsList>
                     <TabsTrigger value="red-tags">Red Tags ({redTagAlerts.length})</TabsTrigger>
                     <TabsTrigger value="yellow-tags">Yellow Tags ({yellowTagAlerts.length})</TabsTrigger>
+                    <TabsTrigger value="general-notices">General Notices ({generalNotices.length})</TabsTrigger>
                 </TabsList>
                 <TabsContent value="red-tags" className="pt-4">
                     {redTagAlerts.length > 0 ? (
@@ -320,6 +323,15 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
                     ) : (
                         <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
                             <p className="text-muted-foreground">No active Yellow Tag alerts.</p>
+                        </div>
+                    )}
+                </TabsContent>
+                <TabsContent value="general-notices" className="pt-4">
+                    {generalNotices.length > 0 ? (
+                        <AlertTable alerts={generalNotices} />
+                    ) : (
+                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                            <p className="text-muted-foreground">No active General Notices.</p>
                         </div>
                     )}
                 </TabsContent>

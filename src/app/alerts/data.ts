@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -9,7 +10,7 @@ export async function getAlertsPageData(companyId: string) {
     // Only fetch Red Tag and Yellow Tag alerts for the main alerts page
     const alertsQuery = query(
         collection(db, `companies/${companyId}/alerts`), 
-        where('type', 'in', ['Red Tag', 'Yellow Tag']),
+        where('type', 'in', ['Red Tag', 'Yellow Tag', 'General Notice']),
         orderBy('date', 'desc')
     );
     

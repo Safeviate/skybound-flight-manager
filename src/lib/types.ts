@@ -514,7 +514,7 @@ export type Alert = {
   id: string;
   companyId?: string;
   number?: number;
-  type: 'Red Tag' | 'Yellow Tag' | 'Task' | 'Signature Request' | 'System Health';
+  type: 'Red Tag' | 'Yellow Tag' | 'General Notice' | 'Task' | 'Signature Request' | 'System Health';
   title: string;
   description?: string; // This is now optional as it's replaced by more specific fields
   author: string;
@@ -756,3 +756,13 @@ export const HIRE_AND_FLY_DOCUMENTS = [
   "Identification",
   "Passport",
 ] as const;
+
+export type RiskLikelihood = 'Frequent' | 'Occasional' | 'Remote' | 'Improbable' | 'Extremely Improbable';
+export type RiskSeverity = 'Catastrophic' | 'Hazardous' | 'Major' | 'Minor' | 'Negligible';
+export type RiskStatus = 'Open' | 'Mitigated' | 'Closed';
+export type AuditArea = 'Personnel' | 'Maintenance' | 'Facilities' | 'Records' | 'Management' | 'Ground Ops' | 'Cabin Safety' | 'Security' | 'Occupational Safety' | 'Administration & Management';
+export type FindingStatus = 'Compliant' | 'Non Compliant' | 'Partial' | 'Not Applicable' | 'Observation';
+export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Finding' | 'Observation' | null;
+export type ChecklistCategory = 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
+export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs' | 'Header';
+export type AuditChecklistItem = { id: string; text: string; finding: FindingStatus | null; level: FindingLevel; observation?: string; findingNotes?: string; evidence?: string; regulationReference?: string; reference?: string; comment?: string; photo?: string; suggestedImprovement?: string; type?: ChecklistItemType; };
