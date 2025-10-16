@@ -74,21 +74,23 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         const updatedAlertData = {
           ...editingAlert,
           ...formData,
-          reviewDate: formData.reviewDate ? format(parseISO(formData.reviewDate as unknown as string), 'yyyy-MM-dd') : null,
+          reviewDate: formData.reviewDate ? format(formData.reviewDate as Date, 'yyyy-MM-dd') : null,
           targetUserId: formData.targetType === 'user' ? formData.targetUserId : null,
           department: formData.targetType === 'department' ? (formData.department || 'all') : null,
         };
-
+  
         // Clean up the object before saving
         delete (updatedAlertData as any).targetType;
-        Object.keys(updatedAlertData).forEach(key => {
-            if (updatedAlertData[key as keyof typeof updatedAlertData] === undefined) {
-                delete updatedAlertData[key as keyof typeof updatedAlertData];
+        
+        const finalDataToSave: Record<string, any> = {};
+        for (const key in updatedAlertData) {
+            if (updatedAlertData[key as keyof typeof updatedAlertData] !== undefined) {
+                finalDataToSave[key] = updatedAlertData[key as keyof typeof updatedAlertData];
             }
-        });
+        }
   
         const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
-        await updateDoc(alertRef, updatedAlertData as any);
+        await updateDoc(alertRef, finalDataToSave);
         
         setAlerts(prev => prev.map(a => a.id === editingAlert.id ? updatedAlertData : a));
         toast({
@@ -97,7 +99,6 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         });
 
       } else {
-        // ... (rest of the creation logic, which is correct)
         const alertsCollection = collection(db, 'companies', company.id, 'alerts');
         
         const q = query(
@@ -117,7 +118,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
             author: user.name,
             date: new Date().toISOString(),
             readBy: [],
-            reviewDate: formData.reviewDate ? format(parseISO(formData.reviewDate as unknown as string), 'yyyy-MM-dd') : null,
+            reviewDate: formData.reviewDate ? format(formData.reviewDate as Date, 'yyyy-MM-dd') : null,
             targetUserId: formData.targetType === 'user' ? formData.targetUserId : null,
             department: formData.targetType === 'department' ? (formData.department || 'all') : null,
         };
