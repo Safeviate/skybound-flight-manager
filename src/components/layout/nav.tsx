@@ -129,8 +129,18 @@ export default function Nav() {
   }
 
   const getIsActive = (href: string) => {
-    if (href === '/' || href === '/settings') {
+    // For the root dashboard, we want an exact match.
+    if (href === '/my-dashboard' || href === '/dashboard') {
         return pathname === href;
+    }
+    // For other parent routes, we check if the current path starts with the href.
+    // We also ensure it's not a more specific route that also starts with the same href.
+    if (pathname.startsWith(href) && href !== '/') {
+        // If there's another, more specific nav item that also matches, this one isn't active.
+        const moreSpecificItem = navItems.find(item => 
+            item.href.startsWith(href) && item.href.length > href.length && pathname.startsWith(item.href)
+        );
+        return !moreSpecificItem || pathname === href;
     }
     return pathname.startsWith(href);
   };

@@ -1,13 +1,14 @@
 
+
 'use client';
 
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { User, Booking } from '@/lib/types';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { MyProfilePageContent } from './my-profile-page-content';
+import { MyProfilePageContent } from './my-profile-page';
 
 function MyProfilePage() {
     const { user, company, loading: userLoading } = useUser();
@@ -18,28 +19,32 @@ function MyProfilePage() {
     useEffect(() => {
         if (!userLoading && !user) {
             router.push('/login');
+            return;
         }
-    }, [user, userLoading, router]);
+        if (userLoading) {
+            return;
+        }
 
-    useEffect(() => {
-        const fetchBookings = async () => {
-            if (!company || !user) return;
+        const fetchBookings = () => {
+            if (!company || !user) return () => {};
             setLoading(true);
-            try {
-                const bookingsQuery = query(collection(db, `companies/${company.id}/aircraft-bookings`), where('instructor', '==', user.name));
-                const snapshot = await getDocs(bookingsQuery);
+            const bookingsQuery = query(collection(db, `companies/${company.id}/aircraft-bookings`), where('instructor', '==', user.name));
+            const unsubscribe = onSnapshot(bookingsQuery, (snapshot) => {
                 setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking)));
-            } catch (error) {
-                console.error("Failed to fetch instructor bookings:", error);
-            } finally {
                 setLoading(false);
-            }
+            }, (error) => {
+                console.error("Failed to fetch instructor bookings:", error);
+                setLoading(false);
+            });
+            return unsubscribe;
         };
 
-        if (user && company) {
-            fetchBookings();
-        }
-    }, [user, company]);
+        const unsubscribe = fetchBookings();
+
+        return () => {
+            if(unsubscribe) unsubscribe();
+        };
+    }, [user, company, userLoading, router]);
 
 
     if (userLoading || loading || !user) {

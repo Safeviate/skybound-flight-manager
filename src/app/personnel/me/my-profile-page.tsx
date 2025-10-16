@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
@@ -31,6 +32,7 @@ import { StandardCamera } from '@/components/ui/standard-camera';
 import { useToast } from '@/hooks/use-toast';
 import { updatePassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { ALL_DOCUMENTS } from '@/lib/types';
 
 const formatDecimalTime = (decimalHours: number | undefined) => {
     if (typeof decimalHours !== 'number' || isNaN(decimalHours)) {
@@ -118,15 +120,18 @@ const ProfileDialog = ({ user, isOpen, onOpenChange, updateUser }: { user: User,
 
     const getCombinedDocuments = useCallback(() => {
         if (!user) return [];
-        const requiredDocTypes = new Set(user.requiredDocuments || []);
+        const requiredDocTypes = new Set(ALL_DOCUMENTS);
         const existingDocs = user.documents || [];
         const combined = new Map<string, UserDocument>();
+        
         requiredDocTypes.forEach(type => {
             const existing = existingDocs.find(d => d.type === type);
             if (existing) { combined.set(type, existing); } 
             else { combined.set(type, { id: `new-${type}-${Date.now()}`, type, expiryDate: null }); }
         });
+        
         existingDocs.forEach(doc => { if (!combined.has(doc.type)) { combined.set(doc.type, doc); } });
+        
         return Array.from(combined.values());
     }, [user]);
 
@@ -158,7 +163,7 @@ const ProfileDialog = ({ user, isOpen, onOpenChange, updateUser }: { user: User,
             nextOfKinName: data.nextOfKinName, nextOfKinPhone: data.nextOfKinPhone,
             nextOfKinEmail: data.nextOfKinEmail, documents: updatedDocs as UserDocument[],
         });
-        if (success) { toast({ title: 'Profile Updated' }); }
+        if (success) { toast({ title: 'Profile Updated' }); onOpenChange(false); }
         else { toast({ variant: 'destructive', title: 'Update Failed' }); }
     };
     
@@ -169,6 +174,7 @@ const ProfileDialog = ({ user, isOpen, onOpenChange, updateUser }: { user: User,
             await updatePassword(currentUser, data.newPassword);
             toast({ title: 'Password Updated'});
             passwordForm.reset();
+            onOpenChange(false);
         } catch (error) { toast({ variant: 'destructive', title: 'Error', description: 'Failed to update password.' }); }
     };
 
@@ -264,14 +270,15 @@ const ProfileDialog = ({ user, isOpen, onOpenChange, updateUser }: { user: User,
     );
 }
 
-export function MyProfilePageContent({ user, bookings }: { user: User; bookings: Booking[] }) {
+export function MyProfilePageContent({ user: initialUser, bookings: initialBookings }: { user: User; bookings: Booking[] }) {
+  const { user, updateUser, company, loading: userLoading } = useUser();
   const { settings } = useSettings();
-  const { updateUser } = useUser();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const instructorLogbookEntries = useMemo(() => {
-    return bookings
-      .filter(booking => booking.status === 'Completed' && booking.instructor === user.name)
+    if (!initialUser || !initialBookings) return [];
+    return initialBookings
+      .filter(booking => booking.status === 'Completed' && booking.instructor === initialUser.name)
       .map(booking => ({
         id: booking.id, date: booking.date, aircraft: booking.aircraft,
         student: booking.student || 'N/A', flightDuration: booking.flightDuration || 0,
@@ -279,11 +286,11 @@ export function MyProfilePageContent({ user, bookings }: { user: User; bookings:
         trainingExercise: booking.trainingExercise || 'N/A',
       }))
       .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
-  }, [bookings, user.name]);
+  }, [initialBookings, initialUser]);
 
   const handleDownloadLogbook = () => {
     const doc = new jsPDF({ orientation: 'landscape' });
-    doc.setFontSize(16); doc.text(`Instructor Logbook: ${user.name}`, 14, 15);
+    doc.setFontSize(16); doc.text(`Instructor Logbook: ${user?.name}`, 14, 15);
     doc.setFontSize(10); doc.text(`Generated on: ${format(new Date(), 'PPP')}`, 14, 22);
 
     const tableBody = instructorLogbookEntries.map(log => [
@@ -297,8 +304,12 @@ export function MyProfilePageContent({ user, bookings }: { user: User; bookings:
         body: tableBody, theme: 'grid', headStyles: { fillColor: [22, 163, 74] },
     });
     
-    doc.save(`${user.name.replace(/\s+/g, '_')}_instructor_logbook.pdf`);
+    doc.save(`${user?.name.replace(/\s+/g, '_')}_instructor_logbook.pdf`);
   };
+  
+  if (!user) {
+    return null;
+  }
   
   return (
     <>
