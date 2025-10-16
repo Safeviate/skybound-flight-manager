@@ -519,7 +519,7 @@ export function AuditChecklistsManager({
                  ))}
             </CardContent>
              <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
-                <DialogContent className="sm:max-w-3xl">
+                <DialogContent className="sm:max-w-5xl">
                     <DialogHeader>
                         <DialogTitle>{editingTemplate ? 'Edit Checklist Template' : 'Create New Checklist Template'}</DialogTitle>
                     </DialogHeader>
