@@ -7,7 +7,7 @@ import type { Alert as AlertType, Booking, SafetyReport, QualityAudit, User as S
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle, Shield, ListChecks, Calendar, Plane, Clock, UserCheck, BellRing, Inbox, Check, AlertTriangle, MessageSquare, Signature } from 'lucide-react';
+import { PlusCircle, Shield, ListChecks, Calendar as CalendarIcon, Plane, Clock, UserCheck, BellRing, Inbox, Check, AlertTriangle, MessageSquare, Signature } from 'lucide-react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
