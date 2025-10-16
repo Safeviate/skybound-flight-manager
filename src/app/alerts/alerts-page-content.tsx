@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { AlertTriangle, Info, ChevronRight, PlusCircle, Users, MoreHorizontal, Trash2, Check, Edit, Printer, Eye } from 'lucide-react';
+import { AlertTriangle, Info, ChevronRight, PlusCircle, Users, MoreHorizontal, Trash2, Check, Edit, Printer, Eye, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Alert, User, AlertAcknowledgement, Department } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { NewAlertForm } from './new-alert-form';
 import { format, parseISO } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, limit, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import Link from 'next/link';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 
 const getAlertVariant = (type: Alert['type']) => {
     switch (type) {
@@ -70,23 +71,20 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
   
     try {
       if (editingAlert) {
-        const updatedAlertData: Partial<Alert> = {
+        const finalDataToSave: Record<string, any> = {
           ...formData,
           reviewDate: formData.reviewDate ? format(formData.reviewDate, 'yyyy-MM-dd') : null,
-          targetUserId: formData.targetType === 'user' ? formData.targetUserId : null,
-          department: formData.targetType === 'department' ? (formData.department || 'all') : null,
         };
-  
-        // Clean up the object before saving
-        delete (updatedAlertData as any).targetType;
         
-        const finalDataToSave: Record<string, any> = {};
-        for (const key in updatedAlertData) {
-            if (updatedAlertData[key as keyof typeof updatedAlertData] !== undefined) {
-                finalDataToSave[key] = updatedAlertData[key as keyof typeof updatedAlertData];
-            }
+        if (formData.targetType === 'department') {
+            finalDataToSave.department = formData.department || 'all';
+            finalDataToSave.targetUserId = null;
+        } else {
+            finalDataToSave.department = null;
+            finalDataToSave.targetUserId = formData.targetUserId;
         }
-  
+        delete finalDataToSave.targetType;
+
         const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
         await updateDoc(alertRef, finalDataToSave);
         
@@ -151,53 +149,20 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     }
   }
 
-  const handleSaveProgress = async (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => {
-    if (!user || !company) return;
-
-    try {
-        const alertsCollection = collection(db, 'companies', company.id, 'alerts');
-        const q = query(alertsCollection, where('type', '==', data.type), orderBy('number', 'desc'), limit(1));
-        const querySnapshot = await getDocs(q);
-        const lastAlert = querySnapshot.empty ? null : querySnapshot.docs[0].data() as Alert;
-        const newAlertNumber = (lastAlert?.number || 0) + 1;
-
-        const newAlertData: Omit<Alert, 'id'> = {
-            ...data,
-            companyId: company.id,
-            number: newAlertNumber,
-            author: user.name,
-            date: new Date().toISOString(),
-            readBy: [],
-        };
-        
-        if (newAlertData.department === 'all') {
-            delete (newAlertData as any).department;
-        }
-
-        const docRef = await addDoc(alertsCollection, newAlertData);
-        const newAlert = { ...newAlertData, id: docRef.id } as Alert;
-        
-        setAlerts(prev => [newAlert, ...prev]);
-        setEditingAlert(newAlert); // Keep it in edit mode
-        
-        toast({
-            title: 'Progress Saved',
-            description: `Your draft alert "${data.title}" has been saved. You can continue editing.`,
-        });
-    } catch (error) {
-        console.error("Error saving alert progress:", error);
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Failed to save the alert draft.'
-        });
-    }
-  }
-
-
   const redTagAlerts = alerts.filter(alert => alert.type === 'Red Tag');
   const yellowTagAlerts = alerts.filter(alert => alert.type === 'Yellow Tag');
   const generalNotices = alerts.filter(alert => alert.type === 'General Notice');
+
+  const groupAlertsByDepartment = (alerts: Alert[]) => {
+    return alerts.reduce((acc, alert) => {
+        const dept = alert.department || 'All Departments';
+        if (!acc[dept]) {
+            acc[dept] = [];
+        }
+        acc[dept].push(alert);
+        return acc;
+    }, {} as Record<string, Alert[]>);
+  };
   
   const AlertTable = ({ alerts }: { alerts: Alert[] }) => (
     <ScrollArea>
@@ -277,6 +242,38 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     </ScrollArea>
   );
 
+  const DepartmentGroup = ({ title, alerts }: { title: string, alerts: Alert[] }) => (
+    <Collapsible defaultOpen={true}>
+        <CollapsibleTrigger className="w-full">
+            <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted">
+                <h3 className="text-lg font-semibold">{title} ({alerts.length})</h3>
+                <ChevronDown className="h-5 w-5" />
+            </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+            <AlertTable alerts={alerts} />
+        </CollapsibleContent>
+    </Collapsible>
+  );
+
+  const renderTabContent = (alerts: Alert[]) => {
+      const groupedAlerts = groupAlertsByDepartment(alerts);
+      if (alerts.length === 0) {
+          return (
+              <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                  <p className="text-muted-foreground">No active alerts of this type.</p>
+              </div>
+          )
+      }
+      return (
+          <div className="space-y-4">
+              {Object.keys(groupedAlerts).sort().map(department => (
+                  <DepartmentGroup key={department} title={department} alerts={groupedAlerts[department]} />
+              ))}
+          </div>
+      );
+  };
+
   if (loading || !user) {
     return (
         <main className="flex-1 flex items-center justify-center">
@@ -312,7 +309,6 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
                       </DialogHeader>
                       <NewAlertForm 
                         onSubmit={handleAlertSubmit} 
-                        onSaveProgress={handleSaveProgress}
                         existingAlert={editingAlert}
                         allUsers={allUsers}
                       />
@@ -328,31 +324,13 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
                     <TabsTrigger value="general-notices">General Notices ({generalNotices.length})</TabsTrigger>
                 </TabsList>
                 <TabsContent value="red-tags" className="pt-4">
-                    {redTagAlerts.length > 0 ? (
-                        <AlertTable alerts={redTagAlerts} />
-                    ) : (
-                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                            <p className="text-muted-foreground">No active Red Tag alerts.</p>
-                        </div>
-                    )}
+                    {renderTabContent(redTagAlerts)}
                 </TabsContent>
                 <TabsContent value="yellow-tags" className="pt-4">
-                    {yellowTagAlerts.length > 0 ? (
-                        <AlertTable alerts={yellowTagAlerts} />
-                    ) : (
-                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                            <p className="text-muted-foreground">No active Yellow Tag alerts.</p>
-                        </div>
-                    )}
+                     {renderTabContent(yellowTagAlerts)}
                 </TabsContent>
                 <TabsContent value="general-notices" className="pt-4">
-                    {generalNotices.length > 0 ? (
-                        <AlertTable alerts={generalNotices} />
-                    ) : (
-                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                            <p className="text-muted-foreground">No active General Notices.</p>
-                        </div>
-                    )}
+                    {renderTabContent(generalNotices)}
                 </TabsContent>
             </Tabs>
         </CardContent>
