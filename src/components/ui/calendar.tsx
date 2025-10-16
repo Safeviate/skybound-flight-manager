@@ -57,6 +57,28 @@ function Calendar({
       components={{
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+        Footer: () => {
+            return (
+              <div className="flex justify-between items-center pt-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => props.onSelect?.(undefined)}
+                  size="sm"
+                  className="text-xs"
+                >
+                  Clear
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => props.onSelect?.(new Date())}
+                  size="sm"
+                  className="text-xs"
+                >
+                  Today
+                </Button>
+              </div>
+            )
+          },
       }}
       fixedWeeks
       {...props}
