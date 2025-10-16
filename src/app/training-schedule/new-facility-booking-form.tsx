@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -102,6 +103,7 @@ export function NewFacilityBookingForm({ facility, users, onSubmit, onDelete, st
       facilityId: facility.id,
       aircraft: facility.name, // Using aircraft field for display name
       date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+      endDate: data.endDate || null,
       status: 'Approved',
       ...data,
       externalAttendees: data.externalAttendees?.split(',').map(s => s.trim()).filter(Boolean),

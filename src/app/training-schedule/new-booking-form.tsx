@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -179,6 +180,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
     
     const cleanData = {
         ...data,
+        endDate: data.endDate || null,
         resourceType: 'aircraft' as const,
         student: data.purpose === 'Training' ? data.student : null,
         studentId: data.purpose === 'Training' ? data.studentId : null,
