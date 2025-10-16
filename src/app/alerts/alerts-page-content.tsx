@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { AlertTriangle, Info, ChevronRight, PlusCircle, Users, MoreHorizontal, Trash2, Check, Edit, Printer, Eye, ChevronDown } from 'lucide-react';
@@ -13,7 +14,7 @@ import { NewAlertForm } from './new-alert-form';
 import { format, parseISO } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -68,69 +69,83 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
 
   const handleAlertSubmit = async (formData: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => {
     if (!user || !company) return;
-  
-    const finalData = {
-        ...formData,
-        reviewerId: formData.reviewerId === 'none' ? null : formData.reviewerId,
-    };
-    delete (finalData as any).targetType;
 
     try {
-      if (editingAlert) {
-        const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
-        const dataToSave: Partial<Alert> = {
-            ...finalData,
-            reviewDate: finalData.reviewDate ? format(finalData.reviewDate, 'yyyy-MM-dd') : null,
-        };
-        await updateDoc(alertRef, dataToSave);
-        
-        setAlerts(prev => prev.map(a => a.id === editingAlert.id ? { ...a, ...dataToSave } as Alert : a));
-        toast({
-            title: 'Alert Updated',
-            description: `The "${formData.title}" alert has been updated.`,
-        });
+        if (editingAlert) {
+            const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
+            const reviewDate = formData.reviewDate instanceof Date ? format(formData.reviewDate, 'yyyy-MM-dd') : null;
+            
+            const dataToSave: Partial<Alert> = {
+                ...editingAlert,
+                ...formData,
+                reviewDate: reviewDate,
+                targetUserId: formData.targetType === 'user' ? formData.targetUserId : null,
+                department: formData.targetType === 'department' ? (formData.department || 'all') : null,
+            };
 
-      } else {
-        const alertsCollection = collection(db, 'companies', company.id, 'alerts');
-        
-        const q = query(
-            alertsCollection, 
-            where('type', '==', finalData.type), 
-            orderBy('number', 'desc'), 
-            limit(1)
-        );
-        const querySnapshot = await getDocs(q);
-        const lastAlert = querySnapshot.empty ? null : querySnapshot.docs[0].data() as Alert;
-        const newAlertNumber = (lastAlert?.number || 0) + 1;
+            // Remove properties that shouldn't be in the final object
+            delete (dataToSave as any).targetType;
 
-        const newAlertData: Omit<Alert, 'id'> = {
-            ...finalData,
-            companyId: company.id,
-            number: newAlertNumber,
-            author: user.name,
-            date: new Date().toISOString(),
-            readBy: [],
-            reviewDate: finalData.reviewDate ? format(finalData.reviewDate, 'yyyy-MM-dd') : null,
-        };
-        
-        const docRef = await addDoc(alertsCollection, newAlertData);
-        setAlerts(prev => [{ ...newAlertData, id: docRef.id } as Alert, ...prev]);
-        toast({
-            title: 'Alert Created',
-            description: `The "${finalData.title}" alert has been issued.`,
-        });
-
-        if (newAlertData.reviewerId) {
-            const reviewerName = userMap.get(newAlertData.reviewerId) || 'the reviewer';
+            await updateDoc(alertRef, dataToSave);
+            
+            setAlerts(prev => prev.map(a => a.id === editingAlert.id ? { ...a, ...dataToSave } as Alert : a));
             toast({
-                title: 'Reviewer Notified',
-                description: `A task has been assigned to ${reviewerName}.`,
+                title: 'Alert Updated',
+                description: `The "${formData.title}" alert has been updated.`,
             });
+        } else {
+            // This is the logic for creating a new alert
+            const alertsCollection = collection(db, 'companies', company.id, 'alerts');
+            
+            const q = query(
+                alertsCollection, 
+                where('type', '==', formData.type), 
+                orderBy('number', 'desc'),
+                limit(1)
+            );
+            const querySnapshot = await getDocs(q);
+            const lastAlert = querySnapshot.empty ? null : querySnapshot.docs[0].data() as Alert;
+            const newAlertNumber = (lastAlert?.number || 0) + 1;
+    
+            const newAlertData: Omit<Alert, 'id'> = {
+                ...formData,
+                companyId: company.id,
+                number: newAlertNumber,
+                author: user.name,
+                date: new Date().toISOString(),
+                readBy: [],
+                reviewDate: formData.reviewDate ? format(formData.reviewDate, 'yyyy-MM-dd') : null,
+                targetUserId: formData.targetType === 'user' ? formData.targetUserId : null,
+                department: formData.targetType === 'department' ? (formData.department || 'all') : null,
+            };
+            
+             // Clean up the data before saving
+            delete (newAlertData as any).targetType;
+            Object.keys(newAlertData).forEach(key => {
+                if (newAlertData[key as keyof typeof newAlertData] === undefined) {
+                    delete newAlertData[key as keyof typeof newAlertData];
+                }
+            });
+
+
+            const docRef = await addDoc(alertsCollection, newAlertData);
+            setAlerts(prev => [{ ...newAlertData, id: docRef.id } as Alert, ...prev]);
+            toast({
+                title: 'Alert Created',
+                description: `The "${formData.title}" alert has been issued.`,
+            });
+    
+            if (newAlertData.reviewerId) {
+                const reviewerName = userMap.get(newAlertData.reviewerId) || 'the reviewer';
+                toast({
+                    title: 'Reviewer Notified',
+                    description: `A task has been assigned to ${reviewerName}.`,
+                });
+            }
         }
-      }
-        
-      setIsDialogOpen(false);
-      setEditingAlert(null);
+            
+        setIsDialogOpen(false);
+        setEditingAlert(null);
     } catch (error) {
         console.error("Error saving alert:", error);
         toast({
@@ -139,7 +154,37 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
             description: 'Failed to save the alert in the database.'
         });
     }
+}
+  
+  const handleDeleteAlert = async (alert: Alert) => {
+    if (!company) return;
+    try {
+        const batch = writeBatch(db);
+        
+        // 1. Delete the alert document
+        const alertRef = doc(db, `companies/${company.id}/alerts`, alert.id);
+        batch.delete(alertRef);
+
+        // 2. Find and delete all notification alerts related to this alert
+        const notificationsRef = collection(db, `companies/${company.id}/alerts`);
+        const q = query(notificationsRef, where("relatedLink", "==", `/alerts/${alert.id}`));
+        const querySnapshot = await getDocs(q);
+        
+        querySnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+
+        // 3. Commit all deletions
+        await batch.commit();
+
+        setAlerts(prev => prev.filter(a => a.id !== alert.id));
+        toast({ title: "Alert Deleted", description: `Alert "${alert.title}" and its ${querySnapshot.size} related notifications have been removed.` });
+    } catch (error) {
+        console.error("Error deleting alert:", error);
+        toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete the alert.' });
+    }
   }
+
 
   const redTagAlerts = alerts.filter(alert => alert.type === 'Red Tag');
   const yellowTagAlerts = alerts.filter(alert => alert.type === 'Yellow Tag');
@@ -215,7 +260,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => {}}>
+                                <AlertDialogAction onClick={() => handleDeleteAlert(alert)}>
                                   Yes, delete alert
                                 </AlertDialogAction>
                               </AlertDialogFooter>
