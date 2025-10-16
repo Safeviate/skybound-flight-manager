@@ -19,17 +19,19 @@ export async function getDashboardData(companyId: string, userId: string): Promi
     
     const userCollections = ['users', 'students'];
     let userSnap: import('firebase/firestore').DocumentSnapshot | null = null;
+    let userLocationType: 'users' | 'students' | null = null;
 
     for (const coll of userCollections) {
         const userDocRef = doc(db, `companies/${companyId}/${coll}`, userId);
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
             userSnap = docSnap;
+            userLocationType = coll as 'users' | 'students';
             break;
         }
     }
     
-    if (!userSnap) {
+    if (!userSnap || !userLocationType) {
         console.error("Dashboard: Could not find user to fetch data.");
         return { upcomingBookings: [], allUserBookings: [], openSafetyReports: [], openQualityAudits: [], assignedStudents: [] };
     }
@@ -38,7 +40,7 @@ export async function getDashboardData(companyId: string, userId: string): Promi
 
     const today = format(startOfToday(), 'yyyy-MM-dd');
 
-    // Refactored queries to avoid composite index requirement for OR operator
+    // Queries for upcoming bookings for the user
     const upcomingStudentBookingsQuery = query(
       collection(db, `companies/${companyId}/aircraft-bookings`),
       where('date', '>=', today),
@@ -54,7 +56,7 @@ export async function getDashboardData(companyId: string, userId: string): Promi
       orderBy('date'),
       orderBy('startTime')
     );
-
+    
     const allUserBookingsQuery = query(
       collection(db, `companies/${companyId}/aircraft-bookings`),
       or(
@@ -88,7 +90,7 @@ export async function getDashboardData(companyId: string, userId: string): Promi
     ] = await Promise.all([
         getDocs(upcomingStudentBookingsQuery),
         getDocs(upcomingInstructorBookingsQuery),
-        getDocs(allUserBookingsQuery),
+        getDocs(allUserBookingsQuery), // Fetch all user bookings
         user.permissions.includes('Safety:View') ? getDocs(openSafetyReportsQuery) : Promise.resolve({ docs: [] }),
         user.permissions.includes('Quality:View') ? getDocs(openQualityAuditsQuery) : Promise.resolve({ docs: [] }),
         user.role.includes('Instructor') || user.role === 'Chief Flight Instructor' || user.role === 'Head Of Training' ? getDocs(assignedStudentsQuery) : Promise.resolve({ docs: [] }),
