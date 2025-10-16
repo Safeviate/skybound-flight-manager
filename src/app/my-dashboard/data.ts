@@ -45,6 +45,7 @@ export async function getDashboardData(companyId: string, userId: string): Promi
       collection(db, `companies/${companyId}/aircraft-bookings`),
       where('date', '>=', today),
       where('student', '==', userName),
+      where('status', '==', 'Approved'),
       orderBy('date'),
       orderBy('startTime')
     );
@@ -53,6 +54,7 @@ export async function getDashboardData(companyId: string, userId: string): Promi
       collection(db, `companies/${companyId}/aircraft-bookings`),
       where('date', '>=', today),
       where('instructor', '==', userName),
+      where('status', '==', 'Approved'),
       orderBy('date'),
       orderBy('startTime')
     );
