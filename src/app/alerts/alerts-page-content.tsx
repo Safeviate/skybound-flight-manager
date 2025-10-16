@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -71,10 +70,9 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
   
     try {
       if (editingAlert) {
-        const updatedAlertData = {
-          ...editingAlert,
+        const updatedAlertData: Partial<Alert> = {
           ...formData,
-          reviewDate: formData.reviewDate ? format(formData.reviewDate as Date, 'yyyy-MM-dd') : null,
+          reviewDate: formData.reviewDate ? format(formData.reviewDate, 'yyyy-MM-dd') : null,
           targetUserId: formData.targetType === 'user' ? formData.targetUserId : null,
           department: formData.targetType === 'department' ? (formData.department || 'all') : null,
         };
@@ -92,7 +90,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
         await updateDoc(alertRef, finalDataToSave);
         
-        setAlerts(prev => prev.map(a => a.id === editingAlert.id ? updatedAlertData : a));
+        setAlerts(prev => prev.map(a => a.id === editingAlert.id ? { ...a, ...finalDataToSave } as Alert : a));
         toast({
             title: 'Alert Updated',
             description: `The "${formData.title}" alert has been updated.`,
@@ -118,7 +116,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
             author: user.name,
             date: new Date().toISOString(),
             readBy: [],
-            reviewDate: formData.reviewDate ? format(formData.reviewDate as Date, 'yyyy-MM-dd') : null,
+            reviewDate: formData.reviewDate ? format(formData.reviewDate, 'yyyy-MM-dd') : null,
             targetUserId: formData.targetType === 'user' ? formData.targetUserId : null,
             department: formData.targetType === 'department' ? (formData.department || 'all') : null,
         };

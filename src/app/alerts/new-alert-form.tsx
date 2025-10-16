@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -98,28 +97,40 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert, allUsers
   
   useEffect(() => {
     if (existingAlert) {
-      // Robustly set form values when editing an existing alert
+      let targetTypeValue: 'user' | 'department' = 'department';
+      let departmentValue: string | null = 'all';
+      let targetUserIdValue: string | null = null;
+
+      if (existingAlert.targetUserId) {
+        targetTypeValue = 'user';
+        targetUserIdValue = existingAlert.targetUserId;
+        departmentValue = null;
+      } else {
+        targetTypeValue = 'department';
+        departmentValue = existingAlert.department || 'all';
+        targetUserIdValue = null;
+      }
+      
       form.reset({
         type: existingAlert.type as 'Red Tag' | 'Yellow Tag' | 'General Notice',
         title: existingAlert.title || '',
-        targetType: existingAlert.targetUserId ? 'user' : 'department',
-        department: existingAlert.targetUserId ? null : existingAlert.department || 'all',
-        targetUserId: existingAlert.targetUserId || null,
-        reviewerId: existingAlert.reviewerId || '',
+        targetType: targetTypeValue,
+        department: departmentValue,
+        targetUserId: targetUserIdValue,
+        reviewerId: existingAlert.reviewerId || 'none',
         background: existingAlert.background || '',
         purpose: existingAlert.purpose || '',
         instruction: existingAlert.instruction || '',
         reviewDate: existingAlert.reviewDate ? parseISO(existingAlert.reviewDate) : undefined,
       });
     } else {
-      // Reset to default values for a new alert
       form.reset({
         type: undefined,
         title: '',
         targetType: 'department',
         department: 'all',
         targetUserId: '',
-        reviewerId: '',
+        reviewerId: 'none',
         background: '',
         purpose: '',
         instruction: '',
@@ -369,7 +380,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert, allUsers
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Reviewer (Optional)</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <Select onValueChange={field.onChange} value={field.value || 'none'}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Select a reviewer" /></SelectTrigger></FormControl>
                             <SelectContent>
                                <SelectItem value="none">None</SelectItem>
