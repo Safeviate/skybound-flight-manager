@@ -16,7 +16,7 @@ import { Loader2, AlertTriangle, Calendar as CalendarIcon, Search, Trash2, Edit 
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { format, parseISO, setHours, setMinutes, isBefore, addDays, startOfDay, endOfDay, isWithinInterval, isSameDay } from 'date-fns';
+import { format, parseISO, setHours, setMinutes, isBefore, addDays, startOfDay, endOfDay, isWithinInterval, isSameDay, add, sub } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useSettings } from '@/context/settings-provider';
@@ -131,44 +131,43 @@ const GanttChart = ({
 
     const getBookingForSlot = (resourceIdentifier: string, time: string) => {
         const slotTimeInMinutes = timeToMinutes(time);
+        
         return bookings.find(b => {
             const bookingResourceIdentifier = b.resourceType === 'facility' ? b.facilityId : b.aircraft;
             if (bookingResourceIdentifier !== resourceIdentifier) return false;
-            if (b.status === 'Cancelled') return false; 
             
-            const bookingDate = parseISO(b.date);
-            const isBookingForSelectedDate = isSameDay(bookingDate, selectedDate);
-            const isBookingOvernightFromPrevious = b.endDate && !isSameDay(bookingDate, parseISO(b.endDate)) && isSameDay(selectedDate, parseISO(b.endDate));
-
-            let startTimeInMinutes = timeToMinutes(b.startTime);
-            let endTimeInMinutes = timeToMinutes(b.endTime);
-
-            if (isBookingOvernightFromPrevious) {
-                startTimeInMinutes = 0; // Starts at midnight
+            const bookingStartDateTime = parseISO(`${b.date}T${b.startTime}`);
+            let bookingEndDateTime = parseISO(`${b.endDate || b.date}T${b.endTime}`);
+            
+            // Adjust for bookings ending at midnight or later
+            if (isBefore(bookingEndDateTime, bookingStartDateTime)) {
+                bookingEndDateTime = addDays(bookingEndDateTime, 1);
             }
             
-            if (isBookingForSelectedDate || isBookingOvernightFromPrevious) {
-                return slotTimeInMinutes >= startTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
-            }
-            
-            return false;
+            const slotDateTime = parseISO(`${selectedDate.toISOString().split('T')[0]}T${time}`);
+
+            // The slot time needs to be adjusted for the next day if it's before 6 AM
+            const slotHour = parseInt(time.split(':')[0], 10);
+            const correctedSlotDateTime = slotHour < 6 
+                ? addDays(slotDateTime, 1)
+                : slotDateTime;
+                
+            return isWithinInterval(correctedSlotDateTime, { start: bookingStartDateTime, end: bookingEndDateTime });
         });
     };
 
     const calculateColSpan = (booking: Booking, time: string) => {
-        let startTimeInMinutes = timeToMinutes(booking.startTime);
         const slotTimeInMinutes = timeToMinutes(time);
-        const bookingDate = parseISO(booking.date);
+        let startTimeInMinutes = timeToMinutes(booking.startTime);
 
-        const isOvernightFromPrevious = booking.endDate && !isSameDay(bookingDate, parseISO(booking.endDate)) && isSameDay(selectedDate, parseISO(booking.endDate));
-
-        if (isOvernightFromPrevious) {
-            startTimeInMinutes = 0; // Starts at midnight for the Gantt chart
-        }
-
-        if (startTimeInMinutes !== slotTimeInMinutes) return 0;
+        if (slotTimeInMinutes !== startTimeInMinutes) return 0;
 
         let endTimeInMinutes = timeToMinutes(booking.endTime);
+        
+        if (endTimeInMinutes < startTimeInMinutes) { // Overnight booking
+            endTimeInMinutes += 24 * 60;
+        }
+
         const durationInMinutes = endTimeInMinutes - startTimeInMinutes;
         return Math.ceil(durationInMinutes / 15);
     };
@@ -225,7 +224,7 @@ const GanttChart = ({
                                         const startTimeInMinutes = timeToMinutes(booking.startTime);
                                         for (let i = 1; i < colSpan; i++) {
                                             const nextSlotTimeInMinutes = startTimeInMinutes + i * 15;
-                                            const nextHour = Math.floor(nextSlotTimeInMinutes / 60);
+                                            const nextHour = Math.floor(nextSlotTimeInMinutes / 60) % 24;
                                             const nextMinute = nextSlotTimeInMinutes % 60;
                                             renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:${nextMinute.toString().padStart(2, '0')}`);
                                         }
@@ -378,50 +377,41 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 }, [company, toast]);
 
     const dailyAircraftBookings = useMemo(() => {
-        const dailyBookings: Booking[] = [];
-        bookings.forEach(b => {
-            if (b.status === 'Cancelled' || !b.date) return;
-            if (b.resourceType === 'facility') return;
+        const startOfView = setHours(startOfDay(selectedDate), 6);
+        const endOfView = setMinutes(setHours(addDays(startOfDay(selectedDate), 1), 5), 59);
 
-            const bookingStart = parseISO(b.date);
-            if (isSameDay(selectedDate, bookingStart)) {
-                dailyBookings.push(b);
-            }
+        return bookings.filter(b => {
+            if (b.status === 'Cancelled' || !b.date || b.resourceType !== 'aircraft') return false;
             
-            if (b.endDate && !isSameDay(bookingStart, parseISO(b.endDate))) {
-                const bookingEnd = parseISO(b.endDate);
-                 if (isSameDay(selectedDate, bookingEnd)) {
-                    // This booking ends today, but started yesterday.
-                    // Create a "phantom" booking for today's part of the event.
-                    dailyBookings.push({
-                        ...b,
-                        startTime: '00:00',
-                    });
-                }
+            const bookingStart = parseISO(`${b.date}T${b.startTime}`);
+            let bookingEnd = parseISO(`${b.endDate || b.date}T${b.endTime}`);
+
+            if (isBefore(bookingEnd, bookingStart)) {
+                bookingEnd = addDays(bookingEnd, 1);
             }
+
+            // Check if the booking interval overlaps with the Gantt chart view interval
+            return isWithinInterval(bookingStart, { start: sub(startOfView, {days: 1}), end: endOfView }) ||
+                   isWithinInterval(bookingEnd, { start: startOfView, end: add(endOfView, {days: 1}) }) ||
+                   (isBefore(bookingStart, startOfView) && isAfter(bookingEnd, endOfView));
         });
-        return dailyBookings;
     }, [bookings, selectedDate]);
 
     const dailyFacilityBookings = useMemo(() => {
-        const dailyBookings: Booking[] = [];
-        bookings.forEach(b => {
-            if (b.status === 'Cancelled' || !b.date) return;
-            if (b.resourceType !== 'facility') return;
+        const startOfView = setHours(startOfDay(selectedDate), 6);
+        const endOfView = setMinutes(setHours(addDays(startOfDay(selectedDate), 1), 5), 59);
 
-            const bookingStart = parseISO(b.date);
-            if (isSameDay(selectedDate, bookingStart)) {
-                dailyBookings.push(b);
-            }
-            
-            if (b.endDate && !isSameDay(bookingStart, parseISO(b.endDate))) {
-                const bookingEnd = parseISO(b.endDate);
-                 if (isSameDay(selectedDate, bookingEnd)) {
-                    dailyBookings.push({ ...b, startTime: '00:00' });
-                }
-            }
+        return bookings.filter(b => {
+            if (b.status === 'Cancelled' || !b.date || b.resourceType !== 'facility') return false;
+
+            const bookingStart = parseISO(`${b.date}T${b.startTime}`);
+            let bookingEnd = parseISO(`${b.endDate || b.date}T${b.endTime}`);
+            if (isBefore(bookingEnd, bookingStart)) bookingEnd = addDays(bookingEnd, 1);
+
+            return isWithinInterval(bookingStart, { start: sub(startOfView, {days: 1}), end: endOfView }) ||
+                   isWithinInterval(bookingEnd, { start: startOfView, end: add(endOfView, {days: 1}) }) ||
+                   (isBefore(bookingStart, startOfView) && isAfter(bookingEnd, endOfView));
         });
-        return dailyBookings;
     }, [bookings, selectedDate]);
   
   const handleBookingSubmit = async (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking, studentRef?: any, logEntry?: TrainingLogEntry) => {
