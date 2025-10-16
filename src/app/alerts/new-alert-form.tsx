@@ -29,6 +29,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 
 const alertFormSchema = z.object({
@@ -38,7 +39,9 @@ const alertFormSchema = z.object({
   title: z.string().min(5, {
     message: 'Title must be at least 5 characters.',
   }),
+  targetType: z.enum(['department', 'user']).optional(),
   department: z.string().optional().nullable(),
+  targetUserId: z.string().optional().nullable(),
   reviewerId: z.string().optional(),
   background: z.string().min(10, { message: 'Background must be at least 10 characters.' }),
   purpose: z.string().min(10, { message: 'Purpose must be at least 10 characters.' }),
@@ -52,19 +55,20 @@ interface NewAlertFormProps {
   onSubmit: (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => void;
   onSaveProgress: (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => void;
   existingAlert?: Alert | null;
+  allUsers: User[];
 }
 
-export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAlertFormProps) {
+export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert, allUsers }: NewAlertFormProps) {
   const { toast } = useToast();
   const { company } = useUser();
   const [departments, setDepartments] = useState<CompanyDepartment[]>([]);
-  const [personnel, setPersonnel] = useState<User[]>([]);
 
   const form = useForm<AlertFormValues>({
     resolver: zodResolver(alertFormSchema),
     defaultValues: {
       title: '',
       department: '',
+      targetUserId: '',
       reviewerId: '',
       background: '',
       purpose: '',
@@ -72,26 +76,16 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
     },
   });
 
+  const { watch, setValue } = form;
+  const targetType = watch('targetType');
+
   useEffect(() => {
     const fetchData = async () => {
         if (!company) return;
         try {
             const deptsQuery = query(collection(db, `companies/${company.id}/departments`));
-            const usersQuery = query(collection(db, `companies/${company.id}/users`));
-            const studentsQuery = query(collection(db, `companies/${company.id}/students`));
-
-            const [deptsSnapshot, usersSnapshot, studentsSnapshot] = await Promise.all([
-                getDocs(deptsQuery),
-                getDocs(usersQuery),
-                getDocs(studentsQuery)
-            ]);
-            
+            const deptsSnapshot = await getDocs(deptsQuery);
             setDepartments(deptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment)));
-            
-            const users = usersSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
-            const students = studentsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
-            setPersonnel([...users, ...students]);
-
         } catch (error) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch company data.' });
         }
@@ -104,7 +98,9 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
       form.reset({
         type: existingAlert.type as 'Red Tag' | 'Yellow Tag' | 'General Notice',
         title: existingAlert.title,
+        targetType: existingAlert.targetUserId ? 'user' : 'department',
         department: existingAlert.department,
+        targetUserId: existingAlert.targetUserId,
         reviewerId: existingAlert.reviewerId,
         background: existingAlert.background,
         purpose: existingAlert.purpose,
@@ -115,7 +111,9 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
         form.reset({
             type: undefined,
             title: '',
-            department: '',
+            targetType: 'department',
+            department: 'all',
+            targetUserId: '',
             reviewerId: '',
             background: '',
             purpose: '',
@@ -130,7 +128,8 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
         ...data,
         reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
         reviewerId: data.reviewerId === 'none' ? undefined : data.reviewerId,
-        department: data.department || null,
+        department: data.targetType === 'department' ? (data.department || 'all') : undefined,
+        targetUserId: data.targetType === 'user' ? data.targetUserId : undefined,
     };
     onSubmit(finalData as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
     form.reset();
@@ -144,7 +143,8 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
           ...data,
           reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
           reviewerId: data.reviewerId === 'none' ? undefined : data.reviewerId,
-          department: data.department || null,
+          department: data.targetType === 'department' ? (data.department || 'all') : undefined,
+          targetUserId: data.targetType === 'user' ? data.targetUserId : undefined,
        } as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
     } else {
         toast({
@@ -197,25 +197,70 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-1 gap-4">
+            
+            <FormField
+                control={form.control}
+                name="targetType"
+                render={({ field }) => (
+                    <FormItem className="space-y-3">
+                        <FormLabel>Send To</FormLabel>
+                        <FormControl>
+                            <RadioGroup
+                                onValueChange={field.onChange}
+                                value={field.value}
+                                className="flex items-center space-x-4"
+                            >
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                    <FormControl><RadioGroupItem value="department" /></FormControl>
+                                    <FormLabel className="font-normal">Department</FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                    <FormControl><RadioGroupItem value="user" /></FormControl>
+                                    <FormLabel className="font-normal">Specific User</FormLabel>
+                                </FormItem>
+                            </RadioGroup>
+                        </FormControl>
+                    </FormItem>
+                )}
+            />
+
+            {targetType === 'department' ? (
                 <FormField
                     control={form.control}
                     name="department"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Target Department (Optional)</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || undefined}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="All Departments" /></SelectTrigger></FormControl>
-                            <SelectContent>
-                                <SelectItem value="all">All Departments</SelectItem>
-                                {departments.map((dept) => (<SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
+                            <FormLabel>Target Department</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || 'all'}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="All Departments" /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    <SelectItem value="all">All Departments</SelectItem>
+                                    {departments.map((dept) => (<SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
-            </div>
+            ) : (
+                <FormField
+                    control={form.control}
+                    name="targetUserId"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Target User</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ''}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Select a user" /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    {allUsers.map((u) => (<SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
+
             <FormField
               control={form.control}
               name="title"
@@ -325,7 +370,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
                             <FormControl><SelectTrigger><SelectValue placeholder="Select a reviewer" /></SelectTrigger></FormControl>
                             <SelectContent>
                                <SelectItem value="none">None</SelectItem>
-                               {personnel.map((p) => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))}
+                               {allUsers.map((p) => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))}
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -345,4 +390,3 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
     </Form>
   );
 }
-

@@ -71,18 +71,21 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
 
     try {
       if (editingAlert) {
-        const updatedAlertData = { ...editingAlert, ...data };
+        const updatedAlertData: Partial<Alert> = { ...editingAlert, ...data };
         
-        // Firestore cannot store `null` for an optional field in an update.
-        // It should be `undefined` or deleted.
-        if (updatedAlertData.department === null || updatedAlertData.department === 'all' || updatedAlertData.department === '') {
-            delete (updatedAlertData as any).department;
+        // If a department is selected, clear the user-specific field.
+        if (data.department && data.department !== 'all' && data.department !== '') {
+            updatedAlertData.targetUserId = undefined;
+        } 
+        // If a user is selected, clear the department field.
+        else if (data.targetUserId) {
+            updatedAlertData.department = undefined;
         }
 
         const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
         await updateDoc(alertRef, updatedAlertData as any);
         
-        setAlerts(prev => prev.map(a => a.id === editingAlert.id ? updatedAlertData : a));
+        setAlerts(prev => prev.map(a => a.id === editingAlert.id ? { ...a, ...updatedAlertData } as Alert : a));
         toast({
             title: 'Alert Updated',
             description: `The "${data.title}" alert has been updated.`,
@@ -109,7 +112,10 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
             readBy: [],
         };
         
-        if (newAlertData.department === 'all') {
+        if (newAlertData.department === 'all' || newAlertData.department === '') {
+            delete (newAlertData as any).department;
+        }
+        if (newAlertData.targetUserId) {
             delete (newAlertData as any).department;
         }
 
@@ -304,6 +310,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
                         onSubmit={handleAlertSubmit} 
                         onSaveProgress={handleSaveProgress}
                         existingAlert={editingAlert}
+                        allUsers={allUsers}
                       />
                   </DialogContent>
               </Dialog>
