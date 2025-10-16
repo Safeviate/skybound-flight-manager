@@ -129,7 +129,11 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert, allUsers
   }, [existingAlert, form]);
   
   function handleFormSubmit(data: AlertFormValues) {
-    onSubmit(data as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
+    const finalData = {
+        ...data,
+        reviewerId: data.reviewerId === 'none' ? null : data.reviewerId,
+    };
+    onSubmit(finalData as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
     form.reset();
   }
   
@@ -368,7 +372,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert, allUsers
                         <Select onValueChange={field.onChange} value={field.value || ''}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Select a reviewer" /></SelectTrigger></FormControl>
                             <SelectContent>
-                               <SelectItem value="">None</SelectItem>
+                               <SelectItem value="none">None</SelectItem>
                                {allUsers.map((p) => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))}
                             </SelectContent>
                         </Select>
