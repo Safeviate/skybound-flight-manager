@@ -8,7 +8,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, Au
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser, Users, Camera, Image as ImageIcon, RotateCw, FileUp, Trash2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser, Users, Camera, Image as ImageIcon, RotateCw, FileUp, Trash2, ChevronDown } from 'lucide-react';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
@@ -40,6 +40,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { StandardCamera } from '@/components/ui/standard-camera';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const discussionFormSchema = z.object({
   recipient: z.string().optional(),
@@ -961,99 +962,14 @@ export default function QualityAuditDetailPage() {
                                     const currentQuestionNumber = questionNumber++;
                                     const fileInputId = `file-input-${item.id}`;
                                     return (
-                                        <div key={item.id} className="p-4 border rounded-lg space-y-4">
-                                            <div>
-                                                <p className="font-medium">{currentQuestionNumber}. {item.text}</p>
-                                                {item.regulationReference && <p className="text-xs text-muted-foreground ml-5">Regulation: {item.regulationReference}</p>}
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label className="text-sm font-medium">Finding</Label>
-                                                    <Select value={item.finding || ''} onValueChange={(value: FindingStatus) => handleItemChange(item.id, 'finding', value)}>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select Finding" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {finalFindingOptions.map(opt => (
-                                                                <SelectItem key={opt.id} value={opt.name}>{opt.name}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                                {showLevelSelect && (
-                                                    <div className="space-y-2">
-                                                        <Label className="text-sm font-medium">Level</Label>
-                                                        <Select value={item.level || ''} onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select Level" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {levelOptions.map(opt => (
-                                                                    <SelectItem key={opt} value={opt!}>{opt}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
+                                        <Collapsible key={item.id} className="p-4 border rounded-lg">
+                                            <CollapsibleTrigger asChild>
+                                                <div className="flex justify-between items-center cursor-pointer">
+                                                    <div className="flex-1">
+                                                        <p className="font-medium">{currentQuestionNumber}. {item.text}</p>
+                                                        {item.regulationReference && <p className="text-xs text-muted-foreground ml-5">Regulation: {item.regulationReference}</p>}
                                                     </div>
-                                                )}
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label className="text-sm font-medium">Reference</Label>
-                                                <Textarea
-                                                    placeholder="Document references, evidence, etc."
-                                                    value={item.reference || ''}
-                                                    onChange={(e) => handleItemChange(item.id, 'reference', e.target.value)}
-                                                    className="whitespace-pre-wrap"
-                                                    />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label className="text-sm font-medium">Comment</Label>
-                                                <Textarea
-                                                    placeholder="Auditor comments, observations..."
-                                                    value={item.comment || ''}
-                                                    onChange={(e) => handleItemChange(item.id, 'comment', e.target.value)}
-                                                    className="whitespace-pre-wrap"
-                                                    />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label className="text-sm font-medium">Suggested Improvement</Label>
-                                                <Textarea
-                                                    placeholder="Provide a suggestion for improvement..."
-                                                    value={item.suggestedImprovement || ''}
-                                                    onChange={(e) => handleItemChange(item.id, 'suggestedImprovement', e.target.value)}
-                                                    className="whitespace-pre-wrap"
-                                                    />
-                                            </div>
-                                            <div className="space-y-4 pt-4 border-t">
-                                                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <Button variant="outline" size="sm" onClick={() => setCameraItemId(item.id)}>
-                                                            <Camera className="mr-2 h-4 w-4" />
-                                                            {item.photo ? 'Retake Photo' : 'Take Photo'}
-                                                        </Button>
-                                                        <Button variant="outline" size="sm" asChild>
-                                                            <label htmlFor={fileInputId} className="cursor-pointer">
-                                                                <FileUp className="mr-2 h-4 w-4" />
-                                                                {item.photo ? 'Change' : 'Upload'}
-                                                            </label>
-                                                        </Button>
-                                                        <Input
-                                                            id={fileInputId}
-                                                            type="file"
-                                                            accept="image/*"
-                                                            className="hidden"
-                                                            onChange={(e) => e.target.files && handleFileChange(e.target.files[0], item.id)}
-                                                        />
-                                                        {item.photo && (
-                                                            <>
-                                                            <ImageIcon className="h-5 w-5 text-green-500" />
-                                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleItemChange(item.id, 'photo', null)}>
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </Button>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex items-center gap-4 text-sm">
-                                                        <span className="font-semibold">Result:</span>
+                                                    <div className="flex items-center gap-4">
                                                         {item.finding && (
                                                             <Badge variant={findingInfo.variant} className="whitespace-nowrap">
                                                                 {findingInfo.icon}
@@ -1062,13 +978,106 @@ export default function QualityAuditDetailPage() {
                                                         )}
                                                         {levelInfo && (
                                                             <Badge variant={levelInfo.variant} className="whitespace-nowrap">
-                                                            {item.level}
+                                                                {item.level}
                                                             </Badge>
                                                         )}
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                            <ChevronDown className="h-4 w-4" />
+                                                        </Button>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </div>
+                                            </CollapsibleTrigger>
+                                            <CollapsibleContent className="pt-4 mt-4 border-t space-y-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label className="text-sm font-medium">Finding</Label>
+                                                        <Select value={item.finding || ''} onValueChange={(value: FindingStatus) => handleItemChange(item.id, 'finding', value)}>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select Finding" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {finalFindingOptions.map(opt => (
+                                                                    <SelectItem key={opt.id} value={opt.name}>{opt.name}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    {showLevelSelect && (
+                                                        <div className="space-y-2">
+                                                            <Label className="text-sm font-medium">Level</Label>
+                                                            <Select value={item.level || ''} onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select Level" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {levelOptions.map(opt => (
+                                                                        <SelectItem key={opt} value={opt!}>{opt}</SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-sm font-medium">Reference</Label>
+                                                    <Textarea
+                                                        placeholder="Document references, evidence, etc."
+                                                        value={item.reference || ''}
+                                                        onChange={(e) => handleItemChange(item.id, 'reference', e.target.value)}
+                                                        className="whitespace-pre-wrap"
+                                                        />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-sm font-medium">Comment</Label>
+                                                    <Textarea
+                                                        placeholder="Auditor comments, observations..."
+                                                        value={item.comment || ''}
+                                                        onChange={(e) => handleItemChange(item.id, 'comment', e.target.value)}
+                                                        className="whitespace-pre-wrap"
+                                                        />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-sm font-medium">Suggested Improvement</Label>
+                                                    <Textarea
+                                                        placeholder="Provide a suggestion for improvement..."
+                                                        value={item.suggestedImprovement || ''}
+                                                        onChange={(e) => handleItemChange(item.id, 'suggestedImprovement', e.target.value)}
+                                                        className="whitespace-pre-wrap"
+                                                        />
+                                                </div>
+                                                <div className="space-y-4 pt-4 border-t">
+                                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <Button variant="outline" size="sm" onClick={() => setCameraItemId(item.id)}>
+                                                                <Camera className="mr-2 h-4 w-4" />
+                                                                {item.photo ? 'Retake Photo' : 'Take Photo'}
+                                                            </Button>
+                                                            <Button variant="outline" size="sm" asChild>
+                                                                <label htmlFor={fileInputId} className="cursor-pointer">
+                                                                    <FileUp className="mr-2 h-4 w-4" />
+                                                                    {item.photo ? 'Change' : 'Upload'}
+                                                                </label>
+                                                            </Button>
+                                                            <Input
+                                                                id={fileInputId}
+                                                                type="file"
+                                                                accept="image/*"
+                                                                className="hidden"
+                                                                onChange={(e) => e.target.files && handleFileChange(e.target.files[0], item.id)}
+                                                            />
+                                                            {item.photo && (
+                                                                <>
+                                                                <ImageIcon className="h-5 w-5 text-green-500" />
+                                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleItemChange(item.id, 'photo', null)}>
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </CollapsibleContent>
+                                        </Collapsible>
                                     )
                                 })
                             })()}
@@ -1107,3 +1116,4 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
