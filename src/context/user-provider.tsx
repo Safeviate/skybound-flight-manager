@@ -262,11 +262,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     );
     const unsubAlerts = onSnapshot(alertsQuery, (snapshot) => {
         const alertsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
-        const filteredAlerts = alertsData.filter(alert => 
-            !alert.readBy.some(ack => ack.userId === userId) && 
-            (!alert.targetUserId || alert.targetUserId === userId)
-        );
-        setAllAlerts(filteredAlerts);
+        setAllAlerts(alertsData);
     });
 
     return () => {
@@ -385,16 +381,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const getUnacknowledgedAlerts = useCallback((types?: Alert['type'][]): Alert[] => {
     if (!user) return [];
 
-    let filteredAlerts = allAlerts.filter(alert =>
-        !alert.readBy.some(ack => ack.userId === user.id) && 
-        (!alert.targetUserId || alert.targetUserId === user.id)
-    );
+    return allAlerts.filter(alert => {
+        const isUnread = !alert.readBy.some(ack => ack.userId === user.id);
+        if (!isUnread) return false;
 
-    if (types && types.length > 0) {
-        filteredAlerts = filteredAlerts.filter(alert => types.includes(alert.type));
-    }
-    
-    return filteredAlerts;
+        const isTargetedToUser = !alert.targetUserId || alert.targetUserId === user.id;
+        
+        const isForUserDepartment = !alert.department || alert.department === 'all' || alert.department === user.department;
+        
+        const isCorrectType = !types || types.length === 0 || types.includes(alert.type);
+
+        return (isTargetedToUser && isForUserDepartment) && isCorrectType;
+    });
   }, [allAlerts, user]);
 
   const acknowledgeAlerts = async (alertIds: string[]): Promise<void> => {
