@@ -88,29 +88,31 @@ export function MyDashboardPageContent({ initialData }: { initialData: Dashboard
         description = alert.background;
     }
     
-    if (alert.title.startsWith("Document Expiry:")) {
-        const dateMatch = description.match(/on (\d{4}-\d{2}-\d{2})/);
+    let isReviewTask = false;
+    if (alert.title.startsWith("Document Expiry:") || alert.title.startsWith("Review Due:")) {
+        isReviewTask = true;
+        const dateMatch = alert.description?.match(/on (\d{4}-\d{2}-\d{2})/);
         if (dateMatch) {
             const expiryDate = parseISO(dateMatch[1]);
             const daysUntil = differenceInDays(expiryDate, new Date());
 
             description = daysUntil < 0 
-                ? `This document has expired.`
-                : `This document expires in ${daysUntil} days on ${format(expiryDate, 'MMM d, yyyy')}.`;
+                ? `This item has expired.`
+                : `This item is due in ${daysUntil} days on ${format(expiryDate, 'MMM d, yyyy')}.`;
             
             let className = 'bg-background hover:bg-muted/50';
 
             if (daysUntil < 0) {
                 className = 'bg-destructive/10 border-destructive text-foreground';
             } else if (daysUntil <= settings.expiryWarningOrangeDays) {
-                className = 'bg-orange/10 border-orange text-foreground';
+                className = 'bg-orange-500/10 border-orange-500 text-foreground';
             } else if (daysUntil <= settings.expiryWarningYellowDays) {
                 className = 'bg-yellow-400/20 border-yellow-500 text-foreground';
             }
-            return { className, description };
+            return { className, description, isReviewTask };
         }
     }
-    return { className: 'bg-background hover:bg-muted/50', description };
+    return { className: 'bg-background hover:bg-muted/50', description, isReviewTask };
   };
   
   const isLoading = userLoading || dataLoading;
@@ -231,11 +233,11 @@ export function MyDashboardPageContent({ initialData }: { initialData: Dashboard
                         ) : alerts.length > 0 ? (
                             <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
                                 {alerts.map(alert => {
-                                    const { className, description } = getAlertStylingAndDescription(alert);
+                                    const { className, description, isReviewTask } = getAlertStylingAndDescription(alert);
                                     return (
                                     <div key={alert.id} className={cn("p-3 border rounded-lg transition-colors", className)}>
                                         <div className="flex items-start gap-3">
-                                            {getAlertIcon(alert.type)}
+                                            {isReviewTask ? <CalendarIcon className="h-4 w-4 text-amber-600" /> : getAlertIcon(alert.type)}
                                             <div className="flex-1">
                                                 <div className="flex items-center justify-between">
                                                     <p className="font-semibold text-sm leading-tight">{alert.title}</p>

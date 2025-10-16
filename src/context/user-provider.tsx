@@ -168,6 +168,67 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   }, [router]);
 
+  const checkPendingReviews = useCallback(async (companyId: string) => {
+    const alertsQuery = query(collection(db, 'companies', companyId, 'alerts'));
+    const alertsSnapshot = await getDocs(alertsQuery);
+    const alerts = alertsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
+
+    let settings = defaultSettings;
+    try {
+        const storedSettings = localStorage.getItem('operationalSettings');
+        if (storedSettings) {
+            settings = { ...defaultSettings, ...JSON.parse(storedSettings) };
+        }
+    } catch(e) {
+        console.error("Could not read settings from local storage for review check.");
+    }
+    
+    const today = startOfDay(new Date());
+    const batch = writeBatch(db);
+    const alertsCollection = collection(db, 'companies', companyId, 'alerts');
+
+    for (const alert of alerts) {
+        if (!alert.reviewDate || !alert.reviewerId) continue;
+        
+        const reviewDate = startOfDay(parseISO(alert.reviewDate));
+        const daysUntil = differenceInDays(reviewDate, today);
+
+        let alertLevel: 'orange' | 'yellow' | null = null;
+        if (daysUntil <= settings.expiryWarningOrangeDays) {
+            alertLevel = 'orange';
+        } else if (daysUntil <= settings.expiryWarningYellowDays) {
+            alertLevel = 'yellow';
+        }
+
+        const title = `Review Due: Alert #${alert.number || alert.id.substring(0,6)}`;
+
+        const existingAlertsQuery = query(
+            alertsCollection, 
+            where('targetUserId', '==', alert.reviewerId), 
+            where('title', '==', title)
+        );
+        const existingAlertsSnap = await getDocs(existingAlertsQuery);
+
+        if (alertLevel && existingAlertsSnap.empty) {
+            const description = `The alert "${alert.title}" is due for review on ${alert.reviewDate}. Please take appropriate action.`;
+            const newAlertRef = doc(alertsCollection);
+            batch.set(newAlertRef, {
+                companyId: companyId,
+                type: 'Task',
+                title: title,
+                description: description,
+                author: 'System',
+                date: new Date().toISOString(),
+                readBy: [],
+                targetUserId: alert.reviewerId,
+                relatedLink: `/alerts/${alert.id}`,
+            });
+        }
+    }
+    await batch.commit();
+
+  }, []);
+
   const checkExpiringDocuments = useCallback(async (user: User, companyId: string) => {
     if (!user.documents || user.documents.length === 0) return;
 
@@ -242,6 +303,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         if (auth.currentUser?.uid === userData.id) {
             setUser(userData);
             checkExpiringDocuments(userData, companyId);
+            if (userData.permissions.includes('Super User') || userData.permissions.includes('Safety:View')) {
+              checkPendingReviews(companyId);
+            }
         }
       }
     }, (error) => {
@@ -270,7 +334,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         unsubCompany();
         unsubAlerts();
     };
-  }, [logout, checkExpiringDocuments]);
+  }, [logout, checkExpiringDocuments, checkPendingReviews]);
   
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
