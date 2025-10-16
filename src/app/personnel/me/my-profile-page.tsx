@@ -49,7 +49,7 @@ const MAX_FILE_SIZE = 500000; // 500KB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const profileFormSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters.'),
+  name: z.string().min(2, 'Name is required.'),
   phone: z.string().regex(phoneRegex, 'Invalid Number!'),
   homeAddress: z.string().optional(),
   nextOfKinName: z.string().optional(),
@@ -155,7 +155,7 @@ const ProfileDialog = ({ user, isOpen, onOpenChange, updateUser }: { user: User,
         const updatedDocs = (data.documents || []).map(d => ({
             id: d.id, type: d.type,
             expiryDate: d.expiryDate ? format(d.expiryDate, 'yyyy-MM-dd') : null,
-            url: d.url || undefined
+            url: d.url || null
         }));
 
         const success = await updateUser({
