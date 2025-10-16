@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { LogOut, User as UserIcon, FileText, Building, Check, Users, Repeat, Cog, PanelLeft, KeyRound } from 'lucide-react';
+import { LogOut, User as UserIcon, FileText, Building, Check, Users, Repeat, Cog, PanelLeft, KeyRound, UserCircle } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import {
@@ -43,6 +43,7 @@ import { db, auth } from '@/lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { updatePassword } from 'firebase/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Link from 'next/link';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -224,9 +225,15 @@ export default function Header({ title, children }: { title: string, children?: 
                     <div className="text-xs text-muted-foreground">Active Company: <strong>{company?.name}</strong></div>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={() => setIsProfileOpen(true)}>
-                      <UserIcon className="mr-2 h-4 w-4" />
-                      <span>My Personal Information</span>
+                  <DropdownMenuItem asChild>
+                      <Link href="/personnel/me">
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        <span>My Profile</span>
+                      </Link>
+                  </DropdownMenuItem>
+                   <DropdownMenuItem onSelect={() => setIsProfileOpen(true)}>
+                      <Cog className="mr-2 h-4 w-4" />
+                      <span>Edit Personal Info</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
