@@ -225,13 +225,7 @@ export default function Header({ title, children }: { title: string, children?: 
                     <div className="text-xs text-muted-foreground">Active Company: <strong>{company?.name}</strong></div>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                      <Link href="/personnel/me">
-                        <UserIcon className="mr-2 h-4 w-4" />
-                        <span>My Profile</span>
-                      </Link>
-                  </DropdownMenuItem>
-                   <DropdownMenuItem onSelect={() => setIsProfileOpen(true)}>
+                  <DropdownMenuItem onSelect={() => setIsProfileOpen(true)}>
                       <Cog className="mr-2 h-4 w-4" />
                       <span>Edit Personal Info</span>
                   </DropdownMenuItem>

@@ -55,7 +55,8 @@ export const navItems: {
   requiredPermissions?: Permission[];
   requiredFeature?: Feature;
 }[] = [
-  { href: '/my-dashboard', label: 'My Dashboard', icon: UserCircle },
+  { href: '/my-dashboard', label: 'My Dashboard', icon: LayoutDashboard },
+  { href: '/personnel/me', label: 'My Profile', icon: UserCircle },
   { href: '/dashboard', label: 'Company Dashboard', icon: LayoutDashboard },
   { href: '/aircraft', label: 'Aircraft Management', icon: Plane, requiredFeature: 'Aircraft' },
   { href: '/quick-reports', label: 'Quick Reports', icon: ClipboardCheck },
