@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -133,7 +132,7 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate, departm
         </div>
         <div>
             <FormLabel>Checklist Items</FormLabel>
-            <ScrollArea className="h-60 mt-2 pr-4">
+            <ScrollArea className="h-[60vh] mt-2 pr-4">
                 <div className="space-y-3">
                     {fields.map((field, index) => {
                        const itemType = form.watch(`items.${index}.type`);
