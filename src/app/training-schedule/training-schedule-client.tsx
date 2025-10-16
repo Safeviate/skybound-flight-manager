@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -211,7 +212,7 @@ const GanttChart = ({
             <table className="w-full border-collapse" style={{ minWidth: '4758px', tableLayout: 'fixed' }}>
                 <thead>
                     <tr>
-                        <th className="sticky top-0 z-20 bg-card text-center p-2 w-[100px] border-r">Resource</th>
+                        <th className="sticky top-0 z-20 bg-card text-center p-2 w-[90px] border-r">Resource</th>
                         {hourlyTimeSlots.map(time => <th key={time} colSpan={4} className="text-center p-2 sticky top-0 z-10 bg-card border-l">{time}</th>)}
                     </tr>
                 </thead>
@@ -220,7 +221,7 @@ const GanttChart = ({
                         const renderedSlots = new Set();
                         return (
                         <tr key={resource[resourceKey]}>
-                            <td className="sticky left-0 z-10 bg-card font-medium text-center p-2 w-[100px] border-r">{resource[resourceNameKey]}</td>
+                            <td className="sticky left-0 z-10 bg-card font-medium text-center p-2 w-[90px] border-r">{resource[resourceNameKey]}</td>
                             {timeSlots.map(time => {
                                 if (renderedSlots.has(time)) return null;
 
@@ -400,7 +401,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 bookingEnd = addDays(bookingEnd, 1);
             }
             
-            const viewInterval = { start: sub(startOfView, {days: 1}), end: add(endOfView, {days: 1}) };
+            const viewInterval = { start: sub(startOfView, {days: 1}), end: endOfView };
 
             return isWithinInterval(bookingStart, { start: sub(startOfView, {days: 1}), end: endOfView }) ||
                    isWithinInterval(bookingEnd, { start: startOfView, end: add(endOfView, {days: 1}) }) ||
