@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label';
 import { useUser } from '@/context/user-provider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 const bookingFormSchema = z.object({
@@ -205,237 +206,240 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="purpose"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Purpose of Booking</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger><SelectValue placeholder="Select a purpose" /></SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                   {bookingPurposes.map(p => (
-                    <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="grid grid-cols-2 gap-4">
-            <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Start Date</FormLabel>
-                        <FormControl>
-                            <Input type="date" {...field} value={field.value ?? ''} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="endDate"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>End Date (Optional)</FormLabel>
-                        <FormControl>
-                            <Input type="date" {...field} value={field.value ?? ''} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-            <FormField
-            control={form.control}
-            name="departure"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Departure</FormLabel>
-                <FormControl>
-                    <Input placeholder="e.g., KPAO" {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-            control={form.control}
-            name="arrival"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Arrival</FormLabel>
-                <FormControl>
-                    <Input placeholder="e.g., KSQL" {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-            <FormField
-                control={form.control}
-                name="startTime"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Start Time</FormLabel>
-                    <FormControl>
-                    <Input type="time" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="endTime"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>End Time</FormLabel>
-                    <FormControl>
-                    <Input type="time" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </div>
-
-        {purpose === 'Training' && (
-          <div className="space-y-4 p-4 border rounded-lg">
-            <div className="grid grid-cols-2 gap-4">
+        <ScrollArea className="h-[60vh] pr-4">
+            <div className="space-y-4">
                 <FormField
                 control={form.control}
-                name="student"
+                name="purpose"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Student</FormLabel>
-                    <Select onValueChange={(value) => {
-                        field.onChange(value);
-                        const selectedStudent = users.find(u => u.name === value);
-                        if (selectedStudent) form.setValue('studentId', selectedStudent.id);
-                    }} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Select student" /></SelectTrigger></FormControl>
-                        <SelectContent>{students.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="instructor"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Instructor</FormLabel>
+                    <FormLabel>Purpose of Booking</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Select instructor" /></SelectTrigger></FormControl>
-                        <SelectContent>{instructors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}</SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
-            <FormField
-                control={form.control}
-                name="trainingExercise"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Training Exercise</FormLabel>
                         <FormControl>
-                            <Textarea placeholder="e.g., Stalls and spins, short field landings..." {...field} value={field.value ?? ''} />
+                        <SelectTrigger><SelectValue placeholder="Select a purpose" /></SelectTrigger>
                         </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-          </div>
-        )}
-        
-        {purpose === 'Hire and Fly' && (
-          <div className="grid grid-cols-1 gap-4 p-4 border rounded-lg">
-            <FormField
-              control={form.control}
-              name="pilotName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Pilot</FormLabel>
-                  <Select onValueChange={(value) => {
-                    field.onChange(value);
-                    const selectedPilot = [...hireAndFly, ...personnel].find(u => u.name === value);
-                    if (selectedPilot) form.setValue('pilotId', selectedPilot.id);
-                  }} defaultValue={field.value}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Select pilot" /></SelectTrigger></FormControl>
-                    <SelectContent>
-                        {hireAndFly.map(p => (
+                        <SelectContent>
+                        {bookingPurposes.map(p => (
                             <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
                         ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        )}
-
-        {purpose === 'Post-Maintenance Flight' && (
-             <div className="grid grid-cols-1 gap-4 p-4 border rounded-lg">
-                <FormField
-                control={form.control}
-                name="pilotName"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Pilot</FormLabel>
-                    <Select onValueChange={(value) => {
-                        field.onChange(value);
-                        const selectedPilot = personnel.find(p => p.name === value);
-                        if (selectedPilot) form.setValue('pilotId', selectedPilot.id);
-                    }} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Select personnel" /></SelectTrigger></FormControl>
-                        <SelectContent>
-                            {personnel.map(p => (
-                                <SelectItem key={p.id} value={p.name}>{p.name} ({p.role})</SelectItem>
-                            ))}
                         </SelectContent>
                     </Select>
                     <FormMessage />
                     </FormItem>
                 )}
                 />
-            </div>
-        )}
-        
-        {purpose === 'Maintenance' && (
-          <div className="p-4 border rounded-lg space-y-4">
-             <FormField
-              control={form.control}
-              name="maintenanceType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Maintenance Type / Note</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., 100-Hour Inspection" {...field} value={field.value ?? ''} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        )}
+                
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="date"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Start Date</FormLabel>
+                                <FormControl>
+                                    <Input type="date" {...field} value={field.value ?? ''} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="endDate"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>End Date (Optional)</FormLabel>
+                                <FormControl>
+                                    <Input type="date" {...field} value={field.value ?? ''} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                    control={form.control}
+                    name="departure"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Departure</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., KPAO" {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                    control={form.control}
+                    name="arrival"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Arrival</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., KSQL" {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="startTime"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Start Time</FormLabel>
+                            <FormControl>
+                            <Input type="time" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="endTime"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>End Time</FormLabel>
+                            <FormControl>
+                            <Input type="time" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
+                {purpose === 'Training' && (
+                <div className="space-y-4 p-4 border rounded-lg">
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                        control={form.control}
+                        name="student"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Student</FormLabel>
+                            <Select onValueChange={(value) => {
+                                field.onChange(value);
+                                const selectedStudent = users.find(u => u.name === value);
+                                if (selectedStudent) form.setValue('studentId', selectedStudent.id);
+                            }} defaultValue={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Select student" /></SelectTrigger></FormControl>
+                                <SelectContent>{students.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                        <FormField
+                        control={form.control}
+                        name="instructor"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Instructor</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Select instructor" /></SelectTrigger></FormControl>
+                                <SelectContent>{instructors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}</SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    </div>
+                    <FormField
+                        control={form.control}
+                        name="trainingExercise"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Training Exercise</FormLabel>
+                                <FormControl>
+                                    <Textarea placeholder="e.g., Stalls and spins, short field landings..." {...field} value={field.value ?? ''} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                )}
+                
+                {purpose === 'Hire and Fly' && (
+                <div className="grid grid-cols-1 gap-4 p-4 border rounded-lg">
+                    <FormField
+                    control={form.control}
+                    name="pilotName"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Pilot</FormLabel>
+                        <Select onValueChange={(value) => {
+                            field.onChange(value);
+                            const selectedPilot = [...hireAndFly, ...personnel].find(u => u.name === value);
+                            if (selectedPilot) form.setValue('pilotId', selectedPilot.id);
+                        }} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select pilot" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                                {hireAndFly.map(p => (
+                                    <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                </div>
+                )}
+
+                {purpose === 'Post-Maintenance Flight' && (
+                    <div className="grid grid-cols-1 gap-4 p-4 border rounded-lg">
+                        <FormField
+                        control={form.control}
+                        name="pilotName"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Pilot</FormLabel>
+                            <Select onValueChange={(value) => {
+                                field.onChange(value);
+                                const selectedPilot = personnel.find(p => p.name === value);
+                                if (selectedPilot) form.setValue('pilotId', selectedPilot.id);
+                            }} defaultValue={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Select personnel" /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    {personnel.map(p => (
+                                        <SelectItem key={p.id} value={p.name}>{p.name} ({p.role})</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    </div>
+                )}
+                
+                {purpose === 'Maintenance' && (
+                <div className="p-4 border rounded-lg space-y-4">
+                    <FormField
+                    control={form.control}
+                    name="maintenanceType"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Maintenance Type / Note</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., 100-Hour Inspection" {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                </div>
+                )}
+            </div>
+        </ScrollArea>
         <div className="flex justify-between items-center pt-4">
            {existingBooking && onDelete && (
                 <AlertDialog>
