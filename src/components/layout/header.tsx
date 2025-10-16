@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { LogOut, User as UserIcon, FileText, Building, Check, Users, Repeat, Cog, PanelLeft, KeyRound, UserCircle } from 'lucide-react';
+import { LogOut, User as UserIcon, FileUp, Building, Check, Users, Repeat, Cog, PanelLeft, KeyRound, UserCircle, Camera, ImageIcon } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import {
@@ -36,7 +36,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import type { UserDocument, User as AppUser } from '@/lib/types';
+import type { UserDocument, User as AppUser, ThemeColors } from '@/lib/types';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { db, auth } from '@/lib/firebase';
@@ -44,10 +44,14 @@ import { collection, query, getDocs } from 'firebase/firestore';
 import { updatePassword } from 'firebase/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
+import { StandardCamera } from '../ui/standard-camera';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
 );
+
+const MAX_FILE_SIZE = 500000; // 500KB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const profileFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -57,9 +61,11 @@ const profileFormSchema = z.object({
   nextOfKinPhone: z.string().regex(phoneRegex, 'Invalid Number!').optional().or(z.literal('')),
   nextOfKinEmail: z.string().email().optional().or(z.literal('')),
   documents: z.array(z.object({
-    id: z.string(),
-    type: z.string(),
-    expiryDate: z.date().nullable().optional(),
+      id: z.string(),
+      type: z.string(),
+      expiryDate: z.date().nullable().optional(),
+      url: z.string().optional().nullable(),
+      file: z.any().optional(),
   })).optional(),
 });
 
@@ -82,6 +88,8 @@ export default function Header({ title, children }: { title: string, children?: 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const { toast } = useToast();
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [photoTarget, setPhotoTarget] = useState<string | null>(null);
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -90,6 +98,40 @@ export default function Header({ title, children }: { title: string, children?: 
   const passwordForm = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordFormSchema),
   });
+  
+  const { setValue, watch } = profileForm;
+
+  const handleFileChange = useCallback((file: File, index: number) => {
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast({ variant: 'destructive', title: 'File too large', description: 'Maximum file size is 500KB.' });
+        return;
+      }
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        toast({ variant: 'destructive', title: 'Invalid file type', description: 'Only JPG, PNG, and WEBP are accepted.' });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setValue(`documents.${index}.url`, reader.result as string, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
+    }
+  }, [setValue, toast]);
+
+  const handlePhotoSuccess = (dataUrl: string) => {
+    if (photoTarget) {
+      setValue(photoTarget as any, dataUrl, { shouldValidate: true });
+    }
+    setIsCameraOpen(false);
+    setPhotoTarget(null);
+  };
+  
+  const openCamera = (targetField: string) => {
+    setPhotoTarget(targetField);
+    setIsCameraOpen(true);
+  };
+
 
   const getCombinedDocuments = useCallback(() => {
     if (!user) return [];
@@ -109,7 +151,7 @@ export default function Header({ title, children }: { title: string, children?: 
     });
 
     existingDocs.forEach(doc => {
-        if (doc.expiryDate && !combined.has(doc.type)) {
+        if (!combined.has(doc.type)) {
             combined.set(doc.type, doc);
         }
     });
@@ -127,7 +169,7 @@ export default function Header({ title, children }: { title: string, children?: 
         nextOfKinName: user.nextOfKinName || '',
         nextOfKinPhone: user.nextOfKinPhone || '',
         nextOfKinEmail: user.nextOfKinEmail || '',
-        documents: combinedDocs.map(d => ({ ...d, expiryDate: d.expiryDate ? parseISO(d.expiryDate) : null })),
+        documents: combinedDocs.map(d => ({ ...d, expiryDate: d.expiryDate ? parseISO(d.expiryDate) : null, file: null })),
       });
       passwordForm.reset();
     }
@@ -140,15 +182,12 @@ export default function Header({ title, children }: { title: string, children?: 
   const handleProfileUpdate = async (data: ProfileFormValues) => {
     if (!user) return;
     
-    const requiredDocTypes = new Set(user.requiredDocuments || []);
-
     const updatedDocs = (data.documents || []).map(d => ({
         id: d.id,
         type: d.type,
-        expiryDate: d.expiryDate ? format(d.expiryDate, 'yyyy-MM-dd') : null
-    })).filter(d => 
-        requiredDocTypes.has(d.type) || d.expiryDate
-    );
+        expiryDate: d.expiryDate ? format(d.expiryDate, 'yyyy-MM-dd') : null,
+        url: d.url || undefined
+    }));
 
     const success = await updateUser({
       name: data.name,
@@ -193,6 +232,7 @@ export default function Header({ title, children }: { title: string, children?: 
   }
 
   return (
+    <>
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-8 no-print">
       <div className="flex items-center flex-1">
         <div className="md:hidden">
@@ -244,9 +284,10 @@ export default function Header({ title, children }: { title: string, children?: 
               </DialogDescription>
             </DialogHeader>
              <Tabs defaultValue="personal">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="personal">Personal Info</TabsTrigger>
-                    <TabsTrigger value="security">Security & Password</TabsTrigger>
+                    <TabsTrigger value="documents">Documents</TabsTrigger>
+                    <TabsTrigger value="security">Security</TabsTrigger>
                 </TabsList>
                 <TabsContent value="personal">
                     <Form {...profileForm}>
@@ -268,22 +309,74 @@ export default function Header({ title, children }: { title: string, children?: 
                                         <FormField control={profileForm.control} name="nextOfKinEmail" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="jane.doe@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                 </div>
-                                <Separator />
-                                <div>
-                                    <h4 className="font-medium text-sm mb-2 flex items-center gap-2"><FileText className="h-4 w-4 text-muted-foreground" />Required Documents</h4>
-                                    <div className="space-y-4">
-                                        {profileForm.watch('documents')?.map((docItem, index) => (<FormField key={docItem.id} control={profileForm.control} name={`documents.${index}.expiryDate`} render={({ field }) => { const typedField = field as unknown as { value: Date | null | undefined; onChange: (date: Date | undefined) => void }; return (<FormItem className="flex items-center justify-between"><FormLabel className="w-1/2">{docItem.type}</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-1/2 pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}>{typedField.value ? format(typedField.value, "PPP") : <span>Set expiry</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={typedField.value || undefined} onSelect={typedField.onChange} initialFocus /></PopoverContent></Popover></FormItem>)}} />))}
-                                        {(profileForm.getValues('documents') || []).length === 0 && (<p className="text-sm text-muted-foreground">No specific documents have been requested.</p>)}
-                                    </div>
-                                </div>
                             </div>
                             </ScrollArea>
-                            <DialogFooter className="pt-4">
+                            <DialogFooter className="pt-4 mt-4 border-t">
                                 <DialogClose asChild><Button type="button" variant="secondary">Close</Button></DialogClose>
                                 <Button type="submit">Save Changes</Button>
                             </DialogFooter>
                         </form>
                     </Form>
+                </TabsContent>
+                <TabsContent value="documents">
+                  <Form {...profileForm}>
+                    <form onSubmit={profileForm.handleSubmit(handleProfileUpdate)}>
+                       <ScrollArea className="h-[60vh] pr-6">
+                         <div className="space-y-4 pt-4">
+                           <h4 className="font-medium text-sm mb-2 flex items-center gap-2"><FileUp className="h-4 w-4 text-muted-foreground" />My Documents</h4>
+                           <div className="space-y-4">
+                               {(profileForm.watch('documents') || []).map((docItem, index) => {
+                                  const documentUrl = watch(`documents.${index}.url`);
+                                  return (
+                                     <div key={docItem.id} className="p-4 border rounded-lg space-y-3">
+                                        <p className="font-medium text-sm">{docItem.type}</p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                           <FormField control={profileForm.control} name={`documents.${index}.expiryDate`} render={({ field }) => { const typedField = field as unknown as { value: Date | null | undefined, onChange: (date: Date | undefined) => void }; return (<FormItem><FormLabel className="sr-only">Expiry Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}>{typedField.value ? format(typedField.value, "PPP") : <span>Set expiry date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={typedField.value || undefined} onSelect={typedField.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)}} />
+                                           <div className="flex items-center gap-2">
+                                              <Button type="button" variant="outline" size="sm" className="flex-1" onClick={() => openCamera(`documents.${index}.url`)}>
+                                                    <Camera className="mr-2 h-4 w-4" /> Take Photo
+                                              </Button>
+                                              <FormField
+                                                    control={profileForm.control}
+                                                    name={`documents.${index}.file`}
+                                                    render={({ field }) => (
+                                                        <FormItem className="flex-1">
+                                                            <FormControl>
+                                                                <div className="relative">
+                                                                    <Button type="button" variant="outline" asChild size="sm" className="w-full">
+                                                                        <label htmlFor={`doc-file-${index}`} className="cursor-pointer">
+                                                                            <FileUp className="mr-2 h-4 w-4" />
+                                                                            {documentUrl ? 'Change' : 'Upload'}
+                                                                        </label>
+                                                                    </Button>
+                                                                    <Input
+                                                                        id={`doc-file-${index}`}
+                                                                        type="file"
+                                                                        accept="image/*"
+                                                                        className="absolute w-0 h-0 opacity-0"
+                                                                        onChange={(e) => e.target.files && handleFileChange(e.target.files[0], index)}
+                                                                    />
+                                                                </div>
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                           </div>
+                                        </div>
+                                     </div>
+                                  )
+                               })}
+                               {(profileForm.getValues('documents') || []).length === 0 && (<p className="text-sm text-muted-foreground">No specific documents have been requested.</p>)}
+                           </div>
+                         </div>
+                       </ScrollArea>
+                        <DialogFooter className="pt-4 mt-4 border-t">
+                            <DialogClose asChild><Button type="button" variant="secondary">Close</Button></DialogClose>
+                            <Button type="submit">Save Changes</Button>
+                        </DialogFooter>
+                    </form>
+                  </Form>
                 </TabsContent>
                 <TabsContent value="security">
                      <Form {...passwordForm}>
@@ -328,7 +421,17 @@ export default function Header({ title, children }: { title: string, children?: 
                 </div>
             </DialogContent>
         </Dialog>
+         <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
+            <DialogContent>
+                <DialogHeader>
+                <DialogTitle>Take Photo</DialogTitle>
+                <DialogDescription>Take a picture of the document.</DialogDescription>
+                </DialogHeader>
+                <StandardCamera onSuccess={handlePhotoSuccess} />
+            </DialogContent>
+        </Dialog>
       </div>
     </header>
+    </>
   );
 }
