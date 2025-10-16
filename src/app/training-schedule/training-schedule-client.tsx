@@ -16,7 +16,7 @@ import { Loader2, AlertTriangle, Calendar as CalendarIcon, Search, Trash2, Edit 
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { format, parseISO, setHours, setMinutes, isBefore, addDays, startOfDay, endOfDay, isWithinInterval, isSameDay, add, sub, isAfter, startOfYesterday } from 'date-fns';
+import { format, parseISO, setHours, setMinutes, isBefore, addDays, startOfDay, endOfDay, isWithinInterval, isSameDay, add, sub, isAfter } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useSettings } from '@/context/settings-provider';
@@ -130,8 +130,11 @@ const GanttChart = ({
     }
     
     const getBookingForSlot = (resourceIdentifier: string, time: string) => {
-        const slotDateTime = setMinutes(setHours(startOfDay(selectedDate), parseInt(time.split(':')[0], 10)), parseInt(time.split(':')[1], 10));
-        
+        const [slotHour, slotMinute] = time.split(':').map(Number);
+        const isNextDaySlot = slotHour < 6;
+        const slotDate = isNextDaySlot ? addDays(startOfDay(selectedDate), 1) : startOfDay(selectedDate);
+        const slotDateTime = setMinutes(setHours(slotDate, slotHour), slotMinute);
+
         return bookings.find(b => {
             const bookingResourceIdentifier = b.resourceType === 'facility' ? b.facilityId : b.aircraft;
             if (bookingResourceIdentifier !== resourceIdentifier) return false;
@@ -143,9 +146,7 @@ const GanttChart = ({
                 bookingEndDateTime = addDays(bookingEndDateTime, 1);
             }
             
-            const slotDateTimeForCheck = parseInt(time.split(':')[0], 10) < 6 ? addDays(slotDateTime, 1) : slotDateTime;
-            
-            return isWithinInterval(slotDateTimeForCheck, { start: bookingStartDateTime, end: bookingEndDateTime });
+            return isWithinInterval(slotDateTime, { start: bookingStartDateTime, end: bookingEndDateTime });
         });
     };
 
@@ -160,16 +161,14 @@ const GanttChart = ({
         const visibleBookingStart = isAfter(bookingStart, viewStart) ? bookingStart : viewStart;
         const visibleBookingEnd = isBefore(bookingEnd, viewEnd) ? bookingEnd : viewEnd;
         
-        const startTimeInMinutes = timeToMinutes(time);
-        
-        let effectiveStartTimeInMinutes;
-        if (isAfter(bookingStart, viewStart)) {
-            effectiveStartTimeInMinutes = timeToMinutes(booking.startTime);
+        let startTimeToRender;
+        if (isBefore(bookingStart, viewStart)) {
+            startTimeToRender = '06:00';
         } else {
-            effectiveStartTimeInMinutes = timeToMinutes('06:00');
+            startTimeToRender = booking.startTime;
         }
 
-        if (startTimeInMinutes !== effectiveStartTimeInMinutes) return 0;
+        if (time !== startTimeToRender) return 0;
         
         const durationInMinutes = (visibleBookingEnd.getTime() - visibleBookingStart.getTime()) / (1000 * 60);
         return Math.ceil(durationInMinutes / 15);
@@ -224,15 +223,10 @@ const GanttChart = ({
                                 if (booking) {
                                     const colSpan = calculateColSpan(booking, time);
                                     if (colSpan > 0) {
-                                        let startTimeToRender;
-                                        if (isBefore(parseISO(`${booking.date}T${booking.startTime}`), setHours(startOfDay(selectedDate), 6))) {
-                                            startTimeToRender = '06:00';
-                                        } else {
-                                            startTimeToRender = booking.startTime;
-                                        }
-
-                                        const startTimeInMinutes = timeToMinutes(startTimeToRender);
-
+                                        
+                                        const [startHour, startMinute] = time.split(':').map(Number);
+                                        const startTimeInMinutes = startHour * 60 + startMinute;
+                                        
                                         for (let i = 1; i < colSpan; i++) {
                                             const nextSlotTimeInMinutes = startTimeInMinutes + i * 15;
                                             const nextHour = Math.floor(nextSlotTimeInMinutes / 60) % 24;
@@ -390,7 +384,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     const dailyAircraftBookings = useMemo(() => {
         const startOfView = setHours(startOfDay(selectedDate), 6);
         const endOfView = addDays(startOfView, 1);
-        const viewInterval = { start: startOfView, end: endOfView };
         
         return bookings.filter(b => {
             if (b.status === 'Cancelled' || !b.date || b.resourceType !== 'aircraft') return false;
@@ -401,17 +394,19 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             if (isBefore(bookingEnd, bookingStart)) {
                 bookingEnd = addDays(bookingEnd, 1);
             }
+            
+            const bookingInterval = { start: bookingStart, end: bookingEnd };
+            const viewInterval = { start: sub(startOfView, {days: 1}), end: add(endOfView, {days: 1}) };
 
             return isWithinInterval(bookingStart, viewInterval) || 
                    isWithinInterval(bookingEnd, viewInterval) ||
-                   (isBefore(bookingStart, startOfView) && isAfter(bookingEnd, startOfView));
+                   (isBefore(bookingStart, startOfView) && isAfter(bookingEnd, endOfView));
         });
     }, [bookings, selectedDate]);
 
     const dailyFacilityBookings = useMemo(() => {
         const startOfView = setHours(startOfDay(selectedDate), 6);
         const endOfView = addDays(startOfView, 1);
-        const viewInterval = { start: startOfView, end: endOfView };
 
         return bookings.filter(b => {
             if (b.status === 'Cancelled' || !b.date || b.resourceType !== 'facility') return false;
@@ -419,6 +414,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             const bookingStart = parseISO(`${b.date}T${b.startTime}`);
             let bookingEnd = parseISO(`${b.endDate || b.date}T${b.endTime}`);
             if (isBefore(bookingEnd, bookingStart)) bookingEnd = addDays(bookingEnd, 1);
+
+            const viewInterval = { start: startOfView, end: endOfView };
 
             return isWithinInterval(bookingStart, viewInterval) || 
                    isWithinInterval(bookingEnd, viewInterval) ||
@@ -616,7 +613,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
   const handleBookingClick = (booking: Booking) => {
     const variant = getBookingVariant(booking);
-    if (!variant.isClickable) {
+    if (!variant.isClickable && booking.status !== 'Completed') {
         toast({
             variant: 'default',
             title: 'Booking Not Active',
