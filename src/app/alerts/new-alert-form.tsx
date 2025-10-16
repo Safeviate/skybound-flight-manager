@@ -127,14 +127,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert, allUsers
   }, [existingAlert, form]);
   
   function handleFormSubmit(data: AlertFormValues) {
-    const finalData = {
-        ...data,
-        reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
-        reviewerId: data.reviewerId === 'none' ? undefined : data.reviewerId,
-        department: data.targetType === 'department' ? (data.department || 'all') : undefined,
-        targetUserId: data.targetType === 'user' ? data.targetUserId : undefined,
-    };
-    onSubmit(finalData as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
+    onSubmit(data as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
     form.reset();
   }
   
@@ -142,13 +135,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert, allUsers
     const isValid = await form.trigger();
     if (isValid) {
       const data = form.getValues();
-       onSaveProgress({
-          ...data,
-          reviewDate: data.reviewDate ? format(data.reviewDate, 'yyyy-MM-dd') : undefined,
-          reviewerId: data.reviewerId === 'none' ? undefined : data.reviewerId,
-          department: data.targetType === 'department' ? (data.department || 'all') : undefined,
-          targetUserId: data.targetType === 'user' ? data.targetUserId : undefined,
-       } as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
+       onSaveProgress(data as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
     } else {
         toast({
             variant: 'destructive',

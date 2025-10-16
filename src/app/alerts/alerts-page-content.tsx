@@ -66,37 +66,43 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     setIsDialogOpen(true);
   };
 
-  const handleAlertSubmit = async (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => {
+  const handleAlertSubmit = async (formData: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => {
     if (!user || !company) return;
-
+  
     try {
       if (editingAlert) {
-        const updatedAlertData: Partial<Alert> = { ...editingAlert, ...data };
-        
-        // Ensure we don't write `undefined` to Firestore.
-        if (data.department) {
-            updatedAlertData.targetUserId = undefined;
-            delete (updatedAlertData as any).targetUserId;
-        } 
-        else if (data.targetUserId) {
-            updatedAlertData.department = undefined;
-            delete (updatedAlertData as any).department;
-        }
+        const updatedAlertData = {
+          ...editingAlert,
+          ...formData,
+          reviewDate: formData.reviewDate ? format(parseISO(formData.reviewDate as unknown as string), 'yyyy-MM-dd') : null,
+          targetUserId: formData.targetType === 'user' ? formData.targetUserId : null,
+          department: formData.targetType === 'department' ? (formData.department || 'all') : null,
+        };
 
+        // Clean up the object before saving
+        delete (updatedAlertData as any).targetType;
+        Object.keys(updatedAlertData).forEach(key => {
+            if (updatedAlertData[key as keyof typeof updatedAlertData] === undefined) {
+                delete updatedAlertData[key as keyof typeof updatedAlertData];
+            }
+        });
+  
         const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
         await updateDoc(alertRef, updatedAlertData as any);
         
-        setAlerts(prev => prev.map(a => a.id === editingAlert.id ? { ...a, ...updatedAlertData } as Alert : a));
+        setAlerts(prev => prev.map(a => a.id === editingAlert.id ? updatedAlertData : a));
         toast({
             title: 'Alert Updated',
-            description: `The "${data.title}" alert has been updated.`,
+            description: `The "${formData.title}" alert has been updated.`,
         });
+
       } else {
+        // ... (rest of the creation logic, which is correct)
         const alertsCollection = collection(db, 'companies', company.id, 'alerts');
         
         const q = query(
             alertsCollection, 
-            where('type', '==', data.type), 
+            where('type', '==', formData.type), 
             orderBy('number', 'desc'), 
             limit(1)
         );
@@ -105,26 +111,24 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         const newAlertNumber = (lastAlert?.number || 0) + 1;
 
         const newAlertData: Omit<Alert, 'id'> = {
-            ...data,
+            ...formData,
             companyId: company.id,
             number: newAlertNumber,
             author: user.name,
             date: new Date().toISOString(),
             readBy: [],
+            reviewDate: formData.reviewDate ? format(parseISO(formData.reviewDate as unknown as string), 'yyyy-MM-dd') : null,
+            targetUserId: formData.targetType === 'user' ? formData.targetUserId : null,
+            department: formData.targetType === 'department' ? (formData.department || 'all') : null,
         };
         
-        if (newAlertData.department === 'all' || newAlertData.department === '') {
-            delete (newAlertData as any).department;
-        }
-        if (newAlertData.targetUserId) {
-            delete (newAlertData as any).department;
-        }
+        delete (newAlertData as any).targetType;
 
         const docRef = await addDoc(alertsCollection, newAlertData);
         setAlerts(prev => [{ ...newAlertData, id: docRef.id } as Alert, ...prev]);
         toast({
             title: 'Alert Created',
-            description: `The "${data.title}" alert has been issued.`,
+            description: `The "${formData.title}" alert has been issued.`,
         });
 
         if (newAlertData.reviewerId) {
