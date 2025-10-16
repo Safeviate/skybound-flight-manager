@@ -66,13 +66,16 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert, allUsers
   const form = useForm<AlertFormValues>({
     resolver: zodResolver(alertFormSchema),
     defaultValues: {
+      type: undefined,
       title: '',
-      department: '',
+      targetType: 'department',
+      department: 'all',
       targetUserId: '',
       reviewerId: '',
       background: '',
       purpose: '',
       instruction: '',
+      reviewDate: undefined,
     },
   });
 

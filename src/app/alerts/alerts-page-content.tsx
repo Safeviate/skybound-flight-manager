@@ -73,13 +73,14 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
       if (editingAlert) {
         const updatedAlertData: Partial<Alert> = { ...editingAlert, ...data };
         
-        // If a department is selected, clear the user-specific field.
-        if (data.department && data.department !== 'all' && data.department !== '') {
+        // Ensure we don't write `undefined` to Firestore.
+        if (data.department) {
             updatedAlertData.targetUserId = undefined;
+            delete (updatedAlertData as any).targetUserId;
         } 
-        // If a user is selected, clear the department field.
         else if (data.targetUserId) {
             updatedAlertData.department = undefined;
+            delete (updatedAlertData as any).department;
         }
 
         const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
