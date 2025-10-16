@@ -14,7 +14,7 @@ import { NewAlertForm } from './new-alert-form';
 import { format, parseISO } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, updateDoc, writeBatch, limit } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -74,12 +74,11 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         if (editingAlert) {
             const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
             
-            const dataToSave = {
-              ...editingAlert,
-              ...formData,
-              reviewDate: formData.reviewDate instanceof Date ? format(formData.reviewDate, 'yyyy-MM-dd') : null,
-              targetUserId: formData.targetType === 'user' ? formData.targetUserId : null,
-              department: formData.targetType === 'department' ? (formData.department || 'all') : null,
+            const dataToSave: Partial<Alert> = {
+                ...formData,
+                reviewDate: formData.reviewDate instanceof Date ? format(formData.reviewDate, 'yyyy-MM-dd') : null,
+                targetUserId: formData.targetType === 'user' ? formData.targetUserId : null,
+                department: formData.targetType === 'department' ? (formData.department || 'all') : null,
             };
             
             delete (dataToSave as any).targetType;
@@ -97,7 +96,6 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
                 description: `The "${formData.title}" alert has been updated.`,
             });
         } else {
-            // This is the logic for creating a new alert
             const alertsCollection = collection(db, 'companies', company.id, 'alerts');
             
             const q = query(
@@ -164,11 +162,9 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     try {
         const batch = writeBatch(db);
         
-        // 1. Delete the alert document
         const alertRef = doc(db, `companies/${company.id}/alerts`, alert.id);
         batch.delete(alertRef);
 
-        // 2. Find and delete all notification alerts related to this alert
         const notificationsRef = collection(db, `companies/${company.id}/alerts`);
         const q = query(notificationsRef, where("relatedLink", "==", `/alerts/${alert.id}`));
         const querySnapshot = await getDocs(q);
@@ -177,7 +173,6 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
             batch.delete(doc.ref);
         });
 
-        // 3. Commit all deletions
         await batch.commit();
 
         setAlerts(prev => prev.filter(a => a.id !== alert.id));
@@ -208,7 +203,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     <ScrollArea>
       <Table>
         <TableHeader>
-          <TableRow>
+          <TableRow className="border-b-0">
             <TableHead>Number</TableHead>
             <TableHead>Title</TableHead>
             <TableHead>Department</TableHead>
