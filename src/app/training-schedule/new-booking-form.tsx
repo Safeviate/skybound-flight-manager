@@ -57,10 +57,7 @@ const bookingFormSchema = z.object({
     message: "A pilot is required for this booking type.",
     path: ["pilotName"],
 }).refine(data => {
-    if (data.purpose !== 'Maintenance') {
-        return !!data.startTime && !!data.endTime;
-    }
-    return true;
+    return !!data.startTime && !!data.endTime;
 }, {
     message: "Start and End time are required.",
     path: ["startTime"],
@@ -258,66 +255,62 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
             />
         </div>
 
-        {purpose !== 'Maintenance' && (
-             <>
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                    control={form.control}
-                    name="departure"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Departure</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., KPAO" {...field} value={field.value ?? ''} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                    control={form.control}
-                    name="arrival"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Arrival</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., KSQL" {...field} value={field.value ?? ''} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                </div>
-                 <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="startTime"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Start Time</FormLabel>
-                            <FormControl>
-                            <Input type="time" {...field} value={field.value ?? ''} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="endTime"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>End Time</FormLabel>
-                            <FormControl>
-                            <Input type="time" {...field} value={field.value ?? ''} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-             </>
-        )}
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="departure"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Departure</FormLabel>
+                <FormControl>
+                    <Input placeholder="e.g., KPAO" {...field} value={field.value ?? ''} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="arrival"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Arrival</FormLabel>
+                <FormControl>
+                    <Input placeholder="e.g., KSQL" {...field} value={field.value ?? ''} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+                control={form.control}
+                name="startTime"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Start Time</FormLabel>
+                    <FormControl>
+                    <Input type="time" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="endTime"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>End Time</FormLabel>
+                    <FormControl>
+                    <Input type="time" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
 
         {purpose === 'Training' && (
           <div className="space-y-4 p-4 border rounded-lg">
@@ -432,7 +425,7 @@ export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit
               name="maintenanceType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Maintenance Type / Description</FormLabel>
+                  <FormLabel>Maintenance Type / Note</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., 100-Hour Inspection" {...field} value={field.value ?? ''} />
                   </FormControl>
