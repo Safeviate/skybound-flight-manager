@@ -11,9 +11,11 @@ import { format, parseISO } from 'date-fns';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, Mail, Phone, Home, User as UserIcon } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { getExpiryBadge } from '@/lib/utils';
+import { useSettings } from '@/context/settings-provider';
 
 const formatDecimalTime = (decimalHours: number | undefined) => {
     if (typeof decimalHours !== 'number' || isNaN(decimalHours)) {
@@ -29,6 +31,7 @@ export function MyProfilePageContent({
   user: User;
   bookings: Booking[];
 }) {
+  const { settings } = useSettings();
 
   const instructorLogbookEntries = useMemo(() => {
     return bookings
@@ -85,15 +88,76 @@ export function MyProfilePageContent({
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="logbook">Instructor Logbook</TabsTrigger>
         </TabsList>
-        <TabsContent value="profile" className="mt-4">
-             <Card>
+        <TabsContent value="profile" className="mt-4 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+             <Card className="lg:col-span-1">
                 <CardHeader>
                     <CardTitle>{user.name}</CardTitle>
-                    <CardDescription>{user.role}</CardDescription>
+                    <CardDescription>{user.role} | {user.department}</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    {/* Placeholder for more profile details */}
-                    <p>Contact: {user.email} | {user.phone}</p>
+                <CardContent className="space-y-3">
+                   <div className="flex items-center gap-3">
+                       <Mail className="h-4 w-4 text-muted-foreground" />
+                       <span className="text-sm">{user.email}</span>
+                   </div>
+                   <div className="flex items-center gap-3">
+                       <Phone className="h-4 w-4 text-muted-foreground" />
+                       <span className="text-sm">{user.phone}</span>
+                   </div>
+                   <div className="flex items-center gap-3">
+                       <Home className="h-4 w-4 text-muted-foreground" />
+                       <span className="text-sm">{user.homeAddress || 'No address on file'}</span>
+                   </div>
+                </CardContent>
+             </Card>
+             <Card className="lg:col-span-1">
+                <CardHeader>
+                    <CardTitle>Emergency Contact</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    <div className="flex items-center gap-3">
+                       <UserIcon className="h-4 w-4 text-muted-foreground" />
+                       <span className="text-sm">{user.nextOfKinName || 'N/A'} ({user.nextOfKinRelation || 'N/A'})</span>
+                   </div>
+                    <div className="flex items-center gap-3">
+                       <Phone className="h-4 w-4 text-muted-foreground" />
+                       <span className="text-sm">{user.nextOfKinPhone || 'N/A'}</span>
+                   </div>
+                    <div className="flex items-center gap-3">
+                       <Mail className="h-4 w-4 text-muted-foreground" />
+                       <span className="text-sm">{user.nextOfKinEmail || 'N/A'}</span>
+                   </div>
+                </CardContent>
+             </Card>
+              <Card className="lg:col-span-1">
+                <CardHeader>
+                    <CardTitle>Document Status</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    {(user.documents || []).length > 0 ? (
+                        user.documents?.map((doc, index) => (
+                        <div key={index} className="flex items-center justify-between text-sm">
+                            <span>{doc.type}</span>
+                            {getExpiryBadge(doc.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                        </div>
+                        ))
+                    ) : (
+                        <p className="text-sm text-muted-foreground">No documents on file.</p>
+                    )}
+                </CardContent>
+             </Card>
+             <Card className="md:col-span-2 lg:col-span-3">
+                 <CardHeader>
+                    <CardTitle>Assigned Permissions</CardTitle>
+                    <CardDescription>
+                        Based on your role of <span className="font-semibold">{user.role}</span>, you have the following permissions:
+                    </CardDescription>
+                </CardHeader>
+                 <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                        {user.permissions.sort().map(permission => (
+                            <Badge key={permission} variant="secondary">{permission}</Badge>
+                        ))}
+                    </div>
                 </CardContent>
              </Card>
         </TabsContent>
