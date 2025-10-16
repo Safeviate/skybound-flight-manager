@@ -95,34 +95,36 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert, allUsers
     };
     fetchData();
   }, [company, toast]);
-
+  
   useEffect(() => {
     if (existingAlert) {
+      // Robustly set form values when editing an existing alert
       form.reset({
         type: existingAlert.type as 'Red Tag' | 'Yellow Tag' | 'General Notice',
-        title: existingAlert.title,
+        title: existingAlert.title || '',
         targetType: existingAlert.targetUserId ? 'user' : 'department',
-        department: existingAlert.department,
-        targetUserId: existingAlert.targetUserId,
-        reviewerId: existingAlert.reviewerId,
-        background: existingAlert.background,
-        purpose: existingAlert.purpose,
-        instruction: existingAlert.instruction,
+        department: existingAlert.targetUserId ? null : existingAlert.department || 'all',
+        targetUserId: existingAlert.targetUserId || null,
+        reviewerId: existingAlert.reviewerId || '',
+        background: existingAlert.background || '',
+        purpose: existingAlert.purpose || '',
+        instruction: existingAlert.instruction || '',
         reviewDate: existingAlert.reviewDate ? parseISO(existingAlert.reviewDate) : undefined,
       });
     } else {
-        form.reset({
-            type: undefined,
-            title: '',
-            targetType: 'department',
-            department: 'all',
-            targetUserId: '',
-            reviewerId: '',
-            background: '',
-            purpose: '',
-            instruction: '',
-            reviewDate: undefined,
-        });
+      // Reset to default values for a new alert
+      form.reset({
+        type: undefined,
+        title: '',
+        targetType: 'department',
+        department: 'all',
+        targetUserId: '',
+        reviewerId: '',
+        background: '',
+        purpose: '',
+        instruction: '',
+        reviewDate: undefined,
+      });
     }
   }, [existingAlert, form]);
   
@@ -196,7 +198,14 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert, allUsers
                         <FormLabel>Send To</FormLabel>
                         <FormControl>
                             <RadioGroup
-                                onValueChange={field.onChange}
+                                onValueChange={(value) => {
+                                    field.onChange(value);
+                                    if (value === 'department') {
+                                        setValue('targetUserId', null);
+                                    } else {
+                                        setValue('department', null);
+                                    }
+                                }}
                                 value={field.value}
                                 className="flex items-center space-x-4"
                             >
@@ -356,10 +365,10 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert, allUsers
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Reviewer (Optional)</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || 'none'}>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Select a reviewer" /></SelectTrigger></FormControl>
                             <SelectContent>
-                               <SelectItem value="none">None</SelectItem>
+                               <SelectItem value="">None</SelectItem>
                                {allUsers.map((p) => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))}
                             </SelectContent>
                         </Select>
