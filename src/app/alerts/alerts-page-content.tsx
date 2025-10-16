@@ -73,18 +73,21 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     try {
         if (editingAlert) {
             const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
-            const reviewDate = formData.reviewDate instanceof Date ? format(formData.reviewDate, 'yyyy-MM-dd') : null;
             
-            const dataToSave: Partial<Alert> = {
-                ...editingAlert,
-                ...formData,
-                reviewDate: reviewDate,
-                targetUserId: formData.targetType === 'user' ? formData.targetUserId : null,
-                department: formData.targetType === 'department' ? (formData.department || 'all') : null,
+            const dataToSave = {
+              ...editingAlert,
+              ...formData,
+              reviewDate: formData.reviewDate instanceof Date ? format(formData.reviewDate, 'yyyy-MM-dd') : null,
+              targetUserId: formData.targetType === 'user' ? formData.targetUserId : null,
+              department: formData.targetType === 'department' ? (formData.department || 'all') : null,
             };
-
-            // Remove properties that shouldn't be in the final object
+            
             delete (dataToSave as any).targetType;
+            Object.keys(dataToSave).forEach(key => {
+                if (dataToSave[key as keyof typeof dataToSave] === undefined) {
+                    delete dataToSave[key as keyof typeof dataToSave];
+                }
+            });
 
             await updateDoc(alertRef, dataToSave);
             
@@ -307,7 +310,6 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
               {Object.keys(groupedAlerts).sort().map((department, index) => (
                   <React.Fragment key={department}>
                       <DepartmentGroup title={department} alerts={groupedAlerts[department]} />
-                      {index < Object.keys(groupedAlerts).length - 1 && <Separator />}
                   </React.Fragment>
               ))}
           </div>
