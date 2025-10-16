@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { DayPicker } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>
 
@@ -57,36 +57,7 @@ function Calendar({
       components={{
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
-        Footer: () => {
-            return (
-              <tfoot className="w-full">
-                <tr className="w-full">
-                  <td colSpan={100} className="pt-2">
-                    <div className="flex justify-between items-center">
-                      <Button
-                        variant="ghost"
-                        onClick={() => props.onSelect?.(undefined)}
-                        size="sm"
-                        className="text-xs"
-                      >
-                        Clear
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => props.onSelect?.(new Date())}
-                        size="sm"
-                        className="text-xs"
-                      >
-                        Today
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              </tfoot>
-            )
-          },
       }}
-      fixedWeeks
       {...props}
     />
   )
