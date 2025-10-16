@@ -75,8 +75,8 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         
         // Firestore cannot store `null` for an optional field in an update.
         // It should be `undefined` or deleted.
-        if (updatedAlertData.department === null || updatedAlertData.department === '') {
-            delete updatedAlertData.department;
+        if (updatedAlertData.department === null || updatedAlertData.department === 'all' || updatedAlertData.department === '') {
+            delete (updatedAlertData as any).department;
         }
 
         const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
@@ -108,6 +108,10 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
             date: new Date().toISOString(),
             readBy: [],
         };
+        
+        if (newAlertData.department === 'all') {
+            delete (newAlertData as any).department;
+        }
 
         const docRef = await addDoc(alertsCollection, newAlertData);
         setAlerts(prev => [{ ...newAlertData, id: docRef.id } as Alert, ...prev]);
@@ -155,6 +159,10 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
             date: new Date().toISOString(),
             readBy: [],
         };
+        
+        if (newAlertData.department === 'all') {
+            delete (newAlertData as any).department;
+        }
 
         const docRef = await addDoc(alertsCollection, newAlertData);
         const newAlert = { ...newAlertData, id: docRef.id } as Alert;

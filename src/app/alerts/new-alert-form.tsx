@@ -181,7 +181,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Alert Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a type" />
@@ -190,7 +190,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
                     <SelectContent>
                       <SelectItem value="Red Tag">Red Tag (High Priority)</SelectItem>
                       <SelectItem value="Yellow Tag">Yellow Tag (Standard Priority)</SelectItem>
-                      <SelectItem value="General Notice">General Notice / SOP</SelectItem>
+                      <SelectItem value="General Notice">General Notice</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -207,6 +207,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
                         <Select onValueChange={field.onChange} value={field.value || undefined}>
                             <FormControl><SelectTrigger><SelectValue placeholder="All Departments" /></SelectTrigger></FormControl>
                             <SelectContent>
+                                <SelectItem value="all">All Departments</SelectItem>
                                 {departments.map((dept) => (<SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>))}
                             </SelectContent>
                         </Select>
@@ -344,3 +345,4 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert }: NewAle
     </Form>
   );
 }
+
