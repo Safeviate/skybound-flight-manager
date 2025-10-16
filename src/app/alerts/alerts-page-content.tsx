@@ -69,26 +69,22 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
   const handleAlertSubmit = async (formData: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => {
     if (!user || !company) return;
   
+    const finalData = {
+        ...formData,
+        reviewerId: formData.reviewerId === 'none' ? null : formData.reviewerId,
+    };
+    delete (finalData as any).targetType;
+
     try {
       if (editingAlert) {
-        const finalDataToSave: Record<string, any> = {
-          ...formData,
-          reviewDate: formData.reviewDate ? format(formData.reviewDate, 'yyyy-MM-dd') : null,
-        };
-        
-        if (formData.targetType === 'department') {
-            finalDataToSave.department = formData.department || 'all';
-            finalDataToSave.targetUserId = null;
-        } else {
-            finalDataToSave.department = null;
-            finalDataToSave.targetUserId = formData.targetUserId;
-        }
-        delete finalDataToSave.targetType;
-
         const alertRef = doc(db, 'companies', company.id, 'alerts', editingAlert.id);
-        await updateDoc(alertRef, finalDataToSave);
+        const dataToSave: Partial<Alert> = {
+            ...finalData,
+            reviewDate: finalData.reviewDate ? format(finalData.reviewDate, 'yyyy-MM-dd') : null,
+        };
+        await updateDoc(alertRef, dataToSave);
         
-        setAlerts(prev => prev.map(a => a.id === editingAlert.id ? { ...a, ...finalDataToSave } as Alert : a));
+        setAlerts(prev => prev.map(a => a.id === editingAlert.id ? { ...a, ...dataToSave } as Alert : a));
         toast({
             title: 'Alert Updated',
             description: `The "${formData.title}" alert has been updated.`,
@@ -99,7 +95,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         
         const q = query(
             alertsCollection, 
-            where('type', '==', formData.type), 
+            where('type', '==', finalData.type), 
             orderBy('number', 'desc'), 
             limit(1)
         );
@@ -108,24 +104,20 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
         const newAlertNumber = (lastAlert?.number || 0) + 1;
 
         const newAlertData: Omit<Alert, 'id'> = {
-            ...formData,
+            ...finalData,
             companyId: company.id,
             number: newAlertNumber,
             author: user.name,
             date: new Date().toISOString(),
             readBy: [],
-            reviewDate: formData.reviewDate ? format(formData.reviewDate, 'yyyy-MM-dd') : null,
-            targetUserId: formData.targetType === 'user' ? formData.targetUserId : null,
-            department: formData.targetType === 'department' ? (formData.department || 'all') : null,
+            reviewDate: finalData.reviewDate ? format(finalData.reviewDate, 'yyyy-MM-dd') : null,
         };
         
-        delete (newAlertData as any).targetType;
-
         const docRef = await addDoc(alertsCollection, newAlertData);
         setAlerts(prev => [{ ...newAlertData, id: docRef.id } as Alert, ...prev]);
         toast({
             title: 'Alert Created',
-            description: `The "${formData.title}" alert has been issued.`,
+            description: `The "${finalData.title}" alert has been issued.`,
         });
 
         if (newAlertData.reviewerId) {
@@ -243,7 +235,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
   );
 
   const DepartmentGroup = ({ title, alerts }: { title: string, alerts: Alert[] }) => (
-    <Collapsible defaultOpen={true}>
+    <Collapsible defaultOpen={true} className="space-y-2">
         <CollapsibleTrigger className="w-full">
             <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted">
                 <h3 className="text-lg font-semibold">{title} ({alerts.length})</h3>
@@ -267,8 +259,11 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
       }
       return (
           <div className="space-y-4">
-              {Object.keys(groupedAlerts).sort().map(department => (
-                  <DepartmentGroup key={department} title={department} alerts={groupedAlerts[department]} />
+              {Object.keys(groupedAlerts).sort().map((department, index) => (
+                  <React.Fragment key={department}>
+                      <DepartmentGroup title={department} alerts={groupedAlerts[department]} />
+                      {index < Object.keys(groupedAlerts).length - 1 && <Separator />}
+                  </React.Fragment>
               ))}
           </div>
       );
@@ -300,7 +295,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
                           Create Notification
                       </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="max-w-2xl">
                       <DialogHeader>
                           <DialogTitle>{editingAlert ? 'Edit System Notification' : 'Create New System Notification'}</DialogTitle>
                           <DialogDescription>
