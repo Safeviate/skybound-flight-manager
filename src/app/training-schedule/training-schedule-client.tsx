@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -308,11 +309,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
         if (!ac) return { className: 'bg-gray-500', isClickable: false };
 
-        const todaysAircraftBookings = bookings
-            .filter(b => b.aircraft === ac.tailNumber && isSameDay(parseISO(b.date), selectedDate) && b.status !== 'Cancelled')
-            .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
-        
-        const activeBookingForAircraft = todaysAircraftBookings.find(b => b.status !== 'Completed');
+        const allAircraftBookings = bookings
+            .filter(b => b.aircraft === ac.tailNumber && b.status !== 'Cancelled')
+            .sort((a, b) => parseISO(`${a.date}T${a.startTime}`).getTime() - parseISO(`${b.date}T${b.startTime}`).getTime());
+
+        const activeBookingForAircraft = allAircraftBookings.find(b => b.status !== 'Completed');
 
         if (!activeBookingForAircraft || booking.id !== activeBookingForAircraft.id) {
             return { className: 'bg-green-500 text-white opacity-50', isClickable: false };
