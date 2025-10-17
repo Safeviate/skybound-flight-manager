@@ -132,3 +132,11 @@ body {
     display: block !important;
   }
 }
+
+/* react-phone-number-input styles */
+.PhoneInputInput {
+  flex: 1;
+  min-width: 0;
+  background-color: transparent;
+  outline: none;
+}

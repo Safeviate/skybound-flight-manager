@@ -21,6 +21,12 @@ export const metadata: Metadata = {
   },
 };
 
+declare global {
+  interface Window {
+    recaptchaVerifier: any;
+  }
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{

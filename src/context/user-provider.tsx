@@ -16,7 +16,7 @@ interface UserContextType {
   userCompanies: Company[];
   setUserCompanies: React.Dispatch<React.SetStateAction<Company[]>>;
   loading: boolean;
-  login: (email: string, password?: string) => Promise<boolean>;
+  login: (emailOrPhone: string, password?: string) => Promise<boolean>;
   logout: () => Promise<void>;
   updateUser: (updatedData: Partial<User>) => Promise<boolean>;
   updateCompany: (companyId: string, updatedData: Partial<Company>) => Promise<boolean>;
@@ -342,15 +342,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                 try {
                     // This logic is designed to find the user's document regardless of whether they are in 'users' or 'students'.
                     const findUserDoc = async () => {
-                        const userRef = doc(db, 'users', firebaseUser.uid);
-                        const userSnap = await getDoc(userRef);
-                        if (userSnap.exists()) return { snap: userSnap, type: 'users' };
-
-                        const studentRef = doc(db, 'students', firebaseUser.uid);
-                        const studentSnap = await getDoc(studentRef);
-                        if (studentSnap.exists()) return { snap: studentSnap, type: 'students' };
-                        
-                        // If not found at top level, check within companies (this is the main path)
+                        // Check all companies for the user
                         const companiesSnapshot = await getDocs(collection(db, 'companies'));
                         for (const companyDoc of companiesSnapshot.docs) {
                             const companyId = companyDoc.id;
@@ -398,12 +390,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }, [logout, setupListeners]);
 
 
-  const login = async (email: string, password?: string): Promise<boolean> => {
+  const login = async (emailOrPhone: string, password?: string): Promise<boolean> => {
     setLoading(true);
     try {
-        if (!password) return false;
-        await setPersistence(auth, browserSessionPersistence);
-        await signInWithEmailAndPassword(auth, email, password);
+        if (password) { // Email/password login
+            await setPersistence(auth, browserSessionPersistence);
+            await signInWithEmailAndPassword(auth, emailOrPhone, password);
+        }
+        // Phone auth is handled by its own flow and the onAuthStateChanged listener
         return true;
     } catch (error) {
         console.error("Login failed:", error);
@@ -494,5 +488,3 @@ export function useUser() {
   }
   return context;
 }
-    
-    

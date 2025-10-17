@@ -6,7 +6,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LogIn, Rocket, Loader2, KeyRound } from 'lucide-react';
+import { LogIn, Rocket, Loader2, KeyRound, Phone } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
@@ -14,8 +14,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
-import { sendPasswordResetEmail, updatePassword } from 'firebase/auth';
+import { sendPasswordResetEmail, updatePassword, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult } from 'firebase/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 function ChangePasswordDialog({ onPasswordChanged }: { onPasswordChanged: () => void }) {
   const [newPassword, setNewPassword] = useState('');
@@ -84,6 +87,10 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState<string>('');
+  const [otp, setOtp] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const [showOtpInput, setShowOtpInput] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
@@ -98,8 +105,18 @@ export default function LoginPage() {
         }
     }
   }, [user, loading, router]);
+  
+  // Setup recaptcha
+  useEffect(() => {
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      'size': 'invisible',
+      'callback': (response: any) => {
+        // reCAPTCHA solved, allow signInWithPhoneNumber.
+      }
+    });
+  }, []);
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleEmailLogin(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
     setLoginError(null);
@@ -108,6 +125,41 @@ export default function LoginPage() {
 
     if (!loginSuccess) {
       setLoginError('Login failed. Please check your email and password.');
+      setIsLoading(false);
+    }
+  }
+
+  async function handlePhoneLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setIsLoading(true);
+    setLoginError(null);
+    
+    try {
+      const verifier = window.recaptchaVerifier;
+      const result = await signInWithPhoneNumber(auth, phone, verifier);
+      setConfirmationResult(result);
+      setShowOtpInput(true);
+      toast({ title: "Verification Code Sent", description: "A code has been sent to your phone." });
+    } catch (error) {
+      console.error(error);
+      setLoginError('Failed to send verification code. Please check the phone number.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  
+  async function handleOtpVerify(e: React.FormEvent) {
+    e.preventDefault();
+    if (!confirmationResult) return;
+    setIsLoading(true);
+    setLoginError(null);
+
+    try {
+      await confirmationResult.confirm(otp);
+      // User is signed in. The onAuthStateChanged listener will handle the rest.
+    } catch (error) {
+      console.error(error);
+      setLoginError('Failed to verify code. It may be incorrect or expired.');
       setIsLoading(false);
     }
   }
@@ -151,6 +203,7 @@ export default function LoginPage() {
 
   return (
     <>
+      <div id="recaptcha-container"></div>
       <div className="absolute top-8 left-8 flex items-center gap-2">
         <Rocket className="h-8 w-8 text-primary" />
         <span className="text-xl font-semibold">{company?.name || 'Safeviate'}</span>
@@ -167,39 +220,86 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                    id="email"
-                    type="email"
-                    placeholder="m@example.com"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                />
-                </div>
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                        <Button data-nosnippet type="button" variant="link" className="p-0 h-auto text-xs" onClick={handlePasswordReset}>
-                        Forgot password?
-                    </Button>
-                    </div>
-                <Input 
-                    id="password" 
-                    type="password" 
-                    required 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-                </div>
-                
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
-                Login
-                </Button>
-            </form>
+            <Tabs defaultValue="email" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="email">Email</TabsTrigger>
+                    <TabsTrigger value="phone">Phone</TabsTrigger>
+                </TabsList>
+                <TabsContent value="email">
+                    <form onSubmit={handleEmailLogin} className="space-y-4 pt-4">
+                        <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                            id="email"
+                            type="email"
+                            placeholder="m@example.com"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
+                        </div>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                            <Label htmlFor="password">Password</Label>
+                                <Button data-nosnippet type="button" variant="link" className="p-0 h-auto text-xs" onClick={handlePasswordReset}>
+                                Forgot password?
+                            </Button>
+                            </div>
+                        <Input 
+                            id="password" 
+                            type="password" 
+                            required 
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+                        </div>
+                        
+                        <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
+                        Login with Email
+                        </Button>
+                    </form>
+                </TabsContent>
+                <TabsContent value="phone">
+                     {!showOtpInput ? (
+                        <form onSubmit={handlePhoneLogin} className="space-y-4 pt-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="phone">Phone Number</Label>
+                                <PhoneInput
+                                    id="phone"
+                                    international
+                                    defaultCountry="ZA"
+                                    value={phone}
+                                    onChange={(value) => setPhone(value || '')}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                />
+                            </div>
+                            <Button type="submit" className="w-full" disabled={isLoading || !phone}>
+                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Phone className="mr-2 h-4 w-4" />}
+                                Send Code
+                            </Button>
+                        </form>
+                     ) : (
+                        <form onSubmit={handleOtpVerify} className="space-y-4 pt-4">
+                             <div className="space-y-2">
+                                <Label htmlFor="otp">Verification Code</Label>
+                                <Input
+                                    id="otp"
+                                    type="text"
+                                    placeholder="Enter 6-digit code"
+                                    required
+                                    value={otp}
+                                    onChange={(e) => setOtp(e.target.value)}
+                                />
+                            </div>
+                            <Button type="submit" className="w-full" disabled={isLoading || !otp}>
+                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
+                                Verify & Login
+                            </Button>
+                        </form>
+                     )}
+                </TabsContent>
+            </Tabs>
           </CardContent>
           <CardFooter className="justify-center text-sm">
               <Link href="/corporate" className="text-muted-foreground hover:text-primary">
