@@ -18,6 +18,7 @@ import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { resetUserPasswordAndSendWelcomeEmail } from '@/app/actions';
+import { adminSendSms } from '@/ai/flows/admin-send-sms-flow';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EditPersonnelForm } from './edit-personnel-form';
@@ -143,12 +144,23 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
             toast({ variant: 'destructive', title: 'Error', description: 'This user does not have a phone number on file.' });
             return;
         }
-        // In a real app, this would trigger a backend function to send an SMS via Twilio, etc.
-        // For now, we just show a success toast.
-        toast({
-            title: 'SMS Sent (Simulation)',
-            description: `A login code has been sent to ${person.name} at ${person.phone}.`,
-        });
+        try {
+            const result = await adminSendSms({ userId: person.id, phone: person.phone });
+            if (result.success) {
+                toast({
+                    title: 'SMS Sent',
+                    description: `A login code has been sent to ${person.name} at ${person.phone}.`,
+                });
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error: any) {
+             toast({
+                variant: 'destructive',
+                title: 'SMS Failed',
+                description: `Could not send SMS: ${error.message}`,
+            });
+        }
     };
     
     const handleSendPasswordReset = async (person: PersonnelUser) => {
