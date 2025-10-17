@@ -307,5 +307,3 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
     </>
   );
 }
-
-

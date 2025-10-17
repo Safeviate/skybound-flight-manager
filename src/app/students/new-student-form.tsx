@@ -388,5 +388,3 @@ export function NewStudentForm({ onSuccess, instructors }: NewStudentFormProps) 
     </>
   );
 }
-
-    

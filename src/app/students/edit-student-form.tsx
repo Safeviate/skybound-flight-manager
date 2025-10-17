@@ -127,14 +127,14 @@ export function EditStudentForm({ student, onUpdate, instructors }: EditStudentF
             name: student.name || '',
             studentCode: student.studentCode || '',
             email: student.email || '',
-            phone: student.phone || '',
+            phone: student.phone?.replace(/\s/g, '') || '',
             instructor: student.instructor || '',
             licenseType: student.licenseType || '',
             documents: formDocs,
             consentDisplayContact: student.consentDisplayContact || 'Not Consented',
             nextOfKinName: student.nextOfKinName || '',
             nextOfKinRelation: student.nextOfKinRelation || '',
-            nextOfKinPhone: student.nextOfKinPhone || '',
+            nextOfKinPhone: student.nextOfKinPhone?.replace(/\s/g, '') || '',
         });
     }
   }, [student, form]);

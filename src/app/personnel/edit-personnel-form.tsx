@@ -170,14 +170,14 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
             email: personnel.email || '',
             role: personnel.role,
             department: personnel.department || undefined,
-            phone: personnel.phone || '',
+            phone: personnel.phone?.replace(/\s/g, '') || '',
             consentDisplayContact: personnel.consentDisplayContact || 'Not Consented',
             documents: formDocs,
             permissions: personnel.permissions || [],
             visibleMenuItems: personnel.visibleMenuItems || availableNavItems.map(i => i.label),
             nextOfKinName: personnel.nextOfKinName ?? '',
             nextOfKinRelation: personnel.nextOfKinRelation ?? '',
-            nextOfKinPhone: personnel.nextOfKinPhone ?? '',
+            nextOfKinPhone: personnel.nextOfKinPhone?.replace(/\s/g, '') ?? '',
         });
     }
   }, [personnel, roles, departments, form]);
@@ -312,5 +312,3 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
     </>
   );
 }
-
-    
