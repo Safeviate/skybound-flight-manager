@@ -200,18 +200,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
       const hasSignPermission = user.permissions.includes('Quality:Sign') || user.permissions.includes('Super User');
       return hasSignPermission;
     };
-
-    const questionNumberMap = useMemo(() => {
-        const map = new Map<string, number>();
-        let questionCounter = 0;
-        audit.checklistItems.forEach(item => {
-            if (item.type !== 'Header') {
-                questionCounter++;
-                map.set(item.id, questionCounter);
-            }
-        });
-        return map;
-    }, [audit.checklistItems]);
     
     return (
         <div id="printable-report-area" className="space-y-6 print:space-y-4">
@@ -326,17 +314,13 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                 <CardDescription>Details of all non-compliant findings from this audit.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {audit.nonConformanceIssues.map(issue => {
-                                    // The issue ID may have a timestamp suffix, so we find the original item by the base ID.
-                                    const originalItemId = issue.id.split('-')[0];
-                                    const displayQuestionNumber = questionNumberMap.get(originalItemId);
-                                    
+                                {audit.nonConformanceIssues.map((issue, index) => {
                                     return (
                                         <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
                                             <div className="flex justify-between items-start">
                                                 <div>
                                                     <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
-                                                    <p className="font-medium mt-2">{displayQuestionNumber ? `${displayQuestionNumber}. ` : ''}{issue.itemText}</p>
+                                                    <p className="font-medium mt-2">{index + 1}. {issue.itemText}</p>
                                                     <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
                                                     <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
                                                 </div>
@@ -1113,6 +1097,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 
