@@ -181,7 +181,7 @@ export default function LoginPage() {
     setLoginError(null);
     try {
       const actionCodeSettings = {
-        url: `${window.location.origin}/auth/action`,
+        url: `${window.location.origin}/login`,
         handleCodeInApp: true,
       };
       await sendPasswordResetEmail(auth, email, actionCodeSettings);
