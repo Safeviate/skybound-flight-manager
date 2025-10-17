@@ -315,30 +315,26 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                             </CardHeader>
                             <CardContent>
                                 {(() => {
-                                    let questionNumber = 1;
-                                    const itemMap = new Map(audit.checklistItems.map((item, index) => [item.id.split('-')[0], index]));
-                                    
-                                    return audit.nonConformanceIssues.map(issue => {
-                                        const originalItemIndex = itemMap.get(issue.id.split('-')[0]);
-                                        let displayQuestionNumber = '';
-
-                                        if (originalItemIndex !== undefined) {
-                                            let qNum = 0;
-                                            for(let i=0; i <= originalItemIndex; i++) {
-                                                if(audit.checklistItems[i].type !== 'Header') {
-                                                    qNum++;
-                                                }
-                                            }
-                                            displayQuestionNumber = `${qNum}. `;
+                                    const itemMap = new Map(audit.checklistItems.map((item, index) => [item.id, index]));
+                                    let questionCounter = 0;
+                                    const questionNumberMap = new Map();
+                                    audit.checklistItems.forEach(item => {
+                                        if (item.type !== 'Header') {
+                                            questionCounter++;
+                                            questionNumberMap.set(item.id, questionCounter);
                                         }
+                                    });
 
+                                    return audit.nonConformanceIssues.map(issue => {
+                                        const displayQuestionNumber = questionNumberMap.get(issue.id.split('-')[0]);
                                         const issueText = `Non-Conformance: ${issue.itemText}\nLevel: ${issue.level}\nRegulation: ${issue.regulationReference}\n\nAuditor Comment:\n${issue.comment}`;
+
                                         return (
                                             <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
                                                 <div className="flex justify-between items-start">
                                                     <div>
                                                         <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
-                                                        <p className="font-medium mt-2">{displayQuestionNumber}{issue.itemText}</p>
+                                                        <p className="font-medium mt-2">{displayQuestionNumber ? `${displayQuestionNumber}. ` : ''}{issue.itemText}</p>
                                                         <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
                                                         <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
                                                     </div>
@@ -436,13 +432,13 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                         </CardHeader>
                         <CardContent>
                             {(() => {
-                                let questionNumber = 1;
+                                let questionNumber = 0;
                                 return audit.checklistItems.map(item => {
                                     if (item.type === 'Header') {
                                         return <h3 key={item.id} className="text-lg font-semibold mt-6 mb-2 border-b pb-2">{item.text}</h3>;
                                     }
                                     const { icon, variant, text } = getFindingInfo(item.finding);
-                                    const currentQuestionNumber = questionNumber++;
+                                    const currentQuestionNumber = ++questionNumber;
                                     return (
                                         <div key={item.id} className="p-4 border rounded-lg mb-4">
                                             <div className="flex justify-between items-start">
@@ -951,7 +947,7 @@ export default function QualityAuditDetailPage() {
                   {audit.checklistItems && audit.checklistItems.length > 0 ? (
                       <div className="space-y-4">
                           {(() => {
-                                let questionNumber = 1;
+                                let questionNumber = 0;
                                 return audit.checklistItems.map(item => {
                                     if (item.type === 'Header') {
                                         return <h3 key={item.id} className="text-lg font-semibold mt-6 mb-2 border-b pb-2">{item.text}</h3>;
@@ -1116,4 +1112,5 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
