@@ -315,7 +315,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                             </CardHeader>
                             <CardContent>
                                 {(() => {
-                                    const itemMap = new Map(audit.checklistItems.map((item, index) => [item.id, index]));
                                     let questionCounter = 0;
                                     const questionNumberMap = new Map();
                                     audit.checklistItems.forEach(item => {
@@ -326,9 +325,10 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                     });
 
                                     return audit.nonConformanceIssues.map(issue => {
-                                        const displayQuestionNumber = questionNumberMap.get(issue.id.split('-')[0]);
-                                        const issueText = `Non-Conformance: ${issue.itemText}\nLevel: ${issue.level}\nRegulation: ${issue.regulationReference}\n\nAuditor Comment:\n${issue.comment}`;
-
+                                        // The issue ID may have a timestamp suffix, so we find the original item by the base ID.
+                                        const originalItemId = issue.id.split('-')[0]; 
+                                        const displayQuestionNumber = questionNumberMap.get(originalItemId);
+                                        
                                         return (
                                             <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
                                                 <div className="flex justify-between items-start">
@@ -955,7 +955,7 @@ export default function QualityAuditDetailPage() {
                                     const findingInfo = getFindingInfo(item.finding);
                                     const levelInfo = getLevelInfo(item.level);
                                     const showLevelSelect = item.finding === 'Non Compliant' || item.finding === 'Partial';
-                                    const currentQuestionNumber = questionNumber++;
+                                    const currentQuestionNumber = ++questionNumber;
                                     const fileInputId = `file-input-${item.id}`;
                                     return (
                                         <Collapsible key={item.id} className="p-4 border rounded-lg">
@@ -1112,5 +1112,6 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
