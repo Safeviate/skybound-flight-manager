@@ -165,19 +165,27 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
             }
         });
 
+        const sanitizePhoneNumber = (phone: string | undefined | null) => {
+            if (!phone) return '';
+            const cleaned = phone.replace(/\s/g, '');
+            if (cleaned.startsWith('+')) return cleaned;
+            if (cleaned.startsWith('0')) return `+27${cleaned.substring(1)}`;
+            return `+${cleaned}`;
+        };
+
         form.reset({
             name: personnel.name || '',
             email: personnel.email || '',
             role: personnel.role,
             department: personnel.department || undefined,
-            phone: personnel.phone?.replace(/\s/g, '') || '',
+            phone: sanitizePhoneNumber(personnel.phone),
             consentDisplayContact: personnel.consentDisplayContact || 'Not Consented',
             documents: formDocs,
             permissions: personnel.permissions || [],
             visibleMenuItems: personnel.visibleMenuItems || availableNavItems.map(i => i.label),
             nextOfKinName: personnel.nextOfKinName ?? '',
             nextOfKinRelation: personnel.nextOfKinRelation ?? '',
-            nextOfKinPhone: personnel.nextOfKinPhone?.replace(/\s/g, '') ?? '',
+            nextOfKinPhone: sanitizePhoneNumber(personnel.nextOfKinPhone),
         });
     }
   }, [personnel, roles, departments, form]);

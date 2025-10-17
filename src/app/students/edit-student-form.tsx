@@ -122,19 +122,27 @@ export function EditStudentForm({ student, onUpdate, instructors }: EditStudentF
                 url: existing?.url || null,
             }
         });
+        
+        const sanitizePhoneNumber = (phone: string | undefined | null) => {
+            if (!phone) return '';
+            const cleaned = phone.replace(/\s/g, '');
+            if (cleaned.startsWith('+')) return cleaned;
+            if (cleaned.startsWith('0')) return `+27${cleaned.substring(1)}`;
+            return `+${cleaned}`;
+        };
 
         form.reset({
             name: student.name || '',
             studentCode: student.studentCode || '',
             email: student.email || '',
-            phone: student.phone?.replace(/\s/g, '') || '',
+            phone: sanitizePhoneNumber(student.phone),
             instructor: student.instructor || '',
             licenseType: student.licenseType || '',
             documents: formDocs,
             consentDisplayContact: student.consentDisplayContact || 'Not Consented',
             nextOfKinName: student.nextOfKinName || '',
             nextOfKinRelation: student.nextOfKinRelation || '',
-            nextOfKinPhone: student.nextOfKinPhone?.replace(/\s/g, '') || '',
+            nextOfKinPhone: sanitizePhoneNumber(student.nextOfKinPhone),
         });
     }
   }, [student, form]);
