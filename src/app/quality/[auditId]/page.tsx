@@ -323,6 +323,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                     <p className="font-medium mt-2">{index + 1}. {issue.itemText}</p>
                                                     <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
                                                     <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
+                                                    {issue.photo && <Image src={issue.photo} alt={`Photo for ${issue.itemText}`} width={200} height={112} className="mt-2 rounded-md" />}
                                                 </div>
                                             </div>
                                            {issue.correctiveActionPlans && issue.correctiveActionPlans.length > 0 && (
@@ -737,10 +738,10 @@ export default function QualityAuditDetailPage() {
     const compliantItems = audit.checklistItems.filter(item => item.finding === 'Compliant').length;
     const complianceScore = totalApplicableItems > 0 ? Math.round((compliantItems / totalApplicableItems) * 100) : 100;
 
-    const nonConformanceIssues = audit.checklistItems
+    const nonConformanceIssues: NonConformanceIssue[] = audit.checklistItems
         .filter(item => item.finding === 'Non Compliant' || item.finding === 'Partial' || item.finding === 'Observation')
         .map(item => ({
-            id: `${item.id}-${Date.now()}`, // Ensure unique ID for non-conformance issue
+            id: `${item.id}-${Date.now()}`,
             itemText: item.text,
             regulationReference: item.regulationReference,
             finding: item.finding!,
@@ -748,6 +749,7 @@ export default function QualityAuditDetailPage() {
             comment: item.comment,
             reference: item.reference,
             correctiveActionPlans: [],
+            photo: item.photo, // Copy photo over
         }));
 
     const finalAudit: QualityAudit = {
@@ -1097,6 +1099,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 
