@@ -8,7 +8,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail, Phone, Archive, RotateCw, KeyRound } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail, Phone, Archive, RotateCw, KeyRound, MessageSquare } from 'lucide-react';
 import type { User as PersonnelUser } from '@/lib/types';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -137,6 +137,19 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
             });
         }
     };
+
+    const handleSendSmsLogin = async (person: PersonnelUser) => {
+        if (!person.phone) {
+            toast({ variant: 'destructive', title: 'Error', description: 'This user does not have a phone number on file.' });
+            return;
+        }
+        // In a real app, this would trigger a backend function to send an SMS via Twilio, etc.
+        // For now, we just show a success toast.
+        toast({
+            title: 'SMS Sent (Simulation)',
+            description: `A login code has been sent to ${person.name} at ${person.phone}.`,
+        });
+    };
     
     const handleSendPasswordReset = async (person: PersonnelUser) => {
         if (!person.email) {
@@ -178,6 +191,28 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                                         <DropdownMenuItem onSelect={() => setEditingPersonnel(person)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
                                         <DropdownMenuItem onSelect={() => handleSendWelcomeEmail(person)}><Mail className="mr-2 h-4 w-4" /> Send Welcome Email</DropdownMenuItem>
                                         <DropdownMenuItem onSelect={() => handleSendPasswordReset(person)}><KeyRound className="mr-2 h-4 w-4" /> Send Password Reset</DropdownMenuItem>
+                                         <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                    <MessageSquare className="mr-2 h-4 w-4" /> Send SMS Login
+                                                </DropdownMenuItem>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Confirm SMS Action</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will send a one-time login code to {person.name} at {person.phone}. Are you sure?
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleSendSmsLogin(person)}>Yes, Send SMS</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                        <DropdownMenuItem onSelect={() => setViewingDocumentsFor(person)}>
+                                            <Eye className="mr-2 h-4 w-4" /> View Documents
+                                        </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         {isArchived ? (
                                             <>
