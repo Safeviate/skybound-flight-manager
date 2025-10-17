@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -17,7 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
-import { resetUserPasswordAndSendWelcomeEmail, adminResetPassword } from '@/app/actions';
+import { resetUserPasswordAndSendWelcomeEmail } from '@/app/actions';
+import { adminResetPassword } from '@/ai/flows/admin-reset-password-flow';
 import { adminSendSms } from '@/ai/flows/admin-send-sms-flow';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -417,10 +417,12 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setPasswordResetFor(null)}>Cancel</Button>
-                    <Button onClick={handleConfirmPasswordReset}>Confirm & Reset</Button>
+                    <Button onClick={handleConfirmPasswordReset}>Confirm &amp; Reset</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
     </main>
   );
 }
+
+    
