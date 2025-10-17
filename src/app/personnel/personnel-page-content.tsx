@@ -11,13 +11,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail, Phone, Archive, RotateCw, KeyRound, MessageSquare } from 'lucide-react';
 import type { User as PersonnelUser } from '@/lib/types';
 import { getExpiryBadge } from '@/lib/utils.tsx';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { NewPersonnelForm } from './new-personnel-form';
 import { useToast } from '@/hooks/use-toast';
 import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
-import { resetUserPasswordAndSendWelcomeEmail } from '@/app/actions';
+import { resetUserPasswordAndSendWelcomeEmail, adminResetPassword } from '@/app/actions';
 import { adminSendSms } from '@/ai/flows/admin-send-sms-flow';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -40,8 +40,12 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
     const [editingPersonnel, setEditingPersonnel] = useState<PersonnelUser | null>(null);
     const [viewingDocumentsFor, setViewingDocumentsFor] = useState<PersonnelUser | null>(null);
     const { toast } = useToast();
+    const [passwordResetFor, setPasswordResetFor] = useState<PersonnelUser | null>(null);
+    const [tempPassword, setTempPassword] = useState('');
     
     const canEdit = user?.permissions.includes('Super User') || user?.permissions.includes('Personnel:Edit');
+    const canCreateTempPassword = user?.permissions.includes('Super User') || user?.permissions.includes('Personnel:CreateTempPassword');
+
 
     useEffect(() => {
         setPersonnel(initialPersonnel);
@@ -183,6 +187,25 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
             });
         }
     };
+    
+    const handleCreateTempPassword = (person: PersonnelUser) => {
+        const newPassword = Math.random().toString(36).slice(-8);
+        setTempPassword(newPassword);
+        setPasswordResetFor(person);
+    };
+
+    const handleConfirmPasswordReset = async () => {
+        if (!passwordResetFor || !company) return;
+
+        const result = await adminResetPassword({ userId: passwordResetFor.id, newPassword: tempPassword });
+        if (result.success) {
+            const userRef = doc(db, `companies/${company.id}/users`, passwordResetFor.id);
+            await updateDoc(userRef, { mustChangePassword: true });
+            toast({ title: 'Password Reset Successful', description: `Password for ${passwordResetFor.name} has been updated.` });
+        } else {
+            toast({ variant: 'destructive', title: 'Password Reset Failed', description: result.message });
+        }
+    };
 
     const PersonnelCardList = ({ list, isArchived }: { list: PersonnelUser[], isArchived?: boolean }) => (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -222,6 +245,11 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                                                 </AlertDialogFooter>
                                             </AlertDialogContent>
                                         </AlertDialog>
+                                        {canCreateTempPassword && (
+                                            <DropdownMenuItem onSelect={() => handleCreateTempPassword(person)}>
+                                                <KeyRound className="mr-2 h-4 w-4" /> Create Manual Password
+                                            </DropdownMenuItem>
+                                        )}
                                         <DropdownMenuItem onSelect={() => setViewingDocumentsFor(person)}>
                                             <Eye className="mr-2 h-4 w-4" /> View Documents
                                         </DropdownMenuItem>
@@ -374,6 +402,25 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                 </DialogContent>
             </Dialog>
        )}
+        <Dialog open={!!passwordResetFor} onOpenChange={() => setPasswordResetFor(null)}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Create Temporary Password</DialogTitle>
+                    <DialogDescription>
+                        A new temporary password has been generated for {passwordResetFor?.name}. Please communicate this to them securely. They will be required to change it on their next login.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <div className="p-4 bg-muted rounded-lg text-center font-mono text-xl tracking-widest">
+                        {tempPassword}
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setPasswordResetFor(null)}>Cancel</Button>
+                    <Button onClick={handleConfirmPasswordReset}>Confirm & Reset</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </main>
   );
 }

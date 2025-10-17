@@ -184,6 +184,7 @@ export type Permission =
   | 'Students:Edit'
   | 'Personnel:View'
   | 'Personnel:Edit'
+  | 'Personnel:CreateTempPassword'
   | 'HireAndFly:View'
   | 'HireAndFly:Edit'
   | 'Safety:View'
@@ -217,6 +218,7 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Students:Edit',
     'Personnel:View',
     'Personnel:Edit',
+    'Personnel:CreateTempPassword',
     'HireAndFly:View',
     'HireAndFly:Edit',
     'Safety:View',
