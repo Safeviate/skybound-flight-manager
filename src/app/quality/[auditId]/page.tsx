@@ -315,30 +315,15 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                             </CardHeader>
                             <CardContent>
                                 {(() => {
-                                    let questionNumber = 1;
-                                    const itemMap = new Map(audit.checklistItems.map((item, index) => [item.id.split('-')[0], index]));
-                                    
+                                    let nonConformanceCounter = 1;
                                     return audit.nonConformanceIssues.map(issue => {
-                                        const originalItemIndex = itemMap.get(issue.id.split('-')[0]);
-                                        let displayQuestionNumber = '';
-
-                                        if (originalItemIndex !== undefined) {
-                                            let qNum = 0;
-                                            for(let i=0; i <= originalItemIndex; i++) {
-                                                if(audit.checklistItems[i].type !== 'Header') {
-                                                    qNum++;
-                                                }
-                                            }
-                                            displayQuestionNumber = `${qNum}. `;
-                                        }
-
                                         const issueText = `Non-Conformance: ${issue.itemText}\nLevel: ${issue.level}\nRegulation: ${issue.regulationReference}\n\nAuditor Comment:\n${issue.comment}`;
                                         return (
                                             <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
                                                 <div className="flex justify-between items-start">
                                                     <div>
                                                         <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
-                                                        <p className="font-medium mt-2">{displayQuestionNumber}{issue.itemText}</p>
+                                                        <p className="font-medium mt-2">{nonConformanceCounter++}. {issue.itemText}</p>
                                                         <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
                                                         <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
                                                     </div>
@@ -1116,4 +1101,5 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
