@@ -4,7 +4,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import type { Aircraft, Booking, User, UserDocument } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plane, User as UserIcon, Clock, Users, Shield, CheckSquare, AlertTriangle } from 'lucide-react';
+import { Plane, User as UserIcon, Clock, Users, Shield, CheckSquare, AlertTriangle, Power } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format, parse, differenceInMinutes, isWithinInterval, startOfDay, parseISO } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { differenceInDays } from 'date-fns';
 import { LiveFleetMap } from './live-fleet-map';
+import { LiveLocationTracker } from '../training-schedule/live-location-tracker';
 
 
 interface LiveFlight {
@@ -77,6 +78,7 @@ export function DashboardPageContent({
 }: DashboardPageContentProps) {
     const [currentTime, setCurrentTime] = useState(new Date());
     const { settings } = useSettings();
+    const [devTrackingAircraftId, setDevTrackingAircraftId] = useState<string | null>(null);
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Update every minute
@@ -153,8 +155,8 @@ export function DashboardPageContent({
             if (ac.status === 'Archived') return;
 
             const docsToCheck = [
-                { type: 'Airworthiness', expiryDate: ac.airworthinessExpiry },
-                { type: 'Insurance', expiryDate: ac.insuranceExpiry }
+                { type: 'Airworthiness', expiryDate: ac.airworthinessDoc?.expiryDate },
+                { type: 'Insurance', expiryDate: ac.insuranceDoc?.expiryDate }
             ];
 
             docsToCheck.forEach(doc => {
@@ -200,12 +202,27 @@ export function DashboardPageContent({
         }
     }, [initialAircraft, initialUsers, initialStudents, settings]);
 
+    const activeTrackingAircraft = useMemo(() => {
+        if (!devTrackingAircraftId) return null;
+        return initialAircraft.find(a => a.id === devTrackingAircraftId) || null;
+    }, [devTrackingAircraftId, initialAircraft]);
 
     return (
         <main className="flex-1 p-4 md:p-8 space-y-6">
+             {settings.liveTrackingDevMode && activeTrackingAircraft && (
+                <LiveLocationTracker 
+                    aircraft={activeTrackingAircraft} 
+                    enabled={true} 
+                />
+            )}
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-6">
-                    <LiveFleetMap aircraft={initialAircraft} />
+                     <LiveFleetMap 
+                        aircraft={initialAircraft} 
+                        isDevMode={settings.liveTrackingDevMode}
+                        onStartTracking={setDevTrackingAircraftId}
+                        trackingAircraftId={devTrackingAircraftId}
+                    />
                     <Card>
                         <CardHeader>
                             <CardTitle>Student Milestone Progress</CardTitle>
