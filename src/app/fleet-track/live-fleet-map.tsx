@@ -11,7 +11,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
-import getConfig from 'next/config';
 
 interface LiveLocation {
   id: string; // aircraftId
@@ -20,8 +19,6 @@ interface LiveLocation {
   timestamp: any;
   heading?: number;
 }
-
-const { publicRuntimeConfig } = getConfig();
 
 const MapDisplay = ({ locations, aircraft, isDevMode, onStartTracking, trackingAircraftId, isLoaded, loadError }: { locations: LiveLocation[], aircraft: Aircraft[], isDevMode: boolean, onStartTracking: (id: string | null) => void, trackingAircraftId: string | null, isLoaded: boolean, loadError?: Error }) => {
   const mapRef = React.useRef<any | null>(null);
@@ -141,7 +138,7 @@ export function LiveFleetMap({ aircraft, isDevMode, onStartTracking, trackingAir
   const [loading, setLoading] = useState(true);
   
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: publicRuntimeConfig.googleMapsApiKey,
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
     preventGoogleFontsLoading: true,
   });
 
