@@ -1,16 +1,39 @@
 
+'use client';
+
 import { FleetTrackPageContent } from './fleet-track-page-content';
 import { getFleetTrackPageData } from './data';
+import { useUser } from '@/context/user-provider';
+import { useState, useEffect } from 'react';
+import type { Aircraft } from '@/lib/types';
 
-export default async function FleetTrackPage() {
-    // In a real scenario, we'd get the company from an authenticated session.
-    // For now, we will assume a hardcoded companyId for data fetching.
-    const companyId = 'skybound-aero'; 
-    const { aircraft } = await getFleetTrackPageData(companyId);
-    const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY || '';
+
+export default function FleetTrackPage() {
+    const { company, loading: userLoading } = useUser();
+    const [initialData, setInitialData] = useState<{ aircraft: Aircraft[] }>({
+        aircraft: [],
+    });
+    const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
+
+    useEffect(() => {
+        async function loadData() {
+            if (company) {
+                const data = await getFleetTrackPageData(company.id);
+                setInitialData(data);
+            }
+        }
+        if (!userLoading) {
+            loadData();
+        }
+        
+        // This is a workaround to get the environment variable on the client.
+        // In a real app, this would be better handled via a dedicated API route or initial props.
+        setGoogleMapsApiKey(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '');
+
+    }, [company, userLoading]);
 
     return <FleetTrackPageContent 
-            initialAircraft={aircraft}
+            initialAircraft={initialData.aircraft}
             googleMapsApiKey={googleMapsApiKey}
          />;
 }
