@@ -117,7 +117,7 @@ const MapDisplay = ({ locations, aircraft, isDevMode, onStartTracking, trackingA
             )
         })}
       </GoogleMap>
-      {isDevMode && isTrackingInDev && (
+       {isDevMode && isTrackingInDev && (
             <div className="absolute bottom-2 right-2 z-10">
                 <Button variant="destructive" size="sm" onClick={() => onStartTracking(null)}>
                     <Power className="mr-2 h-4 w-4" />
