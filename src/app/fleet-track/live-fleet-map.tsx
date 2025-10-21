@@ -137,7 +137,7 @@ export function LiveFleetMap({ aircraft, isDevMode, onStartTracking, trackingAir
   const [loading, setLoading] = useState(true);
   
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+    googleMapsApiKey: googleMapsApiKey,
     preventGoogleFontsLoading: true,
   });
 
