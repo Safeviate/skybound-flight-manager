@@ -342,9 +342,7 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel }:
                                 )}
                             </TableRow>
                         )}) : (
-                            <TableRow>
-                                <TableCell colSpan={canEdit ? 7 : 6} className="h-24 text-center">No compliance items have been added.</TableCell>
-                            </TableRow>
+                            <TableRow><TableCell colSpan={canEdit ? 7 : 6} className="h-24 text-center">No compliance items have been added.</TableCell></TableRow>
                         )}
                     </TableBody>
                 </Table>
