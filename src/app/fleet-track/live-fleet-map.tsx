@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useUser } from '@/context/user-provider';
-import { Loader2, Plane, Power } from 'lucide-react';
+import { Loader2, Plane, Power, AlertTriangle } from 'lucide-react';
 import type { Aircraft } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -115,7 +115,10 @@ export function LiveFleetMap({ aircraft, isDevMode, onStartTracking, trackingAir
   });
 
   useEffect(() => {
-    if (!company) return;
+    if (!company || !googleMapsApiKey) {
+        setLoading(false);
+        return;
+    };
 
     setLoading(true);
     const q = query(collection(db, `companies/${company.id}/live-tracking`));
@@ -133,7 +136,7 @@ export function LiveFleetMap({ aircraft, isDevMode, onStartTracking, trackingAir
     });
 
     return () => unsubscribe();
-  }, [company]);
+  }, [company, googleMapsApiKey]);
   
   const isTrackingInDev = trackingAircraftId && locations.some(l => l.id === trackingAircraftId);
 
@@ -144,7 +147,13 @@ export function LiveFleetMap({ aircraft, isDevMode, onStartTracking, trackingAir
             <CardDescription>Real-time positions of aircraft in flight.</CardDescription>
         </CardHeader>
         <CardContent className="flex-1">
-            {loading ? (
+            {!googleMapsApiKey ? (
+                <div className="flex flex-col items-center justify-center h-full text-center text-destructive-foreground bg-destructive/80 rounded-md">
+                    <AlertTriangle className="h-10 w-10 mb-2" />
+                    <p className="font-bold">Google Maps API Key Not Configured</p>
+                    <p className="text-sm">Please set the `GOOGLE_MAPS_API_KEY` secret in your App Hosting environment.</p>
+                </div>
+            ) : loading ? (
                  <div className="flex items-center justify-center h-full text-muted-foreground">
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     <span>Connecting to tracking data...</span>
