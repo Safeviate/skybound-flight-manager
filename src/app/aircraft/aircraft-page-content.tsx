@@ -5,7 +5,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2, XCircle, AlertTriangle, Loader2, ListChecks, Wrench, BookOpen, ChevronDown, Calendar as CalendarIcon } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2, XCircle, AlertTriangle, Loader2, ListChecks, Wrench, BookOpen, ChevronDown, Calendar as CalendarIcon, MapPin, Power } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -39,6 +39,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import Loading from '../loading';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { LiveLocationTracker } from '../training-schedule/live-location-tracker';
 
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
     if (!companyId || !aircraftId) return [];
@@ -404,6 +405,7 @@ export function AircraftPageContent() {
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     const [allChecklists, setAllChecklists] = useState<Map<string, CompletedChecklist[]>>(new Map());
     const [dataLoading, setDataLoading] = useState(true);
+    const [devTrackingAircraftId, setDevTrackingAircraftId] = useState<string | null>(null);
 
     const fetchChecklistHistory = useCallback(async () => {
         if (!company) return;
@@ -710,6 +712,7 @@ export function AircraftPageContent() {
                     const currentHobbs = latestChecklist?.results?.hobbs ?? ac.hours;
                     const hoursUntil50 = ac.next50HourInspection ? (ac.next50HourInspection - (ac.currentTachoReading || 0)) : -1;
                     const hoursUntil100 = ac.next100HourInspection ? (ac.next100HourInspection - (ac.currentTachoReading || 0)) : -1;
+                    const isTracking = devTrackingAircraftId === ac.id;
 
                     return (
                         <Card key={ac.id} className={cn("flex flex-col", isArchived && 'bg-muted/50')}>
@@ -818,6 +821,19 @@ export function AircraftPageContent() {
                                     <span>{hoursUntil100 >= 0 ? `${hoursUntil100.toFixed(1)} hrs` : 'N/A'}</span>
                                 </div>
                             </CardContent>
+                             {settings.liveTrackingDevMode && !isArchived && (
+                                <CardFooter className="pt-4 border-t">
+                                    <Button 
+                                        variant={isTracking ? "destructive" : "outline"} 
+                                        size="sm" 
+                                        className="w-full" 
+                                        onClick={() => setDevTrackingAircraftId(isTracking ? null : ac.id)}
+                                    >
+                                        <Power className="mr-2 h-4 w-4" />
+                                        {isTracking ? "Stop Tracking" : "Start Tracking"}
+                                    </Button>
+                                </CardFooter>
+                            )}
                         </Card>
                     )
                 })}
@@ -1036,6 +1052,12 @@ export function AircraftPageContent() {
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-6">
+        {settings.liveTrackingDevMode && devTrackingAircraftId && (
+            <LiveLocationTracker 
+                aircraft={aircraftList.find(a => a.id === devTrackingAircraftId)!} 
+                enabled={true} 
+            />
+        )}
       <Card>
         <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="space-y-1">

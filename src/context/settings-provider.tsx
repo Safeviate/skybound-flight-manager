@@ -17,6 +17,7 @@ interface Settings {
   expiryWarningYellowDays: number;
   pwaEnabled: boolean;
   welcomeEmailEnabled: boolean;
+  liveTrackingDevMode: boolean;
 }
 
 interface SettingsContextType {
@@ -40,6 +41,7 @@ const defaultSettings: Settings = {
     expiryWarningYellowDays: 60,
     pwaEnabled: true,
     welcomeEmailEnabled: true,
+    liveTrackingDevMode: false,
 };
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
