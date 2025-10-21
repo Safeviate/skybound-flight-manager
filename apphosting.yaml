@@ -20,6 +20,3 @@ env:
     availability:
       - BUILD
       - RUNTIME
-secretVolume:
-  - mountPath: /etc/secrets/google-maps-api-key
-    secret: google-maps-api-key
