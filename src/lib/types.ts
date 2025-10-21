@@ -1,3 +1,4 @@
+
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
@@ -244,7 +245,7 @@ export const ALL_PERMISSIONS: Permission[] = [
 export type Role = string;
 export type Department = string;
 
-export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Hire and Fly' | 'Training Schedule' | 'Flight Logs' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart' | 'Roles & Departments' | 'Meetings';
+export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Fleet Track' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Hire and Fly' | 'Training Schedule' | 'Flight Logs' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart' | 'Roles & Departments' | 'Meetings';
 
 export type User = {
     id: string;

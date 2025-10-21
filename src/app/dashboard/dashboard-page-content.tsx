@@ -13,7 +13,6 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { differenceInDays } from 'date-fns';
-import { LiveFleetMap } from './live-fleet-map';
 import { LiveLocationTracker } from '../training-schedule/live-location-tracker';
 
 
@@ -217,12 +216,6 @@ export function DashboardPageContent({
             )}
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-6">
-                     <LiveFleetMap 
-                        aircraft={initialAircraft} 
-                        isDevMode={settings.liveTrackingDevMode}
-                        onStartTracking={setDevTrackingAircraftId}
-                        trackingAircraftId={devTrackingAircraftId}
-                    />
                     <Card>
                         <CardHeader>
                             <CardTitle>Student Milestone Progress</CardTitle>

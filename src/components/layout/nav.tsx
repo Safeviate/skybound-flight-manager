@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
@@ -40,7 +39,8 @@ import {
   BookOpen,
   FlaskConical,
   BarChart,
-  Network
+  Network,
+  Map,
 } from 'lucide-react';
 import type { Permission, Feature, NavMenuItem } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -58,6 +58,7 @@ export const navItems: {
   { href: '/my-dashboard', label: 'My Dashboard', icon: LayoutDashboard },
   { href: '/personnel/me', label: 'My Profile', icon: UserCircle },
   { href: '/dashboard', label: 'Company Dashboard', icon: LayoutDashboard },
+  { href: '/fleet-track', label: 'Fleet Track', icon: Map },
   { href: '/aircraft', label: 'Aircraft Management', icon: Plane, requiredFeature: 'Aircraft' },
   { href: '/quick-reports', label: 'Quick Reports', icon: ClipboardCheck },
   { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
