@@ -10,20 +10,20 @@ import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, Corre
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AuditSchedule } from './audit-schedule';
+import { AuditSchedule } from '../quality/audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch, deleteDoc, getCountFromServer, limit, orderBy, where } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch, deleteDoc, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useTableControls } from '@/hooks/use-table-controls.ts';
-import { AuditChecklistsManager } from './audit-checklists-manager';
+import { AuditChecklistsManager } from '../quality/audit-checklists-manager';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CapTracker } from './cap-tracker';
@@ -139,7 +139,7 @@ const ComplianceItemForm = ({
                                 className={cn( "w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                                 >
                                 {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
                                 </Button>
                             </FormControl>
                             </PopoverTrigger>
@@ -668,7 +668,7 @@ export function QualityPageContent({
                     <TableHead>Audit Date</TableHead>
                     <TableHead>Report Heading</TableHead>
                     <TableHead>Auditee</TableHead>
-                    <TableHead>Area</TableHead>
+                    <TableHead>Audit Reference</TableHead>
                     <TableHead>Asset</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Compliance</TableHead>
@@ -775,13 +775,16 @@ export function QualityPageContent({
       <main className="flex-1 p-4 md:p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4 no-print">
-            <TabsList className="grid w-full grid-cols-2 md:flex md:w-auto">
-              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-              <TabsTrigger value="audits">Audits</TabsTrigger>
-              <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
-              <TabsTrigger value="cap-tracker">CAP Tracker</TabsTrigger>
-              <TabsTrigger value="coherence-matrix">Coherence Matrix</TabsTrigger>
-          </TabsList>
+            <ScrollArea className="w-full whitespace-nowrap">
+                <TabsList>
+                    <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                    <TabsTrigger value="audits">Audits</TabsTrigger>
+                    <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
+                    <TabsTrigger value="cap-tracker">CAP Tracker</TabsTrigger>
+                    <TabsTrigger value="coherence-matrix">Coherence Matrix</TabsTrigger>
+                </TabsList>
+                <ScrollBar orientation="horizontal" />
+            </ScrollArea>
           </div>
           <TabsContent value="dashboard" className="space-y-8 mt-4">
                <Card>
