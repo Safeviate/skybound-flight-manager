@@ -136,9 +136,24 @@ export function LiveFleetMap({ aircraft, isDevMode, onStartTracking, trackingAir
   const { company } = useUser();
   const [locations, setLocations] = useState<LiveLocation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [apiKey, setApiKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Explicitly check for the environment variable before doing anything else.
+    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (key) {
+      setApiKey(key);
+    } else {
+      console.error("Google Maps API Key is missing.");
+    }
+  }, []);
   
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+    googleMapsApiKey: apiKey || "",
+    preventGoogleFontsLoading: true,
+    // Only attempt to load if the apiKey state is set
+    // This prevents useJsApiLoader from running with an empty string initially
+    disabled: !apiKey, 
   });
 
   useEffect(() => {
@@ -169,7 +184,11 @@ export function LiveFleetMap({ aircraft, isDevMode, onStartTracking, trackingAir
             <CardDescription>Real-time positions of aircraft in flight.</CardDescription>
         </CardHeader>
         <CardContent className="flex-1">
-            {loading ? (
+            {!apiKey ? (
+                <div className="flex items-center justify-center h-full text-destructive">
+                    <span>API Key is missing. Map cannot be loaded.</span>
+                </div>
+            ) : loading ? (
                  <div className="flex items-center justify-center h-full text-muted-foreground">
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     <span>Connecting to tracking data...</span>
