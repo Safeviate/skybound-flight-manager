@@ -1,36 +1,22 @@
 
-'use client';
-
-import { FleetTrackPageContent } from './fleet-track-page-content';
 import { getFleetTrackPageData } from './data';
-import { useUser } from '@/context/user-provider';
-import { useState, useEffect } from 'react';
-import type { Aircraft } from '@/lib/types';
+import { FleetTrackPageContent } from './fleet-track-page-content';
+import { getCompaniesPageData } from '@/app/settings/companies/data';
 
 
-export default function FleetTrackPage() {
-    const { company, loading: userLoading } = useUser();
-    const [initialData, setInitialData] = useState<{ aircraft: Aircraft[] }>({
-        aircraft: [],
-    });
-    const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
+async function FleetTrackPage() {
+    // This is now a server component, so we can safely access process.env
+    const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+    
+    // We assume there's at least one company and fetch its data.
+    // In a real multi-company admin setup, this would be more dynamic.
+    const companies = await getCompaniesPageData();
+    const companyId = companies[0]?.id;
+    let initialData = { aircraft: [] };
 
-    useEffect(() => {
-        async function loadData() {
-            if (company) {
-                const data = await getFleetTrackPageData(company.id);
-                setInitialData(data);
-            }
-        }
-        if (!userLoading) {
-            loadData();
-        }
-        
-        // This is a workaround to get the environment variable on the client.
-        // In a real app, this would be better handled via a dedicated API route or initial props.
-        setGoogleMapsApiKey(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '');
-
-    }, [company, userLoading]);
+    if (companyId) {
+        initialData = await getFleetTrackPageData(companyId);
+    }
 
     return <FleetTrackPageContent 
             initialAircraft={initialData.aircraft}
@@ -39,3 +25,5 @@ export default function FleetTrackPage() {
 }
 
 FleetTrackPage.title = "Fleet Track";
+
+export default FleetTrackPage;
