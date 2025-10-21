@@ -22,7 +22,7 @@ interface LiveLocation {
   heading?: number;
 }
 
-const MapDisplay = ({ locations, aircraft, isDevMode, onStartTracking, trackingAircraftId }: { locations: LiveLocation[], aircraft: Aircraft[], isDevMode: boolean, onStartTracking: (id: string) => void, trackingAircraftId: string | null }) => {
+const MapDisplay = ({ locations, aircraft, isDevMode, onStartTracking, trackingAircraftId }: { locations: LiveLocation[], aircraft: Aircraft[], isDevMode: boolean, onStartTracking: (id: string | null) => void, trackingAircraftId: string | null }) => {
   const [bounds, setBounds] = React.useState({ minLat: 90, maxLat: -90, minLon: 180, maxLon: -180 });
 
   useEffect(() => {
@@ -92,7 +92,7 @@ const MapDisplay = ({ locations, aircraft, isDevMode, onStartTracking, trackingA
       })}
        {isDevMode && isTrackingInDev && (
             <div className="absolute bottom-2 right-2">
-                <Button variant="destructive" size="sm" onClick={() => onStartTracking('')}>
+                <Button variant="destructive" size="sm" onClick={() => onStartTracking(null)}>
                     <Power className="mr-2 h-4 w-4" />
                     Stop Tracking
                 </Button>
@@ -103,7 +103,7 @@ const MapDisplay = ({ locations, aircraft, isDevMode, onStartTracking, trackingA
 };
 
 
-export function LiveFleetMap({ aircraft, isDevMode, onStartTracking, trackingAircraftId }: { aircraft: Aircraft[], isDevMode: boolean, onStartTracking: (id: string) => void, trackingAircraftId: string | null }) {
+export function LiveFleetMap({ aircraft, isDevMode, onStartTracking, trackingAircraftId }: { aircraft: Aircraft[], isDevMode: boolean, onStartTracking: (id: string | null) => void, trackingAircraftId: string | null }) {
   const { company } = useUser();
   const [locations, setLocations] = useState<LiveLocation[]>([]);
   const [loading, setLoading] = useState(true);
