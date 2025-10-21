@@ -16,6 +16,6 @@ env:
     availability:
       - RUNTIME
   - variable: GOOGLE_MAPS_API_KEY
-    secret: google-maps-api-key@3
+    secret: google-maps-api-key
     availability:
       - RUNTIME
