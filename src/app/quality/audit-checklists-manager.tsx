@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -184,9 +183,9 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
                         </Select>
                     </div>
                      <div>
-                        <Label>Audit Area</Label>
+                        <Label>Reference</Label>
                         <Input 
-                            placeholder="e.g., Flight Operations, Hangar"
+                            placeholder="e.g., Manual reference, section, etc."
                             value={area}
                             onChange={(e) => setArea(e.target.value)}
                         />
