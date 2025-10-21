@@ -29,7 +29,7 @@ const MapDisplay = ({ locations, aircraft, isDevMode, onStartTracking, trackingA
   const mapRef = React.useRef<google.maps.Map | null>(null);
 
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+    googleMapsApiKey: "", // Key is now loaded globally in layout.tsx
   });
 
   const onMapLoad = React.useCallback((map: google.maps.Map) => {
