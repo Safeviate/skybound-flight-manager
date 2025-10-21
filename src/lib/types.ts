@@ -475,7 +475,7 @@ export type QualityAudit = {
   auditor: string;
   auditeeName?: string | null;
   auditeePosition?: string | null;
-  area: AuditArea;
+  area: string;
   department?: Department;
   aircraftInvolved?: string;
   status: 'Open' | 'Closed' | 'Archived';
@@ -760,7 +760,7 @@ export const HIRE_AND_FLY_DOCUMENTS = [
 export type RiskLikelihood = 'Frequent' | 'Occasional' | 'Remote' | 'Improbable' | 'Extremely Improbable';
 export type RiskSeverity = 'Catastrophic' | 'Hazardous' | 'Major' | 'Minor' | 'Negligible';
 export type RiskStatus = 'Open' | 'Mitigated' | 'Closed';
-export type AuditArea = 'Personnel' | 'Maintenance' | 'Facilities' | 'Records' | 'Management' | 'Ground Ops' | 'Cabin Safety' | 'Security' | 'Occupational Safety' | 'Administration & Management';
+export type AuditArea = string;
 export type FindingStatus = 'Compliant' | 'Non Compliant' | 'Partial' | 'Not Applicable' | 'Observation';
 export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Finding' | 'Observation' | null;
 export type ChecklistCategory = 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
