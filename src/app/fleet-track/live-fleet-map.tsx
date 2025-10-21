@@ -30,21 +30,20 @@ const MapDisplay = ({ locations, aircraft, isDevMode, onStartTracking, trackingA
 
   const onMapLoad = React.useCallback((map: google.maps.Map) => {
     mapRef.current = map;
-  }, []);
+    
+    // Move the bounds logic here. This ensures it runs only after the map is loaded.
+    if (locations.length > 0) {
+        const bounds = new window.google.maps.LatLngBounds();
+        locations.forEach(loc => {
+            bounds.extend(new window.google.maps.LatLng(loc.latitude, loc.longitude));
+        });
+        map.fitBounds(bounds);
+    }
+  }, [locations]);
   
   const onMapUnmount = React.useCallback(() => {
     mapRef.current = null;
   }, []);
-
-  useEffect(() => {
-    if (mapRef.current && locations.length > 0) {
-      const bounds = new window.google.maps.LatLngBounds();
-      locations.forEach(loc => {
-        bounds.extend(new window.google.maps.LatLng(loc.latitude, loc.longitude));
-      });
-      mapRef.current.fitBounds(bounds);
-    }
-  }, [locations]);
   
   if (locations.length === 0) {
      return (
@@ -78,8 +77,8 @@ const MapDisplay = ({ locations, aircraft, isDevMode, onStartTracking, trackingA
     <div className="relative w-full h-full bg-muted/30 rounded-md overflow-hidden border">
       <GoogleMap
         mapContainerStyle={containerStyle}
-        center={{ lat: locations[0].latitude, lng: locations[0].longitude }}
-        zoom={12}
+        center={locations.length > 0 ? { lat: locations[0].latitude, lng: locations[0].longitude } : undefined}
+        zoom={locations.length > 0 ? 12 : 8}
         onLoad={onMapLoad}
         onUnmount={onMapUnmount}
         options={{
