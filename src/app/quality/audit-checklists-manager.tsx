@@ -105,7 +105,7 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
     const [scope, setScope] = useState('');
     const [evidenceReference, setEvidenceReference] = useState('');
     const [isOpen, setIsOpen] = useState(false);
-    const [area, setArea] = useState<AuditArea>('');
+    const [area, setArea] = useState<string>('');
     const [department, setDepartment] = useState<Department>();
     const [aircraftInvolved, setAircraftInvolved] = useState<string | undefined>();
     const { user } = useUser();
@@ -251,7 +251,7 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
                     </div>
                     <div>
                         <Label>Evidence Reference</Label>
-                        <Textarea 
+                        <Input 
                             placeholder="e.g., Maintenance Logbook Ref: 12345, Flight Folio 678" 
                             value={evidenceReference}
                             onChange={(e) => setEvidenceReference(e.target.value)}
