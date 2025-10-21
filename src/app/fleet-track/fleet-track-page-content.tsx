@@ -1,48 +1,23 @@
 
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
-import type { Aircraft } from '@/lib/types';
-import { useSettings } from '@/context/settings-provider';
-import { LiveFleetMap } from './live-fleet-map';
-import { LiveLocationTracker } from '../training-schedule/live-location-tracker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Power, Radio } from 'lucide-react';
-import { Label } from '@/components/ui/label';
-
-interface FleetTrackPageContentProps {
-    initialAircraft: Aircraft[];
-}
+import { Construction } from 'lucide-react';
 
 export function FleetTrackPageContent({
     initialAircraft
-}: FleetTrackPageContentProps) {
-    const { settings } = useSettings();
-    const [devTrackingAircraftId, setDevTrackingAircraftId] = useState<string | null>(null);
-
-    const activeTrackingAircraft = useMemo(() => {
-        if (!devTrackingAircraftId) return null;
-        return initialAircraft.find(a => a.id === devTrackingAircraftId) || null;
-    }, [devTrackingAircraftId, initialAircraft]);
-
+}: {
+    initialAircraft: any[];
+}) {
     return (
-        <main className="flex-1 p-4 md:p-8 space-y-6">
-             {settings.liveTrackingDevMode && activeTrackingAircraft && (
-                <LiveLocationTracker 
-                    aircraft={activeTrackingAircraft} 
-                    enabled={true} 
-                />
-            )}
-
-             <LiveFleetMap 
-                aircraft={initialAircraft} 
-                isDevMode={settings.liveTrackingDevMode}
-                onStartTracking={setDevTrackingAircraftId}
-                trackingAircraftId={devTrackingAircraftId}
-                googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}
-            />
+        <main className="flex-1 p-4 md:p-8">
+            <div className="flex items-center justify-center h-96 border-2 border-dashed rounded-lg">
+                <div className="text-center text-muted-foreground">
+                    <Construction className="mx-auto h-12 w-12 mb-4" />
+                    <h2 className="text-2xl font-semibold">Under Construction</h2>
+                    <p className="mt-2">This feature is currently being worked on. Please check back later.</p>
+                </div>
+            </div>
         </main>
     );
 }
