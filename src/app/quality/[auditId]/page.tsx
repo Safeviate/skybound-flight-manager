@@ -880,7 +880,7 @@ export default function QualityAuditDetailPage() {
                   </div>
                   <div>
                       <p className="font-semibold text-muted-foreground">Area Audited</p>
-                      <Textarea value={audit.area} onChange={(e) => setAudit({ ...audit, area: e.target.value })} />
+                      <p>{audit.area || 'N/A'}</p>
                   </div>
                    <div>
                       <p className="font-semibold text-muted-foreground">Auditor</p>
@@ -1117,5 +1117,6 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 

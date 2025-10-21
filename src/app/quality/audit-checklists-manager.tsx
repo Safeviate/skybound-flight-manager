@@ -186,7 +186,7 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
                      <div>
                         <Label>Audit Area</Label>
                         <Input 
-                            placeholder="e.g., Flight Operations"
+                            placeholder="e.g., Flight Operations, Hangar"
                             value={area}
                             onChange={(e) => setArea(e.target.value)}
                         />
