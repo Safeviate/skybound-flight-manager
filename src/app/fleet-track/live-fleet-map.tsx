@@ -37,7 +37,6 @@ const MapDisplay = ({ locations, aircraft, isDevMode, onStartTracking, trackingA
   if (loadError) {
     return (
         <div className="flex items-center justify-center h-full text-destructive">
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
             <span>Map Error: {loadError.message}</span>
         </div>
     )
@@ -138,7 +137,7 @@ export function LiveFleetMap({ aircraft, isDevMode, onStartTracking, trackingAir
   const [loading, setLoading] = useState(true);
   
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: googleMapsApiKey,
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
     preventGoogleFontsLoading: true,
   });
 

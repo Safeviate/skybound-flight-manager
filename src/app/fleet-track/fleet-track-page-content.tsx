@@ -14,12 +14,10 @@ import { Label } from '@/components/ui/label';
 
 interface FleetTrackPageContentProps {
     initialAircraft: Aircraft[];
-    googleMapsApiKey: string;
 }
 
 export function FleetTrackPageContent({
-    initialAircraft,
-    googleMapsApiKey,
+    initialAircraft
 }: FleetTrackPageContentProps) {
     const { settings } = useSettings();
     const [devTrackingAircraftId, setDevTrackingAircraftId] = useState<string | null>(null);
@@ -43,7 +41,7 @@ export function FleetTrackPageContent({
                 isDevMode={settings.liveTrackingDevMode}
                 onStartTracking={setDevTrackingAircraftId}
                 trackingAircraftId={devTrackingAircraftId}
-                googleMapsApiKey={googleMapsApiKey}
+                googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}
             />
         </main>
     );
