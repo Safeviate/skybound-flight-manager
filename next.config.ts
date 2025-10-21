@@ -24,6 +24,9 @@ const pwaConfig = withPWA({
 
 const nextConfig: NextConfig = {
   /* config options here */
+  publicRuntimeConfig: {
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+  },
   async headers() {
     return [
       {
