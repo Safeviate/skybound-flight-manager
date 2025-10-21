@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { differenceInDays } from 'date-fns';
+import { LiveFleetMap } from './live-fleet-map';
 
 
 interface LiveFlight {
@@ -204,29 +205,7 @@ export function DashboardPageContent({
         <main className="flex-1 p-4 md:p-8 space-y-6">
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Live Flight Status</CardTitle>
-                            <CardDescription>
-                                Overview of all aircraft currently in flight based on schedule. Last updated: {format(currentTime, 'HH:mm')}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {liveFlights.length > 0 ? (
-                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {liveFlights.map(flight => (
-                                        <LiveFlightCard key={flight.booking.id} flight={flight} />
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-40 text-center text-muted-foreground border-2 border-dashed rounded-lg">
-                                    <Plane className="h-10 w-10 mb-2" />
-                                    <p className="font-medium">All aircraft are on the ground.</p>
-                                    <p className="text-xs">No active bookings at this time.</p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                    <LiveFleetMap aircraft={initialAircraft} />
                     <Card>
                         <CardHeader>
                             <CardTitle>Student Milestone Progress</CardTitle>
