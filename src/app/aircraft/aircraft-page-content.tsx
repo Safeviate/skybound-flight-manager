@@ -1041,6 +1041,7 @@ export function AircraftPageContent() {
                   initialHobbs={initialHobbs}
                   booking={activeBookingForSelectedAircraft}
                   onEditBooking={() => {}}
+                  onCancelBooking={() => {}}
               />
           </>
         );
@@ -1364,3 +1365,5 @@ export function AircraftPageContent() {
     </main>
   );
 }
+
+    
