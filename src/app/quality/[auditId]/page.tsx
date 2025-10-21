@@ -384,7 +384,10 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                 <div className="flex justify-between items-start">
                                                     <div>
                                                         <p className="font-medium">{item.type !== 'Header' && `${questionNumber}. `}{item.text}</p>
-                                                        <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
+                                                        <div className="text-xs text-muted-foreground">
+                                                            <p>Regulation: {item.regulationReference || 'N/A'}</p>
+                                                            <p>Reference: {item.reference || 'N/A'}</p>
+                                                        </div>
                                                     </div>
                                                     <Badge variant={variant} className="whitespace-nowrap">
                                                         {icon}
@@ -433,7 +436,10 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                             <div className="flex justify-between items-start">
                                                 <div>
                                                     <p className="font-medium">{currentQuestionNumber}. {item.text}</p>
-                                                    <p className="text-xs text-muted-foreground ml-5">{item.regulationReference || 'N/A'}</p>
+                                                    <div className="text-xs text-muted-foreground ml-5">
+                                                        <p>Regulation: {item.regulationReference || 'N/A'}</p>
+                                                        <p>Reference: {item.reference || 'N/A'}</p>
+                                                    </div>
                                                 </div>
                                                 <Badge variant={variant} className="whitespace-nowrap">
                                                     {icon}
@@ -1101,5 +1107,3 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
-
-
