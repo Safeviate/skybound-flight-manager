@@ -10,7 +10,7 @@ import type { Aircraft } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, LoadScript } from '@react-google-maps/api';
 
 interface LiveLocation {
   id: string; // aircraftId
@@ -27,10 +27,6 @@ const containerStyle = {
 
 const MapDisplay = ({ locations, aircraft, isDevMode, onStartTracking, trackingAircraftId }: { locations: LiveLocation[], aircraft: Aircraft[], isDevMode: boolean, onStartTracking: (id: string | null) => void, trackingAircraftId: string | null }) => {
   const mapRef = React.useRef<google.maps.Map | null>(null);
-
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: "", // Key is now loaded globally in layout.tsx
-  });
 
   const onMapLoad = React.useCallback((map: google.maps.Map) => {
     mapRef.current = map;
@@ -50,14 +46,6 @@ const MapDisplay = ({ locations, aircraft, isDevMode, onStartTracking, trackingA
     }
   }, [locations]);
   
-  if (loadError) {
-    return <div className="flex items-center justify-center h-full text-destructive">Error loading maps. Please check your API key.</div>;
-  }
-  
-  if (!isLoaded) {
-    return <div className="flex items-center justify-center h-full text-muted-foreground"><Loader2 className="animate-spin mr-2" /> Loading map...</div>
-  }
-
   if (locations.length === 0) {
      return (
         <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
@@ -179,13 +167,19 @@ export function LiveFleetMap({ aircraft, isDevMode, onStartTracking, trackingAir
                     <span>Loading map...</span>
                 </div>
             ) : (
-                <MapDisplay 
-                    locations={locations} 
-                    aircraft={aircraft}
-                    isDevMode={isDevMode}
-                    onStartTracking={onStartTracking}
-                    trackingAircraftId={trackingAircraftId}
-                />
+                <LoadScript
+                    googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""}
+                    loadingElement={<div className="flex items-center justify-center h-full text-muted-foreground"><Loader2 className="animate-spin mr-2" /> Loading map...</div>}
+                    onError={(error) => console.error("Google Maps LoadScript Error:", error)}
+                    >
+                    <MapDisplay 
+                        locations={locations} 
+                        aircraft={aircraft}
+                        isDevMode={isDevMode}
+                        onStartTracking={onStartTracking}
+                        trackingAircraftId={trackingAircraftId}
+                    />
+                </LoadScript>
             )}
         </CardContent>
     </Card>
