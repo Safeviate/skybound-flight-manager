@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -6,7 +7,7 @@ import { db } from '@/lib/firebase';
 import { useUser } from '@/context/user-provider';
 import { Loader2, Plane, Power } from 'lucide-react';
 import type { Aircraft } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
@@ -19,7 +20,7 @@ interface LiveLocation {
   heading?: number;
 }
 
-const MapDisplay = ({ locations, aircraft, isDevMode, onStartTracking, trackingAircraftId, isLoaded, loadError }: { locations: LiveLocation[], aircraft: Aircraft[], isDevMode: boolean, onStartTracking: (id: string | null) => void, trackingAircraftId: string | null, isLoaded: boolean, loadError?: Error }) => {
+const MapDisplay = ({ locations, aircraft, isLoaded, loadError }: { locations: LiveLocation[], aircraft: Aircraft[], isLoaded: boolean, loadError?: Error }) => {
   const mapRef = React.useRef<any | null>(null);
 
   const onMapLoad = useCallback((map: any) => {
@@ -55,28 +56,9 @@ const MapDisplay = ({ locations, aircraft, isDevMode, onStartTracking, trackingA
         <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
             <Plane className="h-10 w-10 mb-2" />
             <p className="font-medium">No aircraft are currently transmitting their position.</p>
-            {isDevMode && (
-                <div className="mt-4 flex flex-col items-center gap-2">
-                    <p className="text-xs">Or, for testing:</p>
-                    <Select onValueChange={(value) => onStartTracking(value)}>
-                        <SelectTrigger className="w-[280px]">
-                            <SelectValue placeholder="Start Dev Tracking for an aircraft..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {aircraft.filter(ac => ac.status === 'Available').map(ac => (
-                                <SelectItem key={ac.id} value={ac.id} disabled={trackingAircraftId === ac.id}>
-                                    {ac.tailNumber} ({ac.make})
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            )}
         </div>
     );
   }
-
-  const isTrackingInDev = trackingAircraftId && locations.some(l => l.id === trackingAircraftId);
 
   return (
     <div className="relative w-full h-full bg-muted/30 rounded-md overflow-hidden border">
@@ -117,14 +99,6 @@ const MapDisplay = ({ locations, aircraft, isDevMode, onStartTracking, trackingA
             )
         })}
       </GoogleMap>
-       {isDevMode && isTrackingInDev && (
-            <div className="absolute bottom-2 right-2 z-10">
-                <Button variant="destructive" size="sm" onClick={() => onStartTracking(null)}>
-                    <Power className="mr-2 h-4 w-4" />
-                    Stop Tracking
-                </Button>
-            </div>
-        )}
     </div>
   );
 };
@@ -161,6 +135,8 @@ export function LiveFleetMap({ aircraft, isDevMode, onStartTracking, trackingAir
     return () => unsubscribe();
   }, [company]);
   
+  const isTrackingInDev = trackingAircraftId && locations.some(l => l.id === trackingAircraftId);
+
   return (
     <Card className="h-[calc(100vh-12rem)] flex flex-col">
         <CardHeader>
@@ -177,14 +153,37 @@ export function LiveFleetMap({ aircraft, isDevMode, onStartTracking, trackingAir
                 <MapDisplay 
                     locations={locations} 
                     aircraft={aircraft}
-                    isDevMode={isDevMode}
-                    onStartTracking={onStartTracking}
-                    trackingAircraftId={trackingAircraftId}
                     isLoaded={isLoaded}
                     loadError={loadError}
                 />
             )}
         </CardContent>
+         {isDevMode && (
+          <CardFooter className="border-t pt-4 flex justify-center">
+            {isTrackingInDev ? (
+              <Button variant="destructive" onClick={() => onStartTracking(null)}>
+                <Power className="mr-2 h-4 w-4" />
+                Stop Tracking
+              </Button>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-xs text-muted-foreground">For testing purposes:</p>
+                <Select onValueChange={(value) => onStartTracking(value)}>
+                    <SelectTrigger className="w-[280px]">
+                        <SelectValue placeholder="Start Dev Tracking for an aircraft..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {aircraft.filter(ac => ac.status === 'Available').map(ac => (
+                            <SelectItem key={ac.id} value={ac.id} disabled={trackingAircraftId === ac.id}>
+                                {ac.tailNumber} ({ac.make})
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+              </div>
+            )}
+          </CardFooter>
+        )}
     </Card>
   );
 }
