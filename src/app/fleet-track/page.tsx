@@ -7,7 +7,7 @@ export default async function FleetTrackPage() {
     // For now, we will assume a hardcoded companyId for data fetching.
     const companyId = 'skybound-aero'; 
     const { aircraft } = await getFleetTrackPageData(companyId);
-    const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+    const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY || '';
 
     return <FleetTrackPageContent 
             initialAircraft={aircraft}
