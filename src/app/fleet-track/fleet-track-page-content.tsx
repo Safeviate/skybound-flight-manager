@@ -12,32 +12,37 @@ import { useUser } from '@/context/user-provider';
 
 export function FleetTrackPageContent({
     initialAircraft,
+    googleMapsApiKey,
 }: {
     initialAircraft: any[];
+    googleMapsApiKey: string;
 }) {
     const { settings } = useSettings();
     const [trackingAircraftId, setTrackingAircraftId] = useState<string | null>(null);
-    const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
-    const { company } = useUser();
-
-    useEffect(() => {
-        if (company) {
-            // This is a client-side workaround to get the key.
-            // A better solution would involve a dedicated API route or loading it securely.
-            // For now, we assume it's exposed as a public env var for client-side maps.
-            setGoogleMapsApiKey(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '');
-        }
-    }, [company]);
 
     return (
         <main className="flex-1 p-4 md:p-8">
-             <LiveFleetMap 
-                aircraft={initialAircraft}
-                isDevMode={settings.liveTrackingDevMode}
-                onStartTracking={setTrackingAircraftId}
-                trackingAircraftId={trackingAircraftId}
-                googleMapsApiKey={googleMapsApiKey}
-            />
+             {googleMapsApiKey ? (
+                <LiveFleetMap 
+                    aircraft={initialAircraft}
+                    isDevMode={settings.liveTrackingDevMode}
+                    onStartTracking={setTrackingAircraftId}
+                    trackingAircraftId={trackingAircraftId}
+                    googleMapsApiKey={googleMapsApiKey}
+                />
+            ) : (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Live Fleet Map</CardTitle>
+                        <CardDescription>Real-time positions of aircraft in flight.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex items-center justify-center h-[calc(100vh-18rem)]">
+                        <div className="text-center text-muted-foreground">
+                            <p>Loading map configuration...</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
         </main>
     );
 }
