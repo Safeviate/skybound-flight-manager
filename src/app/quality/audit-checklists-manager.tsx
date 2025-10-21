@@ -185,12 +185,11 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
                     </div>
                      <div>
                         <Label>Audit Area</Label>
-                         <Select value={area} onValueChange={(v: AuditArea) => setArea(v)}>
-                            <SelectTrigger><SelectValue placeholder="Select audit area" /></SelectTrigger>
-                            <SelectContent>
-                                {auditAreas.map(areaItem => <SelectItem key={areaItem.id} value={areaItem.name}>{areaItem.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                        <Input 
+                            placeholder="e.g., Flight Operations"
+                            value={area}
+                            onChange={(e) => setArea(e.target.value)}
+                        />
                     </div>
                     <div>
                         <Label>Audit Aerial Asset</Label>
