@@ -132,13 +132,13 @@ const MapDisplay = ({ locations, aircraft, isDevMode, onStartTracking, trackingA
 };
 
 
-export function LiveFleetMap({ aircraft, isDevMode, onStartTracking, trackingAircraftId }: { aircraft: Aircraft[], isDevMode: boolean, onStartTracking: (id: string | null) => void, trackingAircraftId: string | null }) {
+export function LiveFleetMap({ aircraft, isDevMode, onStartTracking, trackingAircraftId, googleMapsApiKey }: { aircraft: Aircraft[], isDevMode: boolean, onStartTracking: (id: string | null) => void, trackingAircraftId: string | null, googleMapsApiKey: string }) {
   const { company } = useUser();
   const [locations, setLocations] = useState<LiveLocation[]>([]);
   const [loading, setLoading] = useState(true);
   
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+    googleMapsApiKey: googleMapsApiKey,
     preventGoogleFontsLoading: true,
   });
 

@@ -14,6 +14,9 @@ export default function FleetTrackPage() {
     });
     const [dataLoading, setDataLoading] = useState(true);
 
+    // This is a server component, so we can directly access process.env here
+    const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+
     useEffect(() => {
         async function loadData() {
             if (company) {
@@ -37,6 +40,7 @@ export default function FleetTrackPage() {
 
   return <FleetTrackPageContent 
             initialAircraft={initialData.aircraft}
+            googleMapsApiKey={googleMapsApiKey}
          />;
 }
 
