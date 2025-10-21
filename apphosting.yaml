@@ -15,3 +15,7 @@ env:
     secret: resend-api-key@3
     availability:
       - RUNTIME
+  - variable: GOOGLE_MAPS_API_KEY
+    secret: google-maps-api-key
+    availability:
+      - RUNTIME
