@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { LogOut, User as UserIcon, Building, Repeat, PanelLeft, Check } from 'lucide-react';
+import { LogOut, User as UserIcon, Building, Repeat, Menu, Check } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import {
@@ -48,7 +48,7 @@ export default function Header({ title, children }: { title: string, children?: 
       <div className="flex items-center flex-1">
         <div className="md:hidden">
             <SidebarTrigger>
-                <PanelLeft />
+                <Menu />
             </SidebarTrigger>
         </div>
         <h1 className="text-xl font-semibold md:text-2xl whitespace-nowrap text-[var(--header-foreground)] ml-4">{title}</h1>
