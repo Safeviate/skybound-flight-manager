@@ -204,6 +204,8 @@ export type Permission =
   | 'Bookings:View'
   | 'Bookings:Edit'
   | 'MOC:Edit'
+  | 'Exams:View'
+  | 'Exams:Edit'
   | 'Roles & Departments:View'
   | 'Roles & Departments:Edit'
   | 'Super User';
@@ -237,6 +239,8 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Bookings:View',
     'Bookings:Edit',
     'MOC:Edit',
+    'Exams:View',
+    'Exams:Edit',
     'Roles & Departments:View',
     'Roles & Departments:Edit',
     'Super User',
@@ -245,7 +249,7 @@ export const ALL_PERMISSIONS: Permission[] = [
 export type Role = string;
 export type Department = string;
 
-export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Fleet Track' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Hire and Fly' | 'Training Schedule' | 'Flight Logs' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart' | 'Roles & Departments' | 'Meetings';
+export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Fleet Track' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Hire and Fly' | 'Training Schedule' | 'Flight Logs' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart' | 'Roles & Departments' | 'Meetings' | 'Exams';
 
 export type User = {
     id: string;
@@ -621,6 +625,36 @@ export type TechnicalReport = {
   photo?: string;
 };
 
+export type ExamQuestion = {
+  id: string;
+  text: string;
+  options: { id: string; text: string }[];
+  correctAnswer: string; // This will be the id of the correct option
+  explanation?: string;
+};
+
+export type Exam = {
+  id: string;
+  companyId: string;
+  title: string;
+  category: string;
+  questions: ExamQuestion[];
+};
+
+export type UserAnswer = {
+  questionId: string;
+  selectedOptionId: string;
+};
+
+export type ExamAttempt = {
+  id: string;
+  examId: string;
+  userId: string;
+  dateTaken: string;
+  score: number; // Percentage
+  answers: UserAnswer[];
+};
+
 
 export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department> = {
     'Flight Operations Report': 'Flight Operations',
@@ -713,6 +747,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     'Bookings:View',
     'Bookings:Edit',
     'Checklists:View',
+    'Exams:Edit',
   ],
   'Head Of Training': [
     'Students:View',
@@ -722,9 +757,10 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     'Bookings:View',
     'Bookings:Edit',
     'Checklists:View',
+    'Exams:Edit',
   ],
-  'Instructor': ['Students:View', 'Bookings:View', 'Checklists:View'],
-  'Student': ['Students:View', 'Bookings:View'],
+  'Instructor': ['Students:View', 'Bookings:View', 'Checklists:View', 'Exams:View'],
+  'Student': ['Students:View', 'Bookings:View', 'Exams:View'],
   'Hire and Fly': ['Bookings:View'],
   'Auditee': ['Quality:View'],
   'Driver': [],

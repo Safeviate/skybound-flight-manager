@@ -41,6 +41,7 @@ import {
   BarChart,
   Network,
   Map,
+  FileQuestion,
 } from 'lucide-react';
 import type { Permission, Feature, NavMenuItem } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -62,6 +63,7 @@ export const navItems: {
   { href: '/quick-reports', label: 'Quick Reports', icon: ClipboardCheck },
   { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
   { href: '/students', label: 'Students', icon: Users, requiredFeature: 'Students' },
+  { href: '/exams', label: 'Exams', icon: FileQuestion, requiredPermissions: ['Exams:View'] },
   { href: '/hire-and-fly', label: 'Hire and Fly', icon: Contact, requiredFeature: 'Personnel' },
   { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredFeature: 'Personnel' },
   { href: '/training-schedule', label: 'Training Schedule', icon: Calendar, requiredFeature: 'Bookings' },
