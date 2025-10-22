@@ -283,7 +283,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                     )}
                     {audit.evidenceReference && (
                         <div className="pt-2">
-                            <h4 className="font-semibold text-sm">Evidence Reference</h4>
+                            <h4 className="font-semibold text-sm">Audit Reference</h4>
                             <p className="text-sm text-muted-foreground whitespace-pre-wrap p-2 border rounded-md min-h-[60px]">{audit.evidenceReference}</p>
                         </div>
                     )}
@@ -669,9 +669,7 @@ export default function QualityAuditDetailPage() {
       return;
     }
     
-    const companyId = company?.id;
-    if (!companyId) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Company context not found.' });
+    if (!company?.id || !auditId) {
         setLoading(false);
         return;
     }
@@ -679,8 +677,8 @@ export default function QualityAuditDetailPage() {
     const fetchAuditAndPersonnel = async () => {
       setLoading(true);
       try {
-        const auditRef = doc(db, `companies/${companyId}/quality-audits`, auditId);
-        const personnelQuery = collection(db, `companies/${companyId}/users`);
+        const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
+        const personnelQuery = collection(db, `companies/${company.id}/users`);
         
         const [auditSnap, personnelSnapshot] = await Promise.all([
           getDoc(auditRef),
@@ -879,7 +877,7 @@ export default function QualityAuditDetailPage() {
                       <p>{audit.department || 'N/A'}</p>
                   </div>
                   <div>
-                      <p className="font-semibold text-muted-foreground">Area Audited</p>
+                      <p className="font-semibold text-muted-foreground">Audit Reference</p>
                       <p>{audit.area || 'N/A'}</p>
                   </div>
                    <div>
@@ -942,7 +940,7 @@ export default function QualityAuditDetailPage() {
                           <ArrowLeft className="mr-2 h-4 w-4" />
                           Back to Audits
                       </Button>
-                      <Button onClick={() => handleAuditUpdate(audit, false)} className="w-full sm:w-auto">
+                      <Button onClick={() => handleAuditUpdate(audit, true)} className="w-full sm:w-auto">
                           <Save className="mr-2 h-4 w-4" />
                           Save Progress
                       </Button>
@@ -1117,6 +1115,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 
