@@ -641,8 +641,7 @@ export function QualityPageContent({
   const groupedArchivedAudits = useMemo(() => groupAuditsByDepartment(archivedReportsControls.items), [archivedReportsControls.items]);
 
 
-  const ReportTable = ({ isArchivedTable = false }: { isArchivedTable?: boolean }) => {
-    const controls = isArchivedTable ? archivedReportsControls : reportsControls;
+  const ReportTable = ({ audits: reportList, isArchivedTable = false }: { audits: QualityAudit[], isArchivedTable?: boolean }) => {
     
     return (
         <ScrollArea className="w-full whitespace-nowrap rounded-md border">
@@ -652,8 +651,8 @@ export function QualityPageContent({
                     {isArchivedTable && (
                         <TableHead className="w-12">
                             <Checkbox 
-                                onCheckedChange={(checked) => handleSelectAll(Boolean(checked), controls)}
-                                checked={selectedAudits.length > 0 && selectedAudits.length === controls.items.length}
+                                onCheckedChange={(checked) => handleSelectAll(Boolean(checked), isArchivedTable ? archivedReportsControls : reportsControls)}
+                                checked={selectedAudits.length > 0 && selectedAudits.length === (isArchivedTable ? archivedReportsControls.items.length : reportsControls.items.length)}
                                 aria-label="Select all"
                             />
                         </TableHead>
@@ -671,8 +670,8 @@ export function QualityPageContent({
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {controls.items.length > 0 ? (
-                        controls.items.map(audit => (
+                    {reportList.length > 0 ? (
+                        reportList.map(audit => (
                         <TableRow key={audit.id} data-state={selectedAudits.includes(audit.id) && "selected"}>
                             {isArchivedTable && (
                                 <TableCell>
@@ -852,7 +851,7 @@ export function QualityPageContent({
                              {Object.keys(groupedActiveAudits).sort().map(department => (
                                 <div key={department}>
                                     <h3 className="text-lg font-semibold mb-2">{department}</h3>
-                                    <ReportTable isArchivedTable={false} />
+                                    <ReportTable audits={groupedActiveAudits[department]} isArchivedTable={false} />
                                 </div>
                             ))}
                             {Object.keys(groupedActiveAudits).length === 0 && (
@@ -871,7 +870,7 @@ export function QualityPageContent({
                             {Object.keys(groupedArchivedAudits).sort().map(department => (
                                 <div key={department}>
                                     <h3 className="text-lg font-semibold mb-2">{department}</h3>
-                                    <ReportTable isArchivedTable={true} />
+                                    <ReportTable audits={groupedArchivedAudits[department]} isArchivedTable={true} />
                                 </div>
                             ))}
                             {Object.keys(groupedArchivedAudits).length === 0 && (
