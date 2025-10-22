@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -30,6 +29,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import { LiveLocationTracker } from './live-location-tracker';
 
 interface TrainingSchedulePageContentProps {
   initialAircraft: Aircraft[];
@@ -61,12 +61,15 @@ const FlightHub = ({
             
             <div className="py-4">
                 {activeFlight.aircraft.checklistStatus === 'needs-post-flight' ? (
-                    <PostFlightChecklistForm 
-                        onSuccess={handleChecklistSuccess}
-                        aircraft={activeFlight.aircraft}
-                        startHobbs={activeFlight.booking.startHobbs}
-                        onReportIssue={() => {}}
-                    />
+                    <>
+                        <LiveLocationTracker aircraft={activeFlight.aircraft} enabled={true} />
+                        <PostFlightChecklistForm 
+                            onSuccess={handleChecklistSuccess}
+                            aircraft={activeFlight.aircraft}
+                            startHobbs={activeFlight.booking.startHobbs}
+                            onReportIssue={() => {}}
+                        />
+                    </>
                 ) : (
                     <PreFlightChecklistForm 
                         onSuccess={handleChecklistSuccess} 

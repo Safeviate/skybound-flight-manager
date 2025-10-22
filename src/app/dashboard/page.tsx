@@ -16,6 +16,7 @@ export default function DashboardPage() {
         users: [],
         students: [],
     });
+    const [dataLoading, setDataLoading] = useState(true);
 
     useEffect(() => {
         async function loadData() {
@@ -23,11 +24,20 @@ export default function DashboardPage() {
                 const data = await getDashboardData(company.id);
                 setInitialData(data);
             }
+            setDataLoading(false);
         }
         if (!userLoading) {
             loadData();
         }
     }, [company, userLoading]);
+
+  if (dataLoading || userLoading) {
+    return (
+      <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
+        <p>Loading company dashboard...</p>
+      </main>
+    );
+  }
 
   return <DashboardPageContent 
             initialAircraft={initialData.aircraft}

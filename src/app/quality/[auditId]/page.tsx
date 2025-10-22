@@ -384,7 +384,10 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                 <div className="flex justify-between items-start">
                                                     <div>
                                                         <p className="font-medium">{item.type !== 'Header' && `${questionNumber}. `}{item.text}</p>
-                                                        <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
+                                                        <div className="text-xs text-muted-foreground">
+                                                            <p>Regulation: {item.regulationReference || 'N/A'}</p>
+                                                            <p>Reference: {item.reference || 'N/A'}</p>
+                                                        </div>
                                                     </div>
                                                     <Badge variant={variant} className="whitespace-nowrap">
                                                         {icon}
@@ -433,7 +436,10 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                             <div className="flex justify-between items-start">
                                                 <div>
                                                     <p className="font-medium">{currentQuestionNumber}. {item.text}</p>
-                                                    <p className="text-xs text-muted-foreground ml-5">{item.regulationReference || 'N/A'}</p>
+                                                    <div className="text-xs text-muted-foreground ml-5">
+                                                        <p>Regulation: {item.regulationReference || 'N/A'}</p>
+                                                        <p>Reference: {item.reference || 'N/A'}</p>
+                                                    </div>
                                                 </div>
                                                 <Badge variant={variant} className="whitespace-nowrap">
                                                     {icon}
@@ -707,9 +713,19 @@ export default function QualityAuditDetailPage() {
   
   const handleItemChange = useCallback((itemId: string, field: keyof AuditChecklistItem, value: any) => {
     if (!audit) return;
-    const updatedItems = audit.checklistItems.map(item => 
-        item.id === itemId ? { ...item, [field]: value } : item
-    );
+  
+    const updatedItems = audit.checklistItems.map(item => {
+      if (item.id === itemId) {
+        const updatedItem = { ...item, [field]: value };
+        // If the finding is changed to something that is not non-compliant or partial, clear the level.
+        if (field === 'finding' && value !== 'Non Compliant' && value !== 'Partial') {
+          updatedItem.level = null;
+        }
+        return updatedItem;
+      }
+      return item;
+    });
+  
     setAudit(prevAudit => prevAudit ? { ...prevAudit, checklistItems: updatedItems } : null);
   }, [audit]);
 
@@ -864,7 +880,7 @@ export default function QualityAuditDetailPage() {
                   </div>
                   <div>
                       <p className="font-semibold text-muted-foreground">Area Audited</p>
-                      <p>{audit.area}</p>
+                      <p>{audit.area || 'N/A'}</p>
                   </div>
                    <div>
                       <p className="font-semibold text-muted-foreground">Auditor</p>
@@ -1101,5 +1117,6 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
@@ -40,7 +39,8 @@ import {
   BookOpen,
   FlaskConical,
   BarChart,
-  Network
+  Network,
+  Map,
 } from 'lucide-react';
 import type { Permission, Feature, NavMenuItem } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -80,7 +80,6 @@ export const adminNavItems = [
     { href: '/settings/companies', label: 'Manage Companies', icon: Building },
     { href: '/reports/system-health', label: 'System Health', icon: Activity },
     { href: '/functions', label: 'Functions', icon: FlaskConical },
-    { href: '/gantt-chart', label: 'Gantt Chart', icon: BarChart },
 ]
 
 const settingsNavItems: {

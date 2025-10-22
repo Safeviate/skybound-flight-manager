@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -26,7 +25,7 @@ import { useTableControls } from '@/hooks/use-table-controls.ts';
 import { AuditChecklistsManager } from '../quality/audit-checklists-manager';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CapTracker } from './cap-tracker';
+import { CapTracker } from '../quality/cap-tracker';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { complianceData as seedComplianceData } from '@/lib/data-provider';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -40,6 +39,7 @@ import { cn } from '@/lib/utils.tsx';
 import { useForm } from 'react-hook-form';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { EditSpiForm, type SpiConfig } from '@/app/safety/edit-spi-form';
 
 
 const ComplianceItemForm = ({
@@ -449,18 +449,17 @@ export function QualityPageContent({
   
   const reportsControls = useTableControls(activeAudits, {
     initialSort: { key: 'date', direction: 'desc' },
-    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department', 'auditeeName'],
+    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department', 'auditeeName', 'area'],
   });
   
   const archivedReportsControls = useTableControls(archivedAudits, {
     initialSort: { key: 'date', direction: 'desc' },
-    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department', 'auditeeName'],
+    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department', 'auditeeName', 'area'],
   });
   
   const handleAuditUpdate = (updatedData: Partial<QualityAudit>) => {
     if (!updatedData.id) return;
     setAudits(prev => prev.map(a => a.id === updatedData.id ? { ...a, ...updatedData } : a));
-    // The actual database update is now handled within the detail page, this just updates the list view
   };
 
 
@@ -522,20 +521,15 @@ export function QualityPageContent({
     
     try {
         const batch = writeBatch(db);
-
-        // 1. Update the audit status to 'Archived'
         const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
         batch.update(auditRef, { status: 'Archived' });
         
-        // 2. Find and delete all alerts related to this audit
         const alertsRef = collection(db, `companies/${company.id}/alerts`);
         const alertsQuery = query(alertsRef, where("relatedLink", "==", `/quality/${auditId}`));
         const alertsSnapshot = await getDocs(alertsQuery);
         alertsSnapshot.forEach(alertDoc => {
             batch.delete(alertDoc.ref);
         });
-
-        // 3. Commit the batch
         await batch.commit();
 
         setAudits(prev => prev.map(a => a.id === auditId ? { ...a, status: 'Archived' } : a));
@@ -647,13 +641,15 @@ export function QualityPageContent({
   const groupedArchivedAudits = useMemo(() => groupAuditsByDepartment(archivedReportsControls.items), [archivedReportsControls.items]);
 
 
-  const ReportTable = ({ reports, controls, showArchived }: { reports: QualityAudit[], controls: ReturnType<typeof useTableControls>, showArchived: boolean }) => {
+  const ReportTable = ({ isArchivedTable = false }: { isArchivedTable?: boolean }) => {
+    const controls = isArchivedTable ? archivedReportsControls : reportsControls;
+    
     return (
         <ScrollArea className="w-full whitespace-nowrap rounded-md border">
             <Table>
                 <TableHeader>
                     <TableRow>
-                    {showArchived && (
+                    {isArchivedTable && (
                         <TableHead className="w-12">
                             <Checkbox 
                                 onCheckedChange={(checked) => handleSelectAll(Boolean(checked), controls)}
@@ -675,10 +671,10 @@ export function QualityPageContent({
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {reports.length > 0 ? (
-                        reports.map(audit => (
+                    {controls.items.length > 0 ? (
+                        controls.items.map(audit => (
                         <TableRow key={audit.id} data-state={selectedAudits.includes(audit.id) && "selected"}>
-                            {showArchived && (
+                            {isArchivedTable && (
                                 <TableCell>
                                     <Checkbox
                                         checked={selectedAudits.includes(audit.id)}
@@ -716,7 +712,13 @@ export function QualityPageContent({
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent>
-                                        {showArchived ? (
+                                        <DropdownMenuItem asChild>
+                                             <Link href={`/quality/${audit.id}`}>
+                                                <FileText className="mr-2 h-4 w-4" />
+                                                View Report
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        {isArchivedTable ? (
                                             <>
                                                 <DropdownMenuItem onSelect={() => handleRestoreAudit(audit.id)}>
                                                     <RotateCw className="mr-2 h-4 w-4" />
@@ -756,8 +758,8 @@ export function QualityPageContent({
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell colSpan={showArchived ? 11 : 10} className="text-center h-24">
-                                No audit reports found in this department.
+                            <TableCell colSpan={isArchivedTable ? 11 : 10} className="text-center h-24">
+                                No audit reports found.
                             </TableCell>
                         </TableRow>
                     )}
@@ -850,7 +852,7 @@ export function QualityPageContent({
                              {Object.keys(groupedActiveAudits).sort().map(department => (
                                 <div key={department}>
                                     <h3 className="text-lg font-semibold mb-2">{department}</h3>
-                                    <ReportTable reports={groupedActiveAudits[department]} controls={reportsControls} showArchived={false} />
+                                    <ReportTable isArchivedTable={false} />
                                 </div>
                             ))}
                             {Object.keys(groupedActiveAudits).length === 0 && (
@@ -869,7 +871,7 @@ export function QualityPageContent({
                             {Object.keys(groupedArchivedAudits).sort().map(department => (
                                 <div key={department}>
                                     <h3 className="text-lg font-semibold mb-2">{department}</h3>
-                                    <ReportTable reports={groupedArchivedAudits[department]} controls={archivedReportsControls} showArchived={true} />
+                                    <ReportTable isArchivedTable={true} />
                                 </div>
                             ))}
                             {Object.keys(groupedArchivedAudits).length === 0 && (

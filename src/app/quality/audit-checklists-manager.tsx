@@ -95,7 +95,7 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
     )
 }
 
-const StartAuditDialog = ({ onStart, personnel, template, departments, auditAreas, aircraft }: { onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'> & { department?: Department }) => void, personnel: User[], template: Checklist, departments: CompanyDepartment[], auditAreas: CompanyAuditArea[], aircraft: Aircraft[] }) => {
+const StartAuditDialog = ({ onStart, personnel, template, departments, aircraft }: { onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'> & { department?: Department }) => void, personnel: User[], template: Checklist, departments: CompanyDepartment[], aircraft: Aircraft[] }) => {
     const [leadAuditor, setLeadAuditor] = useState('');
     const [auditeeName, setAuditeeName] = useState('');
     const [auditTeam, setAuditTeam] = useState('');
@@ -185,7 +185,7 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, auditArea
                      <div>
                         <Label>Audit Reference</Label>
                         <Input 
-                            placeholder="e.g., Flight Operations Manual, Section 3.2" 
+                            placeholder="e.g., Manual reference, section, etc."
                             value={area}
                             onChange={(e) => setArea(e.target.value)}
                         />
@@ -283,7 +283,6 @@ export function AuditChecklistsManager({
     const [checklistTemplates, setChecklistTemplates] = useState<Checklist[]>(initialTemplates);
     const [personnel, setPersonnel] = useState<User[]>(initialPersonnel);
     const [departments, setDepartments] = useState<CompanyDepartment[]>(initialDepartments);
-    const [auditAreas, setAuditAreas] = useState<CompanyAuditArea[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState<Checklist | null>(null);
     const { user, company, loading } = useUser();
@@ -294,15 +293,12 @@ export function AuditChecklistsManager({
     const fetchCompanyData = useCallback(async () => {
         if (!company) return;
         const deptsQuery = query(collection(db, `companies/${company.id}/departments`));
-        const auditAreasQuery = query(collection(db, `companies/${company.id}/audit-areas`));
         
-        const [deptsSnapshot, auditAreasSnapshot] = await Promise.all([
+        const [deptsSnapshot] = await Promise.all([
             getDocs(deptsQuery),
-            getDocs(auditAreasQuery),
         ]);
         
         setDepartments(deptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment)));
-        setAuditAreas(auditAreasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyAuditArea)));
     }, [company]);
 
 
@@ -490,7 +486,6 @@ export function AuditChecklistsManager({
                                                         onStart={(data) => handleStartAudit(data, template)} 
                                                         personnel={personnel} 
                                                         departments={departments}
-                                                        auditAreas={auditAreas}
                                                         aircraft={initialAircraft}
                                                     />
                                                     <Button variant="outline" size="sm" onClick={() => handleEdit(template)}>
