@@ -26,6 +26,11 @@ const AssignExamDialog = ({ exam, allUsers, onAssign }: { exam: Exam, allUsers: 
         onAssign(selectedUserIds);
     };
 
+    const selectedUsersAsOptions = selectedUserIds.map(id => {
+        const user = allUsers.find(u => u.id === id);
+        return { value: id, label: user ? `${user.name} (${user.role})` : id };
+    });
+
     return (
         <DialogContent>
             <DialogHeader>
@@ -37,7 +42,8 @@ const AssignExamDialog = ({ exam, allUsers, onAssign }: { exam: Exam, allUsers: 
             <div className="py-4">
                 <MultiSelect
                     options={userOptions}
-                    selected={selectedUserIds}
+                    selected={selectedUsersAsOptions.map(u => u.value)}
+                    displayValues={selectedUsersAsOptions}
                     onChange={setSelectedUserIds}
                     placeholder="Select users and students..."
                 />
