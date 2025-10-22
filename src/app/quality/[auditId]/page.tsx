@@ -665,8 +665,8 @@ export default function QualityAuditDetailPage() {
   useEffect(() => {
     if (userLoading) return;
     if (!user) {
-      router.push('/login');
-      return;
+        router.push('/login');
+        return;
     }
     
     if (!company?.id || !auditId) {
@@ -675,32 +675,32 @@ export default function QualityAuditDetailPage() {
     }
     
     const fetchAuditAndPersonnel = async () => {
-      setLoading(true);
-      try {
-        const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
-        const personnelQuery = collection(db, `companies/${company.id}/users`);
-        
-        const [auditSnap, personnelSnapshot] = await Promise.all([
-          getDoc(auditRef),
-          getDocs(personnelQuery)
-        ]);
+        setLoading(true);
+        try {
+            const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
+            const personnelQuery = collection(db, `companies/${company.id}/users`);
+            
+            const [auditSnap, personnelSnapshot] = await Promise.all([
+                getDoc(auditRef),
+                getDocs(personnelQuery)
+            ]);
 
-        if (auditSnap.exists()) {
-          const fetchedAudit = { ...auditSnap.data(), id: auditSnap.id } as QualityAudit;
-          setAudit(fetchedAudit);
-          setSavedAudit(fetchedAudit); // Set initial saved state
-        } else {
-          toast({ variant: 'destructive', title: 'Error', description: 'Audit not found.' });
+            if (auditSnap.exists()) {
+                const fetchedAudit = { ...auditSnap.data(), id: auditSnap.id } as QualityAudit;
+                setAudit(fetchedAudit);
+                setSavedAudit(fetchedAudit);
+            } else {
+                toast({ variant: 'destructive', title: 'Error', description: 'Audit not found.' });
+            }
+            
+            setPersonnel(personnelSnapshot.docs.map(doc => doc.data() as User));
+
+        } catch (error) {
+            console.error("Error fetching audit details:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch audit details.' });
+        } finally {
+            setLoading(false);
         }
-        
-        setPersonnel(personnelSnapshot.docs.map(doc => doc.data() as User));
-
-      } catch (error) {
-        console.error("Error fetching audit details:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch audit details.' });
-      } finally {
-        setLoading(false);
-      }
     };
     
     fetchAuditAndPersonnel();
@@ -715,7 +715,6 @@ export default function QualityAuditDetailPage() {
     const updatedItems = audit.checklistItems.map(item => {
       if (item.id === itemId) {
         const updatedItem = { ...item, [field]: value };
-        // If the finding is changed to something that is not non-compliant or partial, clear the level.
         if (field === 'finding' && value !== 'Non Compliant' && value !== 'Partial') {
           updatedItem.level = null;
         }
@@ -758,7 +757,7 @@ export default function QualityAuditDetailPage() {
     const nonConformanceIssues = audit.checklistItems
         .filter(item => item.finding === 'Non Compliant' || item.finding === 'Partial' || item.finding === 'Observation')
         .map(item => ({
-            id: `${item.id}-${Date.now()}`, // Ensure unique ID for non-conformance issue
+            id: `${item.id}-${Date.now()}`,
             itemText: item.text,
             regulationReference: item.regulationReference,
             finding: item.finding!,
@@ -910,7 +909,7 @@ export default function QualityAuditDetailPage() {
               )}
               {audit.evidenceReference && (
                 <div className="space-y-2 border-t pt-6">
-                    <Label htmlFor="audit-evidence" className="font-semibold">Evidence Reference</Label>
+                    <Label htmlFor="audit-evidence" className="font-semibold">Audit Reference</Label>
                     <Textarea 
                         id="audit-evidence"
                         readOnly
@@ -1115,6 +1114,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 
