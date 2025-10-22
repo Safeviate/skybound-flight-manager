@@ -635,11 +635,12 @@ export type ExamQuestion = {
 };
 
 export type ExamAssignment = {
-    userId: string;
-    name: string;
-    status: 'Not Started' | 'In Progress' | 'Completed' | 'Passed' | 'Failed';
-    score?: number;
-    dateCompleted?: string;
+  userId: string;
+  name: string;
+  status: 'Not Started' | 'In Progress' | 'Completed' | 'Passed' | 'Failed';
+  score?: number;
+  dateCompleted?: string;
+  attemptId?: string; // Link to the detailed ExamAttempt
 };
 
 export type Exam = {
@@ -664,7 +665,6 @@ export type ExamAttempt = {
   score: number; // Percentage
   answers: UserAnswer[];
 };
-
 
 export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department> = {
     'Flight Operations Report': 'Flight Operations',
