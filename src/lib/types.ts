@@ -1,4 +1,5 @@
 
+
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
@@ -633,12 +634,21 @@ export type ExamQuestion = {
   explanation?: string;
 };
 
+export type ExamAssignment = {
+    userId: string;
+    name: string;
+    status: 'Not Started' | 'In Progress' | 'Completed' | 'Passed' | 'Failed';
+    score?: number;
+    dateCompleted?: string;
+};
+
 export type Exam = {
   id: string;
   companyId: string;
   title: string;
   category: string;
   questions: ExamQuestion[];
+  assignedTo?: ExamAssignment[];
 };
 
 export type UserAnswer = {
