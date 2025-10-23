@@ -272,13 +272,9 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         let updatedLogs = [...(student.trainingLogs || [])];
         const logId = logIdToUpdate || `log-${Date.now()}`;
     
-        if (logIdToUpdate) {
-            const index = updatedLogs.findIndex(log => log.id === logIdToUpdate);
-            if (index !== -1) {
-                updatedLogs[index] = { ...updatedLogs[index], ...logData, id: logId, studentSignatureRequired };
-            } else {
-                updatedLogs.push({ ...logData, id: logId, studentSignatureRequired });
-            }
+        const existingLogIndex = updatedLogs.findIndex(log => log.id === logId);
+        if (existingLogIndex !== -1) {
+            updatedLogs[existingLogIndex] = { ...updatedLogs[existingLogIndex], ...logData, id: logId, studentSignatureRequired };
         } else {
             updatedLogs.push({ ...logData, id: logId, studentSignatureRequired });
         }
@@ -295,8 +291,10 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 const headOfTrainingQuery = query(collection(db, `companies/${company.id}/users`), where('role', '==', 'Head Of Training'));
                 const hotSnapshot = await getDocs(headOfTrainingQuery);
                 const hot = hotSnapshot.empty ? null : hotSnapshot.docs[0].data() as StudentUser;
-                const instructorDoc = (await getDocs(query(collection(db, `companies/${company.id}/users`), where('name', '==', student.instructor)))).docs[0];
-                const instructor = instructorDoc ? ({ ...instructorDoc.data(), id: instructorDoc.id } as StudentUser) : null;
+
+                const instructorQuery = query(collection(db, `companies/${company.id}/users`), where('name', '==', student.instructor));
+                const instructorSnapshot = await getDocs(instructorQuery);
+                const instructor = instructorSnapshot.empty ? null : { ...instructorSnapshot.docs[0].data(), id: instructorSnapshot.docs[0].id } as StudentUser;
     
                 const targetUserIds = [hot?.id, instructor?.id].filter(Boolean) as string[];
     
@@ -343,15 +341,12 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         
         await handleUpdate(firestoreUpdate);
 
-        // If the debrief was from a booking, update the booking status to completed.
         if (fromBookingId) {
             const booking = bookings.find(b => b.id === fromBookingId);
             if (booking) {
-                const bookingCollectionName = booking.resourceType === 'aircraft' ? 'aircraft-bookings' : 'facility-bookings';
-                const bookingRef = doc(db, `companies/${company.id}/${bookingCollectionName}`, fromBookingId);
-                await updateDoc(bookingRef, {
-                    status: 'Completed',
-                });
+                const collectionName = booking.resourceType === 'aircraft' ? 'aircraft-bookings' : 'facility-bookings';
+                const bookingRef = doc(db, `companies/${company.id}/${collectionName}`, fromBookingId);
+                await updateDoc(bookingRef, { status: 'Completed' });
             }
         }
         
