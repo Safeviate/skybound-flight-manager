@@ -86,7 +86,7 @@ const defaultFormValues: Partial<DebriefFormValues> = {
     instructorSignature: '',
     studentSignature: '',
     remarks: '',
-    trainingExercises: [],
+    trainingExercises: [{ exercise: '', rating: 0, comment: '' }],
 };
 
 export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDebriefFormProps) {
@@ -125,7 +125,7 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                 ...logToEdit,
                 date: parseISO(logToEdit.date),
                 remarks: logToEdit.remarks || remarksFromStorage,
-                trainingExercises: logToEdit.trainingExercises || [],
+                trainingExercises: logToEdit.trainingExercises?.length ? logToEdit.trainingExercises : [{ exercise: '', rating: 0, comment: '' }],
             };
         }
         if (booking) {
@@ -139,7 +139,7 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                 departure: associatedLog?.departure,
                 arrival: associatedLog?.arrival,
                 remarks: associatedLog?.remarks || remarksFromStorage,
-                trainingExercises: associatedLog?.trainingExercises || [],
+                trainingExercises: associatedLog?.trainingExercises?.length ? associatedLog.trainingExercises : [{ exercise: '', rating: 0, comment: '' }],
             };
         }
         return defaultFormValues;
@@ -270,57 +270,102 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                     <CardHeader>
                         <CardTitle>Training Details</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                         <FormField
+                    <CardContent className="space-y-4">
+                        <FormField
                             control={form.control}
                             name="remarks"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Remarks &amp; In-Flight Notes</FormLabel>
-                                    <div className="pb-4">
-                                      <FormField
-                                          control={form.control}
-                                          name={`trainingExercises.0.exercise` as const}
-                                          render={({ field }) => (
-                                              <FormItem>
-                                                  <FormLabel>Exercise Covered</FormLabel>
-                                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                      <FormControl>
-                                                          <SelectTrigger><SelectValue placeholder="Select an exercise" /></SelectTrigger>
-                                                      </FormControl>
-                                                      <SelectContent>
-                                                          {trainingExercisesData.map(ex => <SelectItem key={ex} value={ex}>{ex}</SelectItem>)}
-                                                      </SelectContent>
-                                                  </Select>
-                                                  <FormMessage />
-                                              </FormItem>
-                                          )}
-                                      />
-                                    </div>
+                                    <FormLabel>Remarks & In-Flight Notes</FormLabel>
                                     <FormControl>
                                         <Textarea placeholder="In-flight notes will appear here. Add any additional remarks for the overall flight." {...field} className="min-h-[100px] bg-muted" />
                                     </FormControl>
-                                    <div className="pt-4">
-                                        <FormLabel>Rating</FormLabel>
-                                        <RadioGroup
-                                            onValueChange={(value) => form.setValue(`trainingExercises.0.rating`, Number(value))}
-                                            defaultValue={form.getValues(`trainingExercises.0.rating`)?.toString()}
-                                            className="flex items-center gap-4 mt-2"
-                                        >
-                                            {[1, 2, 3, 4].map(rating => (
-                                                <FormItem key={rating} className="flex items-center space-x-2 space-y-0">
-                                                    <FormControl>
-                                                        <RadioGroupItem value={String(rating)} />
-                                                    </FormControl>
-                                                    <FormLabel className="font-normal">{rating}</FormLabel>
-                                                </FormItem>
-                                            ))}
-                                        </RadioGroup>
-                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
+                        <div className="space-y-4 pt-4 border-t">
+                            <h3 className="font-medium">Exercises Covered</h3>
+                             {fields.map((field, index) => (
+                                <div key={field.id} className="p-4 border rounded-md relative space-y-4">
+                                     <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute top-2 right-2"
+                                        onClick={() => remove(index)}
+                                        disabled={fields.length <= 1}
+                                    >
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                    <FormField
+                                        control={form.control}
+                                        name={`trainingExercises.${index}.exercise`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Exercise</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger><SelectValue placeholder="Select an exercise" /></SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {trainingExercisesData.map(ex => <SelectItem key={ex} value={ex}>{ex}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                     <FormField
+                                        control={form.control}
+                                        name={`trainingExercises.${index}.comment`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Exercise Comment</FormLabel>
+                                                <FormControl>
+                                                    <Textarea placeholder="Add a comment for this exercise..." {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name={`trainingExercises.${index}.rating`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Rating</FormLabel>
+                                                <FormControl>
+                                                    <RadioGroup
+                                                        onValueChange={(value) => field.onChange(Number(value))}
+                                                        value={field.value?.toString()}
+                                                        className="flex items-center gap-4"
+                                                    >
+                                                        {[1, 2, 3, 4].map(rating => (
+                                                            <FormItem key={rating} className="flex items-center space-x-2 space-y-0">
+                                                                <FormControl>
+                                                                    <RadioGroupItem value={String(rating)} />
+                                                                </FormControl>
+                                                                <FormLabel className="font-normal">{rating}</FormLabel>
+                                                            </FormItem>
+                                                        ))}
+                                                    </RadioGroup>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            ))}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full"
+                                onClick={() => append({ exercise: '', rating: 0, comment: '' })}
+                            >
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add Exercise
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
 
