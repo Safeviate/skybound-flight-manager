@@ -277,23 +277,22 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Remarks & In-Flight Notes</FormLabel>
-                                    
-                                    <div className="my-2">
-                                        <Select>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select exercise..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {trainingExercisesData.map(ex => (
-                                                    <SelectItem key={ex} value={ex}>{ex}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    
                                     <FormControl>
                                         <Textarea placeholder="In-flight notes will appear here. Add any additional remarks for the overall flight." {...field} className="min-h-[100px] bg-muted" />
                                     </FormControl>
+                                    <div className="pt-4">
+                                        <FormLabel>Rating</FormLabel>
+                                        <RadioGroup className="flex items-center gap-4 mt-2">
+                                            {[1, 2, 3, 4].map(rating => (
+                                                <FormItem key={rating} className="flex items-center space-x-2 space-y-0">
+                                                    <FormControl>
+                                                        <RadioGroupItem value={String(rating)} />
+                                                    </FormControl>
+                                                    <FormLabel className="font-normal">{rating}</FormLabel>
+                                                </FormItem>
+                                            ))}
+                                        </RadioGroup>
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -348,3 +347,5 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
     </Form>
   );
 }
+
+    
