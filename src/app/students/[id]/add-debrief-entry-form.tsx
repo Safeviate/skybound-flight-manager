@@ -12,6 +12,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -56,7 +57,6 @@ const debriefFormSchema = z.object({
   instructorName: z.string({
     required_error: 'Please enter the instructor\'s name.',
   }),
-  trainingExercises: z.array(exerciseLogSchema).min(1, 'At least one exercise must be logged.'),
   instructorSignature: z.string().min(1, 'Instructor signature is required.'),
   studentSignature: z.string().optional(),
   departure: z.string().optional(),
@@ -82,7 +82,6 @@ const defaultFormValues: Partial<DebriefFormValues> = {
     startHobbs: 0,
     endHobbs: 0,
     instructorName: '',
-    trainingExercises: [],
     instructorSignature: '',
     studentSignature: '',
     remarks: '',
@@ -101,11 +100,6 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
   const form = useForm<DebriefFormValues>({
     resolver: zodResolver(debriefFormSchema),
     defaultValues: defaultFormValues as DebriefFormValues,
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "trainingExercises",
   });
   
   useEffect(() => {
@@ -134,7 +128,6 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                 startHobbs: associatedLog?.startHobbs || booking.startHobbs || 0,
                 endHobbs: associatedLog?.endHobbs || booking.endHobbs || 0,
                 instructorName: booking.instructor || '',
-                trainingExercises: associatedLog?.trainingExercises.length ? associatedLog.trainingExercises : [],
                 departure: associatedLog?.departure,
                 arrival: associatedLog?.arrival,
                 remarks: associatedLog?.remarks || remarksFromStorage,
