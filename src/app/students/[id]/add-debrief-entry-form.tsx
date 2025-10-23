@@ -270,36 +270,36 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                     <CardHeader>
                         <CardTitle>Training Details</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <FormField
+                    <CardContent>
+                         <FormField
                             control={form.control}
                             name="remarks"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Remarks & In-Flight Notes</FormLabel>
+                                    <FormLabel>Remarks &amp; In-Flight Notes</FormLabel>
+                                    <div className="pb-4">
+                                      <FormField
+                                          control={form.control}
+                                          name={`trainingExercises.0.exercise` as const}
+                                          render={({ field }) => (
+                                              <FormItem>
+                                                  <FormLabel>Exercise Covered</FormLabel>
+                                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                      <FormControl>
+                                                          <SelectTrigger><SelectValue placeholder="Select an exercise" /></SelectTrigger>
+                                                      </FormControl>
+                                                      <SelectContent>
+                                                          {trainingExercisesData.map(ex => <SelectItem key={ex} value={ex}>{ex}</SelectItem>)}
+                                                      </SelectContent>
+                                                  </Select>
+                                                  <FormMessage />
+                                              </FormItem>
+                                          )}
+                                      />
+                                    </div>
                                     <FormControl>
                                         <Textarea placeholder="In-flight notes will appear here. Add any additional remarks for the overall flight." {...field} className="min-h-[100px] bg-muted" />
                                     </FormControl>
-                                     <div className="pt-4">
-                                         <FormField
-                                             control={form.control}
-                                             name={`trainingExercises.0.exercise` as const}
-                                             render={({ field }) => (
-                                                 <FormItem>
-                                                     <FormLabel>Exercise Covered</FormLabel>
-                                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                         <FormControl>
-                                                             <SelectTrigger><SelectValue placeholder="Select an exercise" /></SelectTrigger>
-                                                         </FormControl>
-                                                         <SelectContent>
-                                                             {trainingExercisesData.map(ex => <SelectItem key={ex} value={ex}>{ex}</SelectItem>)}
-                                                         </SelectContent>
-                                                     </Select>
-                                                     <FormMessage />
-                                                 </FormItem>
-                                             )}
-                                         />
-                                    </div>
                                     <div className="pt-4">
                                         <FormLabel>Rating</FormLabel>
                                         <RadioGroup
