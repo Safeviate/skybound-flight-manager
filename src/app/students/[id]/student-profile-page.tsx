@@ -125,21 +125,30 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     useEffect(() => {
         if (!company || !student) return;
         
-        const bookingsQuery = query(
+        const aircraftBookingsQuery = query(
             collection(db, `companies/${company.id}/aircraft-bookings`), 
             where('studentId', '==', student.id)
         );
+        const facilityBookingsQuery = query(
+            collection(db, `companies/${company.id}/facility-bookings`), 
+            where('studentAttendees', 'array-contains', student.name)
+        );
 
-        const unsubscribe = onSnapshot(bookingsQuery, (snapshot) => {
-            const allBookings = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
-            setBookings(allBookings);
-        }, (error) => {
-            console.error("Error fetching bookings:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not load booking data for this student.' });
+        const unsubAircraft = onSnapshot(aircraftBookingsQuery, (snapshot) => {
+            const aircraftBookings = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
+            setBookings(prev => [...aircraftBookings, ...prev.filter(b => b.resourceType === 'facility')]);
+        });
+        
+        const unsubFacility = onSnapshot(facilityBookingsQuery, (snapshot) => {
+            const facilityBookings = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
+            setBookings(prev => [...facilityBookings, ...prev.filter(b => b.resourceType === 'aircraft')]);
         });
 
-        return () => unsubscribe();
-    }, [student, company, toast]);
+        return () => {
+            unsubAircraft();
+            unsubFacility();
+        };
+    }, [student, company]);
     
     const { pendingBookings, completedBookings } = useMemo(() => {
         if (!student) return { pendingBookings: [], completedBookings: [] };
@@ -333,6 +342,18 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         }
         
         await handleUpdate(firestoreUpdate);
+
+        // If the debrief was from a booking, update the booking status to completed.
+        if (fromBookingId) {
+            const booking = bookings.find(b => b.id === fromBookingId);
+            if (booking) {
+                const bookingCollectionName = booking.resourceType === 'aircraft' ? 'aircraft-bookings' : 'facility-bookings';
+                const bookingRef = doc(db, `companies/${company.id}/${bookingCollectionName}`, fromBookingId);
+                await updateDoc(bookingRef, {
+                    status: 'Completed',
+                });
+            }
+        }
         
         setIsDebriefOpen(false);
         setLogToEdit(null);
@@ -383,7 +404,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             setBookingForDebrief(booking);
             setIsDebriefOpen(true);
         } else {
-            // Fallback for offline sync issue: create a temporary log entry from booking data
             const tempLogEntry: TrainingLogEntry = {
                 id: booking.pendingLogEntryId || `temp-log-${Date.now()}`,
                 date: booking.date,
