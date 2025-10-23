@@ -280,9 +280,33 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                                     <FormControl>
                                         <Textarea placeholder="In-flight notes will appear here. Add any additional remarks for the overall flight." {...field} className="min-h-[100px] bg-muted" />
                                     </FormControl>
+                                     <div className="pt-4">
+                                         <FormField
+                                             control={form.control}
+                                             name={`trainingExercises.0.exercise` as const}
+                                             render={({ field }) => (
+                                                 <FormItem>
+                                                     <FormLabel>Exercise Covered</FormLabel>
+                                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                         <FormControl>
+                                                             <SelectTrigger><SelectValue placeholder="Select an exercise" /></SelectTrigger>
+                                                         </FormControl>
+                                                         <SelectContent>
+                                                             {trainingExercisesData.map(ex => <SelectItem key={ex} value={ex}>{ex}</SelectItem>)}
+                                                         </SelectContent>
+                                                     </Select>
+                                                     <FormMessage />
+                                                 </FormItem>
+                                             )}
+                                         />
+                                    </div>
                                     <div className="pt-4">
                                         <FormLabel>Rating</FormLabel>
-                                        <RadioGroup className="flex items-center gap-4 mt-2">
+                                        <RadioGroup
+                                            onValueChange={(value) => form.setValue(`trainingExercises.0.rating`, Number(value))}
+                                            defaultValue={form.getValues(`trainingExercises.0.rating`)?.toString()}
+                                            className="flex items-center gap-4 mt-2"
+                                        >
                                             {[1, 2, 3, 4].map(rating => (
                                                 <FormItem key={rating} className="flex items-center space-x-2 space-y-0">
                                                     <FormControl>
@@ -347,5 +371,3 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
     </Form>
   );
 }
-
-    
