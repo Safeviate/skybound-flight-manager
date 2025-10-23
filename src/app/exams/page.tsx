@@ -9,7 +9,7 @@ import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import type { Exam, User, ExamAssignment, ExamAttempt } from '@/lib/types';
+import type { Exam, User, ExamAssignment, ExamAttempt, CompanyDepartment } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { ExamForm } from './exam-form';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -18,8 +18,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, parseISO } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
-const AssignExamDialog = ({ exam, allUsers, onAssign }: { exam: Exam, allUsers: User[], onAssign: (assignedUserIds: string[]) => void }) => {
+const AssignExamDialog = ({ exam, allUsers, departments, onAssign }: { exam: Exam, allUsers: User[], departments: CompanyDepartment[], onAssign: (assignedUserIds: string[]) => void }) => {
     const [selectedUserIds, setSelectedUserIds] = React.useState<string[]>(exam.assignedTo?.map(a => a.userId) || []);
 
     const userOptions = allUsers.map(u => ({ value: u.id, label: `${u.name} (${u.role})` }));
@@ -27,6 +30,17 @@ const AssignExamDialog = ({ exam, allUsers, onAssign }: { exam: Exam, allUsers: 
     const handleSave = () => {
         onAssign(selectedUserIds);
     };
+
+    const handleDepartmentSelect = (departmentName: string) => {
+        if (departmentName === 'all') {
+            const allUserIds = allUsers.map(u => u.id);
+            setSelectedUserIds(Array.from(new Set([...selectedUserIds, ...allUserIds])));
+        } else {
+            const usersInDept = allUsers.filter(u => u.department === departmentName).map(u => u.id);
+            setSelectedUserIds(Array.from(new Set([...selectedUserIds, ...usersInDept])));
+        }
+    };
+
 
     const selectedUsersDisplay = React.useMemo(() => {
         return selectedUserIds.map(id => {
@@ -36,21 +50,41 @@ const AssignExamDialog = ({ exam, allUsers, onAssign }: { exam: Exam, allUsers: 
     }, [selectedUserIds, allUsers]);
 
     return (
-        <DialogContent>
+        <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
                 <DialogTitle>Assign Exam: {exam.title}</DialogTitle>
                 <DialogDescription>
-                    Select the users and students who should be assigned this exam.
+                    Select individual users or assign to an entire department.
                 </DialogDescription>
             </DialogHeader>
-            <div className="py-4">
-                <MultiSelect
-                    options={userOptions}
-                    selected={selectedUserIds}
-                    displayValues={selectedUsersDisplay}
-                    onChange={setSelectedUserIds}
-                    placeholder="Select users and students..."
-                />
+            <div className="py-4 space-y-4">
+                 <div>
+                    <Label>Assign to Department</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                        <Select onValueChange={handleDepartmentSelect}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a department to add..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Personnel</SelectItem>
+                                {departments.map(dept => (
+                                    <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                 </div>
+                 <Separator />
+                 <div>
+                    <Label>Assign to Individuals</Label>
+                    <MultiSelect
+                        options={userOptions}
+                        selected={selectedUserIds}
+                        displayValues={selectedUsersDisplay}
+                        onChange={setSelectedUserIds}
+                        placeholder="Select users and students..."
+                    />
+                 </div>
             </div>
             <DialogFooter>
                 <Button onClick={handleSave}>Save Assignments</Button>
@@ -121,6 +155,7 @@ export default function ExamsPage() {
     const [exams, setExams] = React.useState<Exam[]>([]);
     const [allUsers, setAllUsers] = React.useState<User[]>([]);
     const [examAttempts, setExamAttempts] = React.useState<ExamAttempt[]>([]);
+    const [departments, setDepartments] = React.useState<CompanyDepartment[]>([]);
     const [isFormOpen, setIsFormOpen] = React.useState(false);
     const [isAssignOpen, setIsAssignOpen] = React.useState(false);
     const [selectedExam, setSelectedExam] = React.useState<Exam | null>(null);
@@ -132,12 +167,15 @@ export default function ExamsPage() {
             const personnelQuery = query(collection(db, `companies/${company.id}/users`));
             const studentsQuery = query(collection(db, `companies/${company.id}/students`));
             const attemptsQuery = query(collection(db, `companies/${company.id}/exam-attempts`));
+            const deptsQuery = query(collection(db, `companies/${company.id}/departments`));
 
-            const [examsSnapshot, personnelSnapshot, studentsSnapshot, attemptsSnapshot] = await Promise.all([
+
+            const [examsSnapshot, personnelSnapshot, studentsSnapshot, attemptsSnapshot, deptsSnapshot] = await Promise.all([
                 getDocs(examsQuery),
                 getDocs(personnelQuery),
                 getDocs(studentsQuery),
                 getDocs(attemptsQuery),
+                getDocs(deptsQuery),
             ]);
 
             setExams(examsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Exam)));
@@ -147,6 +185,7 @@ export default function ExamsPage() {
             setAllUsers([...personnel, ...students]);
 
             setExamAttempts(attemptsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ExamAttempt)));
+            setDepartments(deptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment)));
 
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -330,6 +369,7 @@ export default function ExamsPage() {
                     <AssignExamDialog 
                         exam={selectedExam}
                         allUsers={allUsers}
+                        departments={departments}
                         onAssign={(userIds) => handleAssign(selectedExam.id, userIds)}
                     />
                 </Dialog>
