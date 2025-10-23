@@ -114,7 +114,10 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
         let remarksFromStorage = '';
         if (booking?.id) {
             try {
-                remarksFromStorage = localStorage.getItem(`inflight-notes-${booking.id}`) || '';
+                const storedNotes = localStorage.getItem(`inflight-notes-${booking.id}`);
+                if (storedNotes) {
+                    remarksFromStorage = storedNotes;
+                }
             } catch (e) {
                 console.warn('Could not access localStorage for in-flight notes.');
             }
@@ -130,6 +133,8 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
         }
         if (booking) {
             const associatedLog = student.trainingLogs?.find(log => log.id === booking.pendingLogEntryId);
+            
+            // This is the core fix: even if associatedLog is not found, we use booking data and localStorage notes.
             return {
                 date: parseISO(booking.date),
                 aircraft: booking.aircraft,
@@ -138,7 +143,7 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                 instructorName: booking.instructor || '',
                 departure: associatedLog?.departure,
                 arrival: associatedLog?.arrival,
-                remarks: associatedLog?.remarks || remarksFromStorage,
+                remarks: associatedLog?.remarks || remarksFromStorage, // Prioritize DB remarks, fallback to localStorage
                 trainingExercises: associatedLog?.trainingExercises?.length ? associatedLog.trainingExercises : [{ exercise: '', rating: 0, comment: '' }],
             };
         }
@@ -159,7 +164,7 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
       studentSignatureRequired: !data.studentSignature,
     };
     
-    const logId = logToEdit?.id || logEntryForBooking?.id;
+    const logId = logToEdit?.id || booking?.pendingLogEntryId || `log-${Date.now()}`;
     onSubmit(newEntry, booking?.id, logId);
     
     form.reset();
