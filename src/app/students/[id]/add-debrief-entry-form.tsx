@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -63,7 +62,12 @@ const debriefFormSchema = z.object({
   arrival: z.string().optional(),
   remarks: z.string().optional(),
   trainingExercises: z.array(exerciseLogSchema).optional(),
-}).refine(data => data.endHobbs > data.startHobbs, {
+}).refine(data => {
+    if (data.startHobbs !== undefined && data.endHobbs !== undefined) {
+        return data.endHobbs > data.startHobbs;
+    }
+    return true;
+}, {
     message: 'End Hobbs must be greater than Start Hobbs.',
     path: ['endHobbs'],
 });
