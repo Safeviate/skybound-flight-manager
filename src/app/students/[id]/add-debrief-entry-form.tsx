@@ -62,6 +62,7 @@ const debriefFormSchema = z.object({
   departure: z.string().optional(),
   arrival: z.string().optional(),
   remarks: z.string().optional(),
+  trainingExercises: z.array(exerciseLogSchema).optional(),
 }).refine(data => data.endHobbs > data.startHobbs, {
     message: 'End Hobbs must be greater than Start Hobbs.',
     path: ['endHobbs'],
@@ -85,6 +86,7 @@ const defaultFormValues: Partial<DebriefFormValues> = {
     instructorSignature: '',
     studentSignature: '',
     remarks: '',
+    trainingExercises: [],
 };
 
 export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDebriefFormProps) {
@@ -100,6 +102,11 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
   const form = useForm<DebriefFormValues>({
     resolver: zodResolver(debriefFormSchema),
     defaultValues: defaultFormValues as DebriefFormValues,
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "trainingExercises",
   });
   
   useEffect(() => {
@@ -118,6 +125,7 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                 ...logToEdit,
                 date: parseISO(logToEdit.date),
                 remarks: logToEdit.remarks || remarksFromStorage,
+                trainingExercises: logToEdit.trainingExercises || [],
             };
         }
         if (booking) {
@@ -131,6 +139,7 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                 departure: associatedLog?.departure,
                 arrival: associatedLog?.arrival,
                 remarks: associatedLog?.remarks || remarksFromStorage,
+                trainingExercises: associatedLog?.trainingExercises || [],
             };
         }
         return defaultFormValues;
@@ -275,6 +284,70 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                                 </FormItem>
                             )}
                         />
+                        <Separator />
+                        <div className="space-y-4">
+                            <FormLabel>Exercises Covered</FormLabel>
+                            {fields.map((field, index) => (
+                                <div key={field.id} className="p-4 border rounded-lg space-y-3 relative">
+                                     <FormField
+                                        control={form.control}
+                                        name={`trainingExercises.${index}.exercise`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="sr-only">Exercise</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select exercise..." /></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        {trainingExercisesData.map(ex => <SelectItem key={ex} value={ex}>{ex}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <div className="grid grid-cols-2 gap-4">
+                                         <FormField
+                                            control={form.control}
+                                            name={`trainingExercises.${index}.rating`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Rating</FormLabel>
+                                                    <Select onValueChange={(val) => field.onChange(parseInt(val))} defaultValue={field.value?.toString()}>
+                                                        <FormControl><SelectTrigger><SelectValue placeholder="Select rating" /></SelectTrigger></FormControl>
+                                                        <SelectContent>
+                                                            {[1,2,3,4].map(r => <SelectItem key={r} value={r.toString()}>{r}</SelectItem>)}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                     <FormField
+                                        control={form.control}
+                                        name={`trainingExercises.${index}.comment`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="sr-only">Comment</FormLabel>
+                                                <FormControl><Textarea placeholder="Add a comment for this exercise..." {...field} /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1" onClick={() => remove(index)}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </div>
+                            ))}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full"
+                                onClick={() => append({ exercise: '', rating: 1, comment: '' })}
+                            >
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add Another Exercise
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
 
