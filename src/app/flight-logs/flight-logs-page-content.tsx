@@ -107,7 +107,7 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
   );
   
   const getAssociatedLog = (booking: Booking) => {
-    if (!booking.studentId) return null;
+    if (!booking || !booking.studentId) return null;
     const student = initialUsers.find(u => u.id === booking.studentId);
     return student?.trainingLogs?.find(log => log.id === booking.pendingLogEntryId);
   }
