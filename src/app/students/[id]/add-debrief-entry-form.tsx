@@ -277,6 +277,20 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Remarks & In-Flight Notes</FormLabel>
+                                    
+                                    <div className="my-2">
+                                        <Select>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select exercise..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {trainingExercisesData.map(ex => (
+                                                    <SelectItem key={ex} value={ex}>{ex}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    
                                     <FormControl>
                                         <Textarea placeholder="In-flight notes will appear here. Add any additional remarks for the overall flight." {...field} className="min-h-[100px] bg-muted" />
                                     </FormControl>
@@ -284,38 +298,6 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                                 </FormItem>
                             )}
                         />
-                        <Separator />
-                        <div className="space-y-4">
-                            <FormLabel>Exercises Covered</FormLabel>
-                            {fields.map((field, index) => (
-                                <div key={field.id} className="p-4 border rounded-lg space-y-3 relative">
-                                     <FormField
-                                        control={form.control}
-                                        name={`trainingExercises.${index}.exercise`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="sr-only">Exercise</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select exercise..." /></SelectTrigger></FormControl>
-                                                    <SelectContent>
-                                                        {trainingExercisesData.map(ex => <SelectItem key={ex} value={ex}>{ex}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            ))}
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="w-full"
-                                onClick={() => append({ exercise: '', rating: 1, comment: '' })}
-                            >
-                                <PlusCircle className="mr-2 h-4 w-4" /> Add Another Exercise
-                            </Button>
-                        </div>
                     </CardContent>
                 </Card>
 
