@@ -377,16 +377,30 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         if (!student?.trainingLogs || !company) return;
         
         const logToUpdate = student.trainingLogs.find(log => log.id === booking.pendingLogEntryId);
-
+    
         if (logToUpdate) {
             setLogToEdit(logToUpdate);
             setBookingForDebrief(booking);
             setIsDebriefOpen(true);
         } else {
+            // Fallback for offline sync issue: create a temporary log entry from booking data
+            const tempLogEntry: TrainingLogEntry = {
+                id: booking.pendingLogEntryId || `temp-log-${Date.now()}`,
+                date: booking.date,
+                aircraft: booking.aircraft,
+                startHobbs: booking.startHobbs || 0,
+                endHobbs: booking.endHobbs || 0,
+                flightDuration: booking.flightDuration || 0,
+                instructorName: booking.instructor || '',
+                trainingExercises: [],
+            };
+            setLogToEdit(tempLogEntry);
+            setBookingForDebrief(booking);
+            setIsDebriefOpen(true);
             toast({
-                variant: 'destructive',
-                title: 'Log Entry Not Found',
-                description: `Could not find log entry with ID: ${booking.pendingLogEntryId}. Please add it manually.`,
+                variant: "default",
+                title: "Draft Log Created",
+                description: `A draft log was created from the booking as the original couldn't be found. Please verify the details.`
             });
         }
     };
