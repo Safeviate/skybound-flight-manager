@@ -150,7 +150,7 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
 
 
   function handleFormSubmit(data: DebriefFormValues) {
-    const duration = parseFloat((data.endHobbs - data.startHobbs).toFixed(1));
+    const duration = parseFloat(((data.endHobbs || 0) - (data.startHobbs || 0)).toFixed(1));
     
     const newEntry = {
       ...data,
