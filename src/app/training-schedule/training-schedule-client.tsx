@@ -260,7 +260,7 @@ const GanttChart = ({
                                                     <TooltipTrigger asChild>
                                                         <div 
                                                             onClick={() => onBookingClick(booking)}
-                                                            className={cn('h-full flex items-center p-2 text-white text-xs whitespace-nowrap overflow-hidden border-r border-white/20', variant.className, (variant.isClickable || booking.status === 'Completed') ? 'cursor-pointer' : 'cursor-not-allowed')} style={variant.style}>
+                                                            className={cn('h-full flex items-center p-2 text-white text-xs whitespace-nowrap overflow-hidden border-r border-white/20', variant.className, (variant.isClickable) ? 'cursor-pointer' : 'cursor-not-allowed')} style={variant.style}>
                                                             {getBookingLabel(booking)}
                                                         </div>
                                                     </TooltipTrigger>
@@ -629,7 +629,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
   const handleBookingClick = (booking: Booking) => {
     const variant = getBookingVariant(booking);
-    if (!variant.isClickable && booking.status !== 'Completed') {
+    if (!variant.isClickable) {
         toast({
             variant: 'default',
             title: 'Booking Not Active',
@@ -637,10 +637,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         });
         return;
     };
-    if (booking.status === 'Completed') {
-        setEditingBooking(booking);
-        return;
-    };
+    
+    if (booking.status === 'Completed') return;
 
     if (!booking.resourceType || booking.resourceType === 'aircraft') {
         const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
