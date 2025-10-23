@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -10,12 +9,15 @@ import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import type { Exam, User, ExamAssignment } from '@/lib/types';
+import type { Exam, User, ExamAssignment, ExamAttempt } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { ExamForm } from './exam-form';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { format, parseISO } from 'date-fns';
 
 const AssignExamDialog = ({ exam, allUsers, onAssign }: { exam: Exam, allUsers: User[], onAssign: (assignedUserIds: string[]) => void }) => {
     const [selectedUserIds, setSelectedUserIds] = React.useState<string[]>(exam.assignedTo?.map(a => a.userId) || []);
@@ -26,10 +28,12 @@ const AssignExamDialog = ({ exam, allUsers, onAssign }: { exam: Exam, allUsers: 
         onAssign(selectedUserIds);
     };
 
-    const selectedUsersAsOptions = selectedUserIds.map(id => {
-        const user = allUsers.find(u => u.id === id);
-        return { value: id, label: user ? `${user.name} (${user.role})` : id };
-    });
+    const selectedUsersDisplay = React.useMemo(() => {
+        return selectedUserIds.map(id => {
+            const user = allUsers.find(u => u.id === id);
+            return { value: id, label: user ? `${user.name} (${user.role})` : id };
+        });
+    }, [selectedUserIds, allUsers]);
 
     return (
         <DialogContent>
@@ -42,8 +46,8 @@ const AssignExamDialog = ({ exam, allUsers, onAssign }: { exam: Exam, allUsers: 
             <div className="py-4">
                 <MultiSelect
                     options={userOptions}
-                    selected={selectedUsersAsOptions.map(u => u.value)}
-                    displayValues={selectedUsersAsOptions}
+                    selected={selectedUserIds}
+                    displayValues={selectedUsersDisplay}
                     onChange={setSelectedUserIds}
                     placeholder="Select users and students..."
                 />
@@ -55,11 +59,68 @@ const AssignExamDialog = ({ exam, allUsers, onAssign }: { exam: Exam, allUsers: 
     );
 };
 
+const ExamResultsTab = ({ exams, attempts, users }: { exams: Exam[], attempts: ExamAttempt[], users: User[] }) => {
+    
+    const results = React.useMemo(() => {
+        return attempts.map(attempt => {
+            const exam = exams.find(e => e.id === attempt.examId);
+            const user = users.find(u => u.id === attempt.userId);
+            return {
+                ...attempt,
+                examTitle: exam?.title || 'Unknown Exam',
+                userName: user?.name || 'Unknown User',
+            };
+        });
+    }, [attempts, exams, users]);
+    
+    if (results.length === 0) {
+        return (
+            <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                <p className="text-muted-foreground">No exam results found.</p>
+            </div>
+        )
+    }
+
+    return (
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Student</TableHead>
+                    <TableHead>Exam</TableHead>
+                    <TableHead>Score</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Date Completed</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {results.map(result => (
+                    <TableRow key={result.id}>
+                        <TableCell>{result.userName}</TableCell>
+                        <TableCell>{result.examTitle}</TableCell>
+                        <TableCell>{result.score}%</TableCell>
+                        <TableCell>
+                            <Badge variant={result.score >= 75 ? 'success' : 'destructive'}>
+                                {result.score >= 75 ? 'Passed' : 'Failed'}
+                            </Badge>
+                        </TableCell>
+                        <TableCell>{format(parseISO(result.dateTaken), 'PPP')}</TableCell>
+                        <TableCell className="text-right">
+                             <Button variant="outline" size="sm" disabled>View Details</Button>
+                        </TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+    )
+}
+
 export default function ExamsPage() {
     const { company, user } = useUser();
     const { toast } = useToast();
     const [exams, setExams] = React.useState<Exam[]>([]);
     const [allUsers, setAllUsers] = React.useState<User[]>([]);
+    const [examAttempts, setExamAttempts] = React.useState<ExamAttempt[]>([]);
     const [isFormOpen, setIsFormOpen] = React.useState(false);
     const [isAssignOpen, setIsAssignOpen] = React.useState(false);
     const [selectedExam, setSelectedExam] = React.useState<Exam | null>(null);
@@ -70,11 +131,13 @@ export default function ExamsPage() {
             const examsQuery = query(collection(db, `companies/${company.id}/exams`));
             const personnelQuery = query(collection(db, `companies/${company.id}/users`));
             const studentsQuery = query(collection(db, `companies/${company.id}/students`));
+            const attemptsQuery = query(collection(db, `companies/${company.id}/exam-attempts`));
 
-            const [examsSnapshot, personnelSnapshot, studentsSnapshot] = await Promise.all([
+            const [examsSnapshot, personnelSnapshot, studentsSnapshot, attemptsSnapshot] = await Promise.all([
                 getDocs(examsQuery),
                 getDocs(personnelQuery),
-                getDocs(studentsQuery)
+                getDocs(studentsQuery),
+                getDocs(attemptsQuery),
             ]);
 
             setExams(examsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Exam)));
@@ -82,6 +145,8 @@ export default function ExamsPage() {
             const personnel = personnelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
             const students = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
             setAllUsers([...personnel, ...students]);
+
+            setExamAttempts(attemptsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ExamAttempt)));
 
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -169,66 +234,87 @@ export default function ExamsPage() {
 
     return (
         <main className="flex-1 p-4 md:p-8">
-            <Card>
-                <CardHeader className="flex-row justify-between items-start">
-                    <div>
-                        <CardTitle>Exam Management</CardTitle>
-                        <CardDescription>Create, view, and manage exam templates.</CardDescription>
-                    </div>
+            <Tabs defaultValue="exams" className="w-full">
+                <div className="flex justify-between items-center">
+                    <TabsList>
+                        <TabsTrigger value="exams">Exams</TabsTrigger>
+                        <TabsTrigger value="results">Results</TabsTrigger>
+                    </TabsList>
                     {canEdit && (
-                        <Button onClick={openNewDialog}><PlusCircle className="mr-2 h-4 w-4" /> New Exam Template</Button>
+                        <Button onClick={openNewDialog}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> New Exam Template
+                        </Button>
                     )}
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {exams.map(exam => (
-                            <Card key={exam.id}>
-                                <CardHeader>
-                                    <CardTitle>{exam.title}</CardTitle>
-                                    <CardDescription>{exam.category}</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-sm">{exam.questions.length} questions</p>
-                                    <div className="flex items-center text-sm text-muted-foreground mt-2">
-                                        <Users className="h-4 w-4 mr-1"/>
-                                        Assigned to {exam.assignedTo?.length || 0} user(s)
-                                    </div>
-                                </CardContent>
-                                {canEdit && (
-                                    <CardFooter className="flex justify-end gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => openAssignDialog(exam)}>
-                                            <Users className="mr-2 h-4 w-4" /> Assign
-                                        </Button>
-                                        <Button variant="outline" size="sm" onClick={() => openEditDialog(exam)}>
-                                            <Edit className="mr-2 h-4 w-4" /> Edit
-                                        </Button>
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" /> Delete</Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                    <AlertDialogDescription>This will permanently delete the exam template "{exam.title}".</AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDelete(exam.id)}>Delete</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                    </CardFooter>
-                                )}
-                            </Card>
-                        ))}
-                    </div>
-                    {exams.length === 0 && (
-                        <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                            <p className="text-muted-foreground">No exam templates have been created yet.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                </div>
+                <TabsContent value="exams" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Exam Management</CardTitle>
+                            <CardDescription>Create, view, and manage exam templates.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {exams.map(exam => (
+                                    <Card key={exam.id}>
+                                        <CardHeader>
+                                            <CardTitle>{exam.title}</CardTitle>
+                                            <CardDescription>{exam.category}</CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <p className="text-sm">{exam.questions.length} questions</p>
+                                            <div className="flex items-center text-sm text-muted-foreground mt-2">
+                                                <Users className="h-4 w-4 mr-1"/>
+                                                Assigned to {exam.assignedTo?.length || 0} user(s)
+                                            </div>
+                                        </CardContent>
+                                        {canEdit && (
+                                            <CardFooter className="flex justify-end gap-2">
+                                                <Button variant="outline" size="sm" onClick={() => openAssignDialog(exam)}>
+                                                    <Users className="mr-2 h-4 w-4" /> Assign
+                                                </Button>
+                                                <Button variant="outline" size="sm" onClick={() => openEditDialog(exam)}>
+                                                    <Edit className="mr-2 h-4 w-4" /> Edit
+                                                </Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" /> Delete</Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>This will permanently delete the exam template "{exam.title}".</AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDelete(exam.id)}>Delete</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </CardFooter>
+                                        )}
+                                    </Card>
+                                ))}
+                            </div>
+                            {exams.length === 0 && (
+                                <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                                    <p className="text-muted-foreground">No exam templates have been created yet.</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="results" className="mt-4">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Exam Results</CardTitle>
+                            <CardDescription>A log of all completed exam attempts.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <ExamResultsTab exams={exams} attempts={examAttempts} users={allUsers} />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
 
             <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setSelectedExam(null); }}>
                 <DialogContent className="sm:max-w-4xl">
