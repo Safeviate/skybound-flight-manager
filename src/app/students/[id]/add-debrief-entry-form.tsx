@@ -305,19 +305,29 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                                             </FormItem>
                                         )}
                                     />
-                                    <div className="grid grid-cols-2 gap-4">
-                                         <FormField
+                                    <div className="space-y-2">
+                                        <FormField
                                             control={form.control}
                                             name={`trainingExercises.${index}.rating`}
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Rating</FormLabel>
-                                                    <Select onValueChange={(val) => field.onChange(parseInt(val))} defaultValue={field.value?.toString()}>
-                                                        <FormControl><SelectTrigger><SelectValue placeholder="Select rating" /></SelectTrigger></FormControl>
-                                                        <SelectContent>
-                                                            {[1,2,3,4].map(r => <SelectItem key={r} value={r.toString()}>{r}</SelectItem>)}
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <FormControl>
+                                                        <RadioGroup
+                                                            onValueChange={(val) => field.onChange(parseInt(val))}
+                                                            value={field.value?.toString()}
+                                                            className="flex items-center space-x-4"
+                                                        >
+                                                            {[1, 2, 3, 4].map(r => (
+                                                                <FormItem key={r} className="flex items-center space-x-2 space-y-0">
+                                                                    <FormControl>
+                                                                        <RadioGroupItem value={r.toString()} />
+                                                                    </FormControl>
+                                                                    <FormLabel className="font-normal">{r}</FormLabel>
+                                                                </FormItem>
+                                                            ))}
+                                                        </RadioGroup>
+                                                    </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
