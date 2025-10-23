@@ -127,30 +127,31 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
             }
         }
         
-        if (logToEdit) {
+        // Always check for a log entry in the student's record first
+        const associatedLog = logToEdit || (booking?.pendingLogEntryId ? student.trainingLogs?.find(log => log.id === booking.pendingLogEntryId) : null);
+
+        if (associatedLog) {
             return {
-                ...logToEdit,
-                date: parseISO(logToEdit.date),
-                remarks: logToEdit.remarks || remarksFromStorage,
-                trainingExercises: logToEdit.trainingExercises?.length ? logToEdit.trainingExercises : [{ exercise: '', rating: 0, comment: '' }],
+                ...associatedLog,
+                date: parseISO(associatedLog.date),
+                remarks: associatedLog.remarks || remarksFromStorage, // Prioritize DB remarks, fallback to localStorage
+                trainingExercises: associatedLog.trainingExercises?.length ? associatedLog.trainingExercises : [{ exercise: '', rating: 0, comment: '' }],
             };
         }
+
+        // If no log entry exists AT ALL, construct from booking data and local storage
         if (booking) {
-            const associatedLog = student.trainingLogs?.find(log => log.id === booking.pendingLogEntryId);
-            
-            // This is the core fix: even if associatedLog is not found, we use booking data and localStorage notes.
-            return {
+             return {
                 date: parseISO(booking.date),
                 aircraft: booking.aircraft,
-                startHobbs: associatedLog?.startHobbs || booking.startHobbs || 0,
-                endHobbs: associatedLog?.endHobbs || booking.endHobbs || 0,
+                startHobbs: booking.startHobbs || 0,
+                endHobbs: booking.endHobbs || 0,
                 instructorName: booking.instructor || '',
-                departure: associatedLog?.departure,
-                arrival: associatedLog?.arrival,
-                remarks: associatedLog?.remarks || remarksFromStorage, // Prioritize DB remarks, fallback to localStorage
-                trainingExercises: associatedLog?.trainingExercises?.length ? associatedLog.trainingExercises : [{ exercise: '', rating: 0, comment: '' }],
+                remarks: remarksFromStorage, // Use local storage notes as the only source
+                trainingExercises: [{ exercise: '', rating: 0, comment: '' }],
             };
         }
+        
         return defaultFormValues;
     };
 

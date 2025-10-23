@@ -577,7 +577,6 @@ export function AircraftPageContent() {
     
         const bookingForChecklist = bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId);
     
-        // Ensure we only proceed if there is an aircraft booking
         if (!bookingForChecklist || bookingForChecklist.resourceType !== 'aircraft') {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not find a valid aircraft booking for this checklist.' });
             return;
@@ -607,23 +606,30 @@ export function AircraftPageContent() {
                 const bookingRef = doc(db, `companies/${company.id}/aircraft-bookings`, bookingForChecklist.id);
                 batch.update(bookingRef, { status: 'Completed', endHobbs: data.hobbs, flightDuration });
 
-                if (bookingForChecklist.purpose === 'Training' && bookingForChecklist.studentId) {
+                if (bookingForChecklist.purpose === 'Training' && bookingForChecklist.studentId && bookingForChecklist.pendingLogEntryId) {
                     const studentRef = doc(db, `companies/${company.id}/students`, bookingForChecklist.studentId);
                     const studentSnap = await getDoc(studentRef);
 
                     if (studentSnap.exists()) {
                         const studentData = studentSnap.data() as User;
-                        const newTotalHours = (studentData.flightHours || 0) + flightDuration;
+                        const inFlightNotes = localStorage.getItem(`inflight-notes-${bookingForChecklist.id}`);
                         
-                        const updatedLogs = (studentData.trainingLogs || []).map(log => 
-                            log.id === bookingForChecklist.pendingLogEntryId
-                            ? { ...log, startHobbs: bookingForChecklist.startHobbs || 0, endHobbs: data.hobbs, flightDuration }
-                            : log
-                        );
+                        const updatedLogs = studentData.trainingLogs?.map(log => {
+                            if (log.id === bookingForChecklist.pendingLogEntryId) {
+                                return { 
+                                    ...log, 
+                                    startHobbs: bookingForChecklist.startHobbs || 0, 
+                                    endHobbs: data.hobbs, 
+                                    flightDuration,
+                                    remarks: inFlightNotes || log.remarks || ''
+                                };
+                            }
+                            return log;
+                        }) || [];
                         
                         batch.update(studentRef, { 
                             trainingLogs: updatedLogs,
-                            flightHours: newTotalHours
+                            flightHours: (studentData.flightHours || 0) + flightDuration
                         });
                     }
                 }
@@ -634,6 +640,11 @@ export function AircraftPageContent() {
                     hours: data.hobbs,
                     currentTachoReading: data.tacho,
                 });
+                
+                if (bookingForChecklist.purpose === 'Training' && bookingForChecklist.id) {
+                    localStorage.removeItem(`inflight-notes-${bookingForChecklist.id}`);
+                }
+                
                 toast({ title: 'Post-Flight Checklist Submitted', description: 'Logbook entry created and booking completed.' });
             }
     
