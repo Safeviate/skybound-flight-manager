@@ -305,48 +305,6 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                                             </FormItem>
                                         )}
                                     />
-                                    <div className="space-y-2">
-                                        <FormField
-                                            control={form.control}
-                                            name={`trainingExercises.${index}.rating`}
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Rating</FormLabel>
-                                                    <FormControl>
-                                                        <RadioGroup
-                                                            onValueChange={(val) => field.onChange(parseInt(val))}
-                                                            value={field.value?.toString()}
-                                                            className="flex items-center space-x-4"
-                                                        >
-                                                            {[1, 2, 3, 4].map(r => (
-                                                                <FormItem key={r} className="flex items-center space-x-2 space-y-0">
-                                                                    <FormControl>
-                                                                        <RadioGroupItem value={r.toString()} />
-                                                                    </FormControl>
-                                                                    <FormLabel className="font-normal">{r}</FormLabel>
-                                                                </FormItem>
-                                                            ))}
-                                                        </RadioGroup>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                     <FormField
-                                        control={form.control}
-                                        name={`trainingExercises.${index}.comment`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="sr-only">Comment</FormLabel>
-                                                <FormControl><Textarea placeholder="Add a comment for this exercise..." {...field} /></FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1" onClick={() => remove(index)}>
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
                                 </div>
                             ))}
                             <Button
