@@ -278,7 +278,7 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                                 <FormItem>
                                     <FormLabel>Remarks & In-Flight Notes</FormLabel>
                                     <FormControl>
-                                        <Textarea placeholder="In-flight notes will appear here. Add any additional remarks." {...field} className="min-h-[150px] bg-muted" />
+                                        <Textarea placeholder="In-flight notes will appear here. Add any additional remarks for the overall flight." {...field} className="min-h-[100px] bg-muted" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
