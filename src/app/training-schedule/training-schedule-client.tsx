@@ -30,6 +30,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { LiveLocationTracker } from './live-location-tracker';
+import { InFlightNotes } from './in-flight-notes';
 
 interface TrainingSchedulePageContentProps {
   initialAircraft: Aircraft[];
@@ -61,15 +62,24 @@ const FlightHub = ({
             
             <div className="py-4">
                 {activeFlight.aircraft.checklistStatus === 'needs-post-flight' ? (
-                    <>
-                        <LiveLocationTracker aircraft={activeFlight.aircraft} enabled={true} />
-                        <PostFlightChecklistForm 
-                            onSuccess={handleChecklistSuccess}
-                            aircraft={activeFlight.aircraft}
-                            startHobbs={activeFlight.booking.startHobbs}
-                            onReportIssue={() => {}}
-                        />
-                    </>
+                    <Tabs defaultValue="checklist">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="checklist">Post-Flight Checklist</TabsTrigger>
+                            <TabsTrigger value="notes">In-Flight Notes</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="checklist" className="mt-4">
+                             <LiveLocationTracker aircraft={activeFlight.aircraft} enabled={true} />
+                            <PostFlightChecklistForm 
+                                onSuccess={handleChecklistSuccess}
+                                aircraft={activeFlight.aircraft}
+                                startHobbs={activeFlight.booking.startHobbs}
+                                onReportIssue={() => {}}
+                            />
+                        </TabsContent>
+                        <TabsContent value="notes" className="mt-4">
+                            <InFlightNotes bookingId={activeFlight.booking.id} />
+                        </TabsContent>
+                    </Tabs>
                 ) : (
                     <PreFlightChecklistForm 
                         onSuccess={handleChecklistSuccess} 
