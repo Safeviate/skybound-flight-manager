@@ -344,6 +344,26 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         setLoading(false);
         return;
     }
+    
+    // Attempt to load from cache first
+    try {
+        const cachedBookings = localStorage.getItem(`schedule-bookings-${company.id}`);
+        const cachedAircraft = localStorage.getItem(`schedule-aircraft-${company.id}`);
+        const cachedUsers = localStorage.getItem(`schedule-users-${company.id}`);
+        const cachedHireAndFly = localStorage.getItem(`schedule-hireandfly-${company.id}`);
+        
+        if (cachedBookings) setBookings(JSON.parse(cachedBookings));
+        if (cachedAircraft) setAircraft(JSON.parse(cachedAircraft));
+        if (cachedUsers) setUsers(JSON.parse(cachedUsers));
+        if (cachedHireAndFly) setHireAndFly(JSON.parse(cachedHireAndFly));
+
+        if (cachedBookings || cachedAircraft) {
+            setLoading(false); // Render with cached data immediately
+        }
+    } catch (e) {
+        console.warn("Could not retrieve schedule data from localStorage.");
+    }
+
     setLoading(true);
     
     const aircraftBookingsQuery = query(collection(db, `companies/${company.id}/aircraft-bookings`));
@@ -351,7 +371,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
     const unsubAircraftBookings = onSnapshot(aircraftBookingsQuery, (snapshot) => {
         const aircraftBookingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-        setBookings(prev => [...aircraftBookingsData, ...prev.filter(b => b.resourceType === 'facility')]);
+        setBookings(prev => {
+            const newBookings = [...aircraftBookingsData, ...prev.filter(b => b.resourceType === 'facility')];
+            localStorage.setItem(`schedule-bookings-${company.id}`, JSON.stringify(newBookings));
+            return newBookings;
+        });
         setLoading(false);
     }, (error) => {
         console.error("Error fetching real-time aircraft bookings:", error);
@@ -361,7 +385,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     
     const unsubFacilityBookings = onSnapshot(facilityBookingsQuery, (snapshot) => {
         const facilityBookingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-        setBookings(prev => [...facilityBookingsData, ...prev.filter(b => b.resourceType === 'aircraft')]);
+        setBookings(prev => {
+            const newBookings = [...facilityBookingsData, ...prev.filter(b => b.resourceType === 'aircraft')];
+            localStorage.setItem(`schedule-bookings-${company.id}`, JSON.stringify(newBookings));
+            return newBookings;
+        });
         setLoading(false);
     }, (error) => {
         console.error("Error fetching real-time facility bookings:", error);
@@ -370,7 +398,9 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     });
 
     const aircraftUnsub = onSnapshot(collection(db, `companies/${company.id}/aircraft`), (snapshot) => {
-        setAircraft(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft)));
+        const aircraftData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
+        setAircraft(aircraftData);
+        localStorage.setItem(`schedule-aircraft-${company.id}`, JSON.stringify(aircraftData));
     });
     
     const fetchAllUsers = async () => {
@@ -388,8 +418,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         const students = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
         const hireAndFlyData = hireAndFlySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 
-        setUsers([...personnel, ...students]);
+        const allUsers = [...personnel, ...students];
+        setUsers(allUsers);
         setHireAndFly(hireAndFlyData);
+        localStorage.setItem(`schedule-users-${company.id}`, JSON.stringify(allUsers));
+        localStorage.setItem(`schedule-hireandfly-${company.id}`, JSON.stringify(hireAndFlyData));
     };
     fetchAllUsers();
     
