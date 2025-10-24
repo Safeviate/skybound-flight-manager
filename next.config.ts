@@ -10,7 +10,7 @@ const pwaConfig = withPWA({
   runtimeCaching: [
     {
       urlPattern: /^https?.*/,
-      handler: 'NetworkFirst',
+      handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'offlineCache',
         expiration: {
