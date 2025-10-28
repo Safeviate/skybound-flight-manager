@@ -30,8 +30,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import { DiscussionSection } from './discussion-section';
-import { QualityAuditAnalyzer } from '../quality-audit-analyzer';
-import type { GenerateQualityCapOutput } from '@/ai/flows/generate-quality-cap-flow';
 import { AuditTeamForm } from './audit-team-form';
 import { SignaturePad } from '@/components/ui/signature-pad';
 import Image from 'next/image';
@@ -86,10 +84,9 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
     const otherFindings = useMemo(() => audit.checklistItems.filter(item => item.finding !== 'Non Compliant' && item.finding !== 'Partial' && item.finding !== 'Observation'), [audit.checklistItems]);
 
     const availableRecipients = React.useMemo(() => {
-        if (!audit.investigationTeam || !user) return [];
-        const teamNames = audit.investigationTeam || [];
-        return teamNames.filter(name => name !== user.name);
-    }, [audit.investigationTeam, user]);
+        if (!audit.auditTeam || !user) return [];
+        return audit.auditTeam.filter(name => name !== user.name);
+    }, [audit.auditTeam, user]);
 
 
     const handleReply = (recipient: string) => {
@@ -122,7 +119,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
 
         const recipients = data.recipient
           ? [data.recipient]
-          : audit.investigationTeam?.filter((name) => name !== user.name) || [];
+          : audit.auditTeam?.filter((name) => name !== user.name) || [];
 
         if (recipients.length > 0) {
             toast({ title: 'Message Posted', description: `A notification has been sent to relevant team members.`});
@@ -296,7 +293,9 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                     </div>
                 </CardContent>
             </Card>
-            
+
+            <AuditTeamForm audit={audit} onUpdate={onUpdate} personnel={personnel} />
+
             {nonConformances.length > 0 && (
                 <Card>
                     <CardHeader>
@@ -374,7 +373,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                     </CardContent>
                 </Card>
             )}
-
+            
             <Card>
                 <CardHeader>
                     <CardTitle>Full Audit Checklist</CardTitle>
@@ -403,7 +402,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                 {icon}
                                                 <span className="ml-2">{text}</span>
                                             </Badge>
-                                            {item.level && (
+                                             {item.level && (
                                                 <Badge variant="secondary">{item.level}</Badge>
                                             )}
                                         </div>
@@ -723,11 +722,11 @@ export default function QualityAuditDetailPage() {
                       <p className="font-semibold text-muted-foreground">Auditee</p>
                       <p>{audit.auditeeName || 'Not yet assigned'}</p>
                   </div>
-                  {audit.investigationTeam && audit.investigationTeam.length > 0 && (
+                  {audit.auditTeam && audit.auditTeam.length > 0 && (
                         <div className="md:col-span-4">
                             <p className="font-semibold text-muted-foreground">Team Members</p>
                             <div className="flex flex-wrap gap-2 mt-1">
-                                {audit.investigationTeam.map(member => <Badge key={member} variant="secondary">{member}</Badge>)}
+                                {audit.auditTeam.map(member => <Badge key={member} variant="secondary">{member}</Badge>)}
                             </div>
                         </div>
                     )}
@@ -956,3 +955,6 @@ export default function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
+    
+
+    
