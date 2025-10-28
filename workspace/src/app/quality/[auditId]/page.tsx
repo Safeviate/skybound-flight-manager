@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -307,7 +306,10 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                             <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <Badge variant={getFindingInfo(issue.finding).variant}>{issue.finding}</Badge>
+                                            {issue.level && <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>}
+                                        </div>
                                         <p className="font-medium mt-2">{index + 1}. {issue.text}</p>
                                         <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
                                         <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
@@ -359,11 +361,12 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                             <div key={item.id} className="p-4 border rounded-lg mb-4">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <p className="font-medium">{index + 1}. {item.text}</p>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <Badge variant={getFindingInfo(item.finding).variant}>{item.finding}</Badge>
+                                            {item.level && <Badge variant="secondary">{item.level}</Badge>}
+                                        </div>
+                                        <p className="font-medium mt-2">{index + 1}. {item.text}</p>
                                         <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Badge variant="secondary">Observation</Badge>
                                     </div>
                                 </div>
                                 {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
@@ -376,9 +379,9 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
             
             <Card>
                 <CardHeader>
-                    <CardTitle>Full Audit Checklist</CardTitle>
+                    <CardTitle>Additional Checklist Findings</CardTitle>
                     <CardDescription>
-                        A complete log of all items from the audit questionnaire.
+                        A log of all compliant or not-applicable items from the audit.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -402,9 +405,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                 {icon}
                                                 <span className="ml-2">{text}</span>
                                             </Badge>
-                                             {item.level && (
-                                                <Badge variant="secondary">{item.level}</Badge>
-                                            )}
                                         </div>
                                     </div>
                                     {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
@@ -958,3 +958,4 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
