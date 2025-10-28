@@ -7,11 +7,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-<<<<<<< HEAD
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail, Phone, Archive, RotateCw, KeyRound, MessageSquare } from 'lucide-react';
-=======
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail, Phone, Archive, RotateCw, KeyRound, Copy } from 'lucide-react';
->>>>>>> 3660f00aa221a8e2ee721a4d46244ad9522e8024
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail, Phone, Archive, RotateCw, KeyRound, MessageSquare, Copy } from 'lucide-react';
 import type { User as PersonnelUser } from '@/lib/types';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -20,13 +16,9 @@ import { useToast } from '@/hooks/use-toast';
 import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
-<<<<<<< HEAD
-import { resetUserPasswordAndSendWelcomeEmail } from '@/app/actions';
+import { resetUserPasswordAndSendWelcomeEmail, manuallyResetPassword } from '@/app/actions';
 import { adminResetPassword } from '@/ai/flows/admin-reset-password-flow';
 import { adminSendSms } from '@/ai/flows/admin-send-sms-flow';
-=======
-import { resetUserPasswordAndSendWelcomeEmail, manuallyResetPassword } from '@/app/actions';
->>>>>>> 3660f00aa221a8e2ee721a4d46244ad9522e8024
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EditPersonnelForm } from './edit-personnel-form';
@@ -226,11 +218,9 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                                     <DropdownMenuContent>
                                         <DropdownMenuItem onSelect={() => setEditingPersonnel(person)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
                                         <DropdownMenuItem onSelect={() => handleSendWelcomeEmail(person)}><Mail className="mr-2 h-4 w-4" /> Send Welcome Email</DropdownMenuItem>
-<<<<<<< HEAD
-                                        <DropdownMenuItem onSelect={() => handleSendPasswordReset(person)}><KeyRound className="mr-2 h-4 w-4" /> Send Password Reset</DropdownMenuItem>
-                                         <AlertDialog>
+                                        <AlertDialog>
                                             <AlertDialogTrigger asChild>
-                                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                                     <MessageSquare className="mr-2 h-4 w-4" /> Send SMS Login
                                                 </DropdownMenuItem>
                                             </AlertDialogTrigger>
@@ -248,16 +238,13 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                                             </AlertDialogContent>
                                         </AlertDialog>
                                         {canCreateTempPassword && (
-                                            <DropdownMenuItem onSelect={() => handleCreateTempPassword(person)}>
+                                            <DropdownMenuItem onSelect={() => handleManualPasswordReset(person)}>
                                                 <KeyRound className="mr-2 h-4 w-4" /> Create Manual Password
                                             </DropdownMenuItem>
                                         )}
                                         <DropdownMenuItem onSelect={() => setViewingDocumentsFor(person)}>
                                             <Eye className="mr-2 h-4 w-4" /> View Documents
                                         </DropdownMenuItem>
-=======
-                                        <DropdownMenuItem onSelect={() => handleManualPasswordReset(person)}><KeyRound className="mr-2 h-4 w-4" /> Create Manual Password</DropdownMenuItem>
->>>>>>> 3660f00aa221a8e2ee721a4d46244ad9522e8024
                                         <DropdownMenuSeparator />
                                         {isArchived ? (
                                             <>
@@ -407,7 +394,6 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                 </DialogContent>
             </Dialog>
        )}
-<<<<<<< HEAD
         <Dialog open={!!passwordResetFor} onOpenChange={() => setPasswordResetFor(null)}>
             <DialogContent>
                 <DialogHeader>
@@ -425,7 +411,8 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                     <Button variant="outline" onClick={() => setPasswordResetFor(null)}>Cancel</Button>
                     <Button onClick={handleConfirmPasswordReset}>Confirm &amp; Reset</Button>
                 </DialogFooter>
-=======
+            </DialogContent>
+        </Dialog>
         <Dialog open={!!manualPassword} onOpenChange={() => setManualPassword(null)}>
             <DialogContent>
                 <DialogHeader>
@@ -443,11 +430,8 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                         <Copy className="h-4 w-4" />
                     </Button>
                 </div>
->>>>>>> 3660f00aa221a8e2ee721a4d46244ad9522e8024
             </DialogContent>
         </Dialog>
     </main>
   );
 }
-
-    
