@@ -82,6 +82,10 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
 
     const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
     const [isSigning, setIsSigning] = React.useState(false);
+    
+    const nonConformances = useMemo(() => audit.checklistItems.filter(item => item.finding === 'Non Compliant' || item.finding === 'Partial'), [audit.checklistItems]);
+    const observations = useMemo(() => audit.checklistItems.filter(item => item.finding === 'Observation'), [audit.checklistItems]);
+    const otherFindings = useMemo(() => audit.checklistItems.filter(item => item.finding !== 'Non Compliant' && item.finding !== 'Partial' && item.finding !== 'Observation'), [audit.checklistItems]);
 
     const availableRecipients = React.useMemo(() => {
         if (!audit.investigationTeam || !user) return [];
@@ -269,11 +273,11 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                         </div>
                         <div className="text-center">
                             <p className="text-sm text-muted-foreground">Non-Conformances</p>
-                            <p className="text-3xl font-bold text-destructive">{audit.nonConformanceIssues.length}</p>
+                            <p className="text-3xl font-bold text-destructive">{nonConformances.length}</p>
                         </div>
                         <div className="text-center">
-                            <p className="text-sm text-muted-foreground">Status</p>
-                            <Badge variant="success" className="text-lg mt-1">Closed</Badge>
+                            <p className="text-sm text-muted-foreground">Observations</p>
+                            <p className="text-3xl font-bold">{observations.length}</p>
                         </div>
                     </div>
                     {audit.scope && (
@@ -288,43 +292,38 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                             <p className="text-sm text-muted-foreground whitespace-pre-wrap p-2 border rounded-md min-h-[60px]">{audit.evidenceReference}</p>
                         </div>
                     )}
+                     <div className="pt-2">
+                        <h4 className="font-semibold text-sm">Audit Summary</h4>
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap p-2 border rounded-md min-h-[60px]">{audit.summary || 'No summary was provided.'}</p>
+                    </div>
                 </CardContent>
             </Card>
 
             <Tabs defaultValue="summary" className="w-full">
                 <TabsList className="grid w-full grid-cols-4 no-print">
-                    <TabsTrigger value="summary">Summary &amp; Findings</TabsTrigger>
+                    <TabsTrigger value="summary">Summary</TabsTrigger>
                     <TabsTrigger value="team">Audit Team</TabsTrigger>
                     <TabsTrigger value="checklist">Full Checklist</TabsTrigger>
                     <TabsTrigger value="discussion">Discussion</TabsTrigger>
                 </TabsList>
                 <TabsContent value="summary" className="space-y-6 mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Audit Summary</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground p-2 border rounded-md min-h-[60px] whitespace-pre-wrap">{audit.summary || 'No summary was provided.'}</p>
-                        </CardContent>
-                    </Card>
-
-                    {audit.nonConformanceIssues.length > 0 && (
+                     {nonConformances.length > 0 && (
                         <Card>
                             <CardHeader>
                                 <CardTitle>Non-Conformance Report</CardTitle>
                                 <CardDescription>Details of all non-compliant findings from this audit.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {audit.nonConformanceIssues.map((issue, index) => {
+                                {nonConformances.map((issue, index) => {
                                     return (
                                         <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
                                             <div className="flex justify-between items-start">
                                                 <div>
                                                     <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
-                                                    <p className="font-medium mt-2">{index + 1}. {issue.itemText}</p>
+                                                    <p className="font-medium mt-2">{index + 1}. {issue.text}</p>
                                                     <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
                                                     <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
-                                                    {issue.photo && <Image src={issue.photo} alt={`Photo for ${issue.itemText}`} width={200} height={112} className="mt-2 rounded-md" />}
+                                                    {issue.photo && <Image src={issue.photo} alt={`Photo for ${issue.text}`} width={200} height={112} className="mt-2 rounded-md" />}
                                                 </div>
                                             </div>
                                            {issue.correctiveActionPlans && issue.correctiveActionPlans.length > 0 && (
@@ -361,14 +360,15 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                             </CardContent>
                         </Card>
                     )}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Observations</CardTitle>
-                            <CardDescription>Items noted during the audit that are not non-conformances but could lead to improvements.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                             {audit.checklistItems.filter(item => item.finding === 'Observation').length > 0 ? (
-                                audit.checklistItems.filter(item => item.finding === 'Observation').map((item, index) => (
+                    
+                    {observations.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Observations</CardTitle>
+                                <CardDescription>Items noted during the audit that are not non-conformances but could lead to improvements.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {observations.map((item, index) => (
                                     <div key={item.id} className="p-4 border rounded-lg mb-4">
                                         <div className="flex justify-between items-start">
                                             <div>
@@ -382,64 +382,10 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                         {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
                                         {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
                                     </div>
-                                ))
-                             ) : (
-                                <p className="text-sm text-muted-foreground">No observations were recorded for this audit.</p>
-                             )}
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Additional Checklist Findings</CardTitle>
-                            <CardDescription>
-                                A log of all compliant items from the audit.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {(() => {
-                                let questionNumber = 0;
-                                const compliantItems = audit.checklistItems.filter(item => item.finding === 'Compliant' || item.finding === 'Not Applicable');
-                                
-                                if (compliantItems.length === 0) {
-                                    return <p className="text-sm text-muted-foreground">No compliant items were recorded for this audit.</p>
-                                }
-
-                                return compliantItems.map(item => {
-                                    if (item.type !== 'Header') {
-                                        questionNumber++;
-                                    }
-                                    const { icon, variant, text } = getFindingInfo(item.finding);
-                                    return (
-                                        <div key={item.id} className="p-4 border rounded-lg mb-4">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <p className="font-medium">{item.type !== 'Header' && `${questionNumber}. `}{item.text}</p>
-                                                    <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant={variant} className="whitespace-nowrap">
-                                                        {icon}
-                                                        <span className="ml-2">{text}</span>
-                                                    </Badge>
-                                                    {item.level && (
-                                                        <Badge variant="secondary">{item.level}</Badge>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
-                                            {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
-                                            {item.suggestedImprovement && (
-                                                <div className="mt-2">
-                                                    <p className="text-xs font-semibold text-primary">Suggested Improvement:</p>
-                                                    <p className="text-sm p-2 bg-primary/10 rounded-md whitespace-pre-wrap">{item.suggestedImprovement}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )
-                                })
-                            })()}
-                        </CardContent>
-                    </Card>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    )}
                 </TabsContent>
                  <TabsContent value="team" className="mt-4">
                     <AuditTeamForm audit={audit} onUpdate={onUpdate} personnel={personnel} />
@@ -455,7 +401,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                         <CardContent>
                             {(() => {
                                 let questionNumber = 0;
-                                return audit.checklistItems.map(item => {
+                                return otherFindings.map(item => {
                                     if (item.type === 'Header') {
                                         return <h3 key={item.id} className="text-lg font-semibold mt-6 mb-2 border-b pb-2">{item.text}</h3>;
                                     }
@@ -466,7 +412,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                             <div className="flex justify-between items-start">
                                                 <div>
                                                     <p className="font-medium">{currentQuestionNumber}. {item.text}</p>
-                                                    <p className="text-xs text-muted-foreground ml-5">{item.regulationReference || 'N/A'}</p>
+                                                    <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <Badge variant={variant} className="whitespace-nowrap">
@@ -749,7 +695,6 @@ export default function QualityAuditDetailPage() {
     const updatedItems = audit.checklistItems.map(item => {
       if (item.id === itemId) {
         const updatedItem = { ...item, [field]: value };
-        // If changing the finding, reset the level.
         if (field === 'finding') {
             updatedItem.level = null;
         }
@@ -1159,6 +1104,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 
