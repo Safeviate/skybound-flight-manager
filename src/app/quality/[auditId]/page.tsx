@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -796,7 +797,7 @@ export default function QualityAuditDetailPage() {
                                     const fileInputId = `file-input-${item.id}`;
                                     
                                     let levelDropdownOptions = levelOptions;
-                                    if (item.finding === 'Compliant') {
+                                    if (item.finding === 'Compliant' || item.finding === 'Observation') {
                                         levelDropdownOptions = ['Observation'];
                                     } else if (item.finding === 'Non Compliant' || item.finding === 'Partial') {
                                         levelDropdownOptions = levelOptions.filter(opt => opt !== 'Observation');
