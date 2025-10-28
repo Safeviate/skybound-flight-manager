@@ -465,6 +465,7 @@ export type NonConformanceIssue = {
   comment?: string;
   reference?: string;
   correctiveActionPlans?: CorrectiveActionPlan[];
+  photo?: string;
 };
 
 export type QualityAudit = {

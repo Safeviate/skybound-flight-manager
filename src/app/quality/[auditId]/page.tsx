@@ -66,6 +66,7 @@ const getLevelInfo = (level: FindingLevel) => {
         case 'Level 1 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
         case 'Level 2 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-orange-600" />, variant: 'orange' as const };
         case 'Level 3 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
+        case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const };
         default: return null;
     }
 };
@@ -374,7 +375,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                     if (item.type !== 'Header') {
                                         questionNumber++;
                                     }
-                                    if (item.finding !== 'Non Compliant' && item.finding !== 'Partial') {
+                                    if (item.finding !== 'Non Compliant' && item.finding !== 'Partial' && item.finding !== 'Observation') {
                                         const { icon, variant, text } = getFindingInfo(item.finding);
                                         return (
                                             <div key={item.id} className="p-4 border rounded-lg mb-4">
@@ -402,6 +403,26 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                     return null;
                                 })
                             })()}
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Observations</CardTitle>
+                            <CardDescription>Items noted during the audit that are not non-conformances but could lead to improvements.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {audit.checklistItems.filter(item => item.finding === 'Observation').map((item, index) => (
+                                 <div key={item.id} className="p-4 border rounded-lg mb-4">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="font-medium">{index + 1}. {item.text}</p>
+                                            <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
+                                        </div>
+                                        <Badge variant="secondary">Observation</Badge>
+                                    </div>
+                                    {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
+                                </div>
+                            ))}
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -749,7 +770,7 @@ export default function QualityAuditDetailPage() {
             comment: item.comment,
             reference: item.reference,
             correctiveActionPlans: [],
-            photo: item.photo, // Copy photo over
+            photo: item.photo,
         }));
 
     const finalAudit: QualityAudit = {
@@ -1099,6 +1120,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 
