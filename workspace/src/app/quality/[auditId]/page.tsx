@@ -80,7 +80,8 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
     
     const nonConformances = useMemo(() => audit.checklistItems.filter(item => item.finding === 'Non Compliant' || item.finding === 'Partial'), [audit.checklistItems]);
     const observations = useMemo(() => audit.checklistItems.filter(item => item.finding === 'Observation'), [audit.checklistItems]);
-    const otherFindings = useMemo(() => audit.checklistItems.filter(item => item.finding !== 'Non Compliant' && item.finding !== 'Partial' && item.finding !== 'Observation'), [audit.checklistItems]);
+    const otherFindings = useMemo(() => audit.checklistItems.filter(item => !nonConformances.some(nc => nc.id === item.id) && !observations.some(obs => obs.id === item.id)), [audit.checklistItems, nonConformances, observations]);
+
 
     const availableRecipients = React.useMemo(() => {
         if (!audit.auditTeam || !user) return [];
@@ -958,4 +959,3 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
-
