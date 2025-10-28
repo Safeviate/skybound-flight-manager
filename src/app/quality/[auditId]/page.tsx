@@ -363,66 +363,73 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                     )}
                      <Card>
                         <CardHeader>
+                            <CardTitle>Observations</CardTitle>
+                            <CardDescription>Items noted during the audit that are not non-conformances but could lead to improvements.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             {audit.checklistItems.filter(item => item.finding === 'Observation').length > 0 ? (
+                                audit.checklistItems.filter(item => item.finding === 'Observation').map((item, index) => (
+                                    <div key={item.id} className="p-4 border rounded-lg mb-4">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-medium">{index + 1}. {item.text}</p>
+                                                <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
+                                            </div>
+                                            <Badge variant="secondary">Observation</Badge>
+                                        </div>
+                                        {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
+                                    </div>
+                                ))
+                             ) : (
+                                <p className="text-sm text-muted-foreground">No observations were recorded for this audit.</p>
+                             )}
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
                             <CardTitle>Additional Checklist Findings</CardTitle>
                             <CardDescription>
-                                A log of all compliant items and observations from the audit.
+                                A log of all compliant items from the audit.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             {(() => {
                                 let questionNumber = 0;
-                                return audit.checklistItems.map(item => {
+                                const compliantItems = audit.checklistItems.filter(item => item.finding === 'Compliant' || item.finding === 'Not Applicable');
+                                
+                                if (compliantItems.length === 0) {
+                                    return <p className="text-sm text-muted-foreground">No compliant items were recorded for this audit.</p>
+                                }
+
+                                return compliantItems.map(item => {
                                     if (item.type !== 'Header') {
                                         questionNumber++;
                                     }
-                                    if (item.finding !== 'Non Compliant' && item.finding !== 'Partial' && item.finding !== 'Observation') {
-                                        const { icon, variant, text } = getFindingInfo(item.finding);
-                                        return (
-                                            <div key={item.id} className="p-4 border rounded-lg mb-4">
-                                                <div className="flex justify-between items-start">
-                                                    <div>
-                                                        <p className="font-medium">{item.type !== 'Header' && `${questionNumber}. `}{item.text}</p>
-                                                        <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
-                                                    </div>
-                                                    <Badge variant={variant} className="whitespace-nowrap">
-                                                        {icon}
-                                                        <span className="ml-2">{text}</span>
-                                                    </Badge>
+                                    const { icon, variant, text } = getFindingInfo(item.finding);
+                                    return (
+                                        <div key={item.id} className="p-4 border rounded-lg mb-4">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <p className="font-medium">{item.type !== 'Header' && `${questionNumber}. `}{item.text}</p>
+                                                    <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
                                                 </div>
-                                                {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
-                                                {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
-                                                {item.suggestedImprovement && (
-                                                    <div className="mt-2">
-                                                        <p className="text-xs font-semibold text-primary">Suggested Improvement:</p>
-                                                        <p className="text-sm p-2 bg-primary/10 rounded-md whitespace-pre-wrap">{item.suggestedImprovement}</p>
-                                                    </div>
-                                                )}
+                                                <Badge variant={variant} className="whitespace-nowrap">
+                                                    {icon}
+                                                    <span className="ml-2">{text}</span>
+                                                </Badge>
                                             </div>
-                                        )
-                                    }
-                                    return null;
+                                            {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
+                                            {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
+                                            {item.suggestedImprovement && (
+                                                <div className="mt-2">
+                                                    <p className="text-xs font-semibold text-primary">Suggested Improvement:</p>
+                                                    <p className="text-sm p-2 bg-primary/10 rounded-md whitespace-pre-wrap">{item.suggestedImprovement}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
                                 })
                             })()}
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Observations</CardTitle>
-                            <CardDescription>Items noted during the audit that are not non-conformances but could lead to improvements.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {audit.checklistItems.filter(item => item.finding === 'Observation').map((item, index) => (
-                                 <div key={item.id} className="p-4 border rounded-lg mb-4">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="font-medium">{index + 1}. {item.text}</p>
-                                            <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
-                                        </div>
-                                        <Badge variant="secondary">Observation</Badge>
-                                    </div>
-                                    {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
-                                </div>
-                            ))}
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -725,9 +732,21 @@ export default function QualityAuditDetailPage() {
   
   const handleItemChange = useCallback((itemId: string, field: keyof AuditChecklistItem, value: any) => {
     if (!audit) return;
-    const updatedItems = audit.checklistItems.map(item => 
-        item.id === itemId ? { ...item, [field]: value } : item
-    );
+  
+    const updatedItems = audit.checklistItems.map(item => {
+      if (item.id === itemId) {
+        const updatedItem = { ...item, [field]: value };
+        // If changing the finding, reset the level unless the new finding is compliant and the new level is observation.
+        if (field === 'finding' && !(value === 'Compliant' && updatedItem.level === 'Observation')) {
+          if (value !== 'Non Compliant' && value !== 'Partial' && value !== 'Compliant') {
+            updatedItem.level = null;
+          }
+        }
+        return updatedItem;
+      }
+      return item;
+    });
+  
     setAudit(prevAudit => prevAudit ? { ...prevAudit, checklistItems: updatedItems } : null);
   }, [audit]);
 
@@ -962,9 +981,18 @@ export default function QualityAuditDetailPage() {
                                     }
                                     const findingInfo = getFindingInfo(item.finding);
                                     const levelInfo = getLevelInfo(item.level);
-                                    const showLevelSelect = item.finding === 'Non Compliant' || item.finding === 'Partial';
+                                    const showLevelSelect = item.finding === 'Compliant' || item.finding === 'Non Compliant' || item.finding === 'Partial';
                                     const currentQuestionNumber = ++questionNumber;
                                     const fileInputId = `file-input-${item.id}`;
+                                    
+                                    let levelDropdownOptions = levelOptions;
+                                    if (item.finding === 'Compliant') {
+                                        levelDropdownOptions = ['Observation'];
+                                    } else if (item.finding === 'Non Compliant' || item.finding === 'Partial') {
+                                        levelDropdownOptions = levelOptions.filter(opt => opt !== 'Observation');
+                                    }
+
+
                                     return (
                                         <Collapsible key={item.id} className="p-4 border rounded-lg">
                                             <CollapsibleTrigger asChild>
@@ -1014,7 +1042,7 @@ export default function QualityAuditDetailPage() {
                                                                     <SelectValue placeholder="Select Level" />
                                                                 </SelectTrigger>
                                                                 <SelectContent>
-                                                                    {levelOptions.map(opt => (
+                                                                    {levelDropdownOptions.map(opt => (
                                                                         <SelectItem key={opt} value={opt!}>{opt}</SelectItem>
                                                                     ))}
                                                                 </SelectContent>
@@ -1120,6 +1148,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 
