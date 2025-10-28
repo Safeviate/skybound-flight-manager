@@ -361,7 +361,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                             </CardContent>
                         </Card>
                     )}
-                     <Card>
+                    <Card>
                         <CardHeader>
                             <CardTitle>Observations</CardTitle>
                             <CardDescription>Items noted during the audit that are not non-conformances but could lead to improvements.</CardDescription>
@@ -378,6 +378,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                             <Badge variant="secondary">Observation</Badge>
                                         </div>
                                         {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
+                                        {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
                                     </div>
                                 ))
                              ) : (
@@ -736,11 +737,9 @@ export default function QualityAuditDetailPage() {
     const updatedItems = audit.checklistItems.map(item => {
       if (item.id === itemId) {
         const updatedItem = { ...item, [field]: value };
-        // If changing the finding, reset the level unless the new finding is compliant and the new level is observation.
-        if (field === 'finding' && !(value === 'Compliant' && updatedItem.level === 'Observation')) {
-          if (value !== 'Non Compliant' && value !== 'Partial' && value !== 'Compliant') {
+        // If changing the finding, reset the level.
+        if (field === 'finding') {
             updatedItem.level = null;
-          }
         }
         return updatedItem;
       }
@@ -1148,6 +1147,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 
