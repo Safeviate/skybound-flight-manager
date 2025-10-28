@@ -28,8 +28,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
-import { DiscussionSection } from './discussion-section';
-import { AuditTeamForm } from './audit-team-form';
+import { AuditTeamForm } from './audit-team-form.tsx';
 import { SignaturePad } from '@/components/ui/signature-pad';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
@@ -792,12 +791,12 @@ export default function QualityAuditDetailPage() {
                                     }
                                     const findingInfo = getFindingInfo(item.finding);
                                     const levelInfo = getLevelInfo(item.level);
-                                    const showLevelSelect = item.finding === 'Compliant' || item.finding === 'Non Compliant' || item.finding === 'Partial';
+                                    const showLevelSelect = item.finding === 'Non Compliant' || item.finding === 'Partial';
                                     const currentQuestionNumber = ++questionNumber;
                                     const fileInputId = `file-input-${item.id}`;
                                     
                                     let levelDropdownOptions = levelOptions;
-                                    if (item.finding === 'Compliant') {
+                                    if (item.finding === 'Compliant' || item.finding === 'Observation') {
                                         levelDropdownOptions = ['Observation'];
                                     } else if (item.finding === 'Non Compliant' || item.finding === 'Partial') {
                                         levelDropdownOptions = levelOptions.filter(opt => opt !== 'Observation');
