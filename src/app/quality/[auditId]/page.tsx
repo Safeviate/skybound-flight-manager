@@ -28,7 +28,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
-import { DiscussionSection } from './discussion-section';
 import { AuditTeamForm } from './audit-team-form';
 import { SignaturePad } from '@/components/ui/signature-pad';
 import Image from 'next/image';
