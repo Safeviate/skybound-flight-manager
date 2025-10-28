@@ -375,7 +375,9 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                 <p className="font-medium">{index + 1}. {item.text}</p>
                                                 <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
                                             </div>
-                                            <Badge variant="secondary">Observation</Badge>
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="secondary">Observation</Badge>
+                                            </div>
                                         </div>
                                         {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
                                         {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
@@ -414,10 +416,15 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                     <p className="font-medium">{item.type !== 'Header' && `${questionNumber}. `}{item.text}</p>
                                                     <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
                                                 </div>
-                                                <Badge variant={variant} className="whitespace-nowrap">
-                                                    {icon}
-                                                    <span className="ml-2">{text}</span>
-                                                </Badge>
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant={variant} className="whitespace-nowrap">
+                                                        {icon}
+                                                        <span className="ml-2">{text}</span>
+                                                    </Badge>
+                                                    {item.level && (
+                                                        <Badge variant="secondary">{item.level}</Badge>
+                                                    )}
+                                                </div>
                                             </div>
                                             {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
                                             {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
@@ -461,10 +468,15 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                     <p className="font-medium">{currentQuestionNumber}. {item.text}</p>
                                                     <p className="text-xs text-muted-foreground ml-5">{item.regulationReference || 'N/A'}</p>
                                                 </div>
-                                                <Badge variant={variant} className="whitespace-nowrap">
-                                                    {icon}
-                                                    <span className="ml-2">{text}</span>
-                                                </Badge>
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant={variant} className="whitespace-nowrap">
+                                                        {icon}
+                                                        <span className="ml-2">{text}</span>
+                                                    </Badge>
+                                                     {item.level && (
+                                                        <Badge variant="secondary">{item.level}</Badge>
+                                                    )}
+                                                </div>
                                             </div>
                                             {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
                                             {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
@@ -1147,6 +1159,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 
