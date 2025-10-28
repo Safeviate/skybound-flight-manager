@@ -739,7 +739,7 @@ export default function QualityAuditDetailPage() {
     const complianceScore = totalApplicableItems > 0 ? Math.round((compliantItems / totalApplicableItems) * 100) : 100;
 
     const nonConformanceIssues: NonConformanceIssue[] = audit.checklistItems
-        .filter(item => item.finding === 'Non Compliant' || item.finding === 'Partial' || item.finding === 'Observation')
+        .filter(item => item.finding === 'Non Compliant' || item.finding === 'Partial')
         .map(item => ({
             id: `${item.id}-${Date.now()}`,
             itemText: item.text,
@@ -1099,6 +1099,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 
