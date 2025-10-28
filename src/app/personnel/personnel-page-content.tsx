@@ -7,7 +7,11 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+<<<<<<< HEAD
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail, Phone, Archive, RotateCw, KeyRound, MessageSquare } from 'lucide-react';
+=======
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail, Phone, Archive, RotateCw, KeyRound, Copy } from 'lucide-react';
+>>>>>>> 3660f00aa221a8e2ee721a4d46244ad9522e8024
 import type { User as PersonnelUser } from '@/lib/types';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -16,14 +20,18 @@ import { useToast } from '@/hooks/use-toast';
 import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
+<<<<<<< HEAD
 import { resetUserPasswordAndSendWelcomeEmail } from '@/app/actions';
 import { adminResetPassword } from '@/ai/flows/admin-reset-password-flow';
 import { adminSendSms } from '@/ai/flows/admin-send-sms-flow';
+=======
+import { resetUserPasswordAndSendWelcomeEmail, manuallyResetPassword } from '@/app/actions';
+>>>>>>> 3660f00aa221a8e2ee721a4d46244ad9522e8024
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EditPersonnelForm } from './edit-personnel-form';
 import { useSettings } from '@/context/settings-provider';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { getPersonnelPageData } from './data';
 import { Separator } from '@/components/ui/separator';
 import { ALL_DOCUMENTS } from '@/lib/types';
@@ -39,6 +47,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
     const [isNewPersonnelOpen, setIsNewPersonnelOpen] = useState(false);
     const [editingPersonnel, setEditingPersonnel] = useState<PersonnelUser | null>(null);
     const [viewingDocumentsFor, setViewingDocumentsFor] = useState<PersonnelUser | null>(null);
+    const [manualPassword, setManualPassword] = useState<{ name: string; pass: string } | null>(null);
     const { toast } = useToast();
     const [passwordResetFor, setPasswordResetFor] = useState<PersonnelUser | null>(null);
     const [tempPassword, setTempPassword] = useState('');
@@ -167,23 +176,15 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
         }
     };
     
-    const handleSendPasswordReset = async (person: PersonnelUser) => {
-        if (!person.email) {
-            toast({ variant: 'destructive', title: 'Error', description: 'This user does not have an email address on file.' });
-            return;
-        }
-        try {
-            await sendPasswordResetEmail(auth, person.email);
-            toast({
-                title: 'Password Reset Email Sent',
-                description: `A password reset link has been sent to ${person.name}.`,
-            });
-        } catch (error: any) {
-            console.error("Error sending password reset email:", error);
-            toast({
+    const handleManualPasswordReset = async (person: PersonnelUser) => {
+        const result = await manuallyResetPassword(person);
+        if (result.success && result.temporaryPassword) {
+            setManualPassword({ name: person.name, pass: result.temporaryPassword });
+        } else {
+             toast({
                 variant: 'destructive',
-                title: 'Email Failed',
-                description: 'Could not send the password reset email. Check if the user exists in Firebase Authentication.',
+                title: 'Password Reset Failed',
+                description: result.message,
             });
         }
     };
@@ -225,6 +226,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                                     <DropdownMenuContent>
                                         <DropdownMenuItem onSelect={() => setEditingPersonnel(person)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
                                         <DropdownMenuItem onSelect={() => handleSendWelcomeEmail(person)}><Mail className="mr-2 h-4 w-4" /> Send Welcome Email</DropdownMenuItem>
+<<<<<<< HEAD
                                         <DropdownMenuItem onSelect={() => handleSendPasswordReset(person)}><KeyRound className="mr-2 h-4 w-4" /> Send Password Reset</DropdownMenuItem>
                                          <AlertDialog>
                                             <AlertDialogTrigger asChild>
@@ -253,6 +255,9 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                                         <DropdownMenuItem onSelect={() => setViewingDocumentsFor(person)}>
                                             <Eye className="mr-2 h-4 w-4" /> View Documents
                                         </DropdownMenuItem>
+=======
+                                        <DropdownMenuItem onSelect={() => handleManualPasswordReset(person)}><KeyRound className="mr-2 h-4 w-4" /> Create Manual Password</DropdownMenuItem>
+>>>>>>> 3660f00aa221a8e2ee721a4d46244ad9522e8024
                                         <DropdownMenuSeparator />
                                         {isArchived ? (
                                             <>
@@ -402,6 +407,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                 </DialogContent>
             </Dialog>
        )}
+<<<<<<< HEAD
         <Dialog open={!!passwordResetFor} onOpenChange={() => setPasswordResetFor(null)}>
             <DialogContent>
                 <DialogHeader>
@@ -419,6 +425,25 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                     <Button variant="outline" onClick={() => setPasswordResetFor(null)}>Cancel</Button>
                     <Button onClick={handleConfirmPasswordReset}>Confirm &amp; Reset</Button>
                 </DialogFooter>
+=======
+        <Dialog open={!!manualPassword} onOpenChange={() => setManualPassword(null)}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Manual Password for {manualPassword?.name}</DialogTitle>
+                    <DialogDescription>
+                        Copy this temporary password and share it with the user. They will be required to change it on their next login.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="flex items-center space-x-2 py-4">
+                    <div className="grid flex-1 gap-2">
+                        <span className="text-lg font-mono p-2 border rounded-md bg-muted text-center">{manualPassword?.pass}</span>
+                    </div>
+                    <Button type="button" size="sm" className="px-3" onClick={() => { navigator.clipboard.writeText(manualPassword?.pass || ''); toast({title: 'Copied!'}) }}>
+                        <span className="sr-only">Copy</span>
+                        <Copy className="h-4 w-4" />
+                    </Button>
+                </div>
+>>>>>>> 3660f00aa221a8e2ee721a4d46244ad9522e8024
             </DialogContent>
         </Dialog>
     </main>

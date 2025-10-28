@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import type { Booking, User } from '@/lib/types';
+import type { Booking, User, TrainingLogEntry } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
@@ -41,11 +41,11 @@ interface FlightLogsPageContentProps {
 export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete }: FlightLogsPageContentProps) {
   const { items, searchTerm, setSearchTerm, requestSort, sortConfig } = useTableControls(initialBookings, {
     initialSort: { key: 'date', direction: 'desc' },
-    searchKeys: ['bookingNumber', 'aircraft', 'student', 'instructor', 'trainingExercise'],
+    searchKeys: ['bookingNumber', 'aircraft', 'student', 'instructor', 'remarks'],
   });
   const { toast } = useToast();
   const { company } = useUser();
-  const [viewingPhotosFor, setViewingPhotosFor] = useState<Booking | null>(null);
+  const [viewingDetailsFor, setViewingDetailsFor] = useState<Booking | null>(null);
 
   const handleDelete = async (bookingId: string) => {
     if (!company) {
@@ -69,7 +69,10 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
     doc.setFontSize(16);
     doc.text("Flight Log History", 14, 15);
 
-    const tableBody = items.map(log => [
+    const tableBody = items.map(log => {
+      const student = initialUsers.find(u => u.id === log.studentId);
+      const associatedLog = student?.trainingLogs?.find(tl => tl.id === log.pendingLogEntryId);
+      return [
         log.bookingNumber || 'N/A',
         format(parseISO(log.date), 'dd/MM/yyyy'),
         log.aircraft,
@@ -78,14 +81,14 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
         log.startHobbs?.toFixed(1) || '0.0',
         log.endHobbs?.toFixed(1) || '0.0',
         log.flightDuration?.toFixed(1) || '0.0',
-        log.trainingExercise || 'N/A',
+        associatedLog?.remarks || 'N/A',
         log.fuelUplift?.toFixed(1) || '0',
         log.oilUplift?.toFixed(1) || '0',
-    ]);
+    ]});
     
     autoTable(doc, {
         startY: 25,
-        head: [['Booking #', 'Date', 'Aircraft', 'Student/Pilot', 'Instructor', 'Start Hobbs', 'End Hobbs', 'Duration', 'Exercise', 'Fuel (L)', 'Oil (qts)']],
+        head: [['Booking #', 'Date', 'Aircraft', 'Student/Pilot', 'Instructor', 'Start Hobbs', 'End Hobbs', 'Duration', 'Remarks', 'Fuel (L)', 'Oil (qts)']],
         body: tableBody,
         theme: 'grid',
         headStyles: { fillColor: [22, 163, 74] },
@@ -102,6 +105,12 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
       </Button>
     </div>
   );
+  
+  const getAssociatedLog = (booking: Booking) => {
+    if (!booking || !booking.studentId) return null;
+    const student = initialUsers.find(u => u.id === booking.studentId);
+    return student?.trainingLogs?.find(log => log.id === booking.pendingLogEntryId);
+  }
 
   return (
     <main className="flex-1 p-4 md:p-8">
@@ -139,15 +148,15 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
                   <TableHead>Duration</TableHead>
                   <TableHead>Fuel (L)</TableHead>
                   <TableHead>Oil (qts)</TableHead>
-                  <TableHead><SortableHeader label="Exercise" sortKey="trainingExercise" /></TableHead>
-                  <TableHead>Photos</TableHead>
+                  <TableHead><SortableHeader label="Remarks" sortKey="trainingExercise" /></TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {items.length > 0 ? (
                   items.map((log) => {
-                      const hasPhotos = log.preFlightData?.leftSidePhoto || log.postFlightData?.leftSidePhoto || log.preFlightChecklist?.leftSidePhoto || log.postFlightChecklist?.leftSidePhoto;
+                      const associatedLog = getAssociatedLog(log);
+                      const hasDetails = associatedLog?.remarks || log.preFlightData?.leftSidePhoto || log.postFlightData?.leftSidePhoto || log.preFlightChecklist?.leftSidePhoto || log.postFlightChecklist?.leftSidePhoto;
                       return (
                       <TableRow key={log.id}>
                           <TableCell className="font-medium">{log.bookingNumber || 'N/A'}</TableCell>
@@ -160,19 +169,17 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
                           <TableCell>{log.flightDuration?.toFixed(1) || '-'}</TableCell>
                           <TableCell>{log.fuelUplift?.toFixed(1) || '-'}</TableCell>
                           <TableCell>{log.oilUplift?.toFixed(1) || '-'}</TableCell>
-                          <TableCell className="max-w-[200px] truncate">{log.trainingExercise || 'N/A'}</TableCell>
-                          <TableCell>
-                              <Button
+                          <TableCell className="max-w-[200px] truncate">{associatedLog?.remarks || 'No remarks'}</TableCell>
+                          <TableCell className="text-right space-x-2">
+                               <Button
                                   variant="outline"
                                   size="sm"
-                                  disabled={!hasPhotos}
-                                  onClick={() => setViewingPhotosFor(log)}
+                                  disabled={!hasDetails}
+                                  onClick={() => setViewingDetailsFor(log)}
                               >
                                   <Eye className="mr-2 h-4 w-4" />
-                                  View
+                                  View Details
                               </Button>
-                          </TableCell>
-                          <TableCell className="text-right">
                               <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                       <Button variant="destructive" size="icon">
@@ -212,44 +219,54 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
         </CardContent>
       </Card>
       
-      <Dialog open={!!viewingPhotosFor} onOpenChange={() => setViewingPhotosFor(null)}>
+      <Dialog open={!!viewingDetailsFor} onOpenChange={() => setViewingDetailsFor(null)}>
         <DialogContent className="sm:max-w-3xl">
             <DialogHeader>
-                <DialogTitle>Checklist Photos for Booking {viewingPhotosFor?.bookingNumber}</DialogTitle>
+                <DialogTitle>Flight Details for Booking {viewingDetailsFor?.bookingNumber}</DialogTitle>
                 <DialogDescription>
-                    Photos submitted during pre-flight and post-flight checklists.
+                    Photos and remarks submitted for this flight.
                 </DialogDescription>
             </DialogHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto p-1">
-                <div>
-                    <h3 className="font-semibold mb-2">Pre-Flight</h3>
-                    <div className="space-y-4">
-                        {(viewingPhotosFor?.preFlightData?.leftSidePhoto || viewingPhotosFor?.preFlightChecklist?.leftSidePhoto) ? <Image src={viewingPhotosFor?.preFlightData?.leftSidePhoto || viewingPhotosFor!.preFlightChecklist!.leftSidePhoto!} alt="Pre-flight left side" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" /> : <p className="text-sm text-muted-foreground">No left side photo.</p>}
-                        {(viewingPhotosFor?.preFlightData?.rightSidePhoto || viewingPhotosFor?.preFlightChecklist?.rightSidePhoto) ? <Image src={viewingPhotosFor?.preFlightData?.rightSidePhoto || viewingPhotosFor!.preFlightChecklist!.rightSidePhoto!} alt="Pre-flight right side" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" /> : <p className="text-sm text-muted-foreground">No right side photo.</p>}
-                        {(viewingPhotosFor?.preFlightData?.defectPhoto || viewingPhotosFor?.preFlightChecklist?.defectPhoto) && (
-                            <>
-                                <Separator />
-                                <h4 className="font-semibold text-sm text-destructive">Defect Reported</h4>
-                                <Image src={viewingPhotosFor?.preFlightData?.defectPhoto || viewingPhotosFor!.preFlightChecklist!.defectPhoto!} alt="Pre-flight defect" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" />
-                            </>
-                        )}
+            <ScrollArea className="max-h-[70vh] pr-4">
+                <div className="space-y-4">
+                    {getAssociatedLog(viewingDetailsFor!)?.remarks && (
+                        <div className="space-y-2">
+                            <h3 className="font-semibold">Instructor Remarks</h3>
+                            <p className="text-sm p-3 bg-muted rounded-md whitespace-pre-wrap">{getAssociatedLog(viewingDetailsFor!)?.remarks}</p>
+                        </div>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h3 className="font-semibold mb-2">Pre-Flight Photos</h3>
+                            <div className="space-y-4">
+                                {(viewingDetailsFor?.preFlightData?.leftSidePhoto || viewingDetailsFor?.preFlightChecklist?.leftSidePhoto) ? <Image src={viewingDetailsFor?.preFlightData?.leftSidePhoto || viewingDetailsFor!.preFlightChecklist!.leftSidePhoto!} alt="Pre-flight left side" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" /> : <p className="text-sm text-muted-foreground">No left side photo.</p>}
+                                {(viewingDetailsFor?.preFlightData?.rightSidePhoto || viewingDetailsFor?.preFlightChecklist?.rightSidePhoto) ? <Image src={viewingDetailsFor?.preFlightData?.rightSidePhoto || viewingDetailsFor!.preFlightChecklist!.rightSidePhoto!} alt="Pre-flight right side" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" /> : <p className="text-sm text-muted-foreground">No right side photo.</p>}
+                                {(viewingDetailsFor?.preFlightData?.defectPhoto || viewingDetailsFor?.preFlightChecklist?.defectPhoto) && (
+                                    <>
+                                        <Separator />
+                                        <h4 className="font-semibold text-sm text-destructive">Defect Reported</h4>
+                                        <Image src={viewingDetailsFor?.preFlightData?.defectPhoto || viewingDetailsFor!.preFlightChecklist!.defectPhoto!} alt="Pre-flight defect" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" />
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                         <div>
+                            <h3 className="font-semibold mb-2">Post-Flight Photos</h3>
+                            <div className="space-y-4">
+                                {(viewingDetailsFor?.postFlightData?.leftSidePhoto || viewingDetailsFor?.postFlightChecklist?.leftSidePhoto) ? <Image src={viewingDetailsFor?.postFlightData?.leftSidePhoto || viewingDetailsFor!.postFlightChecklist!.leftSidePhoto!} alt="Post-flight left side" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" /> : <p className="text-sm text-muted-foreground">No left side photo.</p>}
+                                {(viewingDetailsFor?.postFlightData?.rightSidePhoto || viewingDetailsFor?.postFlightChecklist?.rightSidePhoto) ? <Image src={viewingDetailsFor?.postFlightData?.rightSidePhoto || viewingDetailsFor!.postFlightChecklist!.rightSidePhoto!} alt="Post-flight right side" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" /> : <p className="text-sm text-muted-foreground">No right side photo.</p>}
+                                {(viewingDetailsFor?.postFlightData?.defectPhoto || viewingDetailsFor?.postFlightChecklist?.defectPhoto) && (
+                                    <>
+                                        <Separator />
+                                        <h4 className="font-semibold text-sm text-destructive">Defect Reported</h4>
+                                        <Image src={viewingDetailsFor?.postFlightData?.defectPhoto || viewingDetailsFor!.postFlightChecklist!.defectPhoto!} alt="Post-flight defect" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" />
+                                    </>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
-                 <div>
-                    <h3 className="font-semibold mb-2">Post-Flight</h3>
-                    <div className="space-y-4">
-                        {(viewingPhotosFor?.postFlightData?.leftSidePhoto || viewingPhotosFor?.postFlightChecklist?.leftSidePhoto) ? <Image src={viewingPhotosFor?.postFlightData?.leftSidePhoto || viewingPhotosFor!.postFlightChecklist!.leftSidePhoto!} alt="Post-flight left side" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" /> : <p className="text-sm text-muted-foreground">No left side photo.</p>}
-                        {(viewingPhotosFor?.postFlightData?.rightSidePhoto || viewingPhotosFor?.postFlightChecklist?.rightSidePhoto) ? <Image src={viewingPhotosFor?.postFlightData?.rightSidePhoto || viewingPhotosFor!.postFlightChecklist!.rightSidePhoto!} alt="Post-flight right side" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" /> : <p className="text-sm text-muted-foreground">No right side photo.</p>}
-                        {(viewingPhotosFor?.postFlightData?.defectPhoto || viewingPhotosFor?.postFlightChecklist?.defectPhoto) && (
-                             <>
-                                <Separator />
-                                <h4 className="font-semibold text-sm text-destructive">Defect Reported</h4>
-                                <Image src={viewingPhotosFor?.postFlightData?.defectPhoto || viewingPhotosFor!.postFlightChecklist!.defectPhoto!} alt="Post-flight defect" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" />
-                            </>
-                        )}
-                    </div>
-                </div>
-            </div>
+            </ScrollArea>
         </DialogContent>
       </Dialog>
     </main>

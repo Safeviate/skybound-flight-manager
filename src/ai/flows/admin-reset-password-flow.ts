@@ -16,6 +16,14 @@ const AdminResetPasswordInputSchema = z.object({
 
 export type AdminResetPasswordInput = z.infer<typeof AdminResetPasswordInputSchema>;
 
+const AdminResetPasswordOutputSchema = z.object({
+    success: z.boolean(),
+    message: z.string(),
+    temporaryPassword: z.string().optional(),
+});
+export type AdminResetPasswordOutput = z.infer<typeof AdminResetPasswordOutputSchema>;
+
+
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
     try {
@@ -31,7 +39,7 @@ if (!admin.apps.length) {
 }
 
 
-export async function adminResetPassword(input: AdminResetPasswordInput): Promise<{ success: boolean; message: string }> {
+export async function adminResetPassword(input: AdminResetPasswordInput): Promise<AdminResetPasswordOutput> {
   return adminResetPasswordFlow(input);
 }
 
@@ -39,10 +47,7 @@ const adminResetPasswordFlow = ai.defineFlow(
   {
     name: 'adminResetPasswordFlow',
     inputSchema: AdminResetPasswordInputSchema,
-    outputSchema: z.object({
-        success: z.boolean(),
-        message: z.string(),
-    }),
+    outputSchema: AdminResetPasswordOutputSchema,
   },
   async ({ userId, newPassword }) => {
     if (!admin.apps.length) {
@@ -55,7 +60,7 @@ const adminResetPasswordFlow = ai.defineFlow(
       await admin.auth().updateUser(userId, {
         password: newPassword,
       });
-      return { success: true, message: 'Password updated successfully.' };
+      return { success: true, message: 'Password updated successfully.', temporaryPassword: newPassword };
     } catch (error: any) {
       console.error(`Failed to reset password for UID ${userId}:`, error);
       return { success: false, message: error.message };

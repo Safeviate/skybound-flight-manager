@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,11 +7,11 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -58,12 +56,18 @@ const debriefFormSchema = z.object({
   instructorName: z.string({
     required_error: 'Please enter the instructor\'s name.',
   }),
-  trainingExercises: z.array(exerciseLogSchema).min(1, 'At least one exercise must be logged.'),
   instructorSignature: z.string().min(1, 'Instructor signature is required.'),
   studentSignature: z.string().optional(),
   departure: z.string().optional(),
   arrival: z.string().optional(),
-}).refine(data => data.endHobbs > data.startHobbs, {
+  remarks: z.string().optional(),
+  trainingExercises: z.array(exerciseLogSchema).optional(),
+}).refine(data => {
+    if (data.startHobbs !== undefined && data.endHobbs !== undefined) {
+        return data.endHobbs > data.startHobbs;
+    }
+    return true;
+}, {
     message: 'End Hobbs must be greater than Start Hobbs.',
     path: ['endHobbs'],
 });
@@ -83,9 +87,10 @@ const defaultFormValues: Partial<DebriefFormValues> = {
     startHobbs: 0,
     endHobbs: 0,
     instructorName: '',
-    trainingExercises: [{ exercise: '', rating: 0, comment: '' }],
     instructorSignature: '',
     studentSignature: '',
+    remarks: '',
+    trainingExercises: [{ exercise: '', rating: 0, comment: '' }],
 };
 
 export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDebriefFormProps) {
@@ -110,26 +115,43 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
   
   useEffect(() => {
     const getInitialValues = () => {
-        if (logToEdit) {
+        let remarksFromStorage = '';
+        if (booking?.id) {
+            try {
+                const storedNotes = localStorage.getItem(`inflight-notes-${booking.id}`);
+                if (storedNotes) {
+                    remarksFromStorage = storedNotes;
+                }
+            } catch (e) {
+                console.warn('Could not access localStorage for in-flight notes.');
+            }
+        }
+        
+        // Always check for a log entry in the student's record first
+        const associatedLog = logToEdit || (booking?.pendingLogEntryId ? student.trainingLogs?.find(log => log.id === booking.pendingLogEntryId) : null);
+
+        if (associatedLog) {
             return {
-                ...logToEdit,
-                date: parseISO(logToEdit.date),
+                ...associatedLog,
+                date: parseISO(associatedLog.date),
+                remarks: associatedLog.remarks || remarksFromStorage, // Prioritize DB remarks, fallback to localStorage
+                trainingExercises: associatedLog.trainingExercises?.length ? associatedLog.trainingExercises : [{ exercise: '', rating: 0, comment: '' }],
             };
         }
+
+        // If no log entry exists AT ALL, construct from booking data and local storage
         if (booking) {
-            // Find the associated log entry if it exists
-            const associatedLog = student.trainingLogs?.find(log => log.id === booking.pendingLogEntryId);
-            return {
+             return {
                 date: parseISO(booking.date),
                 aircraft: booking.aircraft,
-                startHobbs: associatedLog?.startHobbs || booking.startHobbs || 0,
-                endHobbs: associatedLog?.endHobbs || booking.endHobbs || 0,
+                startHobbs: booking.startHobbs || 0,
+                endHobbs: booking.endHobbs || 0,
                 instructorName: booking.instructor || '',
-                trainingExercises: associatedLog?.trainingExercises.length ? associatedLog.trainingExercises : [{ exercise: '', rating: 0, comment: '' }],
-                departure: associatedLog?.departure,
-                arrival: associatedLog?.arrival,
+                remarks: remarksFromStorage, // Use local storage notes as the only source
+                trainingExercises: [{ exercise: '', rating: 0, comment: '' }],
             };
         }
+        
         return defaultFormValues;
     };
 
@@ -138,7 +160,7 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
 
 
   function handleFormSubmit(data: DebriefFormValues) {
-    const duration = parseFloat((data.endHobbs - data.startHobbs).toFixed(1));
+    const duration = parseFloat(((data.endHobbs || 0) - (data.startHobbs || 0)).toFixed(1));
     
     const newEntry = {
       ...data,
@@ -147,7 +169,7 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
       studentSignatureRequired: !data.studentSignature,
     };
     
-    const logId = logToEdit?.id || logEntryForBooking?.id;
+    const logId = logToEdit?.id || booking?.pendingLogEntryId || `log-${Date.now()}`;
     onSubmit(newEntry, booking?.id, logId);
     
     form.reset();
@@ -259,51 +281,57 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                         <CardTitle>Training Details</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="space-y-4">
-                            <FormLabel>Exercises Covered</FormLabel>
-                            {fields.map((field, index) => (
-                                <div key={field.id} className="p-4 border rounded-lg space-y-2 relative">
+                        <FormField
+                            control={form.control}
+                            name="remarks"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Remarks & In-Flight Notes</FormLabel>
+                                    <FormControl>
+                                        <Textarea placeholder="In-flight notes will appear here. Add any additional remarks for the overall flight." {...field} className="min-h-[100px] bg-muted" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <div className="space-y-4 pt-4 border-t">
+                            <h3 className="font-medium">Exercises Covered</h3>
+                             {fields.map((field, index) => (
+                                <div key={field.id} className="p-4 border rounded-md relative space-y-4">
+                                     <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute top-2 right-2"
+                                        onClick={() => remove(index)}
+                                        disabled={fields.length <= 1}
+                                    >
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
                                     <FormField
                                         control={form.control}
                                         name={`trainingExercises.${index}.exercise`}
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="sr-only">Exercise</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Describe the exercise (e.g., Short field landings)" {...field} />
-                                                </FormControl>
+                                                <FormLabel>Exercise</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger><SelectValue placeholder="Select an exercise" /></SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {trainingExercisesData.map(ex => <SelectItem key={ex} value={ex}>{ex}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
                                      <FormField
                                         control={form.control}
-                                        name={`trainingExercises.${index}.rating`}
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-3">
-                                            <FormLabel>Performance Rating</FormLabel>
-                                            <FormControl>
-                                                <RadioGroup
-                                                    onValueChange={(value) => field.onChange(parseInt(value, 10))}
-                                                    defaultValue={String(field.value)}
-                                                    className="flex flex-wrap items-center gap-x-4 gap-y-2"
-                                                >
-                                                    <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="1" /></FormControl><FormLabel className="font-normal">1 (Poor)</FormLabel></FormItem>
-                                                    <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="2" /></FormControl><FormLabel className="font-normal">2 (Avg)</FormLabel></FormItem>
-                                                    <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="3" /></FormControl><FormLabel className="font-normal">3 (Good)</FormLabel></FormItem>
-                                                    <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="4" /></FormControl><FormLabel className="font-normal">4 (Excep.)</FormLabel></FormItem>
-                                                </RadioGroup>
-                                            </FormControl>
-                                            <FormMessage />
-                                            </FormItem>
-                                        )}
-                                        />
-                                    <FormField
-                                        control={form.control}
                                         name={`trainingExercises.${index}.comment`}
                                         render={({ field }) => (
                                             <FormItem>
-                                                 <FormLabel className="sr-only">Comment</FormLabel>
+                                                <FormLabel>Exercise Comment</FormLabel>
                                                 <FormControl>
                                                     <Textarea placeholder="Add a comment for this exercise..." {...field} />
                                                 </FormControl>
@@ -311,14 +339,41 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                                             </FormItem>
                                         )}
                                     />
-                                     <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => remove(index)} disabled={fields.length <= 1}>
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
+                                    <FormField
+                                        control={form.control}
+                                        name={`trainingExercises.${index}.rating`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Rating</FormLabel>
+                                                <FormControl>
+                                                    <RadioGroup
+                                                        onValueChange={(value) => field.onChange(Number(value))}
+                                                        value={field.value?.toString()}
+                                                        className="flex items-center gap-4"
+                                                    >
+                                                        {[1, 2, 3, 4].map(rating => (
+                                                            <FormItem key={rating} className="flex items-center space-x-2 space-y-0">
+                                                                <FormControl>
+                                                                    <RadioGroupItem value={String(rating)} />
+                                                                </FormControl>
+                                                                <FormLabel className="font-normal">{rating}</FormLabel>
+                                                            </FormItem>
+                                                        ))}
+                                                    </RadioGroup>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                 </div>
                             ))}
-                            <Button type="button" variant="outline" className="w-full" onClick={() => append({ exercise: '', rating: 0, comment: '' })}>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Add Another Exercise
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full"
+                                onClick={() => append({ exercise: '', rating: 0, comment: '' })}
+                            >
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add Exercise
                             </Button>
                         </div>
                     </CardContent>

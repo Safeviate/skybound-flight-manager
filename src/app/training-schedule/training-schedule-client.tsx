@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -30,6 +29,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import { LiveLocationTracker } from './live-location-tracker';
+import { InFlightNotes } from './in-flight-notes';
 
 interface TrainingSchedulePageContentProps {
   initialAircraft: Aircraft[];
@@ -61,12 +62,24 @@ const FlightHub = ({
             
             <div className="py-4">
                 {activeFlight.aircraft.checklistStatus === 'needs-post-flight' ? (
-                    <PostFlightChecklistForm 
-                        onSuccess={handleChecklistSuccess}
-                        aircraft={activeFlight.aircraft}
-                        startHobbs={activeFlight.booking.startHobbs}
-                        onReportIssue={() => {}}
-                    />
+                    <Tabs defaultValue="checklist">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="checklist">Post-Flight Checklist</TabsTrigger>
+                            <TabsTrigger value="notes">In-Flight Notes</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="checklist" className="mt-4">
+                             <LiveLocationTracker aircraft={activeFlight.aircraft} enabled={true} />
+                            <PostFlightChecklistForm 
+                                onSuccess={handleChecklistSuccess}
+                                aircraft={activeFlight.aircraft}
+                                startHobbs={activeFlight.booking.startHobbs}
+                                onReportIssue={() => {}}
+                            />
+                        </TabsContent>
+                        <TabsContent value="notes" className="mt-4">
+                            <InFlightNotes bookingId={activeFlight.booking.id} />
+                        </TabsContent>
+                    </Tabs>
                 ) : (
                     <PreFlightChecklistForm 
                         onSuccess={handleChecklistSuccess} 
@@ -247,7 +260,7 @@ const GanttChart = ({
                                                     <TooltipTrigger asChild>
                                                         <div 
                                                             onClick={() => onBookingClick(booking)}
-                                                            className={cn('h-full flex items-center p-2 text-white text-xs whitespace-nowrap overflow-hidden border-r border-white/20', variant.className, (variant.isClickable || booking.status === 'Completed') ? 'cursor-pointer' : 'cursor-not-allowed')} style={variant.style}>
+                                                            className={cn('h-full flex items-center p-2 text-white text-xs whitespace-nowrap overflow-hidden border-r border-white/20', variant.className, (variant.isClickable) ? 'cursor-pointer' : 'cursor-not-allowed')} style={variant.style}>
                                                             {getBookingLabel(booking)}
                                                         </div>
                                                     </TooltipTrigger>
@@ -331,6 +344,26 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         setLoading(false);
         return;
     }
+    
+    // Attempt to load from cache first
+    try {
+        const cachedBookings = localStorage.getItem(`schedule-bookings-${company.id}`);
+        const cachedAircraft = localStorage.getItem(`schedule-aircraft-${company.id}`);
+        const cachedUsers = localStorage.getItem(`schedule-users-${company.id}`);
+        const cachedHireAndFly = localStorage.getItem(`schedule-hireandfly-${company.id}`);
+        
+        if (cachedBookings) setBookings(JSON.parse(cachedBookings));
+        if (cachedAircraft) setAircraft(JSON.parse(cachedAircraft));
+        if (cachedUsers) setUsers(JSON.parse(cachedUsers));
+        if (cachedHireAndFly) setHireAndFly(JSON.parse(cachedHireAndFly));
+
+        if (cachedBookings || cachedAircraft) {
+            setLoading(false); // Render with cached data immediately
+        }
+    } catch (e) {
+        console.warn("Could not retrieve schedule data from localStorage.");
+    }
+
     setLoading(true);
     
     const aircraftBookingsQuery = query(collection(db, `companies/${company.id}/aircraft-bookings`));
@@ -338,7 +371,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
     const unsubAircraftBookings = onSnapshot(aircraftBookingsQuery, (snapshot) => {
         const aircraftBookingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-        setBookings(prev => [...aircraftBookingsData, ...prev.filter(b => b.resourceType === 'facility')]);
+        setBookings(prev => {
+            const newBookings = [...aircraftBookingsData, ...prev.filter(b => b.resourceType === 'facility')];
+            localStorage.setItem(`schedule-bookings-${company.id}`, JSON.stringify(newBookings));
+            return newBookings;
+        });
         setLoading(false);
     }, (error) => {
         console.error("Error fetching real-time aircraft bookings:", error);
@@ -348,7 +385,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     
     const unsubFacilityBookings = onSnapshot(facilityBookingsQuery, (snapshot) => {
         const facilityBookingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-        setBookings(prev => [...facilityBookingsData, ...prev.filter(b => b.resourceType === 'aircraft')]);
+        setBookings(prev => {
+            const newBookings = [...facilityBookingsData, ...prev.filter(b => b.resourceType === 'aircraft')];
+            localStorage.setItem(`schedule-bookings-${company.id}`, JSON.stringify(newBookings));
+            return newBookings;
+        });
         setLoading(false);
     }, (error) => {
         console.error("Error fetching real-time facility bookings:", error);
@@ -357,7 +398,9 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     });
 
     const aircraftUnsub = onSnapshot(collection(db, `companies/${company.id}/aircraft`), (snapshot) => {
-        setAircraft(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft)));
+        const aircraftData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
+        setAircraft(aircraftData);
+        localStorage.setItem(`schedule-aircraft-${company.id}`, JSON.stringify(aircraftData));
     });
     
     const fetchAllUsers = async () => {
@@ -375,8 +418,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         const students = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
         const hireAndFlyData = hireAndFlySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 
-        setUsers([...personnel, ...students]);
+        const allUsers = [...personnel, ...students];
+        setUsers(allUsers);
         setHireAndFly(hireAndFlyData);
+        localStorage.setItem(`schedule-users-${company.id}`, JSON.stringify(allUsers));
+        localStorage.setItem(`schedule-hireandfly-${company.id}`, JSON.stringify(hireAndFlyData));
     };
     fetchAllUsers();
     
@@ -616,7 +662,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
   const handleBookingClick = (booking: Booking) => {
     const variant = getBookingVariant(booking);
-    if (!variant.isClickable && booking.status !== 'Completed') {
+    if (!variant.isClickable) {
         toast({
             variant: 'default',
             title: 'Booking Not Active',
@@ -624,10 +670,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         });
         return;
     };
-    if (booking.status === 'Completed') {
-        setEditingBooking(booking);
-        return;
-    };
+    
+    if (booking.status === 'Completed') return;
 
     if (!booking.resourceType || booking.resourceType === 'aircraft') {
         const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);

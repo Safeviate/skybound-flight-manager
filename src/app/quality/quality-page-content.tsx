@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -10,23 +9,23 @@ import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, Corre
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AuditSchedule } from './audit-schedule';
+import { AuditSchedule } from '../quality/audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch, deleteDoc, getCountFromServer, limit, orderBy, where } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch, deleteDoc, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useTableControls } from '@/hooks/use-table-controls.ts';
-import { AuditChecklistsManager } from './audit-checklists-manager';
+import { AuditChecklistsManager } from '../quality/audit-checklists-manager';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CapTracker } from './cap-tracker';
+import { CapTracker } from '../quality/cap-tracker';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { complianceData as seedComplianceData } from '@/lib/data-provider';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -40,6 +39,7 @@ import { cn } from '@/lib/utils.tsx';
 import { useForm } from 'react-hook-form';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { EditSpiForm, type SpiConfig } from '@/app/safety/edit-spi-form';
 
 
 const ComplianceItemForm = ({
@@ -139,7 +139,7 @@ const ComplianceItemForm = ({
                                 className={cn( "w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                                 >
                                 {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
                                 </Button>
                             </FormControl>
                             </PopoverTrigger>
@@ -342,9 +342,7 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel }:
                                 )}
                             </TableRow>
                         )}) : (
-                            <TableRow>
-                                <TableCell colSpan={canEdit ? 7 : 6} className="h-24 text-center">No compliance items have been added.</TableCell>
-                            </TableRow>
+                            <TableRow><TableCell colSpan={canEdit ? 7 : 6} className="h-24 text-center">No compliance items have been added.</TableCell></TableRow>
                         )}
                     </TableBody>
                 </Table>
@@ -451,18 +449,17 @@ export function QualityPageContent({
   
   const reportsControls = useTableControls(activeAudits, {
     initialSort: { key: 'date', direction: 'desc' },
-    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department', 'auditeeName'],
+    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department', 'auditeeName', 'area'],
   });
   
   const archivedReportsControls = useTableControls(archivedAudits, {
     initialSort: { key: 'date', direction: 'desc' },
-    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department', 'auditeeName'],
+    searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department', 'auditeeName', 'area'],
   });
   
   const handleAuditUpdate = (updatedData: Partial<QualityAudit>) => {
     if (!updatedData.id) return;
     setAudits(prev => prev.map(a => a.id === updatedData.id ? { ...a, ...updatedData } : a));
-    // The actual database update is now handled within the detail page, this just updates the list view
   };
 
 
@@ -524,20 +521,15 @@ export function QualityPageContent({
     
     try {
         const batch = writeBatch(db);
-
-        // 1. Update the audit status to 'Archived'
         const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
         batch.update(auditRef, { status: 'Archived' });
         
-        // 2. Find and delete all alerts related to this audit
         const alertsRef = collection(db, `companies/${company.id}/alerts`);
         const alertsQuery = query(alertsRef, where("relatedLink", "==", `/quality/${auditId}`));
         const alertsSnapshot = await getDocs(alertsQuery);
         alertsSnapshot.forEach(alertDoc => {
             batch.delete(alertDoc.ref);
         });
-
-        // 3. Commit the batch
         await batch.commit();
 
         setAudits(prev => prev.map(a => a.id === auditId ? { ...a, status: 'Archived' } : a));
@@ -649,17 +641,18 @@ export function QualityPageContent({
   const groupedArchivedAudits = useMemo(() => groupAuditsByDepartment(archivedReportsControls.items), [archivedReportsControls.items]);
 
 
-  const ReportTable = ({ reports, controls, showArchived }: { reports: QualityAudit[], controls: ReturnType<typeof useTableControls>, showArchived: boolean }) => {
+  const ReportTable = ({ audits: reportList, isArchivedTable = false }: { audits: QualityAudit[], isArchivedTable?: boolean }) => {
+    
     return (
         <ScrollArea className="w-full whitespace-nowrap rounded-md border">
             <Table>
                 <TableHeader>
                     <TableRow>
-                    {showArchived && (
+                    {isArchivedTable && (
                         <TableHead className="w-12">
                             <Checkbox 
-                                onCheckedChange={(checked) => handleSelectAll(Boolean(checked), controls)}
-                                checked={selectedAudits.length > 0 && selectedAudits.length === controls.items.length}
+                                onCheckedChange={(checked) => handleSelectAll(Boolean(checked), isArchivedTable ? archivedReportsControls : reportsControls)}
+                                checked={selectedAudits.length > 0 && selectedAudits.length === (isArchivedTable ? archivedReportsControls.items.length : reportsControls.items.length)}
                                 aria-label="Select all"
                             />
                         </TableHead>
@@ -668,7 +661,7 @@ export function QualityPageContent({
                     <TableHead>Audit Date</TableHead>
                     <TableHead>Report Heading</TableHead>
                     <TableHead>Auditee</TableHead>
-                    <TableHead>Area</TableHead>
+                    <TableHead>Audit Reference</TableHead>
                     <TableHead>Asset</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Compliance</TableHead>
@@ -677,10 +670,10 @@ export function QualityPageContent({
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {reports.length > 0 ? (
-                        reports.map(audit => (
+                    {reportList.length > 0 ? (
+                        reportList.map(audit => (
                         <TableRow key={audit.id} data-state={selectedAudits.includes(audit.id) && "selected"}>
-                            {showArchived && (
+                            {isArchivedTable && (
                                 <TableCell>
                                     <Checkbox
                                         checked={selectedAudits.includes(audit.id)}
@@ -718,7 +711,13 @@ export function QualityPageContent({
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent>
-                                        {showArchived ? (
+                                        <DropdownMenuItem asChild>
+                                             <Link href={`/quality/${audit.id}`}>
+                                                <FileText className="mr-2 h-4 w-4" />
+                                                View Report
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        {isArchivedTable ? (
                                             <>
                                                 <DropdownMenuItem onSelect={() => handleRestoreAudit(audit.id)}>
                                                     <RotateCw className="mr-2 h-4 w-4" />
@@ -758,8 +757,8 @@ export function QualityPageContent({
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell colSpan={showArchived ? 11 : 10} className="text-center h-24">
-                                No audit reports found in this department.
+                            <TableCell colSpan={isArchivedTable ? 11 : 10} className="text-center h-24">
+                                No audit reports found.
                             </TableCell>
                         </TableRow>
                     )}
@@ -775,13 +774,16 @@ export function QualityPageContent({
       <main className="flex-1 p-4 md:p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4 no-print">
-            <TabsList className="grid w-full grid-cols-2 md:flex md:w-auto">
-              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-              <TabsTrigger value="audits">Audits</TabsTrigger>
-              <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
-              <TabsTrigger value="cap-tracker">CAP Tracker</TabsTrigger>
-              <TabsTrigger value="coherence-matrix">Coherence Matrix</TabsTrigger>
-          </TabsList>
+            <ScrollArea className="w-full whitespace-nowrap">
+                <TabsList>
+                    <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                    <TabsTrigger value="audits">Audits</TabsTrigger>
+                    <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
+                    <TabsTrigger value="cap-tracker">CAP Tracker</TabsTrigger>
+                    <TabsTrigger value="coherence-matrix">Coherence Matrix</TabsTrigger>
+                </TabsList>
+                <ScrollBar orientation="horizontal" />
+            </ScrollArea>
           </div>
           <TabsContent value="dashboard" className="space-y-8 mt-4">
                <Card>
@@ -849,7 +851,7 @@ export function QualityPageContent({
                              {Object.keys(groupedActiveAudits).sort().map(department => (
                                 <div key={department}>
                                     <h3 className="text-lg font-semibold mb-2">{department}</h3>
-                                    <ReportTable reports={groupedActiveAudits[department]} controls={reportsControls} showArchived={false} />
+                                    <ReportTable audits={groupedActiveAudits[department]} isArchivedTable={false} />
                                 </div>
                             ))}
                             {Object.keys(groupedActiveAudits).length === 0 && (
@@ -868,7 +870,7 @@ export function QualityPageContent({
                             {Object.keys(groupedArchivedAudits).sort().map(department => (
                                 <div key={department}>
                                     <h3 className="text-lg font-semibold mb-2">{department}</h3>
-                                    <ReportTable reports={groupedArchivedAudits[department]} controls={archivedReportsControls} showArchived={true} />
+                                    <ReportTable audits={groupedArchivedAudits[department]} isArchivedTable={true} />
                                 </div>
                             ))}
                             {Object.keys(groupedArchivedAudits).length === 0 && (

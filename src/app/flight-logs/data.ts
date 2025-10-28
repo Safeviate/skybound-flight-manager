@@ -3,7 +3,7 @@
 
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, where, orderBy } from 'firebase/firestore';
-import type { Booking, User } from '@/lib/types';
+import type { Booking, User, TrainingLogEntry } from '@/lib/types';
 
 export async function getFlightLogsPageData(companyId: string): Promise<{ bookings: Booking[], users: User[] }> {
     if (!companyId) {
@@ -21,7 +21,7 @@ export async function getFlightLogsPageData(companyId: string): Promise<{ bookin
 
         const [bookingsSnapshot, usersSnapshot, studentsSnapshot] = await Promise.all([
             getDocs(bookingsQuery),
-            getDocs(usersQuery),
+            getDocs(usersSnapshot),
             getDocs(studentsQuery)
         ]);
 

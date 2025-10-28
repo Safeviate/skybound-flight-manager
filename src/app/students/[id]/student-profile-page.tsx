@@ -125,21 +125,30 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     useEffect(() => {
         if (!company || !student) return;
         
-        const bookingsQuery = query(
+        const aircraftBookingsQuery = query(
             collection(db, `companies/${company.id}/aircraft-bookings`), 
             where('studentId', '==', student.id)
         );
+        const facilityBookingsQuery = query(
+            collection(db, `companies/${company.id}/facility-bookings`), 
+            where('studentAttendees', 'array-contains', student.name)
+        );
 
-        const unsubscribe = onSnapshot(bookingsQuery, (snapshot) => {
-            const allBookings = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
-            setBookings(allBookings);
-        }, (error) => {
-            console.error("Error fetching bookings:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not load booking data for this student.' });
+        const unsubAircraft = onSnapshot(aircraftBookingsQuery, (snapshot) => {
+            const aircraftBookings = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
+            setBookings(prev => [...aircraftBookings, ...prev.filter(b => b.resourceType === 'facility')]);
+        });
+        
+        const unsubFacility = onSnapshot(facilityBookingsQuery, (snapshot) => {
+            const facilityBookings = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
+            setBookings(prev => [...facilityBookings, ...prev.filter(b => b.resourceType === 'aircraft')]);
         });
 
-        return () => unsubscribe();
-    }, [student, company, toast]);
+        return () => {
+            unsubAircraft();
+            unsubFacility();
+        };
+    }, [student, company]);
     
     const { pendingBookings, completedBookings } = useMemo(() => {
         if (!student) return { pendingBookings: [], completedBookings: [] };
@@ -263,13 +272,9 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         let updatedLogs = [...(student.trainingLogs || [])];
         const logId = logIdToUpdate || `log-${Date.now()}`;
     
-        if (logIdToUpdate) {
-            const index = updatedLogs.findIndex(log => log.id === logIdToUpdate);
-            if (index !== -1) {
-                updatedLogs[index] = { ...updatedLogs[index], ...logData, id: logId, studentSignatureRequired };
-            } else {
-                updatedLogs.push({ ...logData, id: logId, studentSignatureRequired });
-            }
+        const existingLogIndex = updatedLogs.findIndex(log => log.id === logId);
+        if (existingLogIndex !== -1) {
+            updatedLogs[existingLogIndex] = { ...updatedLogs[existingLogIndex], ...logData, id: logId, studentSignatureRequired };
         } else {
             updatedLogs.push({ ...logData, id: logId, studentSignatureRequired });
         }
@@ -286,8 +291,10 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 const headOfTrainingQuery = query(collection(db, `companies/${company.id}/users`), where('role', '==', 'Head Of Training'));
                 const hotSnapshot = await getDocs(headOfTrainingQuery);
                 const hot = hotSnapshot.empty ? null : hotSnapshot.docs[0].data() as StudentUser;
-                const instructorDoc = (await getDocs(query(collection(db, `companies/${company.id}/users`), where('name', '==', student.instructor)))).docs[0];
-                const instructor = instructorDoc ? ({ ...instructorDoc.data(), id: instructorDoc.id } as StudentUser) : null;
+
+                const instructorQuery = query(collection(db, `companies/${company.id}/users`), where('name', '==', student.instructor));
+                const instructorSnapshot = await getDocs(instructorQuery);
+                const instructor = instructorSnapshot.empty ? null : { ...instructorSnapshot.docs[0].data(), id: instructorSnapshot.docs[0].id } as StudentUser;
     
                 const targetUserIds = [hot?.id, instructor?.id].filter(Boolean) as string[];
     
@@ -333,6 +340,15 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         }
         
         await handleUpdate(firestoreUpdate);
+
+        if (fromBookingId) {
+            const booking = bookings.find(b => b.id === fromBookingId);
+            if (booking) {
+                const collectionName = booking.resourceType === 'aircraft' ? 'aircraft-bookings' : 'facility-bookings';
+                const bookingRef = doc(db, `companies/${company.id}/${collectionName}`, fromBookingId);
+                await updateDoc(bookingRef, { status: 'Completed' });
+            }
+        }
         
         setIsDebriefOpen(false);
         setLogToEdit(null);
@@ -377,16 +393,29 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         if (!student?.trainingLogs || !company) return;
         
         const logToUpdate = student.trainingLogs.find(log => log.id === booking.pendingLogEntryId);
-
+    
         if (logToUpdate) {
             setLogToEdit(logToUpdate);
             setBookingForDebrief(booking);
             setIsDebriefOpen(true);
         } else {
+            const tempLogEntry: TrainingLogEntry = {
+                id: booking.pendingLogEntryId || `temp-log-${Date.now()}`,
+                date: booking.date,
+                aircraft: booking.aircraft,
+                startHobbs: booking.startHobbs || 0,
+                endHobbs: booking.endHobbs || 0,
+                flightDuration: booking.flightDuration || 0,
+                instructorName: booking.instructor || '',
+                trainingExercises: [],
+            };
+            setLogToEdit(tempLogEntry);
+            setBookingForDebrief(booking);
+            setIsDebriefOpen(true);
             toast({
-                variant: 'destructive',
-                title: 'Log Entry Not Found',
-                description: `Could not find log entry with ID: ${booking.pendingLogEntryId}. Please add it manually.`,
+                variant: "default",
+                title: "Draft Log Created",
+                description: `A draft log was created from the booking as the original couldn't be found. Please verify the details.`
             });
         }
     };

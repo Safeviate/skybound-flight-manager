@@ -31,6 +31,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 export default function MeetingsPage() {
   const { company } = useUser();
@@ -74,87 +75,90 @@ export default function MeetingsPage() {
           <CardDescription>View all scheduled facility bookings and their meeting minutes.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Facility</TableHead>
-                <TableHead>Event</TableHead>
-                <TableHead>Attendees</TableHead>
-                <TableHead>Responsible Person</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {meetings.length > 0 ? (
-                meetings.map(meeting => {
-                   const allAttendees = [
-                    ...(meeting.personnelAttendees || []),
-                    ...(meeting.studentAttendees || []),
-                    ...(meeting.externalAttendees || [])
-                  ];
+          <ScrollArea>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Facility</TableHead>
+                  <TableHead>Event</TableHead>
+                  <TableHead>Attendees</TableHead>
+                  <TableHead>Responsible Person</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {meetings.length > 0 ? (
+                  meetings.map(meeting => {
+                    const allAttendees = [
+                      ...(meeting.personnelAttendees || []),
+                      ...(meeting.studentAttendees || []),
+                      ...(meeting.externalAttendees || [])
+                    ];
 
-                  return (
-                  <TableRow key={meeting.id}>
-                    <TableCell>{format(parseISO(meeting.date), 'MMM d, yyyy')}</TableCell>
-                    <TableCell>{meeting.aircraft}</TableCell>
-                    <TableCell>{meeting.title}</TableCell>
-                     <TableCell>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-muted-foreground" />
-                              <Badge variant="secondary">{allAttendees.length}</Badge>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{allAttendees.join(', ')}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </TableCell>
-                    <TableCell>{meeting.responsiblePerson}</TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/meetings/${meeting.id}`}>
-                          <FileText className="mr-2 h-4 w-4" />
-                          {meeting.meetingMinutes ? 'View/Edit Minutes' : 'Create Minutes'}
-                        </Link>
-                      </Button>
-                      <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                              <Button variant="destructive" size="icon">
-                                  <Trash2 className="h-4 w-4" />
-                              </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                              <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete the meeting "{meeting.title}".
-                              </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(meeting.id)}>
-                                  Yes, delete meeting
-                              </AlertDialogAction>
-                              </AlertDialogFooter>
-                          </AlertDialogContent>
-                      </AlertDialog>
+                    return (
+                    <TableRow key={meeting.id}>
+                      <TableCell>{format(parseISO(meeting.date), 'MMM d, yyyy')}</TableCell>
+                      <TableCell>{meeting.aircraft}</TableCell>
+                      <TableCell>{meeting.title}</TableCell>
+                      <TableCell>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                                <Badge variant="secondary">{allAttendees.length}</Badge>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{allAttendees.join(', ')}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </TableCell>
+                      <TableCell>{meeting.responsiblePerson}</TableCell>
+                      <TableCell className="text-right space-x-2">
+                        <Button asChild variant="outline" size="sm">
+                          <Link href={`/meetings/${meeting.id}`}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            {meeting.meetingMinutes ? 'View/Edit Minutes' : 'Create Minutes'}
+                          </Link>
+                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="icon">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the meeting "{meeting.title}".
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(meeting.id)}>
+                                    Yes, delete meeting
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  )})
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      No meetings found.
                     </TableCell>
                   </TableRow>
-                )})
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
-                    No meetings found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
         </CardContent>
       </Card>
     </main>

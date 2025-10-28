@@ -114,6 +114,38 @@ export async function createUserAndSendWelcomeEmail(
   }
 }
 
+export async function manuallyResetPassword(person: User): Promise<{ success: boolean; message: string; temporaryPassword?: string }> {
+    if (!person.email) {
+        return { success: false, message: 'This user does not have an email address on file.' };
+    }
+
+    const temporaryPassword = Math.random().toString(36).slice(-8);
+
+    try {
+        const result = await adminResetPassword({ userId: person.id, newPassword: temporaryPassword });
+
+        if (!result.success) {
+            throw new Error(result.message);
+        }
+        
+        let collectionName = 'users';
+        if (person.role === 'Student') {
+            collectionName = 'students';
+        } else if (person.role === 'Hire and Fly') {
+            collectionName = 'hire-and-fly';
+        }
+
+        const userRef = doc(db, `companies/${person.companyId}/${collectionName}`, person.id);
+        await updateDoc(userRef, { mustChangePassword: true });
+        
+        return { success: true, message: `Password for ${person.name} has been reset.`, temporaryPassword: result.temporaryPassword };
+
+    } catch (error: any) {
+        console.error("Error resetting password:", error);
+        return { success: false, message: `Could not reset password: ${error.message}` };
+    }
+}
+
 export async function resetUserPasswordAndSendWelcomeEmail(person: User, company: Company): Promise<{ success: boolean; message: string }> {
     if (!person.email) {
         return { success: false, message: 'This user does not have an email address on file.' };

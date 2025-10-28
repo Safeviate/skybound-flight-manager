@@ -4,7 +4,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import type { Aircraft, Booking, User, UserDocument } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plane, User as UserIcon, Clock, Users, Shield, CheckSquare, AlertTriangle } from 'lucide-react';
+import { Plane, User as UserIcon, Clock, Users, Shield, CheckSquare, AlertTriangle, Power } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format, parse, differenceInMinutes, isWithinInterval, startOfDay, parseISO } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { differenceInDays } from 'date-fns';
+import { LiveLocationTracker } from '../training-schedule/live-location-tracker';
 
 
 interface LiveFlight {
@@ -76,6 +77,7 @@ export function DashboardPageContent({
 }: DashboardPageContentProps) {
     const [currentTime, setCurrentTime] = useState(new Date());
     const { settings } = useSettings();
+    const [devTrackingAircraftId, setDevTrackingAircraftId] = useState<string | null>(null);
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Update every minute
@@ -152,8 +154,8 @@ export function DashboardPageContent({
             if (ac.status === 'Archived') return;
 
             const docsToCheck = [
-                { type: 'Airworthiness', expiryDate: ac.airworthinessExpiry },
-                { type: 'Insurance', expiryDate: ac.insuranceExpiry }
+                { type: 'Airworthiness', expiryDate: ac.airworthinessDoc?.expiryDate },
+                { type: 'Insurance', expiryDate: ac.insuranceDoc?.expiryDate }
             ];
 
             docsToCheck.forEach(doc => {
@@ -199,34 +201,21 @@ export function DashboardPageContent({
         }
     }, [initialAircraft, initialUsers, initialStudents, settings]);
 
+    const activeTrackingAircraft = useMemo(() => {
+        if (!devTrackingAircraftId) return null;
+        return initialAircraft.find(a => a.id === devTrackingAircraftId) || null;
+    }, [devTrackingAircraftId, initialAircraft]);
 
     return (
         <main className="flex-1 p-4 md:p-8 space-y-6">
+             {settings.liveTrackingDevMode && activeTrackingAircraft && (
+                <LiveLocationTracker 
+                    aircraft={activeTrackingAircraft} 
+                    enabled={true} 
+                />
+            )}
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Live Flight Status</CardTitle>
-                            <CardDescription>
-                                Overview of all aircraft currently in flight based on schedule. Last updated: {format(currentTime, 'HH:mm')}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {liveFlights.length > 0 ? (
-                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {liveFlights.map(flight => (
-                                        <LiveFlightCard key={flight.booking.id} flight={flight} />
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-40 text-center text-muted-foreground border-2 border-dashed rounded-lg">
-                                    <Plane className="h-10 w-10 mb-2" />
-                                    <p className="font-medium">All aircraft are on the ground.</p>
-                                    <p className="text-xs">No active bookings at this time.</p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
                     <Card>
                         <CardHeader>
                             <CardTitle>Student Milestone Progress</CardTitle>

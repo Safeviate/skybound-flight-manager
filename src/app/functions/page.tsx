@@ -57,6 +57,21 @@ function FunctionsPage() {
                 onCheckedChange={() => handleToggle('welcomeEmailEnabled')}
               />
             </div>
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label htmlFor="live-tracking-dev-mode" className="text-base">
+                  Live Tracking Dev Mode
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Manually start/stop GPS tracking for any aircraft from the fleet page for testing.
+                </p>
+              </div>
+              <Switch
+                id="live-tracking-dev-mode"
+                checked={settings.liveTrackingDevMode}
+                onCheckedChange={() => handleToggle('liveTrackingDevMode')}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -27,6 +27,7 @@ interface MultiSelectProps {
   onChange: (selected: string[]) => void
   placeholder?: string
   className?: string
+  displayValues?: { value: string; label: string }[]
 }
 
 export function MultiSelect({
@@ -35,12 +36,15 @@ export function MultiSelect({
   onChange,
   placeholder = "Select options...",
   className,
+  displayValues,
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false)
 
   const handleUnselect = (item: string) => {
     onChange(selected.filter((i) => i !== item))
   }
+
+  const valuesToDisplay = displayValues || selected.map(val => ({ value: val, label: val }));
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -54,19 +58,19 @@ export function MultiSelect({
           onClick={() => setOpen(!open)}
         >
           <div className="flex flex-wrap gap-1">
-            {selected.length > 0 ? (
-              selected.map((item) => (
+            {valuesToDisplay.length > 0 ? (
+              valuesToDisplay.map((item) => (
                 <Badge
-                  key={item}
+                  key={item.value}
                   variant="secondary"
                   className="rounded-sm pr-1"
                 >
-                  {item}
+                  {item.label}
                   <button
                     className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
-                        handleUnselect(item)
+                        handleUnselect(item.value)
                       }
                     }}
                     onMouseDown={(e) => {
@@ -75,7 +79,7 @@ export function MultiSelect({
                     }}
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleUnselect(item)
+                      handleUnselect(item.value)
                     }}
                   >
                     <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
