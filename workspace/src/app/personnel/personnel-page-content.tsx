@@ -195,6 +195,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
             const userRef = doc(db, `companies/${company.id}/users`, passwordResetFor.id);
             await updateDoc(userRef, { mustChangePassword: true });
             toast({ title: 'Password Reset Successful', description: `Password for ${passwordResetFor.name} has been updated.` });
+            setPasswordResetFor(null);
         } else {
             toast({ variant: 'destructive', title: 'Password Reset Failed', description: result.message });
         }

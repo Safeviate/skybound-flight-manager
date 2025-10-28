@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -29,7 +30,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import { DiscussionSection } from './discussion-section';
-import { CorrectiveActionPlanForm } from './corrective-action-plan-form';
 import { QualityAuditAnalyzer } from '../quality-audit-analyzer';
 import type { GenerateQualityCapOutput } from '@/ai/flows/generate-quality-cap-flow';
 import { AuditTeamForm } from './audit-team-form';
@@ -87,7 +87,8 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
 
     const availableRecipients = React.useMemo(() => {
         if (!audit.investigationTeam || !user) return [];
-        return audit.investigationTeam.filter(name => name !== user.name);
+        const teamNames = audit.investigationTeam || [];
+        return teamNames.filter(name => name !== user.name);
     }, [audit.investigationTeam, user]);
 
 
@@ -232,7 +233,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
 
              <Card className="print:shadow-none print:border-none">
                 <CardHeader>
-                    {/* THIS IS THE STANDARD DOCUMENT HEADER. ALL REPORTS/FORMS SHOULD FOLLOW THIS FORMAT. */}
                     <div className="flex justify-between items-start">
                         <div className="flex items-center gap-4">
                             {company?.logoUrl && (
@@ -296,272 +296,133 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                     </div>
                 </CardContent>
             </Card>
-
-            <Tabs defaultValue="summary" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 no-print">
-                    <TabsTrigger value="summary">Summary</TabsTrigger>
-                    <TabsTrigger value="team">Audit Team</TabsTrigger>
-                    <TabsTrigger value="checklist">Full Checklist</TabsTrigger>
-                    <TabsTrigger value="discussion">Discussion</TabsTrigger>
-                </TabsList>
-                <TabsContent value="summary" className="space-y-6 mt-4">
-                     {nonConformances.length > 0 && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Non-Conformance Report</CardTitle>
-                                <CardDescription>Details of all non-compliant findings from this audit.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {nonConformances.map((issue, index) => (
-                                    <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
-                                                <p className="font-medium mt-2">{index + 1}. {issue.text}</p>
-                                                <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
-                                                <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
-                                                {issue.photo && <Image src={issue.photo} alt={`Photo for ${issue.text}`} width={200} height={112} className="mt-2 rounded-md" />}
-                                            </div>
-                                        </div>
-                                       {issue.correctiveActionPlans && issue.correctiveActionPlans.length > 0 && (
-                                        <div className="space-y-4">
-                                          <h4 className="font-semibold text-sm">Corrective Action Plan(s)</h4>
-                                          {issue.correctiveActionPlans.map((plan, planIndex) => (
-                                            <div key={planIndex} className="p-3 border rounded-md space-y-2 bg-background">
-                                              <div>
-                                                <p className="font-medium text-muted-foreground text-sm">Root Cause</p>
-                                                <p className="text-sm">{plan.rootCause}</p>
-                                              </div>
-                                              <div>
-                                                <p className="font-medium text-muted-foreground text-sm">Actions</p>
-                                                <ul className="list-disc pl-5 text-sm">
-                                                  {plan.actions.map(action => (
-                                                    <li key={action.id} className="mb-1">
-                                                      <span className={cn(action.status === 'Closed' && "line-through text-muted-foreground")}>
-                                                        {action.action}
-                                                      </span>
-                                                      <div className="text-xs text-muted-foreground">
-                                                        {action.responsiblePerson} - Due: {format(parseISO(action.completionDate), 'PPP')} - <Badge variant={action.status === 'Closed' ? 'success' : 'warning'} className="h-auto py-0 px-1.5">{action.status}</Badge>
-                                                      </div>
-                                                    </li>
-                                                  ))}
-                                                </ul>
-                                              </div>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      )}
+            
+            {nonConformances.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Non-Conformance Report</CardTitle>
+                        <CardDescription>Details of all non-compliant findings from this audit.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {nonConformances.map((issue, index) => (
+                            <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
+                                        <p className="font-medium mt-2">{index + 1}. {issue.text}</p>
+                                        <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
+                                        <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
+                                        {issue.photo && <Image src={issue.photo} alt={`Photo for ${issue.text}`} width={200} height={112} className="mt-2 rounded-md" />}
                                     </div>
-                                ))}
-                            </CardContent>
-                        </Card>
-                    )}
-                    
-                    {observations.length > 0 && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Observations</CardTitle>
-                                <CardDescription>Items noted during the audit that are not non-conformances but could lead to improvements.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {observations.map((item, index) => (
-                                    <div key={item.id} className="p-4 border rounded-lg mb-4">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-medium">{index + 1}. {item.text}</p>
-                                                <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Badge variant="secondary">Observation</Badge>
-                                            </div>
+                                </div>
+                                {issue.correctiveActionPlans && issue.correctiveActionPlans.length > 0 && (
+                                <div className="space-y-4">
+                                    <h4 className="font-semibold text-sm">Corrective Action Plan(s)</h4>
+                                    {issue.correctiveActionPlans.map((plan, planIndex) => (
+                                    <div key={planIndex} className="p-3 border rounded-md space-y-2 bg-background">
+                                        <div>
+                                        <p className="font-medium text-muted-foreground text-sm">Root Cause</p>
+                                        <p className="text-sm">{plan.rootCause}</p>
                                         </div>
-                                        {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
-                                        {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
+                                        <div>
+                                        <p className="font-medium text-muted-foreground text-sm">Actions</p>
+                                        <ul className="list-disc pl-5 text-sm">
+                                            {plan.actions.map(action => (
+                                            <li key={action.id} className="mb-1">
+                                                <span className={cn(action.status === 'Closed' && "line-through text-muted-foreground")}>
+                                                {action.action}
+                                                </span>
+                                                <div className="text-xs text-muted-foreground">
+                                                {action.responsiblePerson} - Due: {format(parseISO(action.completionDate), 'PPP')} - <Badge variant={action.status === 'Closed' ? 'success' : 'warning'} className="h-auto py-0 px-1.5">{action.status}</Badge>
+                                                </div>
+                                            </li>
+                                            ))}
+                                        </ul>
+                                        </div>
                                     </div>
-                                ))}
-                            </CardContent>
-                        </Card>
-                    )}
-                </TabsContent>
-                 <TabsContent value="team" className="mt-4">
-                    <AuditTeamForm audit={audit} onUpdate={onUpdate} personnel={personnel} />
-                </TabsContent>
-                <TabsContent value="checklist" className="mt-4">
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Full Audit Checklist</CardTitle>
-                            <CardDescription>
-                                A complete log of all items from the audit questionnaire.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {(() => {
-                                let questionNumber = 0;
-                                return otherFindings.map(item => {
-                                    if (item.type === 'Header') {
-                                        return <h3 key={item.id} className="text-lg font-semibold mt-6 mb-2 border-b pb-2">{item.text}</h3>;
-                                    }
-                                    const { icon, variant, text } = getFindingInfo(item.finding);
-                                    const currentQuestionNumber = ++questionNumber;
-                                    return (
-                                        <div key={item.id} className="p-4 border rounded-lg mb-4">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <p className="font-medium">{currentQuestionNumber}. {item.text}</p>
-                                                    <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant={variant} className="whitespace-nowrap">
-                                                        {icon}
-                                                        <span className="ml-2">{text}</span>
-                                                    </Badge>
-                                                     {item.level && (
-                                                        <Badge variant="secondary">{item.level}</Badge>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
-                                            {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
-                                            {item.suggestedImprovement && (
-                                                <div className="mt-2">
-                                                    <p className="text-xs font-semibold text-primary">Suggested Improvement:</p>
-                                                    <p className="text-sm p-2 bg-primary/10 rounded-md whitespace-pre-wrap">{item.suggestedImprovement}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )
-                                })
-                            })()}
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="discussion" className="mt-4">
-                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Discussion Forum</CardTitle>
-                                <CardDescription>
-                                    A forum for auditors and auditees to discuss findings and corrective actions.
-                                </CardDescription>
+                                    ))}
+                                </div>
+                                )}
                             </div>
-                            <Dialog open={isDiscussionDialogOpen} onOpenChange={setIsDiscussionDialogOpen}>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline" className="no-print">
-                                        <Send className="mr-2 h-4 w-4" />
-                                        Post Message
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Post New Message</DialogTitle>
-                                        <DialogDescription>Your message will be visible to all members of the investigation team.</DialogDescription>
-                                    </DialogHeader>
-                                    <Form {...discussionForm}>
-                                        <form onSubmit={discussionForm.handleSubmit(handleNewDiscussionMessage)} className="space-y-4">
-                                        <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-                                            <FormField
-                                                control={discussionForm.control}
-                                                name="recipient"
-                                                render={({ field }) => (
-                                                <FormItem className="flex-1">
-                                                    <FormLabel>Send To (Optional)</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value || ''}>
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                        <SelectValue placeholder="Select a team member" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {availableRecipients.map((name) => (
-                                                        <SelectItem key={name} value={name}>
-                                                            {name}
-                                                        </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={discussionForm.control}
-                                                name="replyByDate"
-                                                render={({ field }) => (
-                                                    <FormItem className="flex-1">
-                                                        <FormLabel>Reply Needed By (Optional)</FormLabel>
-                                                        <Popover>
-                                                            <PopoverTrigger asChild>
-                                                            <FormControl>
-                                                                <Button
-                                                                variant={"outline"}
-                                                                className={cn(
-                                                                    "w-full pl-3 text-left font-normal",
-                                                                    !field.value && "text-muted-foreground"
-                                                                )}
-                                                                data-nosnippet
-                                                                >
-                                                                {field.value ? (
-                                                                    format(field.value, "PPP")
-                                                                ) : (
-                                                                    <span>Pick a date</span>
-                                                                )}
-                                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                                </Button>
-                                                            </FormControl>
-                                                            </PopoverTrigger>
-                                                            <PopoverContent className="w-auto p-0" align="start">
-                                                            <Calendar
-                                                                mode="single"
-                                                                selected={field.value}
-                                                                onSelect={field.onChange}
-                                                                disabled={(date) => date < new Date()}
-                                                                initialFocus
-                                                            />
-                                                            </PopoverContent>
-                                                        </Popover>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
+            
+            {observations.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Observations</CardTitle>
+                        <CardDescription>Items noted during the audit that are not non-conformances but could lead to improvements.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {observations.map((item, index) => (
+                            <div key={item.id} className="p-4 border rounded-lg mb-4">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-medium">{index + 1}. {item.text}</p>
+                                        <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="secondary">Observation</Badge>
+                                    </div>
+                                </div>
+                                {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
+                                {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Full Audit Checklist</CardTitle>
+                    <CardDescription>
+                        A complete log of all items from the audit questionnaire.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {(() => {
+                        let questionNumber = 0;
+                        return otherFindings.map(item => {
+                            if (item.type === 'Header') {
+                                return <h3 key={item.id} className="text-lg font-semibold mt-6 mb-2 border-b pb-2">{item.text}</h3>;
+                            }
+                            const { icon, variant, text } = getFindingInfo(item.finding);
+                            const currentQuestionNumber = ++questionNumber;
+                            return (
+                                <div key={item.id} className="p-4 border rounded-lg mb-4">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="font-medium">{currentQuestionNumber}. {item.text}</p>
+                                            <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
                                         </div>
-                                        <FormField
-                                            control={discussionForm.control}
-                                            name="message"
-                                            render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Message / Instruction</FormLabel>
-                                                <FormControl>
-                                                <Textarea
-                                                    id="message"
-                                                    placeholder="Type your message here..."
-                                                    className="min-h-[100px]"
-                                                    {...field}
-                                                />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant={variant} className="whitespace-nowrap">
+                                                {icon}
+                                                <span className="ml-2">{text}</span>
+                                            </Badge>
+                                            {item.level && (
+                                                <Badge variant="secondary">{item.level}</Badge>
                                             )}
-                                        />
-                                        <div className="flex justify-end items-center">
-                                            <Button type="submit">
-                                                <Send className="mr-2 h-4 w-4" />
-                                                Post Message
-                                            </Button>
                                         </div>
-                                        </form>
-                                    </Form>
-                                </DialogContent>
-                            </Dialog>
-                        </CardHeader>
-                        <CardContent>
-                            <DiscussionSection 
-                                audit={audit} 
-                                onReply={handleReply}
-                            />
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
+                                    </div>
+                                    {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
+                                    {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
+                                    {item.suggestedImprovement && (
+                                        <div className="mt-2">
+                                            <p className="text-xs font-semibold text-primary">Suggested Improvement:</p>
+                                            <p className="text-sm p-2 bg-primary/10 rounded-md whitespace-pre-wrap">{item.suggestedImprovement}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        })
+                    })()}
+                </CardContent>
+            </Card>
+
              <Card className="mt-6">
                 <CardHeader>
                     <CardTitle>Signatures</CardTitle>
