@@ -169,7 +169,7 @@ export function EditHireAndFlyForm({ pilot, onUpdate }: EditHireAndFlyFormProps)
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Phone Number</FormLabel>
-                <FormControl><Input {...field} /></FormControl>
+                <FormControl><Input type="tel" {...field} /></FormControl>
                 <FormMessage />
                 </FormItem>
             )}
@@ -202,7 +202,7 @@ export function EditHireAndFlyForm({ pilot, onUpdate }: EditHireAndFlyFormProps)
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField control={form.control} name="nextOfKinName" render={({ field }) => (<FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="e.g., Jane Doe" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="nextOfKinRelation" render={({ field }) => (<FormItem><FormLabel>Relation</FormLabel><FormControl><Input placeholder="e.g., Spouse" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="nextOfKinPhone" render={({ field }) => (<FormItem className="col-span-full"><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="+27 98 765 4321" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="nextOfKinPhone" render={({ field }) => (<FormItem className="col-span-full"><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+27 98 765 4321" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
             </div>
         </div>
         

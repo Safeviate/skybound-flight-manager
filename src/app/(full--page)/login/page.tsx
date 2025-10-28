@@ -17,8 +17,6 @@ import { auth } from '@/lib/firebase';
 import { sendPasswordResetEmail, updatePassword, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult } from 'firebase/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import PhoneInput from 'react-phone-number-input';
-import 'react-phone-number-input/style.css';
 
 function ChangePasswordDialog({ onPasswordChanged }: { onPasswordChanged: () => void }) {
   const [newPassword, setNewPassword] = useState('');
@@ -265,13 +263,12 @@ export default function LoginPage() {
                         <form onSubmit={handlePhoneLogin} className="space-y-4 pt-4">
                             <div className="space-y-2">
                                 <Label htmlFor="phone">Phone Number</Label>
-                                <PhoneInput
+                                <Input
                                     id="phone"
-                                    international
-                                    defaultCountry="ZA"
+                                    type="tel"
+                                    placeholder="+27123456789"
                                     value={phone}
-                                    onChange={(value) => setPhone(value || '')}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    onChange={(e) => setPhone(e.target.value || '')}
                                 />
                             </div>
                             <Button type="submit" className="w-full" disabled={isLoading || !phone}>

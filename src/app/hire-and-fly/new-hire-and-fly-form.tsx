@@ -178,7 +178,7 @@ export function NewHireAndFlyForm({ onSuccess }: NewHireAndFlyFormProps) {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Phone Number</FormLabel>
-                        <FormControl><Input placeholder="+27 12 345 6789" {...field} /></FormControl>
+                        <FormControl><Input type="tel" placeholder="+27 12 345 6789" {...field} /></FormControl>
                         <FormMessage />
                         </FormItem>
                     )}

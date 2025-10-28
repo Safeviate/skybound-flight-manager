@@ -41,8 +41,6 @@ import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firesto
 import { createUserAndSendWelcomeEmail } from '../actions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { StandardCamera } from '@/components/ui/standard-camera';
-import PhoneInput from 'react-phone-number-input';
-import 'react-phone-number-input/style.css';
 
 
 const phoneRegex = new RegExp(
@@ -238,14 +236,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                             <FormItem>
                             <FormLabel>Phone Number</FormLabel>
                             <FormControl>
-                                <PhoneInput
-                                    international
-                                    defaultCountry="ZA"
-                                    placeholder="Enter phone number"
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                />
+                                <Input type="tel" placeholder="+27123456789" {...field} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -267,14 +258,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                                 <FormItem>
                                 <FormLabel>Emergency Contact Phone</FormLabel>
                                 <FormControl>
-                                    <PhoneInput
-                                        international
-                                        defaultCountry="ZA"
-                                        placeholder="Enter phone number"
-                                        value={field.value}
-                                        onChange={field.onChange}
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    />
+                                  <Input type="tel" placeholder="+27987654321" {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
