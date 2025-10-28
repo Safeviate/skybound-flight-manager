@@ -81,7 +81,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
     });
 
     const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
-    const [isSigning, setIsSigning] = React.useState(false);
     
     const nonConformances = useMemo(() => audit.checklistItems.filter(item => item.finding === 'Non Compliant' || item.finding === 'Partial'), [audit.checklistItems]);
     const observations = useMemo(() => audit.checklistItems.filter(item => item.finding === 'Observation'), [audit.checklistItems]);
@@ -314,69 +313,50 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                 <CardDescription>Details of all non-compliant findings from this audit.</CardDescription>
                             </CardHeader>
                             <CardContent>
-<<<<<<< HEAD
-                                {nonConformances.map((issue, index) => {
-                                    return (
-                                        <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
-                                                    <p className="font-medium mt-2">{index + 1}. {issue.text}</p>
-                                                    <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
-                                                    <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
-                                                    {issue.photo && <Image src={issue.photo} alt={`Photo for ${issue.text}`} width={200} height={112} className="mt-2 rounded-md" />}
-=======
-                                {(() => {
-                                    let nonConformanceCounter = 1;
-                                    return audit.nonConformanceIssues.map(issue => {
-                                        const issueText = `Non-Conformance: ${issue.itemText}\nLevel: ${issue.level}\nRegulation: ${issue.regulationReference}\n\nAuditor Comment:\n${issue.comment}`;
-                                        return (
-                                            <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
-                                                <div className="flex justify-between items-start">
-                                                    <div>
-                                                        <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
-                                                        <p className="font-medium mt-2">{nonConformanceCounter++}. {issue.itemText}</p>
-                                                        <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
-                                                        <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
-                                                    </div>
->>>>>>> 3660f00aa221a8e2ee721a4d46244ad9522e8024
-                                                </div>
+                                {nonConformances.map((issue, index) => (
+                                    <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
+                                                <p className="font-medium mt-2">{index + 1}. {issue.text}</p>
+                                                <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
+                                                <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
+                                                {issue.photo && <Image src={issue.photo} alt={`Photo for ${issue.text}`} width={200} height={112} className="mt-2 rounded-md" />}
                                             </div>
-                                           {issue.correctiveActionPlans && issue.correctiveActionPlans.length > 0 && (
-                                            <div className="space-y-4">
-                                              <h4 className="font-semibold text-sm">Corrective Action Plan(s)</h4>
-                                              {issue.correctiveActionPlans.map((plan, planIndex) => (
-                                                <div key={planIndex} className="p-3 border rounded-md space-y-2 bg-background">
-                                                  <div>
-                                                    <p className="font-medium text-muted-foreground text-sm">Root Cause</p>
-                                                    <p className="text-sm">{plan.rootCause}</p>
-                                                  </div>
-                                                  <div>
-                                                    <p className="font-medium text-muted-foreground text-sm">Actions</p>
-                                                    <ul className="list-disc pl-5 text-sm">
-                                                      {plan.actions.map(action => (
-                                                        <li key={action.id} className="mb-1">
-                                                          <span className={cn(action.status === 'Closed' && "line-through text-muted-foreground")}>
-                                                            {action.action}
-                                                          </span>
-                                                          <div className="text-xs text-muted-foreground">
-                                                            {action.responsiblePerson} - Due: {format(parseISO(action.completionDate), 'PPP')} - <Badge variant={action.status === 'Closed' ? 'success' : 'warning'} className="h-auto py-0 px-1.5">{action.status}</Badge>
-                                                          </div>
-                                                        </li>
-                                                      ))}
-                                                    </ul>
-                                                  </div>
-                                                </div>
-                                              ))}
-                                            </div>
-                                          )}
                                         </div>
-                                    )
-                                })}
+                                       {issue.correctiveActionPlans && issue.correctiveActionPlans.length > 0 && (
+                                        <div className="space-y-4">
+                                          <h4 className="font-semibold text-sm">Corrective Action Plan(s)</h4>
+                                          {issue.correctiveActionPlans.map((plan, planIndex) => (
+                                            <div key={planIndex} className="p-3 border rounded-md space-y-2 bg-background">
+                                              <div>
+                                                <p className="font-medium text-muted-foreground text-sm">Root Cause</p>
+                                                <p className="text-sm">{plan.rootCause}</p>
+                                              </div>
+                                              <div>
+                                                <p className="font-medium text-muted-foreground text-sm">Actions</p>
+                                                <ul className="list-disc pl-5 text-sm">
+                                                  {plan.actions.map(action => (
+                                                    <li key={action.id} className="mb-1">
+                                                      <span className={cn(action.status === 'Closed' && "line-through text-muted-foreground")}>
+                                                        {action.action}
+                                                      </span>
+                                                      <div className="text-xs text-muted-foreground">
+                                                        {action.responsiblePerson} - Due: {format(parseISO(action.completionDate), 'PPP')} - <Badge variant={action.status === 'Closed' ? 'success' : 'warning'} className="h-auto py-0 px-1.5">{action.status}</Badge>
+                                                      </div>
+                                                    </li>
+                                                  ))}
+                                                </ul>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                ))}
                             </CardContent>
                         </Card>
                     )}
-<<<<<<< HEAD
                     
                     {observations.length > 0 && (
                         <Card>
@@ -391,47 +371,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                             <div>
                                                 <p className="font-medium">{index + 1}. {item.text}</p>
                                                 <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
-=======
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Additional Checklist Findings</CardTitle>
-                            <CardDescription>
-                                A log of all compliant items and observations from the audit.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {(() => {
-                                let questionNumber = 0;
-                                return audit.checklistItems.map(item => {
-                                    if (item.type !== 'Header') {
-                                        questionNumber++;
-                                    }
-                                    if (item.finding !== 'Non Compliant' && item.finding !== 'Partial') {
-                                        const { icon, variant, text } = getFindingInfo(item.finding);
-                                        return (
-                                            <div key={item.id} className="p-4 border rounded-lg mb-4">
-                                                <div className="flex justify-between items-start">
-                                                    <div>
-                                                        <p className="font-medium">{item.type !== 'Header' && `${questionNumber}. `}{item.text}</p>
-                                                        <div className="text-xs text-muted-foreground">
-                                                            <p>Regulation: {item.regulationReference || 'N/A'}</p>
-                                                            <p>Reference: {item.reference || 'N/A'}</p>
-                                                        </div>
-                                                    </div>
-                                                    <Badge variant={variant} className="whitespace-nowrap">
-                                                        {icon}
-                                                        <span className="ml-2">{text}</span>
-                                                    </Badge>
-                                                </div>
-                                                {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
-                                                {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
-                                                {item.suggestedImprovement && (
-                                                    <div className="mt-2">
-                                                        <p className="text-xs font-semibold text-primary">Suggested Improvement:</p>
-                                                        <p className="text-sm p-2 bg-primary/10 rounded-md whitespace-pre-wrap">{item.suggestedImprovement}</p>
-                                                    </div>
-                                                )}
->>>>>>> 3660f00aa221a8e2ee721a4d46244ad9522e8024
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <Badge variant="secondary">Observation</Badge>
@@ -470,7 +409,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                             <div className="flex justify-between items-start">
                                                 <div>
                                                     <p className="font-medium">{currentQuestionNumber}. {item.text}</p>
-<<<<<<< HEAD
                                                     <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
@@ -481,12 +419,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                      {item.level && (
                                                         <Badge variant="secondary">{item.level}</Badge>
                                                     )}
-=======
-                                                    <div className="text-xs text-muted-foreground ml-5">
-                                                        <p>Regulation: {item.regulationReference || 'N/A'}</p>
-                                                        <p>Reference: {item.reference || 'N/A'}</p>
-                                                    </div>
->>>>>>> 3660f00aa221a8e2ee721a4d46244ad9522e8024
                                                 </div>
                                             </div>
                                             {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
@@ -758,13 +690,8 @@ export default function QualityAuditDetailPage() {
     const updatedItems = audit.checklistItems.map(item => {
       if (item.id === itemId) {
         const updatedItem = { ...item, [field]: value };
-<<<<<<< HEAD
         if (field === 'finding') {
             updatedItem.level = null;
-=======
-        if (field === 'finding' && value !== 'Non Compliant' && value !== 'Partial') {
-          updatedItem.level = null;
->>>>>>> 3660f00aa221a8e2ee721a4d46244ad9522e8024
         }
         return updatedItem;
       }
@@ -1172,18 +1099,3 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
-
-
-
-
-
-<<<<<<< HEAD
-
-
-
-
-
-
-
-=======
->>>>>>> 3660f00aa221a8e2ee721a4d46244ad9522e8024
