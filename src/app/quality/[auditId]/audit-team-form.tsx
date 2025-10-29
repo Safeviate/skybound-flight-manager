@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -44,7 +43,7 @@ export function AuditTeamForm({ audit, personnel, onUpdate }: AuditTeamFormProps
   
   const auditorUser = personnel.find(p => p.name === audit.auditor);
   const auditeeUser = personnel.find(p => p.name === audit.auditeeName);
-  const auditeePosition = auditeeUser?.role === 'Auditee' ? auditeeUser.externalPosition : auditeeUser?.role;
+  const auditeePosition = auditeeUser?.role === 'Auditee' ? auditeeUser.externalCompanyName : auditeeUser?.role;
 
   const auditTeamUsers = audit.auditTeam || [];
   const auditeeTeamUsers = audit.auditeeTeam || [];
