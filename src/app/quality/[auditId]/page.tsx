@@ -473,5 +473,488 @@ export default function QualityAuditDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { user, company, loading: userLoading } = useUser();
-  const { toast } }
+  const { toast } = useToast();
+  const [audit, setAudit] = useState<QualityAudit | null>(null);
+  const [savedAudit, setSavedAudit] = useState<QualityAudit | null>(null);
+  const [loading, setLoading] = useState(true);
+  const auditId = params.auditId as string;
+  const [personnel, setPersonnel] = useState<User[]>([]);
+  const [cameraItemId, setCameraItemId] = useState<string | null>(null);
+  const [isBackAlertOpen, setIsBackAlertOpen] = useState(false);
+
+  
+  const finalFindingOptions = useMemo(() => 
+    (company?.findingOptions?.length ?? 0) > 0 
+      ? company!.findingOptions! 
+      : [
+          {id: '1', name: 'Compliant'},
+          {id: '2', name: 'Non Compliant'},
+          {id: '3', name: 'Partial'},
+          {id: '4', name: 'Observation'},
+          {id: '5', name: 'Not Applicable'},
+        ],
+    [company?.findingOptions]
+  );
+  
+  useEffect(() => {
+    if (userLoading) return;
+    if (!user) {
+        router.push('/login');
+        return;
+    }
+    
+    if (!company?.id || !auditId) {
+        setLoading(false);
+        return;
+    }
+    
+    const fetchAuditAndPersonnel = async () => {
+        setLoading(true);
+        try {
+            const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
+            const personnelQuery = collection(db, `companies/${company.id}/users`);
+            
+            const [auditSnap, personnelSnapshot] = await Promise.all([
+                getDoc(auditRef),
+                getDocs(personnelQuery)
+            ]);
+
+            if (auditSnap.exists()) {
+                const fetchedAudit = { ...auditSnap.data(), id: auditSnap.id } as QualityAudit;
+                setAudit(fetchedAudit);
+                setSavedAudit(fetchedAudit);
+            } else {
+                toast({ variant: 'destructive', title: 'Error', description: 'Audit not found.' });
+            }
+            
+            setPersonnel(personnelSnapshot.docs.map(doc => doc.data() as User));
+
+        } catch (error) {
+            console.error("Error fetching audit details:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch audit details.' });
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    fetchAuditAndPersonnel();
+  }, [auditId, user, userLoading, router, toast, company]);
+
+  const hasUnsavedChanges = JSON.stringify(audit) !== JSON.stringify(savedAudit);
+
+  
+  const handleItemChange = useCallback((itemId: string, field: keyof AuditChecklistItem, value: any) => {
+    if (!audit) return;
+  
+    const updatedItems = audit.checklistItems.map(item => {
+      if (item.id === itemId) {
+        const updatedItem = { ...item, [field]: value };
+        if (field === 'finding') {
+            updatedItem.level = null;
+        }
+        return updatedItem;
+      }
+      return item;
+    });
+  
+    setAudit(prevAudit => prevAudit ? { ...prevAudit, checklistItems: updatedItems } : null);
+  }, [audit]);
+
+  const handleAuditUpdate = async (updatedAudit: QualityAudit, showToast = true) => {
+    if (!company) return;
+
+    const cleanAudit = JSON.parse(JSON.stringify(updatedAudit, (key, value) => {
+        return value === undefined ? null : value;
+    }));
+
+    setAudit(cleanAudit); 
+    try {
+        const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
+        await setDoc(auditRef, cleanAudit, { merge: true });
+        setSavedAudit(cleanAudit); // Update saved state after successful save
+        if (showToast) {
+            toast({ title: 'Audit Updated', description: 'Your changes have been saved.' });
+        }
+    } catch (error) {
+        console.error("Error updating audit:", error);
+        toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save changes to the database.' });
+    }
+  };
+  
+   const handleFinalizeAudit = () => {
+    if (!audit) return;
+
+    const totalApplicableItems = audit.checklistItems.filter(item => item.finding !== 'Not Applicable' && item.type !== 'Header').length;
+    const compliantItems = audit.checklistItems.filter(item => item.finding === 'Compliant').length;
+    const complianceScore = totalApplicableItems > 0 ? Math.round((compliantItems / totalApplicableItems) * 100) : 100;
+
+    const nonConformanceIssues: NonConformanceIssue[] = audit.checklistItems
+        .filter(item => item.finding === 'Non Compliant' || item.finding === 'Partial')
+        .map(item => ({
+            id: `${item.id}-${Date.now()}`,
+            itemText: item.text,
+            regulationReference: item.regulationReference,
+            finding: item.finding!,
+            level: item.level!,
+            comment: item.comment,
+            reference: item.reference,
+            correctiveActionPlans: [],
+            photo: item.photo,
+        }));
+
+    const finalAudit: QualityAudit = {
+      ...audit,
+      status: 'Closed',
+      complianceScore,
+      nonConformanceIssues,
+    };
+
+    handleAuditUpdate(finalAudit, true);
+    toast({
+        title: 'Audit Finalized',
+        description: `The audit has been closed with a compliance score of ${complianceScore}%.`,
+    });
+  };
+
+  const handlePhotoSuccess = (dataUrl: string) => {
+    if (cameraItemId) {
+        handleItemChange(cameraItemId, 'photo', dataUrl);
+    }
+    setCameraItemId(null);
+  };
+  
+  const handleFileChange = useCallback((file: File, itemId: string) => {
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast({ variant: 'destructive', title: 'File too large', description: 'Maximum file size is 500KB.' });
+        return;
+      }
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        toast({ variant: 'destructive', title: 'Invalid file type', description: 'Only JPG, PNG, and WEBP are accepted.' });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        handleItemChange(itemId, 'photo', reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  }, [toast, handleItemChange]);
+
+
+  const handleNavigateBack = () => {
+    if (hasUnsavedChanges) {
+      setIsBackAlertOpen(true);
+    } else {
+      router.push('/quality?tab=audits');
+    }
+  };
+
+  if (loading || userLoading) {
+    return (
+        <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
+          <p>Loading audit details...</p>
+        </main>
+    );
+  }
+
+  if (!audit) {
+    return (
+        <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
+          <p>The requested quality audit could not be found.</p>
+        </main>
+    );
+  }
+
+  const isAuditClosed = audit.status === 'Closed' || audit.status === 'Archived';
+  
+  return (
+    <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
+       <AlertDialog open={isBackAlertOpen} onOpenChange={setIsBackAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Do you want to leave without saving?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => router.push('/quality?tab=audits')}>
+              Leave Without Saving
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {isAuditClosed ? (
+          <AuditReportView audit={audit} onUpdate={handleAuditUpdate} personnel={personnel} onNavigateBack={handleNavigateBack} />
+      ) : (
+      <>
+          <h2 className="text-2xl font-bold">Audit Questionnaire</h2>
+          <Card>
+          <CardHeader>
+              <div className="flex items-start justify-between">
+              <div>
+                  <CardTitle className="text-2xl">{audit.title}</CardTitle>
+                  <CardDescription>
+                  Conducting {audit.type} audit on {format(parseISO(audit.date), 'MMMM d, yyyy')}.
+                  </CardDescription>
+              </div>
+              <Badge variant="outline">{audit.status}</Badge>
+              </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm border-t pt-6">
+                  <div>
+                      <p className="font-semibold text-muted-foreground">Department</p>
+                      <p>{audit.department || 'N/A'}</p>
+                  </div>
+                  <div>
+                      <p className="font-semibold text-muted-foreground">Audit Reference</p>
+                      <p>{audit.area || 'N/A'}</p>
+                  </div>
+                   <div>
+                      <p className="font-semibold text-muted-foreground">Auditor</p>
+                      <p>{audit.auditor}</p>
+                  </div>
+                  <div className="space-y-2 md:col-span-1">
+                      <p className="font-semibold text-muted-foreground">Auditee</p>
+                      <p>{audit.auditeeName || 'Not yet assigned'}</p>
+                  </div>
+                  {audit.auditTeam && audit.auditTeam.length > 0 && (
+                        <div className="md:col-span-4">
+                            <p className="font-semibold text-muted-foreground">Team Members</p>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                                {audit.auditTeam.map(member => <Badge key={member} variant="secondary">{member}</Badge>)}
+                            </div>
+                        </div>
+                    )}
+              </div>
+               {audit.scope && (
+                <div className="space-y-2 border-t pt-6">
+                    <Label htmlFor="audit-scope" className="font-semibold">Audit Scope</Label>
+                    <Textarea 
+                        id="audit-scope"
+                        readOnly
+                        value={audit.scope}
+                        className="min-h-[100px] bg-muted whitespace-pre-wrap"
+                    />
+                </div>
+              )}
+              {audit.evidenceReference && (
+                <div className="space-y-2 border-t pt-6">
+                    <Label htmlFor="audit-evidence" className="font-semibold">Audit Reference</Label>
+                    <Textarea 
+                        id="audit-evidence"
+                        readOnly
+                        value={audit.evidenceReference}
+                        className="min-h-[100px] bg-muted whitespace-pre-wrap"
+                    />
+                </div>
+              )}
+              <div className="space-y-2 border-t pt-6">
+                  <Label htmlFor="audit-summary" className="font-semibold">Audit Summary</Label>
+                  <Textarea 
+                  id="audit-summary"
+                  placeholder="Enter the overall audit summary here..."
+                  className="min-h-[100px] whitespace-pre-wrap"
+                  value={audit.summary}
+                  onChange={(e) => setAudit({ ...audit, summary: e.target.value })}
+                  />
+              </div>
+          </CardContent>
+          </Card>
+
+          <Card>
+              <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <CardTitle>Audit Checklist</CardTitle>
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                      <Button variant="outline" onClick={handleNavigateBack} className="w-full sm:w-auto">
+                          <ArrowLeft className="mr-2 h-4 w-4" />
+                          Back to Audits
+                      </Button>
+                      <Button onClick={() => handleAuditUpdate(audit, true)} className="w-full sm:w-auto">
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Progress
+                      </Button>
+                  </div>
+              </CardHeader>
+              <CardContent>
+                  {audit.checklistItems && audit.checklistItems.length > 0 ? (
+                      <div className="space-y-4">
+                          {(() => {
+                                let questionNumber = 0;
+                                return audit.checklistItems.map(item => {
+                                    if (item.type === 'Header') {
+                                        return <h3 key={item.id} className="text-lg font-semibold mt-6 mb-2 border-b pb-2">{item.text}</h3>;
+                                    }
+                                    const findingInfo = getFindingInfo(item.finding);
+                                    const levelInfo = getLevelInfo(item.level);
+                                    const showLevelSelect = item.finding === 'Non Compliant' || item.finding === 'Partial';
+                                    const currentQuestionNumber = ++questionNumber;
+                                    const fileInputId = `file-input-${item.id}`;
+                                    
+                                    let levelDropdownOptions = levelOptions;
+                                    if (item.finding === 'Compliant' || item.finding === 'Observation') {
+                                        levelDropdownOptions = ['Observation'];
+                                    } else if (item.finding === 'Non Compliant' || item.finding === 'Partial') {
+                                        levelDropdownOptions = levelOptions.filter(opt => opt !== 'Observation');
+                                    }
+
+
+                                    return (
+                                        <Collapsible key={item.id} className="p-4 border rounded-lg">
+                                            <CollapsibleTrigger asChild>
+                                                <div className="flex justify-between items-center cursor-pointer">
+                                                    <div className="flex-1">
+                                                        <p className="font-medium">{currentQuestionNumber}. {item.text}</p>
+                                                        {item.regulationReference && <p className="text-xs text-muted-foreground ml-5">Regulation: {item.regulationReference}</p>}
+                                                    </div>
+                                                    <div className="flex items-center gap-4">
+                                                        {item.finding && (
+                                                            <Badge variant={findingInfo.variant} className="whitespace-nowrap">
+                                                                {findingInfo.icon}
+                                                                <span className="ml-2">{findingInfo.text}</span>
+                                                            </Badge>
+                                                        )}
+                                                        {levelInfo && (
+                                                            <Badge variant={levelInfo.variant} className="whitespace-nowrap">
+                                                                {item.level}
+                                                            </Badge>
+                                                        )}
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                            <ChevronDown className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </CollapsibleTrigger>
+                                            <CollapsibleContent className="pt-4 mt-4 border-t space-y-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label className="text-sm font-medium">Finding</Label>
+                                                        <Select value={item.finding || ''} onValueChange={(value: FindingStatus) => handleItemChange(item.id, 'finding', value)}>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select Finding" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {finalFindingOptions.map(opt => (
+                                                                    <SelectItem key={opt.id} value={opt.name}>{opt.name}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    {showLevelSelect && (
+                                                        <div className="space-y-2">
+                                                            <Label className="text-sm font-medium">Level</Label>
+                                                            <Select value={item.level || ''} onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select Level" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {levelDropdownOptions.map(opt => (
+                                                                        <SelectItem key={opt} value={opt!}>{opt}</SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-sm font-medium">Reference</Label>
+                                                    <Textarea
+                                                        placeholder="Document references, evidence, etc."
+                                                        value={item.reference || ''}
+                                                        onChange={(e) => handleItemChange(item.id, 'reference', e.target.value)}
+                                                        className="whitespace-pre-wrap"
+                                                        />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-sm font-medium">Comment</Label>
+                                                    <Textarea
+                                                        placeholder="Auditor comments, observations..."
+                                                        value={item.comment || ''}
+                                                        onChange={(e) => handleItemChange(item.id, 'comment', e.target.value)}
+                                                        className="whitespace-pre-wrap"
+                                                        />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-sm font-medium">Suggested Improvement</Label>
+                                                    <Textarea
+                                                        placeholder="Provide a suggestion for improvement..."
+                                                        value={item.suggestedImprovement || ''}
+                                                        onChange={(e) => handleItemChange(item.id, 'suggestedImprovement', e.target.value)}
+                                                        className="whitespace-pre-wrap"
+                                                        />
+                                                </div>
+                                                <div className="space-y-4 pt-4 border-t">
+                                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <Button variant="outline" size="sm" onClick={() => setCameraItemId(item.id)}>
+                                                                <Camera className="mr-2 h-4 w-4" />
+                                                                {item.photo ? 'Retake Photo' : 'Take Photo'}
+                                                            </Button>
+                                                            <Button variant="outline" size="sm" asChild>
+                                                                <label htmlFor={fileInputId} className="cursor-pointer">
+                                                                    <FileUp className="mr-2 h-4 w-4" />
+                                                                    {item.photo ? 'Change' : 'Upload'}
+                                                                </label>
+                                                            </Button>
+                                                            <Input
+                                                                id={fileInputId}
+                                                                type="file"
+                                                                accept="image/*"
+                                                                className="hidden"
+                                                                onChange={(e) => e.target.files && handleFileChange(e.target.files[0], item.id)}
+                                                            />
+                                                            {item.photo && (
+                                                                <>
+                                                                <ImageIcon className="h-5 w-5 text-green-500" />
+                                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleItemChange(item.id, 'photo', null)}>
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </CollapsibleContent>
+                                        </Collapsible>
+                                    )
+                                })
+                            })()}
+                      </div>
+                  ) : (
+                      <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                          <p className="text-muted-foreground font-semibold">No checklist items were recorded for this audit.</p>
+                      </div>
+                  )}
+              </CardContent>
+              <CardFooter>
+                  <Button onClick={handleFinalizeAudit} className="w-full" variant="destructive">
+                      <Check className="mr-2 h-4 w-4" />
+                      Save and Finalize Audit
+                  </Button>
+              </CardFooter>
+          </Card>
+      </>
+      )}
+
+      {/* Camera Dialog */}
+      <Dialog open={!!cameraItemId} onOpenChange={(isOpen) => !isOpen && setCameraItemId(null)}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Take Photo</DialogTitle>
+                <DialogDescription>Attach a photo as evidence for this checklist item.</DialogDescription>
+            </DialogHeader>
+            <StandardCamera onSuccess={handlePhotoSuccess} />
+        </DialogContent>
+      </Dialog>
+    </main>
+  );
+}
+
+QualityAuditDetailPage.title = "Quality Audit Investigation";
+    
+
     
