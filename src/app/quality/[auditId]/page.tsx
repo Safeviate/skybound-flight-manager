@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -35,6 +36,7 @@ import { Label } from '@/components/ui/label';
 import { StandardCamera } from '@/components/ui/standard-camera';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { AuditTeamForm } from './audit-team-form';
 
 const discussionFormSchema = z.object({
   recipient: z.string().optional(),
@@ -292,6 +294,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                 </CardContent>
             </Card>
 
+            <AuditTeamForm audit={audit} onUpdate={onUpdate} personnel={personnel} />
             
             {nonConformances.length > 0 && (
                 <Card>
@@ -789,11 +792,11 @@ export default function QualityAuditDetailPage() {
                                     }
                                     const findingInfo = getFindingInfo(item.finding);
                                     const levelInfo = getLevelInfo(item.level);
-                                    const showLevelSelect = item.finding === 'Non Compliant' || item.finding === 'Partial';
+                                    const showLevelSelect = item.finding === 'Non Compliant' || item.finding === 'Partial' || item.finding === 'Compliant' || item.finding === 'Observation';
                                     const currentQuestionNumber = ++questionNumber;
                                     const fileInputId = `file-input-${item.id}`;
                                     
-                                    let levelDropdownOptions = levelOptions;
+                                    let levelDropdownOptions: FindingLevel[] = [];
                                     if (item.finding === 'Compliant' || item.finding === 'Observation') {
                                         levelDropdownOptions = ['Observation'];
                                     } else if (item.finding === 'Non Compliant' || item.finding === 'Partial') {
