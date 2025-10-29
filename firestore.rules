@@ -1,145 +1,44 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // == HELPER FUNCTIONS ==
-    // These functions make the rules easier to read and maintain.
-
-    // Checks if a user is signed in.
+  
+    // Helper function to check if a user is authenticated
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Checks if the requesting user's profile exists within the specified company.
-    // It looks in both 'users' and 'students' collections.
-    function isUserInCompany(companyId) {
-      let userId = request.auth.uid;
-      return exists(/databases/$(database)/documents/companies/$(companyId)/users/$(userId))
-          || exists(/databases/$(database)/documents/companies/$(companyId)/students/$(userId));
-    }
-    
-    // Retrieves a user's document data from either 'users' or 'students' collection.
-    function getUserData(companyId, userId) {
-        let userPath = /databases/$(database)/documents/companies/$(companyId)/users/$(userId);
-        let studentPath = /databases/$(database)/documents/companies/$(companyId)/students/$(userId);
-        if (exists(userPath)) {
-            return get(userPath).data;
-        }
-        return get(studentPath).data;
+    // Helper function to get the user's ID
+    function getUserId() {
+      return request.auth.uid;
     }
 
-    // Checks if a user has a specific permission in their profile.
-    function hasPermission(companyId, userId, permission) {
-      let userData = getUserData(companyId, userId);
-      return permission in userData.permissions;
-    }
-    
-    // Checks if a user has the 'Super User' permission.
-    function isSuperUser(companyId, userId) {
-        return hasPermission(companyId, userId, 'Super User');
-    }
-    
-    // == SECURITY RULES START HERE ==
-
-    // --- Top-Level Company Rules ---
-    // Governs access to the company documents themselves.
+    // Allow reads on the companies collection for logged in users
+    // This is necessary for the user to select their company on login
     match /companies/{companyId} {
-      // Allow a user to read their own company's document.
-      allow read: if isSignedIn() && isUserInCompany(companyId);
-
-      // Only super users can update company-level details.
-      allow update: if isSignedIn() && isSuperUser(companyId, request.auth.uid);
-      
-      // Nobody can create or delete company documents from the client.
-      allow create, delete: if false;
-    }
-    
-    // --- Blanket Rule for All Company Sub-collections ---
-    // This is a critical security layer. It ensures that any request to any data
-    // inside a company's sub-collections (like aircraft, users, etc.) is made
-    // by a user who is a member of that company.
-    match /companies/{companyId}/{wildcard=**} {
-      allow read, write: if isSignedIn() && isUserInCompany(companyId);
-    }
-    
-    // --- Specific Rules for Collections (Applied after the blanket rule) ---
-
-    // Rules for user and student profiles
-    match /companies/{companyId}/{collectionName}/{userId}
-      where collectionName == 'users' || collectionName == 'students' {
-        
-        // Allow read if: it's your own profile OR you have permission to view personnel/students.
-        allow read: if isSignedIn() && (request.auth.uid == userId
-                        || hasPermission(companyId, request.auth.uid, 'Personnel:View')
-                        || hasPermission(companyId, request.auth.uid, 'Students:View'));
-
-        // Allow update if: it's your own profile OR you have permission to edit personnel/students.
-        allow update: if isSignedIn() && (request.auth.uid == userId
-                        || hasPermission(companyId, request.auth.uid, 'Personnel:Edit')
-                        || hasPermission(companyId, request.auth.uid, 'Students:Edit'));
-                        
-        // Allow create/delete only for users with edit permissions.
-        allow create, delete: if hasPermission(companyId, request.auth.uid, 'Personnel:Edit')
-                              || hasPermission(companyId, request.auth.uid, 'Students:Edit');
-    }
-
-    // Rules for Aircraft
-    match /companies/{companyId}/aircraft/{aircraftId} {
-      allow read: if hasPermission(companyId, request.auth.uid, 'Aircraft:View');
-      allow create, update: if hasPermission(companyId, request.auth.uid, 'Aircraft:Edit');
-      allow delete: if isSuperUser(companyId, request.auth.uid);
-    }
-
-    // Rules for Bookings
-    match /companies/{companyId}/bookings/{bookingId} {
-      allow read: if hasPermission(companyId, request.auth.uid, 'Bookings:View');
-      allow create, update, delete: if hasPermission(companyId, request.auth.uid, 'Bookings:Edit');
-    }
-
-    // Rules for Safety Reports
-    match /companies/{companyId}/safety-reports/{reportId} {
-      allow read: if hasPermission(companyId, request.auth.uid, 'Safety:View');
-      allow create, update: if hasPermission(companyId, request.auth.uid, 'Safety:Edit');
-      allow delete: if isSuperUser(companyId, request.auth.uid);
-    }
-    
-    // Rules for Quality Audits
-    match /companies/{companyId}/quality-audits/{auditId} {
-      allow read: if hasPermission(companyId, request.auth.uid, 'Quality:View');
-      allow create, update: if hasPermission(companyId, request.auth.uid, 'Quality:Edit');
-      allow delete: if hasPermission(companyId, request.auth.uid, 'Quality:Delete');
-    }
-    
-    // Rules for Alerts
-    match /companies/{companyId}/alerts/{alertId} {
-      allow read: if hasPermission(companyId, request.auth.uid, 'Alerts:View');
-      allow create, update: if hasPermission(companyId, request.auth.uid, 'Alerts:Edit');
-      allow delete: if isSuperUser(companyId, request.auth.uid);
-    }
-    
-    // Rules for Risk Register
-    match /companies/{companyId}/risks/{riskId} {
-        allow read: if hasPermission(companyId, request.auth.uid, 'Safety:View');
-        allow create, update, delete: if hasPermission(companyId, request.auth.uid, 'Safety:Edit');
-    }
-
-    // Rules for Roles
-    match /companies/{companyId}/roles/{roleId} {
-      allow read: if hasPermission(companyId, request.auth.uid, 'Roles & Departments:View');
-      allow create, update, delete: if hasPermission(companyId, request.auth.uid, 'Roles & Departments:Edit');
-    }
-
-    // Rules for Departments
-    match /companies/{companyId}/departments/{deptId} {
-      allow read: if hasPermission(companyId, request.auth.uid, 'Roles & Departments:View');
-      allow create, update, delete: if hasPermission(companyId, request.auth.uid, 'Roles & Departments:Edit');
-    }
-    
-    // Rules for external contacts
-    match /companies/{companyId}/external-contacts/{contactId} {
       allow read: if isSignedIn();
-      allow create, update, delete: if hasPermission(companyId, request.auth.uid, 'Settings:Edit');
+      allow write: if false; // Disallow creating/deleting companies from the client
+    }
+    
+    // Rules for all collections within a company document
+    match /companies/{companyId}/{document=**} {
+      // Allow read/write access only if the user's custom claim `companyId`
+      // matches the companyId in the document path.
+      // This is a common pattern but requires setting custom claims, which we haven't done.
+      // A simpler, more direct rule is to check against the user document.
+      // We will use a function to check user's company membership directly.
+      allow read, write: if isSignedIn() && isUserMemberOfCompany(companyId);
+    }
+    
+    // Function to check if the requesting user belongs to the specified company.
+    // It checks both the 'users' and 'students' collections for the user's document.
+    function isUserMemberOfCompany(companyId) {
+      let userPath = /databases/$(database)/documents/companies/$(companyId)/users/$(getUserId());
+      let studentPath = /databases/$(database)/documents/companies/$(companyId)/students/$(getUserId());
+      
+      return (exists(userPath) && get(userPath).data.companyId == companyId) || 
+             (exists(studentPath) && get(studentPath).data.companyId == companyId);
     }
   }
 }
