@@ -62,5 +62,5 @@ const nextConfig: NextConfig = {
   }
 };
 
-// We apply pwaConfig only in production.
-export default process.env.NODE_ENV === 'development' ? nextConfig : pwaConfig(nextConfig);
+// We temporarily disable PWA for all environments to debug a caching issue.
+export default nextConfig;
