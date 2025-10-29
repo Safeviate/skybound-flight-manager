@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -9,7 +10,7 @@ import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, Corre
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown } from 'lucide-react';
+import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, ChevronDown } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AuditSchedule } from '../quality/audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -40,6 +41,7 @@ import { useForm } from 'react-hook-form';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { EditSpiForm, type SpiConfig } from '@/app/safety/edit-spi-form';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 
 const ComplianceItemForm = ({
@@ -307,45 +309,86 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel }:
                 </div>
             </CardHeader>
             <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[15%]">Regulation</TableHead>
-                            <TableHead className="w-[35%]">Process for Compliance</TableHead>
-                            <TableHead className="w-[15%]">Responsible Manager</TableHead>
-                            <TableHead className="w-[10%]">Last Audit</TableHead>
-                            <TableHead className="w-[10%]">Next Audit</TableHead>
-                            <TableHead className="w-[10%]">Findings</TableHead>
-                            {canEdit && <TableHead className="w-[5%] text-right">Actions</TableHead>}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {complianceItems.length > 0 ? complianceItems.map(item => {
-                            const { lastAuditDate, findings } = getAuditDataForRegulation(item.regulation);
-                            return (
-                            <TableRow key={item.id}>
-                                <TableCell className="font-semibold">{item.regulation}</TableCell>
-                                <TableCell className="whitespace-pre-wrap">{item.process}</TableCell>
-                                <TableCell>{item.responsibleManager}</TableCell>
-                                <TableCell>{lastAuditDate}</TableCell>
-                                <TableCell>{item.nextAuditDate ? format(parseISO(item.nextAuditDate), 'dd MMM yyyy') : 'N/A'}</TableCell>
-                                <TableCell>{findings}</TableCell>
-                                {canEdit && (
-                                    <TableCell className="text-right">
-                                        <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setIsDialogOpen(true); }}>
-                                            <Edit className="h-4 w-4" />
+                <div className="border rounded-md">
+                    <div className="grid grid-cols-[1fr,2fr,1fr] p-4 font-semibold border-b">
+                        <div>Regulation</div>
+                        <div>Process for Compliance</div>
+                        <div className="text-right">Next Audit</div>
+                    </div>
+                    <div className="space-y-1">
+                    {complianceItems.length > 0 ? complianceItems.map(item => {
+                        const { lastAuditDate, findings } = getAuditDataForRegulation(item.regulation);
+                        return (
+                        <Collapsible key={item.id} className="border-b last:border-b-0">
+                            <CollapsibleTrigger className="w-full">
+                                <div className="grid grid-cols-[1fr,2fr,1fr] p-4 text-left hover:bg-muted/50">
+                                    <div className="font-semibold">{item.regulation}</div>
+                                    <div className="truncate pr-4">{item.process}</div>
+                                    <div className="text-right flex items-center justify-end gap-2">
+                                        {item.nextAuditDate ? format(parseISO(item.nextAuditDate), 'dd MMM yyyy') : 'N/A'}
+                                        <ChevronDown className="h-4 w-4" />
+                                    </div>
+                                </div>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                                <div className="px-4 py-3 bg-muted/50 border-t space-y-4">
+                                     <div>
+                                        <h4 className="text-xs font-semibold text-muted-foreground mb-1">Process for Compliance</h4>
+                                        <p className="text-sm whitespace-pre-wrap">{item.process}</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <div>
+                                            <h4 className="text-xs font-semibold text-muted-foreground mb-1">Responsible Manager</h4>
+                                            <p className="text-sm">{item.responsibleManager}</p>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xs font-semibold text-muted-foreground mb-1">Last Audit</h4>
+                                            <p className="text-sm">{lastAuditDate}</p>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xs font-semibold text-muted-foreground mb-1">Next Audit</h4>
+                                            <p className="text-sm">{item.nextAuditDate ? format(parseISO(item.nextAuditDate), 'dd MMM yyyy') : 'N/A'}</p>
+                                        </div>
+                                         <div>
+                                            <h4 className="text-xs font-semibold text-muted-foreground mb-1">Findings</h4>
+                                            <p className="text-sm">{findings}</p>
+                                        </div>
+                                    </div>
+                                    {canEdit && (
+                                    <div className="flex justify-end gap-2 pt-2 border-t">
+                                        <Button variant="ghost" size="sm" onClick={() => { setEditingItem(item); setIsDialogOpen(true); }}>
+                                            <Edit className="mr-2 h-4 w-4" /> Edit
                                         </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteItem(item.id)}>
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
-                                    </TableCell>
-                                )}
-                            </TableRow>
-                        )}) : (
-                            <TableRow><TableCell colSpan={canEdit ? 7 : 6} className="h-24 text-center">No compliance items have been added.</TableCell></TableRow>
-                        )}
-                    </TableBody>
-                </Table>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteItem(item.id)}>Yes, Delete</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
+                                    )}
+                                </div>
+                            </CollapsibleContent>
+                        </Collapsible>
+                        )
+                    }) : (
+                        <div className="p-10 text-center text-sm text-muted-foreground">
+                            No compliance items have been added.
+                        </div>
+                    )}
+                    </div>
+                </div>
             </CardContent>
         </Card>
     );
