@@ -848,7 +848,7 @@ export default function QualityAuditDetailPage() {
                                                     {showLevelSelect && (
                                                         <div className="space-y-2">
                                                             <Label className="text-sm font-medium">Level</Label>
-                                                             <RadioGroup
+                                                            <RadioGroup
                                                                 value={item.level || ''}
                                                                 onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}
                                                                 className="flex items-center space-x-4 pt-2"
@@ -967,5 +967,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
 
   
 
+
+    
 
     
