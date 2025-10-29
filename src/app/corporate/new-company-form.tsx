@@ -15,7 +15,7 @@ import {
   FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import type { Company, Feature, NavMenuItem } from '@/lib/types';
+import type { Company, Feature, NavMenuItem, FindingOption } from '@/lib/types';
 import { Paintbrush, Type, Check, Building, KeyRound, Palette, Wand2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
@@ -57,6 +57,10 @@ const companyFormSchema = z.object({
     sidebarAccent: z.string().optional(),
     font: z.string().optional(),
   }).optional(),
+  findingOptions: z.array(z.object({
+      id: z.string(),
+      name: z.string(),
+  })).optional(),
 });
 
 type CompanyFormValues = z.infer<typeof companyFormSchema>;

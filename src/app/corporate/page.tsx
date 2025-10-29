@@ -6,7 +6,7 @@ import { Rocket, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { NewCompanyForm } from './new-company-form';
-import type { Company, User } from '@/lib/types';
+import type { Company, User, FindingOption } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { setDoc, doc, writeBatch, collection, addDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
@@ -54,6 +54,14 @@ export default function CorporatePage() {
                 font: 'var(--font-inter)',
             };
 
+            const defaultFindingOptions: FindingOption[] = [
+                { id: '1', name: 'Compliant' },
+                { id: '2', name: 'Non Compliant' },
+                { id: '3', name: 'Partial' },
+                { id: '4', name: 'Observation' },
+                { id: '5', name: 'Not Applicable' },
+            ];
+
             const finalCompanyData: Company = {
                 id: companyId,
                 ...companyData,
@@ -61,7 +69,8 @@ export default function CorporatePage() {
                 theme: {
                     ...defaultTheme,
                     ...companyData.theme, 
-                }
+                },
+                findingOptions: defaultFindingOptions,
             };
             batch.set(companyDocRef, finalCompanyData);
 
