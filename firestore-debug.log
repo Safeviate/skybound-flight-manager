@@ -468,3 +468,7 @@ Oct 29, 2025 10:44:53 AM com.google.cloud.datastore.emulator.firestore.websocket
 INFO: Connected to new websocket client
 Oct 29, 2025 10:44:54 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
+Oct 29, 2025 11:07:36 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler channelClosed
+INFO: Websocket client disconnected
+Oct 29, 2025 11:14:32 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+INFO: Connected to new websocket client
