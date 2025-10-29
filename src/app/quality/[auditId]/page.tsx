@@ -28,7 +28,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
-import { AuditTeamForm } from './audit-team-form';
 import { SignaturePad } from '@/components/ui/signature-pad';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
@@ -293,8 +292,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                 </CardContent>
             </Card>
 
-            <AuditTeamForm audit={audit} onUpdate={onUpdate} personnel={personnel} />
-
+            
             {nonConformances.length > 0 && (
                 <Card>
                     <CardHeader>
@@ -961,3 +959,5 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
+  
