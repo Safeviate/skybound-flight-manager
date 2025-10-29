@@ -545,21 +545,28 @@ export default function QualityAuditDetailPage() {
 
   
   const handleItemChange = useCallback((itemId: string, field: keyof AuditChecklistItem, value: any) => {
-    if (!audit) return;
-  
-    const updatedItems = audit.checklistItems.map(item => {
-      if (item.id === itemId) {
-        const updatedItem = { ...item, [field]: value };
-        if (field === 'finding') {
-            updatedItem.level = null;
-        }
-        return updatedItem;
-      }
-      return item;
+    setAudit(prevAudit => {
+        if (!prevAudit) return null;
+
+        const updatedItems = prevAudit.checklistItems.map(item => {
+            if (item.id === itemId) {
+                const updatedItem = { ...item, [field]: value };
+                // If the user clicks the same radio button again, we want to clear the selection.
+                if (field === 'level' && item.level === value) {
+                    updatedItem.level = null;
+                }
+                // If finding changes, reset level
+                if (field === 'finding') {
+                    updatedItem.level = null;
+                }
+                return updatedItem;
+            }
+            return item;
+        });
+
+        return { ...prevAudit, checklistItems: updatedItems };
     });
-  
-    setAudit(prevAudit => prevAudit ? { ...prevAudit, checklistItems: updatedItems } : null);
-  }, [audit]);
+  }, []);
 
   const handleAuditUpdate = async (updatedAudit: QualityAudit, showToast = true) => {
     if (!company) return;
@@ -848,7 +855,7 @@ export default function QualityAuditDetailPage() {
                                                     {showLevelSelect && (
                                                         <div className="space-y-2">
                                                             <Label className="text-sm font-medium">Level</Label>
-                                                            <RadioGroup
+                                                             <RadioGroup
                                                                 value={item.level || ''}
                                                                 onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}
                                                                 className="flex items-center space-x-4 pt-2"
