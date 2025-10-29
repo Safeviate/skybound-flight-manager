@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -37,6 +36,7 @@ import { StandardCamera } from '@/components/ui/standard-camera';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { AuditTeamForm } from './audit-team-form';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const discussionFormSchema = z.object({
   recipient: z.string().optional(),
@@ -848,16 +848,18 @@ export default function QualityAuditDetailPage() {
                                                     {showLevelSelect && (
                                                         <div className="space-y-2">
                                                             <Label className="text-sm font-medium">Level</Label>
-                                                            <Select value={item.level || ''} onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}>
-                                                                <SelectTrigger>
-                                                                    <SelectValue placeholder="Select Level" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    {levelDropdownOptions.map(opt => (
-                                                                        <SelectItem key={opt} value={opt!}>{opt}</SelectItem>
-                                                                    ))}
-                                                                </SelectContent>
-                                                            </Select>
+                                                             <RadioGroup
+                                                                value={item.level || ''}
+                                                                onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}
+                                                                className="flex items-center space-x-4 pt-2"
+                                                            >
+                                                                {levelDropdownOptions.map(opt => (
+                                                                    <div key={opt} className="flex items-center space-x-2">
+                                                                        <RadioGroupItem value={opt!} id={`${item.id}-${opt}`} />
+                                                                        <Label htmlFor={`${item.id}-${opt}`}>{opt}</Label>
+                                                                    </div>
+                                                                ))}
+                                                            </RadioGroup>
                                                         </div>
                                                     )}
                                                 </div>
@@ -964,3 +966,6 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
   
+
+
+    
