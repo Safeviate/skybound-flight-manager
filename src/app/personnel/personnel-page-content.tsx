@@ -7,7 +7,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail, Phone, Archive, RotateCw, KeyRound, MessageSquare, Copy } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail, Phone, Archive, RotateCw, KeyRound, Copy } from 'lucide-react';
 import type { User as PersonnelUser } from '@/lib/types';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -17,8 +17,6 @@ import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { resetUserPasswordAndSendWelcomeEmail, manuallyResetPassword } from '@/app/actions';
-import { adminResetPassword } from '@/ai/flows/admin-reset-password-flow';
-import { adminSendSms } from '@/ai/flows/admin-send-sms-flow';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EditPersonnelForm } from './edit-personnel-form';
@@ -41,8 +39,6 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
     const [viewingDocumentsFor, setViewingDocumentsFor] = useState<PersonnelUser | null>(null);
     const [manualPassword, setManualPassword] = useState<{ name: string; pass: string } | null>(null);
     const { toast } = useToast();
-    const [passwordResetFor, setPasswordResetFor] = useState<PersonnelUser | null>(null);
-    const [tempPassword, setTempPassword] = useState('');
     
     const canEdit = user?.permissions.includes('Super User') || user?.permissions.includes('Personnel:Edit');
     const canCreateTempPassword = user?.permissions.includes('Super User') || user?.permissions.includes('Personnel:CreateTempPassword');
@@ -143,30 +139,6 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
             });
         }
     };
-
-    const handleSendSmsLogin = async (person: PersonnelUser) => {
-        if (!person.phone) {
-            toast({ variant: 'destructive', title: 'Error', description: 'This user does not have a phone number on file.' });
-            return;
-        }
-        try {
-            const result = await adminSendSms({ userId: person.id, phone: person.phone });
-            if (result.success) {
-                toast({
-                    title: 'SMS Sent',
-                    description: `A login code has been sent to ${person.name} at ${person.phone}.`,
-                });
-            } else {
-                throw new Error(result.message);
-            }
-        } catch (error: any) {
-             toast({
-                variant: 'destructive',
-                title: 'SMS Failed',
-                description: `Could not send SMS: ${error.message}`,
-            });
-        }
-    };
     
     const handleManualPasswordReset = async (person: PersonnelUser) => {
         const result = await manuallyResetPassword(person);
@@ -181,25 +153,6 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
         }
     };
     
-    const handleCreateTempPassword = (person: PersonnelUser) => {
-        const newPassword = Math.random().toString(36).slice(-8);
-        setTempPassword(newPassword);
-        setPasswordResetFor(person);
-    };
-
-    const handleConfirmPasswordReset = async () => {
-        if (!passwordResetFor || !company) return;
-
-        const result = await adminResetPassword({ userId: passwordResetFor.id, newPassword: tempPassword });
-        if (result.success) {
-            const userRef = doc(db, `companies/${company.id}/users`, passwordResetFor.id);
-            await updateDoc(userRef, { mustChangePassword: true });
-            toast({ title: 'Password Reset Successful', description: `Password for ${passwordResetFor.name} has been updated.` });
-        } else {
-            toast({ variant: 'destructive', title: 'Password Reset Failed', description: result.message });
-        }
-    };
-
     const PersonnelCardList = ({ list, isArchived }: { list: PersonnelUser[], isArchived?: boolean }) => (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {list.map(person => (
@@ -218,33 +171,12 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                                     <DropdownMenuContent>
                                         <DropdownMenuItem onSelect={() => setEditingPersonnel(person)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
                                         <DropdownMenuItem onSelect={() => handleSendWelcomeEmail(person)}><Mail className="mr-2 h-4 w-4" /> Send Welcome Email</DropdownMenuItem>
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                                    <MessageSquare className="mr-2 h-4 w-4" /> Send SMS Login
-                                                </DropdownMenuItem>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Confirm SMS Action</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        This will send a one-time login code to {person.name} at {person.phone}. Are you sure?
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleSendSmsLogin(person)}>Yes, Send SMS</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
                                         {canCreateTempPassword && (
                                             <DropdownMenuItem onSelect={() => handleManualPasswordReset(person)}>
                                                 <KeyRound className="mr-2 h-4 w-4" /> Create Manual Password
                                             </DropdownMenuItem>
                                         )}
-                                        <DropdownMenuItem onSelect={() => setViewingDocumentsFor(person)}>
-                                            <Eye className="mr-2 h-4 w-4" /> View Documents
-                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => setViewingDocumentsFor(person)}><Eye className="mr-2 h-4 w-4" /> View Documents</DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         {isArchived ? (
                                             <>
@@ -394,25 +326,6 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                 </DialogContent>
             </Dialog>
        )}
-        <Dialog open={!!passwordResetFor} onOpenChange={() => setPasswordResetFor(null)}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Create Temporary Password</DialogTitle>
-                    <DialogDescription>
-                        A new temporary password has been generated for {passwordResetFor?.name}. Please communicate this to them securely. They will be required to change it on their next login.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                    <div className="p-4 bg-muted rounded-lg text-center font-mono text-xl tracking-widest">
-                        {tempPassword}
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setPasswordResetFor(null)}>Cancel</Button>
-                    <Button onClick={handleConfirmPasswordReset}>Confirm &amp; Reset</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
         <Dialog open={!!manualPassword} onOpenChange={() => setManualPassword(null)}>
             <DialogContent>
                 <DialogHeader>
