@@ -42,6 +42,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { EditSpiForm, type SpiConfig } from '@/app/safety/edit-spi-form';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Label } from '@/components/ui/label';
 
 
 const ComplianceItemForm = ({
@@ -91,10 +92,11 @@ const ComplianceItemForm = ({
   };
   
   const filteredPersonnel = useMemo(() => {
+    const eligiblePersonnel = personnel.filter(p => p.role !== 'Student' && p.role !== 'Hire and Fly');
     if (!departmentFilter) {
-        return personnel.filter(p => p.role !== 'Student' && p.role !== 'Hire and Fly');
+        return eligiblePersonnel;
     }
-    return personnel.filter(p => p.department === departmentFilter);
+    return eligiblePersonnel.filter(p => p.department === departmentFilter);
   }, [personnel, departmentFilter]);
 
 
@@ -991,4 +993,3 @@ export function QualityPageContent({
       </main>
   );
 }
-
