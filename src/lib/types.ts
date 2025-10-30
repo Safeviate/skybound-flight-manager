@@ -1,4 +1,5 @@
 
+
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
@@ -543,7 +544,8 @@ export type ComplianceItem = {
     id: string;
     companyId: string;
     regulation: string;
-    process: string;
+    regulationStatement: string;
+    companyReference?: string;
     responsibleManager: string;
     lastAuditDate?: string;
     nextAuditDate?: string;
@@ -815,4 +817,5 @@ export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Find
 export type ChecklistCategory = 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
 export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs' | 'Header';
 export type AuditChecklistItem = { id: string; text: string; finding: FindingStatus | null; level: FindingLevel; observation?: string; findingNotes?: string; evidence?: string; regulationReference?: string; reference?: string; comment?: string; photo?: string; suggestedImprovement?: string; type?: ChecklistItemType; };
+
 

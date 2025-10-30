@@ -6,7 +6,7 @@ import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, GroupedRisk, Booking } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -55,7 +55,8 @@ const ComplianceItemForm = ({
 }) => {
   const complianceItemSchema = z.object({
     regulation: z.string().min(3, 'Regulation is required.'),
-    process: z.string().min(5, 'Process description is required.'),
+    regulationStatement: z.string().min(5, 'Regulation statement is required.'),
+    companyReference: z.string().optional(),
     responsibleManager: z.string().min(1, 'Responsible Manager is required.'),
     nextAuditDate: z.date().optional().nullable(),
   });
@@ -71,7 +72,8 @@ const ComplianceItemForm = ({
         }
       : {
           regulation: '',
-          process: '',
+          regulationStatement: '',
+          companyReference: '',
           responsibleManager: '',
         },
   });
@@ -80,7 +82,7 @@ const ComplianceItemForm = ({
     onSubmit({
         ...data,
         nextAuditDate: data.nextAuditDate ? format(data.nextAuditDate, 'yyyy-MM-dd') : undefined,
-    });
+    } as any);
   };
 
   return (
@@ -99,11 +101,22 @@ const ComplianceItemForm = ({
         />
         <FormField
           control={form.control}
-          name="process"
+          name="regulationStatement"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Compliance Process/Procedure</FormLabel>
-              <FormControl><Textarea placeholder="Describe the process or reference the manual section..." {...field} /></FormControl>
+              <FormLabel>Regulation Statement</FormLabel>
+              <FormControl><Textarea placeholder="Describe the regulation statement..." {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="companyReference"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Company Reference</FormLabel>
+              <FormControl><Textarea placeholder="Reference to company procedure, manual section, etc." {...field} /></FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -260,7 +273,7 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel }:
         seedComplianceData.forEach(item => {
             const docRef = doc(matrixCollectionRef);
             const { findings, ...itemToSeed } = item;
-            batch.set(docRef, {...itemToSeed, companyId: company.id});
+            batch.set(docRef, {...itemToSeed, regulationStatement: item.process, companyId: company.id});
         });
         
         try {
@@ -312,7 +325,7 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel }:
                 <div className="border rounded-md">
                     <div className="grid grid-cols-[1fr,2fr,1fr] p-4 font-semibold border-b">
                         <div>Regulation</div>
-                        <div>Process for Compliance</div>
+                        <div>Regulation Statement</div>
                         <div className="text-right">Next Audit</div>
                     </div>
                     <div className="space-y-1">
@@ -323,7 +336,7 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel }:
                             <CollapsibleTrigger className="w-full">
                                 <div className="grid grid-cols-[1fr,2fr,1fr] p-4 text-left hover:bg-muted/50">
                                     <div className="font-semibold">{item.regulation}</div>
-                                    <div className="truncate pr-4">{item.process}</div>
+                                    <div className="truncate pr-4">{item.regulationStatement}</div>
                                     <div className="text-right flex items-center justify-end gap-2">
                                         {item.nextAuditDate ? format(parseISO(item.nextAuditDate), 'dd MMM yyyy') : 'N/A'}
                                         <ChevronDown className="h-4 w-4" />
@@ -333,8 +346,12 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel }:
                             <CollapsibleContent>
                                 <div className="px-4 py-3 bg-muted/50 border-t space-y-4">
                                      <div>
-                                        <h4 className="text-xs font-semibold text-muted-foreground mb-1">Process for Compliance</h4>
-                                        <p className="text-sm whitespace-pre-wrap">{item.process}</p>
+                                        <h4 className="text-xs font-semibold text-muted-foreground mb-1">Regulation Statement</h4>
+                                        <p className="text-sm whitespace-pre-wrap">{item.regulationStatement}</p>
+                                    </div>
+                                     <div>
+                                        <h4 className="text-xs font-semibold text-muted-foreground mb-1">Company Reference</h4>
+                                        <p className="text-sm whitespace-pre-wrap">{item.companyReference || 'N/A'}</p>
                                     </div>
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         <div>
