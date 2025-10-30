@@ -138,12 +138,12 @@ const ComplianceItemForm = ({
         />
          <div className="space-y-2">
             <Label>Filter by Department</Label>
-            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+            <Select value={departmentFilter} onValueChange={(value) => setDepartmentFilter(value === 'all' ? '' : value)}>
                 <SelectTrigger>
                     <SelectValue placeholder="All Departments" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="">All Departments</SelectItem>
+                    <SelectItem value="all">All Departments</SelectItem>
                     {departments.map(dept => (
                         <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
                     ))}
@@ -993,3 +993,4 @@ export function QualityPageContent({
       </main>
   );
 }
+
