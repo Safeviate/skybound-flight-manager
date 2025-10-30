@@ -201,11 +201,6 @@ export default function LoginPage() {
                 </Button>
             </form>
           </CardContent>
-          <CardFooter className="justify-center text-sm">
-              <Link href="/corporate" className="text-muted-foreground hover:text-primary">
-                  Don't have an account? Register your company
-              </Link>
-          </CardFooter>
         </Card>
         {loginError && (
             <Alert variant="destructive" className="border-destructive">
