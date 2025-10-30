@@ -47,12 +47,16 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 const ComplianceItemForm = ({
   onSubmit,
   personnel,
+  departments,
   existingItem
 }: {
   onSubmit: (data: Omit<ComplianceItem, 'id' | 'companyId'>) => void;
   personnel: User[];
+  departments: CompanyDepartment[];
   existingItem?: ComplianceItem | null;
 }) => {
+  const [departmentFilter, setDepartmentFilter] = useState('');
+
   const complianceItemSchema = z.object({
     regulation: z.string().min(3, 'Regulation is required.'),
     regulationStatement: z.string().min(5, 'Regulation statement is required.'),
@@ -85,6 +89,14 @@ const ComplianceItemForm = ({
         nextAuditDate: data.nextAuditDate ? format(data.nextAuditDate, 'yyyy-MM-dd') : undefined,
     } as any);
   };
+  
+  const filteredPersonnel = useMemo(() => {
+    if (!departmentFilter) {
+        return personnel.filter(p => p.role !== 'Student' && p.role !== 'Hire and Fly');
+    }
+    return personnel.filter(p => p.department === departmentFilter);
+  }, [personnel, departmentFilter]);
+
 
   return (
     <Form {...form}>
@@ -122,6 +134,20 @@ const ComplianceItemForm = ({
             </FormItem>
           )}
         />
+         <div className="space-y-2">
+            <Label>Filter by Department</Label>
+            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                <SelectTrigger>
+                    <SelectValue placeholder="All Departments" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="">All Departments</SelectItem>
+                    {departments.map(dept => (
+                        <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
         <FormField
           control={form.control}
           name="responsibleManager"
@@ -131,7 +157,7 @@ const ComplianceItemForm = ({
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl><SelectTrigger><SelectValue placeholder="Select a person" /></SelectTrigger></FormControl>
                 <SelectContent>
-                  {personnel.filter(p => p.role !== 'Student' && p.role !== 'Hire and Fly').map(p => (
+                  {filteredPersonnel.map(p => (
                     <SelectItem key={p.id} value={p.name}>{p.name} ({p.role})</SelectItem>
                   ))}
                 </SelectContent>
@@ -176,11 +202,12 @@ const ComplianceItemForm = ({
 };
 
 
-const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel }: { audits: QualityAudit[], personnel: User[] }) => {
+const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, departments: initialDepartments }: { audits: QualityAudit[], personnel: User[], departments: CompanyDepartment[] }) => {
     const { company, user, loading } = useUser();
     const { toast } = useToast();
     const [complianceItems, setComplianceItems] = React.useState<ComplianceItem[]>([]);
     const [personnel, setPersonnel] = React.useState<User[]>(initialPersonnel);
+    const [departments, setDepartments] = React.useState<CompanyDepartment[]>(initialDepartments);
     const [audits, setAudits] = React.useState<QualityAudit[]>(initialAudits);
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
     const [editingItem, setEditingItem] = React.useState<ComplianceItem | null>(null);
@@ -204,7 +231,8 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel }:
      React.useEffect(() => {
         setAudits(initialAudits);
         setPersonnel(initialPersonnel);
-    }, [initialAudits, initialPersonnel]);
+        setDepartments(initialDepartments);
+    }, [initialAudits, initialPersonnel, initialDepartments]);
 
     const getAuditDataForRegulation = (regulation: string) => {
         const relevantAudits = audits.filter(audit =>
@@ -315,7 +343,7 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel }:
                                     <DialogHeader>
                                         <DialogTitle>{editingItem ? 'Edit' : 'Add'} Compliance Item</DialogTitle>
                                     </DialogHeader>
-                                    <ComplianceItemForm onSubmit={handleFormSubmit} personnel={personnel} existingItem={editingItem} />
+                                    <ComplianceItemForm onSubmit={handleFormSubmit} personnel={personnel} departments={departments} existingItem={editingItem} />
                                 </DialogContent>
                             </Dialog>
                         </>
@@ -955,7 +983,7 @@ export function QualityPageContent({
           </TabsContent>
           <TabsContent value="coherence-matrix" className="mt-4">
             <ScrollArea className="w-full whitespace-nowrap">
-              <CoherenceMatrix audits={audits} personnel={initialPersonnel} />
+              <CoherenceMatrix audits={audits} personnel={initialPersonnel} departments={initialDepartments} />
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
           </TabsContent>
@@ -963,3 +991,4 @@ export function QualityPageContent({
       </main>
   );
 }
+
