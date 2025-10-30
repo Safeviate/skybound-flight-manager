@@ -68,6 +68,7 @@ const ComplianceItemForm = ({
     defaultValues: existingItem
       ? {
           ...existingItem,
+          regulationStatement: existingItem.regulationStatement || '',
           nextAuditDate: existingItem.nextAuditDate ? parseISO(existingItem.nextAuditDate) : null,
         }
       : {
@@ -128,9 +129,9 @@ const ComplianceItemForm = ({
             <FormItem>
               <FormLabel>Responsible Manager</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl><SelectTrigger><SelectValue placeholder="Select a manager" /></SelectTrigger></FormControl>
+                <FormControl><SelectTrigger><SelectValue placeholder="Select a person" /></SelectTrigger></FormControl>
                 <SelectContent>
-                  {personnel.filter(p => p.role.toLowerCase().includes('manager')).map(p => (
+                  {personnel.filter(p => p.role !== 'Student' && p.role !== 'Hire and Fly').map(p => (
                     <SelectItem key={p.id} value={p.name}>{p.name} ({p.role})</SelectItem>
                   ))}
                 </SelectContent>
