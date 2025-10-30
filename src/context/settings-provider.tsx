@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
@@ -39,7 +38,7 @@ const defaultSettings: Settings = {
     dutyLimitMonthly: 100,
     expiryWarningOrangeDays: 30,
     expiryWarningYellowDays: 60,
-    pwaEnabled: true,
+    pwaEnabled: false, // Defaulting to false, can be enabled via UI
     welcomeEmailEnabled: true,
     liveTrackingDevMode: false,
 };

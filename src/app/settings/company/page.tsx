@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useSettings } from '@/context/settings-provider';
@@ -305,21 +303,36 @@ function CompanySettingsPage() {
             <Separator />
             
             <div className="space-y-2">
-                <h3 className="font-semibold text-lg flex items-center gap-2"><Bot /> AI Features</h3>
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                    <Label htmlFor="use-ai-checklists" className="text-base">
-                    Enable AI-Powered Checklists
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                    Use AI to scan aircraft registration numbers and Hobbs meters to streamline checklist completion.
-                    </p>
+                <h3 className="font-semibold text-lg">System Features</h3>
+                 <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="pwa-enabled" className="text-base">
+                        Enable Progressive Web App (PWA)
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                        Allows users to install the app on their devices for an offline-capable, native-like experience.
+                        </p>
+                    </div>
+                    <Switch
+                        id="pwa-enabled"
+                        checked={settings.pwaEnabled}
+                        onCheckedChange={() => handleToggle('pwaEnabled')}
+                    />
                 </div>
-                <Switch
-                    id="use-ai-checklists"
-                    checked={settings.useAiChecklists}
-                    onCheckedChange={() => handleToggle('useAiChecklists')}
-                />
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="use-ai-checklists" className="text-base">
+                        Enable AI-Powered Checklists
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                        Use AI to scan aircraft registration numbers and Hobbs meters to streamline checklist completion.
+                        </p>
+                    </div>
+                    <Switch
+                        id="use-ai-checklists"
+                        checked={settings.useAiChecklists}
+                        onCheckedChange={() => handleToggle('useAiChecklists')}
+                    />
                 </div>
             </div>
 
