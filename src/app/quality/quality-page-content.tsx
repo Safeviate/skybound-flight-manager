@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -251,7 +250,7 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
         
         const findings = mostRecentAudit.nonConformanceIssues
             .filter(issue => issue.regulationReference === regulation)
-            .map(issue => issue.id.substring(0,8)) // Or some identifier
+            .map(issue => issue.itemText)
             .join(', ');
 
         return {
@@ -993,4 +992,3 @@ export function QualityPageContent({
       </main>
   );
 }
-
