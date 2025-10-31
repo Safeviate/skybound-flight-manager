@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import type { ManagementOfChange, User, CompanyDepartment } from '@/lib/types';
+import type { ManagementOfChange, User, CompanyDepartment, Alert } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
@@ -77,8 +77,25 @@ export function NewMocForm({ onClose, onUpdate, personnel, departments }: NewMoc
         status: 'Proposed',
       };
 
-      await addDoc(mocCollection, newMoc);
-      toast({ title: 'Change Proposed', description: `Your proposal (${mocNumber}) has been submitted for review.` });
+      const docRef = await addDoc(mocCollection, newMoc);
+      
+      const proposer = personnel.find(p => p.name === data.proposedBy);
+      if (proposer) {
+        const newAlert: Omit<Alert, 'id' | 'number'> = {
+            companyId: company.id,
+            type: 'Signature Request',
+            title: `MOC Signature Required: ${mocNumber}`,
+            description: `Your signature is required on your proposal: "${data.title}"`,
+            author: user.name,
+            date: new Date().toISOString(),
+            readBy: [],
+            targetUserId: proposer.id,
+            relatedLink: `/safety/moc/${docRef.id}`,
+        };
+        await addDoc(collection(db, `companies/${company.id}/alerts`), newAlert);
+      }
+
+      toast({ title: 'Change Proposed', description: `Your proposal (${mocNumber}) has been submitted and the proposer notified.` });
       onUpdate();
       onClose();
     } catch (error) {
