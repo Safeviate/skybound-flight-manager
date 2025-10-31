@@ -603,7 +603,7 @@ function CompanySettingsPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-lg">Audit Finding Level Colors</h3>
-                <Button size="sm" onClick={handleSaveFindingLevelColors}>
+                <Button type="button" size="sm" onClick={handleSaveFindingLevelColors}>
                   <Save className="mr-2 h-4 w-4" />
                   Save Colors
                 </Button>
@@ -701,5 +701,3 @@ function CompanySettingsPage() {
 
 CompanySettingsPage.title = 'Company Settings';
 export default CompanySettingsPage;
-
-    
