@@ -57,23 +57,14 @@ const getFindingInfo = (finding: FindingStatus | null) => {
     }
 };
 
-const getLevelInfo = (level: FindingLevel, company: any) => {
-    const defaultColors = {
-        'Level 1 Finding': { variant: 'warning' as const, icon: <AlertTriangle className="h-5 w-5 text-yellow-600" /> },
-        'Level 2 Finding': { variant: 'orange' as const, icon: <AlertTriangle className="h-5 w-5 text-orange-600" /> },
-        'Level 3 Finding': { variant: 'destructive' as const, icon: <AlertTriangle className="h-5 w-5 text-red-600" /> },
-        'Observation': { variant: 'secondary' as const, icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" /> },
-    };
-
-    if (!level) return null;
-
-    const customColor = company?.findingLevelColors?.[level];
-
-    if (customColor) {
-        return { style: { backgroundColor: customColor, color: '#ffffff' }, icon: <AlertTriangle className="h-5 w-5 text-white" /> };
+const getLevelInfo = (level: FindingLevel) => {
+    switch (level) {
+        case 'Level 1 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
+        case 'Level 2 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-orange-600" />, variant: 'orange' as const };
+        case 'Level 3 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
+        case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const };
+        default: return null;
     }
-
-    return defaultColors[level] || null;
 };
 
 
@@ -97,6 +88,22 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
         if (!audit.auditTeam || !user) return [];
         return audit.auditTeam.filter(name => name !== user.name);
     }, [audit.auditTeam, user]);
+
+    const getLevelDisplayInfo = (level: FindingLevel) => {
+        if (!level) return null;
+        
+        const customColor = company?.findingLevelColors?.[level];
+        if (customColor) {
+            return { style: { backgroundColor: customColor, color: '#ffffff' }, variant: 'default' as const, icon: <AlertTriangle className="h-5 w-5 text-white" /> };
+        }
+        
+        const defaultInfo = getLevelInfo(level);
+        if (defaultInfo) {
+            return { style: {}, variant: defaultInfo.variant, icon: defaultInfo.icon };
+        }
+
+        return null;
+    }
 
 
     const handleReply = (recipient: string) => {
@@ -313,50 +320,55 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                         <CardDescription>Details of all non-compliant findings from this audit.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {nonConformances.map((issue, index) => (
-                            <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <Badge variant={getFindingInfo(issue.finding).variant}>{issue.finding}</Badge>
-                                            {issue.level && <Badge style={getLevelInfo(issue.level, company)?.style} variant={getLevelInfo(issue.level, company)?.variant || 'secondary'}>{issue.level}</Badge>}
-                                        </div>
-                                        <p className="font-medium mt-2">{index + 1}. {issue.text}</p>
-                                        <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
-                                        <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
-                                        {issue.photo && <Image src={issue.photo} alt={`Photo for ${issue.text}`} width={200} height={112} className="mt-2 rounded-md" />}
-                                    </div>
-                                </div>
-                                {issue.correctiveActionPlans && issue.correctiveActionPlans.length > 0 && (
-                                <div className="space-y-4">
-                                    <h4 className="font-semibold text-sm">Corrective Action Plan(s)</h4>
-                                    {issue.correctiveActionPlans.map((plan, planIndex) => (
-                                    <div key={planIndex} className="p-3 border rounded-md space-y-2 bg-background">
+                        {nonConformances.map((issue, index) => {
+                            const levelDisplay = getLevelDisplayInfo(issue.level);
+                            return (
+                                <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
+                                    <div className="flex justify-between items-start">
                                         <div>
-                                        <p className="font-medium text-muted-foreground text-sm">Root Cause</p>
-                                        <p className="text-sm">{plan.rootCause}</p>
-                                        </div>
-                                        <div>
-                                        <p className="font-medium text-muted-foreground text-sm">Actions</p>
-                                        <ul className="list-disc pl-5 text-sm">
-                                            {plan.actions.map(action => (
-                                            <li key={action.id} className="mb-1">
-                                                <span className={cn(action.status === 'Closed' && "line-through text-muted-foreground")}>
-                                                {action.action}
-                                                </span>
-                                                <div className="text-xs text-muted-foreground">
-                                                {action.responsiblePerson} - Due: {format(parseISO(action.completionDate), 'PPP')} - <Badge variant={action.status === 'Closed' ? 'success' : 'warning'} className="h-auto py-0 px-1.5">{action.status}</Badge>
-                                                </div>
-                                            </li>
-                                            ))}
-                                        </ul>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <Badge variant={getFindingInfo(issue.finding).variant}>{issue.finding}</Badge>
+                                                {issue.level && levelDisplay && (
+                                                    <Badge style={levelDisplay.style} variant={levelDisplay.variant}>{issue.level}</Badge>
+                                                )}
+                                            </div>
+                                            <p className="font-medium mt-2">{index + 1}. {issue.text}</p>
+                                            <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
+                                            <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
+                                            {issue.photo && <Image src={issue.photo} alt={`Photo for ${issue.text}`} width={200} height={112} className="mt-2 rounded-md" />}
                                         </div>
                                     </div>
-                                    ))}
+                                    {issue.correctiveActionPlans && issue.correctiveActionPlans.length > 0 && (
+                                    <div className="space-y-4">
+                                        <h4 className="font-semibold text-sm">Corrective Action Plan(s)</h4>
+                                        {issue.correctiveActionPlans.map((plan, planIndex) => (
+                                        <div key={planIndex} className="p-3 border rounded-md space-y-2 bg-background">
+                                            <div>
+                                            <p className="font-medium text-muted-foreground text-sm">Root Cause</p>
+                                            <p className="text-sm">{plan.rootCause}</p>
+                                            </div>
+                                            <div>
+                                            <p className="font-medium text-muted-foreground text-sm">Actions</p>
+                                            <ul className="list-disc pl-5 text-sm">
+                                                {plan.actions.map(action => (
+                                                <li key={action.id} className="mb-1">
+                                                    <span className={cn(action.status === 'Closed' && "line-through text-muted-foreground")}>
+                                                    {action.action}
+                                                    </span>
+                                                    <div className="text-xs text-muted-foreground">
+                                                    {action.responsiblePerson} - Due: {format(parseISO(action.completionDate), 'PPP')} - <Badge variant={action.status === 'Closed' ? 'success' : 'warning'} className="h-auto py-0 px-1.5">{action.status}</Badge>
+                                                    </div>
+                                                </li>
+                                                ))}
+                                            </ul>
+                                            </div>
+                                        </div>
+                                        ))}
+                                    </div>
+                                    )}
                                 </div>
-                                )}
-                            </div>
-                        ))}
+                            )
+                        })}
                     </CardContent>
                 </Card>
             )}
@@ -809,7 +821,7 @@ export default function QualityAuditDetailPage() {
                                         return <h3 key={item.id} className="text-lg font-semibold mt-6 mb-2 border-b pb-2">{item.text}</h3>;
                                     }
                                     const findingInfo = getFindingInfo(item.finding);
-                                    const levelInfo = getLevelInfo(item.level, company);
+                                    const levelInfo = getLevelInfo(item.level);
                                     const showLevelSelect = item.finding === 'Non Compliant' || item.finding === 'Partial' || item.finding === 'Compliant' || item.finding === 'Observation';
                                     const currentQuestionNumber = ++questionNumber;
                                     const fileInputId = `file-input-${item.id}`;
@@ -838,7 +850,7 @@ export default function QualityAuditDetailPage() {
                                                             </Badge>
                                                         )}
                                                         {levelInfo && (
-                                                             <Badge style={levelInfo.style} variant={levelInfo.variant || 'secondary'} className="whitespace-nowrap">
+                                                             <Badge variant={levelInfo.variant} className="whitespace-nowrap">
                                                                 {item.level}
                                                             </Badge>
                                                         )}
@@ -991,3 +1003,4 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
 
     
 
+    
