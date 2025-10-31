@@ -324,7 +324,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                     <Badge style={levelDisplay.style} variant={levelDisplay.variant}>{issue.level}</Badge>
                                                 )}
                                             </div>
-                                            <p className="font-medium mt-2">{index + 1}. {issue.text}</p>
+                                            <p className="font-medium mt-2">{index + 1}. {issue.itemText}</p>
                                             <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
                                             <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
                                             {issue.photo && <Image src={issue.photo} alt={`Photo for ${issue.text}`} width={200} height={112} className="mt-2 rounded-md" />}
@@ -672,6 +672,18 @@ export default function QualityAuditDetailPage() {
       router.push('/quality?tab=audits');
     }
   };
+
+  const getLevelInfo = (level: FindingLevel) => {
+    const defaultLevels = {
+        'Level 1 Finding': { variant: 'warning' as const },
+        'Level 2 Finding': { variant: 'orange' as const },
+        'Level 3 Finding': { variant: 'destructive' as const },
+        'Observation': { variant: 'secondary' as const },
+    };
+
+    if (!level) return null;
+    return defaultLevels[level];
+};
 
   if (loading || userLoading) {
     return (
