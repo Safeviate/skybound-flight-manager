@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, updateDoc, collection, addDoc, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, addDoc, getDocs, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ManagementOfChange, MocPhase, MocStep, MocHazard, RiskLikelihood, RiskSeverity, MocRisk, MocMitigation, User, Alert } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -485,4 +485,3 @@ const MitigationForm = ({ onSubmit, mitigation }: { onSubmit: (data: any) => voi
 };
 
 MocDetailPage.title = "Management of Change";
-
