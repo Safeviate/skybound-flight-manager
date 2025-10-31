@@ -80,10 +80,10 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
 
     const getLevelDisplayInfo = (level: FindingLevel) => {
         const defaultLevels = {
-            'Level 1 Finding': { icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const },
-            'Level 2 Finding': { icon: <AlertTriangle className="h-5 w-5 text-orange-600" />, variant: 'orange' as const },
-            'Level 3 Finding': { icon: <AlertTriangle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const },
-            'Observation': { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const }
+            'Level 1 Finding': { icon: <AlertTriangle className="h-5 w-5" />, variant: 'warning' as const },
+            'Level 2 Finding': { icon: <AlertTriangle className="h-5 w-5" />, variant: 'orange' as const },
+            'Level 3 Finding': { icon: <AlertTriangle className="h-5 w-5" />, variant: 'destructive' as const },
+            'Observation': { icon: <MessageSquareWarning className="h-5 w-5" />, variant: 'secondary' as const }
         };
 
         if (!level) return null;
@@ -93,7 +93,8 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
             return { style: { backgroundColor: customColor, color: '#ffffff' }, variant: 'default' as const, icon: <AlertTriangle className="h-5 w-5 text-white" /> };
         }
         
-        return defaultLevels[level] || null;
+        const defaultStyle = defaultLevels[level];
+        return defaultStyle ? { ...defaultStyle, style: {} } : null;
     }
 
 
@@ -812,7 +813,7 @@ export default function QualityAuditDetailPage() {
                                         return <h3 key={item.id} className="text-lg font-semibold mt-6 mb-2 border-b pb-2">{item.text}</h3>;
                                     }
                                     const findingInfo = getFindingInfo(item.finding);
-                                    const levelInfo = getLevelDisplayInfo(item.level);
+                                    const levelInfo = getLevelInfo(item.level);
                                     const showLevelSelect = item.finding === 'Non Compliant' || item.finding === 'Partial' || item.finding === 'Compliant' || item.finding === 'Observation';
                                     const currentQuestionNumber = ++questionNumber;
                                     const fileInputId = `file-input-${item.id}`;
@@ -841,9 +842,8 @@ export default function QualityAuditDetailPage() {
                                                             </Badge>
                                                         )}
                                                         {levelInfo && (
-                                                             <Badge style={levelInfo.style} variant={levelInfo.variant} className="whitespace-nowrap">
-                                                                {levelInfo.icon}
-                                                                <span className="ml-2">{item.level}</span>
+                                                            <Badge variant={levelInfo.variant} className="whitespace-nowrap">
+                                                                {item.level}
                                                             </Badge>
                                                         )}
                                                         <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -992,5 +992,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
 
   
 
+
+    
 
     
