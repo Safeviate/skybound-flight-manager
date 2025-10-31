@@ -57,15 +57,25 @@ const getFindingInfo = (finding: FindingStatus | null) => {
     }
 };
 
-const getLevelInfo = (level: FindingLevel) => {
-    switch (level) {
-        case 'Level 1 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
-        case 'Level 2 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-orange-600" />, variant: 'orange' as const };
-        case 'Level 3 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
-        case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const };
-        default: return null;
+const getLevelInfo = (level: FindingLevel, company: any) => {
+    const defaultColors = {
+        'Level 1 Finding': { variant: 'warning' as const, icon: <AlertTriangle className="h-5 w-5 text-yellow-600" /> },
+        'Level 2 Finding': { variant: 'orange' as const, icon: <AlertTriangle className="h-5 w-5 text-orange-600" /> },
+        'Level 3 Finding': { variant: 'destructive' as const, icon: <AlertTriangle className="h-5 w-5 text-red-600" /> },
+        'Observation': { variant: 'secondary' as const, icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" /> },
+    };
+
+    if (!level) return null;
+
+    const customColor = company?.findingLevelColors?.[level];
+
+    if (customColor) {
+        return { style: { backgroundColor: customColor, color: '#ffffff' }, icon: <AlertTriangle className="h-5 w-5 text-white" /> };
     }
+
+    return defaultColors[level] || null;
 };
+
 
 const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
 
@@ -309,7 +319,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                     <div>
                                         <div className="flex items-center gap-2 flex-wrap">
                                             <Badge variant={getFindingInfo(issue.finding).variant}>{issue.finding}</Badge>
-                                            {issue.level && <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>}
+                                            {issue.level && <Badge style={getLevelInfo(issue.level, company)?.style} variant={getLevelInfo(issue.level, company)?.variant || 'secondary'}>{issue.level}</Badge>}
                                         </div>
                                         <p className="font-medium mt-2">{index + 1}. {issue.text}</p>
                                         <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
@@ -545,28 +555,29 @@ export default function QualityAuditDetailPage() {
 
   
   const handleItemChange = useCallback((itemId: string, field: keyof AuditChecklistItem, value: any) => {
+    if (!audit) return;
+    
     setAudit(prevAudit => {
-        if (!prevAudit) return null;
-
-        const updatedItems = prevAudit.checklistItems.map(item => {
-            if (item.id === itemId) {
-                const updatedItem = { ...item, [field]: value };
-                // If the user clicks the same radio button again, we want to clear the selection.
-                if (field === 'level' && item.level === value) {
-                    updatedItem.level = null;
-                }
-                // If finding changes, reset level
-                if (field === 'finding') {
-                    updatedItem.level = null;
-                }
-                return updatedItem;
-            }
-            return item;
-        });
-
-        return { ...prevAudit, checklistItems: updatedItems };
+      if (!prevAudit) return null;
+      const updatedItems = prevAudit.checklistItems.map(item => {
+        if (item.id === itemId) {
+          const updatedItem = { ...item, [field]: value };
+          
+          if (field === 'finding') {
+            updatedItem.level = null;
+          }
+          
+          if (field === 'level' && item.level === value) {
+            updatedItem.level = null;
+          }
+          
+          return updatedItem;
+        }
+        return item;
+      });
+      return { ...prevAudit, checklistItems: updatedItems };
     });
-  }, []);
+  }, [audit]);
 
   const handleAuditUpdate = async (updatedAudit: QualityAudit, showToast = true) => {
     if (!company) return;
@@ -798,7 +809,7 @@ export default function QualityAuditDetailPage() {
                                         return <h3 key={item.id} className="text-lg font-semibold mt-6 mb-2 border-b pb-2">{item.text}</h3>;
                                     }
                                     const findingInfo = getFindingInfo(item.finding);
-                                    const levelInfo = getLevelInfo(item.level);
+                                    const levelInfo = getLevelInfo(item.level, company);
                                     const showLevelSelect = item.finding === 'Non Compliant' || item.finding === 'Partial' || item.finding === 'Compliant' || item.finding === 'Observation';
                                     const currentQuestionNumber = ++questionNumber;
                                     const fileInputId = `file-input-${item.id}`;
@@ -827,7 +838,7 @@ export default function QualityAuditDetailPage() {
                                                             </Badge>
                                                         )}
                                                         {levelInfo && (
-                                                            <Badge variant={levelInfo.variant} className="whitespace-nowrap">
+                                                             <Badge style={levelInfo.style} variant={levelInfo.variant || 'secondary'} className="whitespace-nowrap">
                                                                 {item.level}
                                                             </Badge>
                                                         )}
@@ -855,9 +866,12 @@ export default function QualityAuditDetailPage() {
                                                     {showLevelSelect && (
                                                         <div className="space-y-2">
                                                             <Label className="text-sm font-medium">Level</Label>
-                                                             <RadioGroup
+                                                            <RadioGroup
                                                                 value={item.level || ''}
-                                                                onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}
+                                                                onValueChange={(value: FindingLevel) => {
+                                                                    const newValue = value === item.level ? null : value;
+                                                                    handleItemChange(item.id, 'level', newValue);
+                                                                }}
                                                                 className="flex items-center space-x-4 pt-2"
                                                             >
                                                                 {levelDropdownOptions.map(opt => (
@@ -977,4 +991,3 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
 
     
 
-    
