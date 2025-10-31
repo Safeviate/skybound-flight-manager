@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useSettings } from '@/context/settings-provider';
@@ -10,7 +11,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Slider } from '@/components/ui/slider';
-import { Bot, ShieldAlert, PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { Bot, ShieldAlert, PlusCircle, Edit, Trash2, Save } from 'lucide-react';
 import { RiskAssessmentTool } from '@/app/safety/[reportId]/risk-assessment-tool';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -41,6 +42,28 @@ function CompanySettingsPage() {
   const [isPurposeDialogOpen, setIsPurposeDialogOpen] = useState(false);
   const [editingPurpose, setEditingPurpose] = useState<BookingPurpose | null>(null);
   const [purposeName, setPurposeName] = useState('');
+  
+  const [findingLevelColors, setFindingLevelColors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (company?.findingLevelColors) {
+      setFindingLevelColors(company.findingLevelColors);
+    }
+  }, [company?.findingLevelColors]);
+
+  const handleFindingLevelColorChange = (level: string, color: string) => {
+    setFindingLevelColors(prev => ({ ...prev, [level]: color }));
+  };
+
+  const handleSaveFindingLevelColors = async () => {
+    if (!company) return;
+    const success = await updateCompany(company.id, { findingLevelColors });
+    if (success) {
+      toast({ title: 'Finding Level Colors Updated' });
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to save finding level colors.' });
+    }
+  };
 
 
   useEffect(() => {
@@ -73,8 +96,8 @@ function CompanySettingsPage() {
 
   const handleColorChange = (level: string, color: string) => {
     if (!company) return;
-    const newColors = { ...(company.findingLevelColors || {}), [level]: color };
-    updateCompany(company.id, { findingLevelColors: newColors });
+    const newColors = { ...(company.riskMatrixColors || {}), [level]: color };
+    updateCompany(company.id, { riskMatrixColors: newColors });
   };
 
   const openFacilityDialog = (facility: Facility | null) => {
@@ -578,7 +601,13 @@ function CompanySettingsPage() {
             <Separator />
 
             <div className="space-y-4">
+              <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-lg">Audit Finding Level Colors</h3>
+                <Button size="sm" onClick={handleSaveFindingLevelColors}>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Colors
+                </Button>
+              </div>
                 <Card>
                     <CardContent className="pt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                         {['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'].map(level => (
@@ -586,8 +615,8 @@ function CompanySettingsPage() {
                                 <Label>{level}</Label>
                                 <Input 
                                     type="color" 
-                                    value={company?.findingLevelColors?.[level] || '#000000'}
-                                    onChange={(e) => handleColorChange(level, e.target.value)}
+                                    value={findingLevelColors[level] || '#000000'}
+                                    onChange={(e) => handleFindingLevelColorChange(level, e.target.value)}
                                 />
                             </div>
                         ))}

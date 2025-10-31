@@ -57,17 +57,6 @@ const getFindingInfo = (finding: FindingStatus | null) => {
     }
 };
 
-const getLevelInfo = (level: FindingLevel) => {
-    switch (level) {
-        case 'Level 1 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
-        case 'Level 2 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-orange-600" />, variant: 'orange' as const };
-        case 'Level 3 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
-        case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const };
-        default: return null;
-    }
-};
-
-
 const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
 
 const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit: QualityAudit, onUpdate: (updatedAudit: QualityAudit, showToast?: boolean) => void, personnel: User[], onNavigateBack: () => void }) => {
@@ -90,6 +79,13 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
     }, [audit.auditTeam, user]);
 
     const getLevelDisplayInfo = (level: FindingLevel) => {
+        const defaultLevels = {
+            'Level 1 Finding': { icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const },
+            'Level 2 Finding': { icon: <AlertTriangle className="h-5 w-5 text-orange-600" />, variant: 'orange' as const },
+            'Level 3 Finding': { icon: <AlertTriangle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const },
+            'Observation': { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const }
+        };
+
         if (!level) return null;
         
         const customColor = company?.findingLevelColors?.[level];
@@ -97,12 +93,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
             return { style: { backgroundColor: customColor, color: '#ffffff' }, variant: 'default' as const, icon: <AlertTriangle className="h-5 w-5 text-white" /> };
         }
         
-        const defaultInfo = getLevelInfo(level);
-        if (defaultInfo) {
-            return { style: {}, variant: defaultInfo.variant, icon: defaultInfo.icon };
-        }
-
-        return null;
+        return defaultLevels[level] || null;
     }
 
 
@@ -821,7 +812,7 @@ export default function QualityAuditDetailPage() {
                                         return <h3 key={item.id} className="text-lg font-semibold mt-6 mb-2 border-b pb-2">{item.text}</h3>;
                                     }
                                     const findingInfo = getFindingInfo(item.finding);
-                                    const levelInfo = getLevelInfo(item.level);
+                                    const levelInfo = getLevelDisplayInfo(item.level);
                                     const showLevelSelect = item.finding === 'Non Compliant' || item.finding === 'Partial' || item.finding === 'Compliant' || item.finding === 'Observation';
                                     const currentQuestionNumber = ++questionNumber;
                                     const fileInputId = `file-input-${item.id}`;
@@ -850,8 +841,9 @@ export default function QualityAuditDetailPage() {
                                                             </Badge>
                                                         )}
                                                         {levelInfo && (
-                                                             <Badge variant={levelInfo.variant} className="whitespace-nowrap">
-                                                                {item.level}
+                                                             <Badge style={levelInfo.style} variant={levelInfo.variant} className="whitespace-nowrap">
+                                                                {levelInfo.icon}
+                                                                <span className="ml-2">{item.level}</span>
                                                             </Badge>
                                                         )}
                                                         <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -1000,7 +992,5 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
 
   
 
-
-    
 
     
