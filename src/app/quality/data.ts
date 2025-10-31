@@ -8,6 +8,7 @@ import type { QualityAudit, AuditScheduleItem, AuditChecklist, User, CompanyDepa
 
 export async function getQualityPageData(companyId: string) {
     if (!companyId) {
+        console.error("getQualityPageData called without a companyId.");
         return { auditsList: [], scheduleList: [], checklistsList: [], personnelList: [], departmentsList: [], aircraftList: [] };
     }
 
@@ -37,7 +38,7 @@ export async function getQualityPageData(companyId: string) {
 
         return { auditsList, scheduleList, checklistsList, personnelList, departmentsList, aircraftList };
     } catch (error) {
-        console.error("Failed to fetch quality page data:", error);
+        console.error(`Failed to fetch quality page data for company ${companyId}:`, error);
         // Return empty arrays to prevent the page from crashing on a DB error.
         return { auditsList: [], scheduleList: [], checklistsList: [], personnelList: [], departmentsList: [], aircraftList: [] };
     }
