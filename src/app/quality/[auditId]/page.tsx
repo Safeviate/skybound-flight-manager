@@ -78,6 +78,8 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
         return audit.auditTeam.filter(name => name !== user.name);
     }, [audit.auditTeam, user]);
 
+    // *** COLOR LOGIC IS HERE (for the report view) ***
+    // This function determines the style for the finding level badges.
     const getLevelDisplayInfo = (level: FindingLevel) => {
         const defaultLevels = {
             'Level 1 Finding': { icon: <AlertTriangle className="h-5 w-5" />, variant: 'warning' as const },
@@ -88,11 +90,14 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
 
         if (!level) return null;
         
+        // 1. Check for a custom color in the company settings.
         const customColor = company?.findingLevelColors?.[level];
         if (customColor) {
+            // 2. If a custom color exists, apply it directly using an inline style.
             return { style: { backgroundColor: customColor, color: '#ffffff' }, variant: 'default' as const, icon: <AlertTriangle className="h-5 w-5 text-white" /> };
         }
         
+        // 3. If no custom color is found, fall back to the default system styles.
         const defaultStyle = defaultLevels[level];
         return defaultStyle ? { ...defaultStyle, style: {} } : null;
     }
@@ -497,6 +502,28 @@ export default function QualityAuditDetailPage() {
   const [cameraItemId, setCameraItemId] = useState<string | null>(null);
   const [isBackAlertOpen, setIsBackAlertOpen] = useState(false);
 
+  // *** COLOR LOGIC IS HERE (for the audit questionnaire view) ***
+  // This function determines the style for the finding level badges.
+  const getLevelInfo = (level: FindingLevel) => {
+    const defaultLevels = {
+        'Level 1 Finding': { icon: <AlertTriangle className="h-5 w-5" />, variant: 'warning' as const },
+        'Level 2 Finding': { icon: <AlertTriangle className="h-5 w-5" />, variant: 'orange' as const },
+        'Level 3 Finding': { icon: <AlertTriangle className="h-5 w-5" />, variant: 'destructive' as const },
+        'Observation': { icon: <MessageSquareWarning className="h-5 w-5" />, variant: 'secondary' as const },
+    };
+
+    if (!level) return null;
+
+    // 1. Check for a custom color in the company settings.
+    const customColor = company?.findingLevelColors?.[level];
+    if (customColor) {
+        // 2. If a custom color exists, apply it directly.
+        return { style: { backgroundColor: customColor, color: '#ffffff' }, variant: 'default' as const };
+    }
+
+    // 3. Fallback to default system styles if no custom color is found.
+    return defaultLevels[level] ? { ...defaultLevels[level], style: {} } : null;
+  };
   
   const finalFindingOptions = useMemo(() => 
     (company?.findingOptions?.length ?? 0) > 0 
@@ -673,18 +700,6 @@ export default function QualityAuditDetailPage() {
     }
   };
 
-  const getLevelInfo = (level: FindingLevel) => {
-    const defaultLevels = {
-        'Level 1 Finding': { variant: 'warning' as const },
-        'Level 2 Finding': { variant: 'orange' as const },
-        'Level 3 Finding': { variant: 'destructive' as const },
-        'Observation': { variant: 'secondary' as const },
-    };
-
-    if (!level) return null;
-    return defaultLevels[level];
-};
-
   if (loading || userLoading) {
     return (
         <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
@@ -854,7 +869,7 @@ export default function QualityAuditDetailPage() {
                                                             </Badge>
                                                         )}
                                                         {levelInfo && (
-                                                            <Badge variant={levelInfo.variant} className="whitespace-nowrap">
+                                                            <Badge variant={levelInfo.variant} style={levelInfo.style} className="whitespace-nowrap">
                                                                 {item.level}
                                                             </Badge>
                                                         )}
