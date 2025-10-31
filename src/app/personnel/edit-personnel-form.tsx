@@ -261,7 +261,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                                 <FormItem className="col-span-full">
                                 <FormLabel>Emergency Contact Phone</FormLabel>
                                 <FormControl>
-                                  <Input type="tel" placeholder="+27987654321" {...field} />
+                                  <Input type="tel" placeholder="+27987654321" {...field} value={field.value ?? ''} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
