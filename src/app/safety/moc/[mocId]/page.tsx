@@ -3,9 +3,9 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, addDoc, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { ManagementOfChange, MocPhase, MocStep, MocHazard, RiskLikelihood, RiskSeverity, MocRisk, MocMitigation } from '@/lib/types';
+import type { ManagementOfChange, MocPhase, MocStep, MocHazard, RiskLikelihood, RiskSeverity, MocRisk, MocMitigation, User, Alert } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -70,6 +70,7 @@ export default function MocDetailPage() {
   const { user, company, loading: userLoading } = useUser();
   const mocId = params.mocId as string;
   const [moc, setMoc] = useState<ManagementOfChange | null>(null);
+  const [personnel, setPersonnel] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -78,7 +79,7 @@ export default function MocDetailPage() {
   
   const canEdit = useMemo(() => user?.permissions.includes('MOC:Edit') || user?.permissions.includes('Super User'), [user]);
 
-  const fetchMoc = useCallback(async () => {
+  const fetchMocAndPersonnel = useCallback(async () => {
     if (!mocId || !company) {
         setLoading(false);
         return;
@@ -86,7 +87,13 @@ export default function MocDetailPage() {
     setLoading(true);
     try {
       const mocRef = doc(db, `companies/${company.id}/management-of-change`, mocId);
-      const mocSnap = await getDoc(mocRef);
+      const personnelQuery = query(collection(db, `companies/${company.id}/users`));
+
+      const [mocSnap, personnelSnap] = await Promise.all([
+          getDoc(mocRef),
+          getDocs(personnelQuery)
+      ]);
+      
 
       if (mocSnap.exists()) {
         setMoc({ id: mocSnap.id, ...mocSnap.data() } as ManagementOfChange);
@@ -94,6 +101,11 @@ export default function MocDetailPage() {
         toast({ variant: 'destructive', title: 'Error', description: 'Management of Change record not found.' });
         setMoc(null);
       }
+
+       if (!personnelSnap.empty) {
+        setPersonnel(personnelSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
+      }
+
     } catch (error) {
       console.error("Error fetching MOC details:", error);
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch MOC details.' });
@@ -108,8 +120,8 @@ export default function MocDetailPage() {
       router.push('/login');
       return;
     }
-    fetchMoc();
-  }, [mocId, user, userLoading, router, fetchMoc]);
+    fetchMocAndPersonnel();
+  }, [mocId, user, userLoading, router, fetchMocAndPersonnel]);
 
   const handleUpdate = async (updatedData: Partial<ManagementOfChange>, showToast = true) => {
     if (!moc || !company) return;
@@ -228,6 +240,31 @@ export default function MocDetailPage() {
     handleUpdate({ phases: updatedPhases });
     toast({ title: 'Item Deleted', description: 'The selected item has been removed.' });
   };
+  
+  const handleRequestProposerSignature = async () => {
+    if (!moc || !company || !user) return;
+
+    const proposer = personnel.find(p => p.name === moc.proposedBy);
+    if (!proposer) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not find the proposer to send a notification.' });
+        return;
+    }
+
+    const newAlert: Omit<Alert, 'id' | 'number'> = {
+        companyId: company.id,
+        type: 'Signature Request',
+        title: `MOC Signature Required: ${moc.mocNumber}`,
+        description: `Your signature is required on your proposal: "${moc.title}"`,
+        author: user.name,
+        date: new Date().toISOString(),
+        readBy: [],
+        targetUserId: proposer.id,
+        relatedLink: `/safety/moc/${moc.id}`,
+    };
+    
+    await addDoc(collection(db, `companies/${company.id}/alerts`), newAlert);
+    toast({ title: 'Signature Request Sent', description: `A notification has been sent to ${proposer.name}.` });
+  };
 
 
   if (loading || userLoading) return <main className="flex-1 p-4 md:p-8 flex items-center justify-center"><p>Loading MOC details...</p></main>;
@@ -243,7 +280,10 @@ export default function MocDetailPage() {
             <Button variant="outline" onClick={() => router.push('/safety?tab=moc')}>
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to MOC List
             </Button>
-            <Button variant="outline" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Print</Button>
+            <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={handleRequestProposerSignature}><Signature className="mr-2 h-4 w-4" /> Request Signature</Button>
+                <Button variant="outline" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Print</Button>
+            </div>
         </div>
         
         <Card className="print:shadow-none print:border-none">
