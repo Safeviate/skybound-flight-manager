@@ -71,6 +71,12 @@ function CompanySettingsPage() {
       setSettings(prev => ({ ...prev, [key]: value[0] }));
   };
 
+  const handleColorChange = (level: string, color: string) => {
+    if (!company) return;
+    const newColors = { ...(company.findingLevelColors || {}), [level]: color };
+    updateCompany(company.id, { findingLevelColors: newColors });
+  };
+
   const openFacilityDialog = (facility: Facility | null) => {
     setEditingFacility(facility);
     setFacilityName(facility ? facility.name : '');
@@ -567,6 +573,26 @@ function CompanySettingsPage() {
              <div className="space-y-4">
                 <h3 className="font-semibold text-lg flex items-center gap-2"><ShieldAlert /> Risk Matrix Configuration</h3>
                 <RiskAssessmentTool readOnly={false} />
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Audit Finding Level Colors</h3>
+                <Card>
+                    <CardContent className="pt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'].map(level => (
+                            <div key={level} className="space-y-2">
+                                <Label>{level}</Label>
+                                <Input 
+                                    type="color" 
+                                    value={company?.findingLevelColors?.[level] || '#000000'}
+                                    onChange={(e) => handleColorChange(level, e.target.value)}
+                                />
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
             </div>
 
           </CardContent>
