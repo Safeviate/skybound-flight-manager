@@ -8,15 +8,18 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import type { ManagementOfChange } from '@/lib/types';
+import type { ManagementOfChange, User, CompanyDepartment } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { addDoc, collection, getCountFromServer, query } from 'firebase/firestore';
 import { format } from 'date-fns';
+import { useState, useMemo } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const mocFormSchema = z.object({
   title: z.string().min(10, 'Title must be at least 10 characters.'),
+  department: z.string().min(1, 'Department is required.'),
   proposedBy: z.string().min(1, 'Proposed by is required.'),
   description: z.string().min(20, 'Description must be at least 20 characters.'),
   reason: z.string().min(20, 'Reason for change must be at least 20 characters.'),
@@ -28,21 +31,31 @@ type MocFormValues = z.infer<typeof mocFormSchema>;
 interface NewMocFormProps {
   onClose: () => void;
   onUpdate: () => void;
+  personnel: User[];
+  departments: CompanyDepartment[];
 }
 
-export function NewMocForm({ onClose, onUpdate }: NewMocFormProps) {
+export function NewMocForm({ onClose, onUpdate, personnel, departments }: NewMocFormProps) {
   const { user, company } = useUser();
   const { toast } = useToast();
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+
   const form = useForm<MocFormValues>({
     resolver: zodResolver(mocFormSchema),
     defaultValues: {
         title: '',
-        proposedBy: user?.name || '',
+        department: '',
+        proposedBy: '',
         description: '',
         reason: '',
         scope: '',
     }
   });
+
+  const filteredPersonnel = useMemo(() => {
+    if (!selectedDepartment) return personnel;
+    return personnel.filter(p => p.department === selectedDepartment);
+  }, [selectedDepartment, personnel]);
 
   async function handleFormSubmit(data: MocFormValues) {
     if (!user || !company) {
@@ -88,17 +101,44 @@ export function NewMocForm({ onClose, onUpdate }: NewMocFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="proposedBy"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Proposed by</FormLabel>
-              <FormControl><Input {...field} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="department"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Department</FormLabel>
+                <Select onValueChange={(value) => {
+                  field.onChange(value);
+                  setSelectedDepartment(value);
+                  form.setValue('proposedBy', ''); // Reset proposer when department changes
+                }} value={field.value}>
+                  <FormControl><SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger></FormControl>
+                  <SelectContent>
+                    {departments.map(dept => <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="proposedBy"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Proposed by</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedDepartment}>
+                  <FormControl><SelectTrigger><SelectValue placeholder="Select user" /></SelectTrigger></FormControl>
+                  <SelectContent>
+                    {filteredPersonnel.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <FormField
           control={form.control}
           name="description"

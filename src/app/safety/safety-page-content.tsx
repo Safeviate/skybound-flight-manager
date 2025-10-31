@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -438,6 +437,8 @@ export function SafetyPageContent({
   const [risks, setRisks] = useState<Risk[]>(initialRisks);
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [mocs, setMocs] = useState<ManagementOfChange[]>(initialMoc);
+  const [personnel, setPersonnel] = useState<User[]>([]);
+  const [departments, setDepartments] = useState<CompanyDepartment[]>([]);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
   const { user, company, loading } = useUser();
   const { toast } = useToast();
@@ -445,11 +446,13 @@ export function SafetyPageContent({
   
   const fetchData = React.useCallback(async () => {
     if (!company) return;
-    const { reportsList, risksList, bookingsList, mocList } = await getSafetyPageData(company.id);
+    const { reportsList, risksList, bookingsList, mocList, personnelList, departmentsList } = await getSafetyPageData(company.id);
     setSafetyReports(reportsList);
     setRisks(risksList);
     setBookings(bookingsList);
     setMocs(mocList);
+    setPersonnel(personnelList);
+    setDepartments(departmentsList);
   }, [company]);
 
   useEffect(() => {
@@ -830,7 +833,7 @@ export function SafetyPageContent({
                                   Submit a new proposal for a significant change to operations.
                               </DialogDescription>
                           </DialogHeader>
-                          <NewMocForm onClose={() => setIsNewMocOpen(false)} onUpdate={fetchData} />
+                          <NewMocForm onClose={() => setIsNewMocOpen(false)} onUpdate={fetchData} personnel={personnel} departments={departments} />
                       </DialogContent>
                   </Dialog>
                 </CardHeader>
