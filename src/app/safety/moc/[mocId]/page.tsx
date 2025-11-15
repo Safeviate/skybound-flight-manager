@@ -1,17 +1,18 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, updateDoc, collection, addDoc, getDocs, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { ManagementOfChange, MocPhase, MocStep, MocHazard, RiskLikelihood, RiskSeverity, MocRisk, MocMitigation, User, Alert } from '@/lib/types';
+import type { ManagementOfChange, MocPhase, MocStep, MocHazard, RiskLikelihood, RiskSeverity, MocRisk, MocMitigation, User, Alert, Signature } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, Bot, Loader2, ChevronDown, Save, Signature } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, Bot, Loader2, ChevronDown, Save } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -22,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { getRiskScore, getRiskScoreColor } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Signature as SignatureIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { analyzeMoc } from '@/ai/flows/analyze-moc-flow';
 import Image from 'next/image';
@@ -281,7 +282,7 @@ export default function MocDetailPage() {
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to MOC List
             </Button>
             <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={handleRequestProposerSignature}><Signature className="mr-2 h-4 w-4" /> Request Signature</Button>
+                <Button variant="outline" onClick={handleRequestProposerSignature}><SignatureIcon className="mr-2 h-4 w-4" /> Request Signature</Button>
                 <Button variant="outline" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Print</Button>
             </div>
         </div>
@@ -399,13 +400,13 @@ export default function MocDetailPage() {
                     <h4 className="font-semibold">Proposer: {moc.proposedBy}</h4>
                     {moc.proposerSignature ? (
                         <div>
-                            <Image src={moc.proposerSignature} alt="Proposer Signature" width={300} height={150} className="rounded-md border bg-white"/>
-                            {moc.proposerSignatureDate && (
-                                <p className="text-xs text-muted-foreground mt-1">Signed by {moc.proposedBy} on: {format(parseISO(moc.proposerSignatureDate), 'PPP p')}</p>
+                            <Image src={moc.proposerSignature.signature} alt="Proposer Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                            {moc.proposerSignature.date && (
+                                <p className="text-xs text-muted-foreground mt-1">Signed by {moc.proposedBy} on: {format(parseISO(moc.proposerSignature.date), 'PPP p')}</p>
                             )}
                         </div>
                     ) : canSignAsProposer ? (
-                        <SignaturePad onSubmit={(signature) => handleUpdate({ proposerSignature: signature, proposerSignatureDate: new Date().toISOString() }, true)} />
+                        <SignaturePad onSubmit={(signature) => handleUpdate({ proposerSignature: { signature, date: new Date().toISOString() } }, true)} />
                     ) : (
                         <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
                     )}
@@ -414,13 +415,13 @@ export default function MocDetailPage() {
                     <h4 className="font-semibold">Approver: {moc.approverName || 'Not Assigned'}</h4>
                     {moc.approverSignature ? (
                         <div>
-                            <Image src={moc.approverSignature} alt="Approver Signature" width={300} height={150} className="rounded-md border bg-white"/>
-                            {moc.approverSignatureDate && (
-                                <p className="text-xs text-muted-foreground mt-1">Signed by {moc.approverName} on: {format(parseISO(moc.approverSignatureDate), 'PPP p')}</p>
+                            <Image src={moc.approverSignature.signature} alt="Approver Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                            {moc.approverSignature.date && (
+                                <p className="text-xs text-muted-foreground mt-1">Signed by {moc.approverName} on: {format(parseISO(moc.approverSignature.date), 'PPP p')}</p>
                             )}
                         </div>
                     ) : canSignAsApprover ? (
-                        <SignaturePad onSubmit={(signature) => handleUpdate({ approverName: user?.name, approverSignature: signature, approverSignatureDate: new Date().toISOString() }, true)} />
+                        <SignaturePad onSubmit={(signature) => handleUpdate({ approverName: user?.name, approverSignature: { signature, date: new Date().toISOString() } }, true)} />
                     ) : (
                         <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
                     )}

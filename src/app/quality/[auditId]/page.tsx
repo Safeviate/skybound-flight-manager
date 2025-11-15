@@ -1,13 +1,14 @@
 
+
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem, User, DiscussionEntry, CorrectiveActionPlan, Alert, Department, FindingOption } from '@/lib/types';
+import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem, User, DiscussionEntry, CorrectiveActionPlan, Alert, Department, FindingOption, Signature } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser, Users, Camera, Image as ImageIcon, RotateCw, FileUp, Trash2, ChevronDown } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Eraser, Users, Camera, Image as ImageIcon, RotateCw, FileUp, Trash2, ChevronDown } from 'lucide-react';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
@@ -195,7 +196,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
     };
 
     const handleResetSignatures = () => {
-        onUpdate({ ...audit, auditorSignature: undefined, auditeeSignature: undefined, auditorSignatureDate: undefined, auditeeSignatureDate: undefined }, true);
+        onUpdate({ ...audit, auditorSignature: undefined, auditeeSignature: undefined }, true);
         toast({
             title: 'Signatures Cleared',
             description: 'The signature fields for this audit have been reset.',
@@ -454,13 +455,13 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                         <h4 className="font-semibold">Lead Auditor: {audit.auditor}</h4>
                         {audit.auditorSignature ? (
                             <div>
-                                <Image src={audit.auditorSignature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
-                                {audit.auditorSignatureDate && (
-                                    <p className="text-xs text-muted-foreground mt-1">Signed on: {format(parseISO(audit.auditorSignatureDate), 'PPP p')}</p>
+                                <Image src={audit.auditorSignature.signature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                                {audit.auditorSignature.date && (
+                                    <p className="text-xs text-muted-foreground mt-1">Signed on: {format(parseISO(audit.auditorSignature.date), 'PPP p')}</p>
                                 )}
                             </div>
                         ) : canSign(user, audit.auditor) ? (
-                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditorSignature: signature, auditorSignatureDate: new Date().toISOString() }, true)} />
+                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditorSignature: { signature, date: new Date().toISOString() } }, true)} />
                         ) : (
                             <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
                         )}
@@ -469,13 +470,13 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                         <h4 className="font-semibold">Auditee: {audit.auditeeName}</h4>
                          {audit.auditeeSignature ? (
                             <div>
-                                <Image src={audit.auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
-                                {audit.auditeeSignatureDate && (
-                                    <p className="text-xs text-muted-foreground mt-1">Signed by {audit.auditeeName} on: {format(parseISO(audit.auditeeSignatureDate), 'PPP p')}</p>
+                                <Image src={audit.auditeeSignature.signature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                                {audit.auditeeSignature.date && (
+                                    <p className="text-xs text-muted-foreground mt-1">Signed by {audit.auditeeName} on: {format(parseISO(audit.auditeeSignature.date), 'PPP p')}</p>
                                 )}
                             </div>
                         ) : canSign(user, audit.auditeeName) ? (
-                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditeeSignature: signature, auditeeSignatureDate: new Date().toISOString() }, true)} />
+                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditeeSignature: { signature, date: new Date().toISOString() } }, true)} />
                         ) : (
                             <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
                         )}
@@ -502,28 +503,6 @@ export default function QualityAuditDetailPage() {
   const [cameraItemId, setCameraItemId] = useState<string | null>(null);
   const [isBackAlertOpen, setIsBackAlertOpen] = useState(false);
 
-  // *** COLOR LOGIC IS HERE (for the audit questionnaire view) ***
-  // This function determines the style for the finding level badges.
-  const getLevelInfo = (level: FindingLevel) => {
-    const defaultLevels = {
-        'Level 1 Finding': { icon: <AlertTriangle className="h-5 w-5" />, variant: 'warning' as const },
-        'Level 2 Finding': { icon: <AlertTriangle className="h-5 w-5" />, variant: 'orange' as const },
-        'Level 3 Finding': { icon: <AlertTriangle className="h-5 w-5" />, variant: 'destructive' as const },
-        'Observation': { icon: <MessageSquareWarning className="h-5 w-5" />, variant: 'secondary' as const },
-    };
-
-    if (!level) return null;
-
-    // 1. Check for a custom color in the company settings.
-    const customColor = company?.findingLevelColors?.[level];
-    if (customColor) {
-        // 2. If a custom color exists, apply it directly.
-        return { style: { backgroundColor: customColor, color: '#ffffff' }, variant: 'default' as const };
-    }
-
-    // 3. Fallback to default system styles if no custom color is found.
-    return defaultLevels[level] ? { ...defaultLevels[level], style: {} } : null;
-  };
   
   const finalFindingOptions = useMemo(() => 
     (company?.findingOptions?.length ?? 0) > 0 
@@ -869,7 +848,7 @@ export default function QualityAuditDetailPage() {
                                                             </Badge>
                                                         )}
                                                         {levelInfo && (
-                                                            <Badge variant={levelInfo.variant} style={levelInfo.style} className="whitespace-nowrap">
+                                                            <Badge variant={levelInfo.variant} className="whitespace-nowrap">
                                                                 {item.level}
                                                             </Badge>
                                                         )}
@@ -1010,16 +989,3 @@ export default function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
-    
-
-
-    
-
-    
-
-  
-
-
-    
-
-    

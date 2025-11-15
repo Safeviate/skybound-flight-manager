@@ -475,6 +475,11 @@ export type NonConformanceIssue = {
   photo?: string;
 };
 
+export type Signature = {
+    signature: string;
+    date: string;
+}
+
 export type QualityAudit = {
   id: string;
   companyId: string;
@@ -496,12 +501,8 @@ export type QualityAudit = {
   discussion?: DiscussionEntry[];
   auditTeam?: string[];
   auditeeTeam?: string[];
-  auditorSignature?: string;
-  auditorSignatureDate?: string;
-  auditeeSignature?: string;
-  auditeeSignatureDate?: string;
-  scope?: string;
-  evidenceReference?: string;
+  auditorSignature?: Signature;
+  auditeeSignature?: Signature;
 };
 
 export type AuditStatus = 'Scheduled' | 'Completed' | 'Pending' | 'Not Scheduled';
@@ -602,11 +603,9 @@ export type ManagementOfChange = {
   proposalDate: string;
   status: 'Proposed' | 'Under Review' | 'Approved' | 'Rejected' | 'Implemented' | 'Closed';
   phases?: MocPhase[];
-  proposerSignature?: string;
-  proposerSignatureDate?: string;
+  proposerSignature?: Signature;
   approverName?: string;
-  approverSignature?: string;
-  approverSignatureDate?: string;
+  approverSignature?: Signature;
 };
 
 export type TechnicalReport = {
@@ -818,6 +817,3 @@ export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Find
 export type ChecklistCategory = 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
 export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs' | 'Header';
 export type AuditChecklistItem = { id: string; text: string; finding: FindingStatus | null; level: FindingLevel; observation?: string; findingNotes?: string; evidence?: string; regulationReference?: string; reference?: string; comment?: string; photo?: string; suggestedImprovement?: string; type?: ChecklistItemType; };
-
-
-
