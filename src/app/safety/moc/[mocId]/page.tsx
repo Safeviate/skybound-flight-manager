@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -398,7 +397,7 @@ export default function MocDetailPage() {
             <CardContent className="grid md:grid-cols-2 gap-8">
                 <div className="space-y-2">
                     <h4 className="font-semibold">Proposer: {moc.proposedBy}</h4>
-                    {moc.proposerSignature ? (
+                    {moc.proposerSignature && moc.proposerSignature.signature ? (
                         <div>
                             <Image src={moc.proposerSignature.signature} alt="Proposer Signature" width={300} height={150} className="rounded-md border bg-white"/>
                             {moc.proposerSignature.date && (
@@ -413,7 +412,7 @@ export default function MocDetailPage() {
                 </div>
                 <div className="space-y-2">
                     <h4 className="font-semibold">Approver: {moc.approverName || 'Not Assigned'}</h4>
-                    {moc.approverSignature ? (
+                    {moc.approverSignature && moc.approverSignature.signature ? (
                         <div>
                             <Image src={moc.approverSignature.signature} alt="Approver Signature" width={300} height={150} className="rounded-md border bg-white"/>
                             {moc.approverSignature.date && (

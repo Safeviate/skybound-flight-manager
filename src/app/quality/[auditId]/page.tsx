@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -230,7 +229,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                     </Button>
                 )}
                 <Button variant="outline" onClick={handleRequestSignatures} className="w-full">
-                    <Signature className="mr-2 h-4 w-4" />
+                    <SignatureIcon className="mr-2 h-4 w-4" />
                     Request Signatures
                 </Button>
                 <Button variant="destructive" size="sm" onClick={handleResetSignatures} className="w-full">
@@ -453,7 +452,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                 <CardContent className="grid md:grid-cols-2 gap-8">
                     <div className="space-y-2">
                         <h4 className="font-semibold">Lead Auditor: {audit.auditor}</h4>
-                        {audit.auditorSignature ? (
+                        {audit.auditorSignature && audit.auditorSignature.signature ? (
                             <div>
                                 <Image src={audit.auditorSignature.signature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
                                 {audit.auditorSignature.date && (
@@ -468,7 +467,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                     </div>
                      <div className="space-y-2">
                         <h4 className="font-semibold">Auditee: {audit.auditeeName}</h4>
-                         {audit.auditeeSignature ? (
+                         {audit.auditeeSignature && audit.auditeeSignature.signature ? (
                             <div>
                                 <Image src={audit.auditeeSignature.signature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
                                 {audit.auditeeSignature.date && (
