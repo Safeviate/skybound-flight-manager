@@ -300,150 +300,131 @@ export default function MocDetailPage() {
                 <DetailSection title="Description of Change"><p className="whitespace-pre-wrap">{moc.description}</p></DetailSection>
                 <DetailSection title="Reason for Change"><p className="whitespace-pre-wrap">{moc.reason}</p></DetailSection>
                 <DetailSection title="Scope of Change"><p className="whitespace-pre-wrap">{moc.scope}</p></DetailSection>
-                
-                <Separator className="my-6 print:my-4" />
-                
-                <Card className="print:shadow-none print:border-none">
-                    <CardHeader>
-                        <CardTitle>Hazard Analysis</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <RiskAssessmentTool readOnly={true} />
-                    </CardContent>
-                </Card>
+            </CardContent>
+        </Card>
 
-                <div>
-                    <h2 className="text-xl font-bold mb-4">Implementation Plan & Hazard Analysis</h2>
-                    <div className="space-y-4 rounded-lg border p-4 no-print">
-                        {canEdit && (<>
-                            <Label htmlFor="analysis-params">AI Analysis Parameters (Optional)</Label>
-                            <Textarea id="analysis-params" placeholder="Enter specific keywords for the AI to focus on, e.g., 'impact on flight crew duty times'..." value={analysisParams} onChange={(e) => setAnalysisParams(e.target.value)}/>
-                            <div className="flex items-center gap-2 justify-end">
-                                <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />} Analyze with AI</Button>
-                            </div>
-                        </>)}
-                    </div>
+        <Card className="print:shadow-none print:border-none">
+            <CardHeader>
+                <CardTitle>Hazard Analysis</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <RiskAssessmentTool readOnly={true} />
+            </CardContent>
+        </Card>
+
+        <Card>
+             <CardHeader>
+                <CardTitle>Implementation Plan & Hazard Analysis</CardTitle>
+             </CardHeader>
+             <CardContent>
+                <div className="space-y-4 rounded-lg border p-4 no-print">
+                    {canEdit && (<>
+                        <Label htmlFor="analysis-params">AI Analysis Parameters (Optional)</Label>
+                        <Textarea id="analysis-params" placeholder="Enter specific keywords for the AI to focus on, e.g., 'impact on flight crew duty times'..." value={analysisParams} onChange={(e) => setAnalysisParams(e.target.value)}/>
+                        <div className="flex items-center gap-2 justify-end">
+                            <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />} Analyze with AI</Button>
+                        </div>
+                    </>)}
                 </div>
 
-                <div className="space-y-4 pt-4">
+                <div className="space-y-6 pt-6">
                      {moc.phases?.map((phase, phaseIndex) => (
-                        <div key={phase.id} className="pt-4 border-t-2 border-primary moc-print-phase-wrapper">
-                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-semibold">{phaseIndex + 1}. {phase.description}</h3>
-                                {canEdit && <div className="flex items-center gap-2 no-print">
-                                        <Button variant="ghost" size="icon" onClick={() => setDialogState({ type: 'editPhase', data: { phaseId: phase.id, description: phase.description }})}><Edit className="h-4 w-4" /></Button>
-                                        <Button variant="ghost" size="icon" onClick={() => handleDelete('phase', { phaseId: phase.id })}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                </div>}
-                            </div>
-                            <div className="pl-2 space-y-4">
-                                {phase.steps?.map((step, stepIndex) => (
-                                    <Card key={step.id} className="print:shadow-none print:border-none">
-                                        <CardHeader className="p-4">
-                                             <div className="flex items-center gap-2"><p className="font-semibold">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</p>
-                                                {canEdit && <div className="flex items-center gap-1 no-print">
-                                                    <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editStep', data: { phaseId: phase.id, stepId: step.id, description: step.description }})}><Edit className="h-3 w-3" /></Button>
-                                                    <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('step', { phaseId: phase.id, stepId: step.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
-                                                </div>}
-                                            </div>
-                                        </CardHeader>
-                                        <CardContent className="p-4 pt-0 space-y-3">
-                                             {step.hazards?.map(hazard => (
-                                                <div key={hazard.id} className="p-3 bg-muted/50 rounded-md border">
-                                                    <div className="flex items-center gap-2"><p className="font-semibold text-sm">Hazard: {hazard.description}</p>
-                                                        {canEdit && <div className="flex items-center gap-1 no-print">
-                                                            <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editHazard', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, description: hazard.description }})}><Edit className="h-3 w-3" /></Button>
-                                                            <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('hazard', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
-                                                        </div>}
-                                                    </div>
-                                                    {hazard.risks?.map(risk => (
-                                                    <div key={risk.id} className="pl-4 pt-2 mt-2 border-t">
-                                                        <div className="flex justify-between items-start">
-                                                            <div className="flex items-center gap-2"><p className="font-semibold text-sm">Risk: {risk.description}</p>
-                                                                {canEdit && <div className="flex items-center gap-1 no-print">
-                                                                    <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editRisk', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, risk } })}><Edit className="h-3 w-3" /></Button>
-                                                                    <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('risk', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
-                                                                </div>}
-                                                            </div>
-                                                            <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity, company?.riskMatrixColors), color: 'black' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
-                                                        </div>
-                                                        {risk.mitigations?.map(mit => (
-                                                        <div key={mit.id} className="pl-8 pt-2 mt-2 border-t border-dashed">
-                                                            <div className="flex justify-between items-start">
-                                                                <div className="flex items-center gap-2"><p className="font-semibold text-sm">Mitigation: {mit.description}</p>
-                                                                    {canEdit && <div className="flex items-center gap-1 no-print">
-                                                                        <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editMitigation', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigation: mit } })}><Edit className="h-3 w-3" /></Button>
-                                                                        <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('mitigation', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigationId: mit.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
-                                                                    </div>}
-                                                                </div>
-                                                                <Badge className="font-mono print-force-color" style={{backgroundColor: getRiskScoreColor(mit.residualLikelihood, mit.residualSeverity, company?.riskMatrixColors), color: 'black'}}>{getAlphanumericCode(mit.residualLikelihood, mit.residualSeverity)}</Badge>
-                                                            </div>
-                                                            <div className="text-xs text-muted-foreground mt-1">
-                                                                {mit.responsiblePerson && <span>Owner: {mit.responsiblePerson}</span>}
-                                                                {mit.completionDate && <span className="ml-4">Due: {format(parseISO(mit.completionDate), 'PPP')}</span>}
-                                                            </div>
-                                                        </div>
-                                                        ))}
-                                                        {canEdit && <Button variant="outline" size="sm" className="mt-2 no-print" onClick={() => setDialogState({ type: 'addMitigation', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id }})}>Add Mitigation</Button>}
-                                                    </div>
-                                                    ))}
-                                                    {canEdit && <div className="flex gap-2 mt-2 no-print">
-                                                        <Button variant="outline" size="sm" onClick={() => setDialogState({ type: 'addRisk', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id }})}>Add Risk</Button>
-                                                    </div>}
-                                                </div>
-                                            ))}
-                                            {canEdit && <div className="flex gap-2 mt-2 no-print"><Button variant="outline" size="sm" onClick={() => setDialogState({ type: 'addHazard', data: { phaseId: phase.id, stepId: step.id }})}>Add Hazard</Button></div>}
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                                {canEdit && <div className="flex justify-end mt-2 no-print"><Button variant="outline" size="sm" onClick={() => setDialogState({ type: 'addStep', data: { phaseId: phase.id }})}>Add Step</Button></div>}
-                            </div>
+                         <Card key={phase.id} className="print:shadow-none print:border-none">
+                             <CardHeader className="p-4">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-lg font-semibold">{phaseIndex + 1}. {phase.description}</h3>
+                                    {canEdit && <div className="flex items-center gap-2 no-print">
+                                            <Button variant="ghost" size="icon" onClick={() => setDialogState({ type: 'editPhase', data: { phaseId: phase.id, description: phase.description }})}><Edit className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => handleDelete('phase', { phaseId: phase.id })}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                    </div>}
+                                </div>
+                             </CardHeader>
+                             <CardContent className="p-4 pt-0 space-y-4">
+                                 {phase.steps?.map((step, stepIndex) => (
+                                     <div key={step.id} className="p-3 border rounded-md">
+                                          <div className="flex items-center gap-2"><p className="font-semibold">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</p>
+                                             {canEdit && <div className="flex items-center gap-1 no-print">
+                                                 <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editStep', data: { phaseId: phase.id, stepId: step.id, description: step.description }})}><Edit className="h-3 w-3" /></Button>
+                                                 <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('step', { phaseId: phase.id, stepId: step.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                                             </div>}
+                                         </div>
+                                          {step.hazards?.map(hazard => (
+                                             <div key={hazard.id} className="pl-4 pt-2 mt-2 border-t">
+                                                 <div className="flex items-center gap-2"><p className="font-semibold text-sm">Hazard: {hazard.description}</p>
+                                                     {canEdit && <div className="flex items-center gap-1 no-print">
+                                                         <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editHazard', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, description: hazard.description }})}><Edit className="h-3 w-3" /></Button>
+                                                         <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('hazard', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                                                     </div>}
+                                                 </div>
+                                                 {hazard.risks?.map(risk => (
+                                                 <div key={risk.id} className="pl-6 pt-2 mt-2 border-t border-dashed">
+                                                     <div className="flex justify-between items-start">
+                                                         <div className="flex items-center gap-2"><p className="text-sm">Risk: {risk.description}</p>
+                                                             {canEdit && <div className="flex items-center gap-1 no-print">
+                                                                 <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editRisk', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, risk } })}><Edit className="h-3 w-3" /></Button>
+                                                                 <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('risk', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                                                             </div>}
+                                                         </div>
+                                                         <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity, company?.riskMatrixColors), color: 'black' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
+                                                     </div>
+                                                 </div>
+                                                 ))}
+                                                 {canEdit && <div className="flex gap-2 mt-2 no-print"><Button variant="link" size="sm" onClick={() => setDialogState({ type: 'addRisk', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id }})}>Add Risk</Button></div>}
+                                             </div>
+                                         ))}
+                                         {canEdit && <div className="flex gap-2 mt-2 no-print"><Button variant="link" size="sm" onClick={() => setDialogState({ type: 'addHazard', data: { phaseId: phase.id, stepId: step.id }})}>Add Hazard</Button></div>}
+                                     </div>
+                                 ))}
+                                 {canEdit && <div className="flex justify-end mt-4 no-print"><Button variant="outline" size="sm" onClick={() => setDialogState({ type: 'addStep', data: { phaseId: phase.id }})}>Add Step</Button></div>}
+                             </CardContent>
+                         </Card>
+                     ))}
+                     {canEdit && (
+                         <div className="pt-4 border-t no-print">
+                             <Button variant="secondary" className="w-full" onClick={() => setDialogState({ type: 'addPhase' })}>
+                                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Phase
+                             </Button>
+                         </div>
+                     )}
+                </div>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Signatures</CardTitle>
+            </CardHeader>
+            <CardContent className="grid md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                    <h4 className="font-semibold">Proposer: {moc.proposedBy}</h4>
+                    {moc.proposerSignature ? (
+                        <div>
+                            <Image src={moc.proposerSignature} alt="Proposer Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                            {moc.proposerSignatureDate && (
+                                <p className="text-xs text-muted-foreground mt-1">Signed by {moc.proposedBy} on: {format(parseISO(moc.proposerSignatureDate), 'PPP p')}</p>
+                            )}
                         </div>
-                    ))}
-                    {canEdit && (
-                        <div className="pt-4 border-t no-print">
-                            <Button variant="secondary" className="w-full" onClick={() => setDialogState({ type: 'addPhase' })}>
-                                <PlusCircle className="mr-2 h-4 w-4" /> Add New Phase
-                            </Button>
-                        </div>
+                    ) : canSignAsProposer ? (
+                        <SignaturePad onSubmit={(signature) => handleUpdate({ proposerSignature: signature, proposerSignatureDate: new Date().toISOString() }, true)} />
+                    ) : (
+                        <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
                     )}
                 </div>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Signatures</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid md:grid-cols-2 gap-8">
-                        <div className="space-y-2">
-                            <h4 className="font-semibold">Proposer: {moc.proposedBy}</h4>
-                            {moc.proposerSignature ? (
-                                <div>
-                                    <Image src={moc.proposerSignature} alt="Proposer Signature" width={300} height={150} className="rounded-md border bg-white"/>
-                                    {moc.proposerSignatureDate && (
-                                        <p className="text-xs text-muted-foreground mt-1">Signed by {moc.proposedBy} on: {format(parseISO(moc.proposerSignatureDate), 'PPP p')}</p>
-                                    )}
-                                </div>
-                            ) : canSignAsProposer ? (
-                                <SignaturePad onSubmit={(signature) => handleUpdate({ proposerSignature: signature, proposerSignatureDate: new Date().toISOString() }, true)} />
-                            ) : (
-                                <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
+                <div className="space-y-2">
+                    <h4 className="font-semibold">Approver: {moc.approverName || 'Not Assigned'}</h4>
+                    {moc.approverSignature ? (
+                        <div>
+                            <Image src={moc.approverSignature} alt="Approver Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                            {moc.approverSignatureDate && (
+                                <p className="text-xs text-muted-foreground mt-1">Signed by {moc.approverName} on: {format(parseISO(moc.approverSignatureDate), 'PPP p')}</p>
                             )}
                         </div>
-                        <div className="space-y-2">
-                            <h4 className="font-semibold">Approver: {moc.approverName || 'Not Assigned'}</h4>
-                            {moc.approverSignature ? (
-                                <div>
-                                    <Image src={moc.approverSignature} alt="Approver Signature" width={300} height={150} className="rounded-md border bg-white"/>
-                                    {moc.approverSignatureDate && (
-                                        <p className="text-xs text-muted-foreground mt-1">Signed by {moc.approverName} on: {format(parseISO(moc.approverSignatureDate), 'PPP p')}</p>
-                                    )}
-                                </div>
-                            ) : canSignAsApprover ? (
-                                <SignaturePad onSubmit={(signature) => handleUpdate({ approverName: user?.name, approverSignature: signature, approverSignatureDate: new Date().toISOString() }, true)} />
-                            ) : (
-                                <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
+                    ) : canSignAsApprover ? (
+                        <SignaturePad onSubmit={(signature) => handleUpdate({ approverName: user?.name, approverSignature: signature, approverSignatureDate: new Date().toISOString() }, true)} />
+                    ) : (
+                        <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
+                    )}
+                </div>
             </CardContent>
         </Card>
       </div>
