@@ -4,12 +4,20 @@
 
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, where } from 'firebase/firestore';
-import type { QualityAudit, AuditScheduleItem, AuditChecklist, User, CompanyDepartment, Aircraft } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, AuditChecklist, User, CompanyDepartment, Aircraft, SafetyReport, ManagementOfChange, UnifiedTask } from '@/lib/types';
 
 export async function getQualityPageData(companyId: string) {
     if (!companyId) {
         console.error("getQualityPageData called without a companyId.");
-        return { auditsList: [], scheduleList: [], checklistsList: [], personnelList: [], departmentsList: [], aircraftList: [] };
+        return { 
+            auditsList: [], 
+            scheduleList: [], 
+            checklistsList: [], 
+            personnelList: [], 
+            departmentsList: [], 
+            aircraftList: [],
+            unifiedTasks: [],
+        };
     }
 
     try {
@@ -19,14 +27,19 @@ export async function getQualityPageData(companyId: string) {
         const personnelQuery = query(collection(db, `companies/${companyId}/users`), where('role', '!=', 'Student'));
         const departmentsQuery = query(collection(db, `companies/${companyId}/departments`));
         const aircraftQuery = query(collection(db, `companies/${companyId}/aircraft`));
+        const safetyReportsQuery = query(collection(db, `companies/${companyId}/safety-reports`));
+        const mocQuery = query(collection(db, `companies/${companyId}/management-of-change`));
 
-        const [auditsSnapshot, scheduleSnapshot, checklistsSnapshot, personnelSnapshot, departmentsSnapshot, aircraftSnapshot] = await Promise.all([
+
+        const [auditsSnapshot, scheduleSnapshot, checklistsSnapshot, personnelSnapshot, departmentsSnapshot, aircraftSnapshot, safetyReportsSnapshot, mocSnapshot] = await Promise.all([
             getDocs(auditsQuery),
             getDocs(scheduleQuery),
             getDocs(checklistsQuery),
             getDocs(personnelQuery),
             getDocs(departmentsQuery),
             getDocs(aircraftQuery),
+            getDocs(safetyReportsQuery),
+            getDocs(mocQuery),
         ]);
         
         const auditsList = auditsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QualityAudit));
@@ -35,11 +48,71 @@ export async function getQualityPageData(companyId: string) {
         const personnelList = personnelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
         const departmentsList = departmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment));
         const aircraftList = aircraftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
+        const safetyReportsList = safetyReportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SafetyReport));
+        const mocList = mocSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ManagementOfChange));
 
-        return { auditsList, scheduleList, checklistsList, personnelList, departmentsList, aircraftList };
+        const unifiedTasks: UnifiedTask[] = [];
+
+        auditsList.forEach(audit => {
+            audit.nonConformanceIssues?.forEach(issue => {
+                issue.correctiveActionPlans?.forEach(plan => {
+                    plan.actions.forEach(action => {
+                        unifiedTasks.push({
+                            id: `${audit.id}-${issue.id}-${plan.id}-${action.id}`,
+                            description: action.action,
+                            responsiblePerson: action.responsiblePerson,
+                            dueDate: action.completionDate,
+                            status: action.status,
+                            sourceType: 'Quality Audit',
+                            sourceId: audit.id,
+                            sourceTitle: audit.auditNumber || audit.title,
+                        });
+                    });
+                });
+            });
+        });
+
+        safetyReportsList.forEach(report => {
+            report.tasks?.forEach(task => {
+                unifiedTasks.push({
+                    id: `${report.id}-${task.id}`,
+                    description: task.description,
+                    responsiblePerson: task.assignedTo,
+                    dueDate: task.dueDate,
+                    status: task.status,
+                    sourceType: 'Safety Report',
+                    sourceId: report.id,
+                    sourceTitle: report.reportNumber,
+                });
+            });
+        });
+        
+        mocList.forEach(moc => {
+            moc.phases?.forEach(phase => {
+                phase.steps.forEach(step => {
+                    step.hazards?.forEach(hazard => {
+                        hazard.risks?.forEach(risk => {
+                            risk.mitigations?.forEach(mitigation => {
+                                unifiedTasks.push({
+                                    id: `${moc.id}-${mitigation.id}`,
+                                    description: mitigation.description,
+                                    responsiblePerson: mitigation.responsiblePerson || 'N/A',
+                                    dueDate: mitigation.completionDate || 'N/A',
+                                    status: mitigation.status,
+                                    sourceType: 'MOC',
+                                    sourceId: moc.id,
+                                    sourceTitle: moc.mocNumber,
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+
+        return { auditsList, scheduleList, checklistsList, personnelList, departmentsList, aircraftList, unifiedTasks };
     } catch (error) {
         console.error(`Failed to fetch quality page data for company ${companyId}:`, error);
-        // Return empty arrays to prevent the page from crashing on a DB error.
-        return { auditsList: [], scheduleList: [], checklistsList: [], personnelList: [], departmentsList: [], aircraftList: [] };
+        return { auditsList: [], scheduleList: [], checklistsList: [], personnelList: [], departmentsList: [], aircraftList: [], unifiedTasks: [] };
     }
 }
