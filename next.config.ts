@@ -6,11 +6,11 @@ const pwaConfig = withPWA({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
+  disable: process.env.NODE_ENV === 'development' || process.env.PWA_DISABLED === 'true',
   runtimeCaching: [
     {
       urlPattern: /^https?.*/,
-      handler: 'StaleWhileRevalidate',
+      handler: 'NetworkFirst',
       options: {
         cacheName: 'offlineCache',
         expiration: {
@@ -24,6 +24,9 @@ const pwaConfig = withPWA({
 
 const nextConfig: NextConfig = {
   /* config options here */
+  env: {
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+  },
   async headers() {
     return [
       {
@@ -62,5 +65,4 @@ const nextConfig: NextConfig = {
   }
 };
 
-// We apply pwaConfig only in production.
-export default process.env.NODE_ENV === 'development' ? nextConfig : pwaConfig(nextConfig);
+export default pwaConfig(nextConfig);
