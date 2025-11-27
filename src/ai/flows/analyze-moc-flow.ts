@@ -29,6 +29,8 @@ const MocRiskSchema = z.object({
   description: z.string().describe('A concise description of a potential risk associated with the hazard.'),
   likelihood: likelihoodEnum.describe('The initial likelihood of the risk occurring.'),
   severity: severityEnum.describe('The initial severity of the risk\'s potential outcome.'),
+  mitigation: z.string().describe('A specific, actionable mitigation step to control this risk.'),
+  responsiblePerson: z.string().describe('The generic role or department responsible for implementing the mitigation (e.g., "Safety Manager", "Maintenance Department").'),
 });
 
 const MocHazardSchema = z.object({
@@ -82,6 +84,8 @@ const prompt = ai.definePrompt({
   3.  **For each STEP, identify potential new HAZARDS.** Think about what could go wrong during or after each specific action, including any regulatory compliance hazards under SACAA rules. If a step is purely administrative and introduces no new operational hazards, you can return an empty array for its hazards.
   4.  **For each HAZARD, identify the associated RISKS.** A risk is the potential negative consequence of a hazard.
   5.  **Perform an initial risk assessment for each RISK.** Assign an initial 'likelihood' and 'severity' based on your expert judgment.
+  6.  **For each RISK, define an initial MITIGATION strategy.** This should be a specific, actionable step to control the risk.
+  7.  **For each MITIGATION, assign a generic RESPONSIBLE PERSON** (e.g., "Safety Manager", "Head of Training", "Maintenance Department").
 
   Structure your entire output in the required JSON format.
   `,

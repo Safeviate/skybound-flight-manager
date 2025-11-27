@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, Bot, Loader2, ChevronDown, Save } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, Bot, Loader2, ChevronDown, Save, Signature as SignatureIcon, ShieldAlert } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { getRiskScore, getRiskScoreColor } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, Signature as SignatureIcon } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { analyzeMoc } from '@/ai/flows/analyze-moc-flow';
 import Image from 'next/image';
@@ -166,7 +166,13 @@ export default function MocDetailPage() {
               likelihood: risk.likelihood,
               severity: risk.severity,
               riskScore: getRiskScore(risk.likelihood, risk.severity),
-              mitigations: [],
+              mitigations: [{
+                  id: `mitigation-${Date.now()}-${Math.random()}`,
+                  description: risk.mitigation,
+                  responsiblePerson: risk.responsiblePerson,
+                  completionDate: '',
+                  status: 'Open',
+              }],
             })),
           })),
         }))
@@ -342,7 +348,7 @@ export default function MocDetailPage() {
                              <CardContent className="p-4 pt-0 space-y-4">
                                  {phase.steps?.map((step, stepIndex) => (
                                      <div key={step.id} className="p-3 border rounded-md">
-                                          <div className="flex items-center gap-2"><p className="font-semibold">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</p>
+                                         <div className="flex items-center gap-2"><p className="font-semibold">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</p>
                                              {canEdit && <div className="flex items-center gap-1 no-print">
                                                  <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editStep', data: { phaseId: phase.id, stepId: step.id, description: step.description }})}><Edit className="h-3 w-3" /></Button>
                                                  <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('step', { phaseId: phase.id, stepId: step.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
@@ -350,22 +356,26 @@ export default function MocDetailPage() {
                                          </div>
                                           {step.hazards?.map(hazard => (
                                              <div key={hazard.id} className="pl-4 pt-2 mt-2 border-t">
-                                                 <div className="flex items-center gap-2"><p className="font-semibold text-sm">Hazard: {hazard.description}</p>
+                                                 <div className="flex items-center gap-2 moc-print-hazard-title"><p className="font-semibold text-sm">Hazard: {hazard.description}</p>
                                                      {canEdit && <div className="flex items-center gap-1 no-print">
                                                          <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editHazard', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, description: hazard.description }})}><Edit className="h-3 w-3" /></Button>
                                                          <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('hazard', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                                                      </div>}
                                                  </div>
                                                  {hazard.risks?.map(risk => (
-                                                 <div key={risk.id} className="pl-6 pt-2 mt-2 border-t border-dashed">
+                                                 <div key={risk.id} className="pl-6 pt-2 mt-2 border-t border-dashed moc-print-risk-wrapper">
                                                      <div className="flex justify-between items-start">
-                                                         <div className="flex items-center gap-2"><p className="text-sm">Risk: {risk.description}</p>
+                                                         <div className="flex items-center gap-2 moc-print-risk-title"><p className="text-sm">Risk: {risk.description}</p>
                                                              {canEdit && <div className="flex items-center gap-1 no-print">
                                                                  <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editRisk', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, risk } })}><Edit className="h-3 w-3" /></Button>
                                                                  <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('risk', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                                                              </div>}
                                                          </div>
                                                          <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity, company?.riskMatrixColors), color: 'black' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
+                                                     </div>
+                                                      <div className="pl-6 pt-2 mt-2 border-t border-dashed moc-print-mitigation-wrapper">
+                                                         <p className="font-semibold text-sm moc-print-mitigation-title">Mitigation: <span className="font-normal text-foreground">{risk.mitigations && risk.mitigations.length > 0 ? risk.mitigations[0].description : 'Not defined'}</span></p>
+                                                         <p className="text-xs text-muted-foreground">Responsible: {risk.mitigations && risk.mitigations.length > 0 ? risk.mitigations[0].responsiblePerson : 'N/A'}</p>
                                                      </div>
                                                  </div>
                                                  ))}
