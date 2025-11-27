@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -379,10 +380,17 @@ export default function MocDetailPage() {
                                                                     <p className="font-semibold text-sm moc-print-mitigation-title">Mitigation: <span className="font-normal text-foreground">{mitigation.description}</span></p>
                                                                     <p className="text-xs text-muted-foreground">Responsible: {mitigation.responsiblePerson || 'N/A'}</p>
                                                                 </div>
-                                                                 {canEdit && <div className="flex items-center gap-1 no-print">
-                                                                    <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editMitigation', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigation } })}><Edit className="h-3 w-3" /></Button>
-                                                                    <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('mitigation', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigationId: mitigation.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
-                                                                </div>}
+                                                                <div className="flex items-center gap-2">
+                                                                    {mitigation.residualLikelihood && mitigation.residualSeverity && (
+                                                                         <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(mitigation.residualLikelihood, mitigation.residualSeverity, company?.riskMatrixColors), color: 'black' }}>
+                                                                            {getAlphanumericCode(mitigation.residualLikelihood, mitigation.residualSeverity)}
+                                                                        </Badge>
+                                                                    )}
+                                                                    {canEdit && <div className="flex items-center gap-1 no-print">
+                                                                        <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editMitigation', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigation } })}><Edit className="h-3 w-3" /></Button>
+                                                                        <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('mitigation', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigationId: mitigation.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                                                                    </div>}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                      ))}
