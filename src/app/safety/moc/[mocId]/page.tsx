@@ -239,9 +239,9 @@ export default function MocDetailPage() {
     } else if (itemType === 'hazard') {
         updatedPhases = updatedPhases.map((p: MocPhase) => p.id === ids.phaseId ? { ...p, steps: p.steps?.map(s => s.id === ids.stepId ? { ...s, hazards: s.hazards?.filter(h => h.id !== ids.hazardId) } : s) } : p);
     } else if (itemType === 'risk') {
-        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === ids.phaseId ? { ...p, steps: p.steps?.map(s => s.id === ids.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === ids.hazardId ? { ...h, risks: h.risks?.filter(r => r.id !== ids.riskId) } : h) } : s) } : p);
+        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === ids.phaseId ? { ...p, steps: p.steps?.map(s => s.id === ids.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: h.risks?.filter(r => r.id !== ids.riskId) } : h) } : s) } : p);
     } else if (itemType === 'mitigation') {
-        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === ids.phaseId ? { ...p, steps: p.steps?.map(s => s.id === ids.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === ids.hazardId ? { ...h, risks: h.risks?.map(r => r.id === ids.riskId ? { ...r, mitigations: r.mitigations?.filter(m => m.id !== ids.mitigationId) } : r) } : h) } : s) } : p);
+        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === ids.phaseId ? { ...p, steps: p.steps?.map(s => s.id === ids.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: h.risks?.map(r => r.id === ids.riskId ? { ...r, mitigations: r.mitigations?.filter(m => m.id !== ids.mitigationId) } : r) } : h) } : s) } : p);
     }
 
     handleUpdate({ phases: updatedPhases });
@@ -400,7 +400,7 @@ export default function MocDetailPage() {
                                                      </div>
                                                      {risk.mitigations?.map(mitigation => (
                                                         <div key={mitigation.id} className="pl-6 pt-2 mt-2 border-t border-dashed moc-print-mitigation-wrapper">
-                                                            <div className="flex justify-between items-start">
+                                                            <div className="flex justify-between items-start gap-2">
                                                                 <div className="flex-1">
                                                                     <p className="font-semibold text-sm moc-print-mitigation-title">Mitigation: <span className="font-normal text-foreground">{mitigation.description}</span></p>
                                                                     <p className="text-xs text-muted-foreground">Responsible: {mitigation.responsiblePerson || 'N/A'}</p>
@@ -414,7 +414,13 @@ export default function MocDetailPage() {
                                                                     {canEdit && (
                                                                         <div className="flex items-center gap-1 no-print">
                                                                             <Select value={mitigation.status} onValueChange={(value: MocMitigation['status']) => handleMitigationStatusChange(value, { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigationId: mitigation.id })}>
-                                                                                <SelectTrigger className="h-8 text-xs w-[120px]"><SelectValue /></SelectTrigger>
+                                                                                <SelectTrigger className={cn("h-8 text-xs w-[130px]",
+                                                                                    mitigation.status === 'Open' && 'bg-warning text-warning-foreground',
+                                                                                    mitigation.status === 'In Progress' && 'bg-primary text-primary-foreground',
+                                                                                    mitigation.status === 'Closed' && 'bg-success text-success-foreground'
+                                                                                )}>
+                                                                                    <SelectValue />
+                                                                                </SelectTrigger>
                                                                                 <SelectContent>
                                                                                     {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                                                                                 </SelectContent>
@@ -423,7 +429,6 @@ export default function MocDetailPage() {
                                                                             <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('mitigation', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigationId: mitigation.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                                                                         </div>
                                                                     )}
-                                                                    <Badge variant={getStatusBadgeVariant(mitigation.status)}>{mitigation.status}</Badge>
                                                                 </div>
                                                             </div>
                                                         </div>
