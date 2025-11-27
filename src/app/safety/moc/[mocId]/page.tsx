@@ -375,14 +375,14 @@ export default function MocDetailPage() {
                                                      </div>
                                                      {risk.mitigations?.map(mitigation => (
                                                         <div key={mitigation.id} className="pl-6 pt-2 mt-2 border-t border-dashed moc-print-mitigation-wrapper">
-                                                            <div className="flex justify-between items-start">
-                                                                <div>
+                                                            <div className="flex justify-between items-start gap-4">
+                                                                <div className="flex-1">
                                                                     <p className="font-semibold text-sm moc-print-mitigation-title">Mitigation: <span className="font-normal text-foreground">{mitigation.description}</span></p>
                                                                     <p className="text-xs text-muted-foreground">Responsible: {mitigation.responsiblePerson || 'N/A'}</p>
                                                                 </div>
                                                                 <div className="flex items-center gap-2">
                                                                     {mitigation.residualLikelihood && mitigation.residualSeverity && (
-                                                                         <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(mitigation.residualLikelihood, mitigation.residualSeverity, company?.riskMatrixColors), color: 'black' }}>
+                                                                        <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(mitigation.residualLikelihood, mitigation.residualSeverity, company?.riskMatrixColors), color: 'black' }}>
                                                                             {getAlphanumericCode(mitigation.residualLikelihood, mitigation.residualSeverity)}
                                                                         </Badge>
                                                                     )}
