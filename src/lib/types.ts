@@ -559,10 +559,12 @@ export type MocMitigation = {
   description: string;
   responsiblePerson?: string;
   completionDate?: string;
-  residualLikelihood: RiskLikelihood;
-  residualSeverity: RiskSeverity;
-  residualRiskScore: number;
+  status: 'Open' | 'In Progress' | 'Closed';
+  residualLikelihood?: RiskLikelihood;
+  residualSeverity?: RiskSeverity;
+  residualRiskScore?: number;
 };
+
 
 export type MocRisk = {
   id: string;
@@ -643,7 +645,6 @@ export type ExamAssignment = {
   name: string;
   status: 'Not Started' | 'In Progress' | 'Completed' | 'Passed' | 'Failed';
   score?: number;
-  dateCompleted?: string;
   attemptId?: string; // Link to the detailed ExamAttempt
 };
 
