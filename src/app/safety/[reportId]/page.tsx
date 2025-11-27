@@ -85,7 +85,7 @@ const manualTaskFormSchema = z.object({
 type ManualTaskFormValues = z.infer<typeof manualTaskFormSchema>;
 
 
-const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, isLoading, onMarkCommentsRead, onManualTaskAdd, onRequestExtension, onApproveExtension, onRejectExtension }: { report: SafetyReport, personnel: User[], onUpdateTask: (taskId: string, status: 'Open' | 'Completed') => void, onAddComment: (taskId: string, message: string) => void, isLoading: boolean, onMarkCommentsRead: (taskId: string) => void, onManualTaskAdd: (task: Omit<InvestigationTask, 'id'|'status'>) => void, onRequestExtension: (taskId: string, reason: string, newDeadline: string) => void, onApproveExtension: (taskId: string) => void, onRejectExtension: (taskId: string) => void }) => {
+const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, isLoading, onMarkCommentsRead, onManualTaskAdd, onRequestExtension, onApproveExtension, onRejectExtension }: { report: SafetyReport, personnel: User[], onUpdateTask: (taskId: string, status: 'Open' | 'Completed' | 'In Progress' | 'Not Started') => void, onAddComment: (taskId: string, message: string) => void, isLoading: boolean, onMarkCommentsRead: (taskId: string) => void, onManualTaskAdd: (task: Omit<InvestigationTask, 'id'|'status'>) => void, onRequestExtension: (taskId: string, reason: string, newDeadline: string) => void, onApproveExtension: (taskId: string) => void, onRejectExtension: (taskId: string) => void }) => {
     const tasks = report.tasks || [];
     const [isManualTaskOpen, setIsManualTaskOpen] = useState(false);
 
@@ -427,7 +427,7 @@ function SafetyReportInvestigationPage() {
     });
   };
 
-  const handleUpdateTaskStatus = (taskId: string, status: 'Open' | 'Completed') => {
+  const handleUpdateTaskStatus = (taskId: string, status: 'Open' | 'Completed' | 'In Progress' | 'Not Started') => {
     if (!report) return;
     
     const updatedTasks = report.tasks?.map(task => 
@@ -487,7 +487,7 @@ function SafetyReportInvestigationPage() {
       if (!taskToUpdate || !taskToUpdate.requestedDeadline) return;
       
       const updatedTasks = report?.tasks?.map(t =>
-          t.id === taskId ? { ...t, deadline: t.requestedDeadline!, extensionStatus: 'Approved' } : a
+          t.id === taskId ? { ...t, deadline: t.requestedDeadline!, extensionStatus: 'Approved' } : t
       );
       handleReportUpdate({ tasks: updatedTasks || [] }, true);
       toast({ title: 'Extension Approved', description: `The deadline has been updated.`});
