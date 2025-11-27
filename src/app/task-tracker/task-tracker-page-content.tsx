@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 import type { UnifiedTask, User } from '@/lib/types';
 import { AlertTriangle, CheckCircle, Clock, Edit } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
@@ -59,6 +59,14 @@ export function TaskTrackerPageContent({ initialTasks, personnel }: TaskTrackerP
     }
   }
 
+  const renderDueDate = (dateString: string) => {
+    const date = parseISO(dateString);
+    if (isValid(date)) {
+      return format(date, 'PPP');
+    }
+    return 'N/A';
+  };
+
   return (
     <main className="flex-1 p-4 md:p-8">
     <Card>
@@ -95,7 +103,7 @@ export function TaskTrackerPageContent({ initialTasks, personnel }: TaskTrackerP
                             <TableRow key={task.id}>
                                 <TableCell>{task.description}</TableCell>
                                 <TableCell>{task.responsiblePerson}</TableCell>
-                                <TableCell>{format(parseISO(task.dueDate), 'PPP')}</TableCell>
+                                <TableCell>{renderDueDate(task.dueDate)}</TableCell>
                                 <TableCell>
                                     <Badge variant={getStatusVariant(task.status)}>{task.status}</Badge>
                                 </TableCell>
