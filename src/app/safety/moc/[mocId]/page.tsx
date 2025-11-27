@@ -36,6 +36,7 @@ import { SignaturePad } from '@/components/ui/signature-pad';
 
 const probabilityOptions: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
 const severityOptions: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
+const statusOptions: MocMitigation['status'][] = ['Open', 'In Progress', 'Closed'];
 
 const getAlphanumericCode = (likelihood: RiskLikelihood, severity: RiskSeverity): string => {
     const likelihoodMap: Record<RiskLikelihood, number> = { 'Frequent': 5, 'Occasional': 4, 'Remote': 3, 'Improbable': 2, 'Extremely Improbable': 1 };
@@ -247,6 +248,30 @@ export default function MocDetailPage() {
     toast({ title: 'Item Deleted', description: 'The selected item has been removed.' });
   };
   
+    const handleMitigationStatusChange = (newStatus: MocMitigation['status'], ids: Record<string, string>) => {
+        if (!moc) return;
+        let updatedPhases = JSON.parse(JSON.stringify(moc.phases || []));
+        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === ids.phaseId 
+            ? { ...p, steps: p.steps?.map(s => s.id === ids.stepId 
+                ? { ...s, hazards: s.hazards?.map(h => h.id === ids.hazardId 
+                    ? { ...h, risks: h.risks?.map(r => r.id === ids.riskId 
+                        ? { ...r, mitigations: r.mitigations?.map(m => m.id === ids.mitigationId ? { ...m, status: newStatus } : m) } 
+                        : r) } 
+                    : h) } 
+                : s) } 
+            : p);
+        handleUpdate({ phases: updatedPhases }, true);
+    };
+
+    const getStatusBadgeVariant = (status: MocMitigation['status']) => {
+        switch (status) {
+            case 'Open': return 'warning';
+            case 'In Progress': return 'primary';
+            case 'Closed': return 'success';
+            default: return 'outline';
+        }
+    };
+
   const handleRequestProposerSignature = async () => {
     if (!moc || !company || !user) return;
 
@@ -375,7 +400,7 @@ export default function MocDetailPage() {
                                                      </div>
                                                      {risk.mitigations?.map(mitigation => (
                                                         <div key={mitigation.id} className="pl-6 pt-2 mt-2 border-t border-dashed moc-print-mitigation-wrapper">
-                                                            <div className="flex justify-between items-start gap-4">
+                                                            <div className="flex justify-between items-start">
                                                                 <div className="flex-1">
                                                                     <p className="font-semibold text-sm moc-print-mitigation-title">Mitigation: <span className="font-normal text-foreground">{mitigation.description}</span></p>
                                                                     <p className="text-xs text-muted-foreground">Responsible: {mitigation.responsiblePerson || 'N/A'}</p>
@@ -386,10 +411,19 @@ export default function MocDetailPage() {
                                                                             {getAlphanumericCode(mitigation.residualLikelihood, mitigation.residualSeverity)}
                                                                         </Badge>
                                                                     )}
-                                                                    {canEdit && <div className="flex items-center gap-1 no-print">
-                                                                        <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editMitigation', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigation } })}><Edit className="h-3 w-3" /></Button>
-                                                                        <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('mitigation', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigationId: mitigation.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
-                                                                    </div>}
+                                                                    {canEdit && (
+                                                                        <div className="flex items-center gap-1 no-print">
+                                                                            <Select value={mitigation.status} onValueChange={(value: MocMitigation['status']) => handleMitigationStatusChange(value, { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigationId: mitigation.id })}>
+                                                                                <SelectTrigger className="h-8 text-xs w-[120px]"><SelectValue /></SelectTrigger>
+                                                                                <SelectContent>
+                                                                                    {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                                                                </SelectContent>
+                                                                            </Select>
+                                                                            <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editMitigation', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigation } })}><Edit className="h-3 w-3" /></Button>
+                                                                            <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('mitigation', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigationId: mitigation.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                                                                        </div>
+                                                                    )}
+                                                                    <Badge variant={getStatusBadgeVariant(mitigation.status)}>{mitigation.status}</Badge>
                                                                 </div>
                                                             </div>
                                                         </div>
