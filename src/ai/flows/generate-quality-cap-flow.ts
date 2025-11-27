@@ -9,8 +9,10 @@
  * - GenerateQualityCapOutput - The return type for the function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai, configureGenkit} from '@/ai/genkit';
 import {z} from 'genkit';
+
+configureGenkit();
 
 const GenerateQualityCapInputSchema = z.object({
   nonConformanceText: z.string().describe('The text of the non-conformance finding, including the item, regulation, and auditor comment.'),

@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -8,9 +9,11 @@
  * - SuggestHazardsOutput - The return type for the function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai, configureGenkit} from '@/ai/genkit';
 import {z} from 'genkit';
 import type { RiskLikelihood, RiskSeverity } from '@/lib/types';
+
+configureGenkit();
 
 const SuggestHazardsInputSchema = z.object({
   reportText: z.string().describe('The full text of the safety report.'),

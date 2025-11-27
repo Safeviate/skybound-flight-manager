@@ -9,8 +9,10 @@
  * - GenerateAuditChecklistOutput - The return type for the function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai, configureGenkit} from '@/ai/genkit';
 import {z} from 'genkit';
+
+configureGenkit();
 
 const GenerateAuditChecklistInputSchema = z.object({
   topic: z.string().describe('The topic for the audit checklist (e.g., "Hangar Safety", "Flight Documentation").'),

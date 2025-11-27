@@ -4,9 +4,11 @@
 /**
  * @fileOverview A Genkit flow for sending emails with attachments using Resend.
  */
-import { ai } from '@/ai/genkit';
+import { ai, configureGenkit } from '@/ai/genkit';
 import { z } from 'zod';
 import { Resend } from 'resend';
+
+configureGenkit();
 
 const SendEmailWithAttachmentInputSchema = z.object({
   to: z.string().email(),

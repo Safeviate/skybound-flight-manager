@@ -9,9 +9,11 @@
  * - GenerateCorrectiveActionPlanOutput - The return type for the function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai, configureGenkit} from '@/ai/genkit';
 import {z} from 'genkit';
 import type { GenerateCorrectiveActionPlanOutput, SafetyReport } from '@/lib/types';
+
+configureGenkit();
 
 const GenerateCorrectiveActionPlanInputSchema = z.object({
   report: z.any().describe('The full safety report object, including all investigation details.'),
@@ -75,4 +77,3 @@ const generateCorrectiveActionPlanFlow = ai.defineFlow(
     return output!;
   }
 );
-    

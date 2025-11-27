@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -8,8 +9,10 @@
  * - AnalyzeSafetyReportToneOutput - The return type for the analyzeSafetyReportTone function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai, configureGenkit} from '@/ai/genkit';
 import {z} from 'genkit';
+
+configureGenkit();
 
 const AnalyzeSafetyReportToneInputSchema = z.object({
   reportText: z

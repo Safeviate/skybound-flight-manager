@@ -9,9 +9,11 @@
  * - SuggestInvestigationStepsOutput - The return type for the suggestInvestigationSteps function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai, configureGenkit} from '@/ai/genkit';
 import {z} from 'genkit';
 import type { SafetyReport } from '@/lib/types';
+
+configureGenkit();
 
 const SuggestInvestigationStepsInputSchema = z.object({
   report: z.any().describe('The full safety report object to be analyzed.'),

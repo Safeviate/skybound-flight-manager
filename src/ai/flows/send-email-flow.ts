@@ -7,9 +7,11 @@
  * - sendEmail - A function that handles sending emails.
  * - SendEmailInput - The input type for the sendEmail function.
  */
-import { ai } from '@/ai/genkit';
+import { ai, configureGenkit } from '@/ai/genkit';
 import { z } from 'zod';
 import { Resend } from 'resend';
+
+configureGenkit();
 
 const SendEmailInputSchema = z.object({
   to: z.string().email(),

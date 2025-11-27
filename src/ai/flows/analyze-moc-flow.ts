@@ -9,9 +9,11 @@
  * - AnalyzeMocOutput - The return type for the function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai, configureGenkit} from '@/ai/genkit';
 import {z} from 'genkit';
 import { RiskLikelihood, RiskSeverity } from '@/lib/types';
+
+configureGenkit();
 
 const AnalyzeMocInputSchema = z.object({
   title: z.string().describe('The title of the proposed change.'),

@@ -9,11 +9,12 @@
  * - SuggestIcaoCategoryOutput - The return type for the function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai, configureGenkit} from '@/ai/genkit';
 import {z} from 'genkit';
 import { ICAO_OCCURRENCE_CATEGORIES } from '@/lib/types';
 import { ICAO_CODE_DEFINITIONS } from '@/lib/icao-codes';
 
+configureGenkit();
 
 const SuggestIcaoCategoryInputSchema = z.object({
   reportText: z.string().describe('The full text of the safety report.'),
