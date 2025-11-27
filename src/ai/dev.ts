@@ -17,6 +17,4 @@ import '@/ai/flows/send-email-with-attachment-flow.ts';
 import '@/ai/flows/read-hobbs-from-image-flow.ts';
 import '@/ai/flows/read-registration-from-image-flow.ts';
 import '@/ai/flows/analyze-moc-flow.ts';
-import '@/ai/flows/admin-reset-password-flow.ts';
-
     
