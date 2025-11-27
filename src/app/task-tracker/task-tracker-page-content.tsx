@@ -12,6 +12,8 @@ import type { UnifiedTask, User } from '@/lib/types';
 import { AlertTriangle, CheckCircle, Clock, Edit } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useRouter } from 'next/navigation';
+
 
 interface TaskTrackerProps {
   initialTasks: UnifiedTask[];
@@ -20,6 +22,7 @@ interface TaskTrackerProps {
 
 export function TaskTrackerPageContent({ initialTasks, personnel }: TaskTrackerProps) {
   const [tasks, setTasks] = React.useState<UnifiedTask[]>(initialTasks);
+  const router = useRouter();
   
   React.useEffect(() => {
     setTasks(initialTasks);
@@ -60,9 +63,13 @@ export function TaskTrackerPageContent({ initialTasks, personnel }: TaskTrackerP
   }
 
   const renderDueDate = (dateString: string) => {
-    const date = parseISO(dateString);
-    if (isValid(date)) {
-      return format(date, 'PPP');
+    try {
+        const date = parseISO(dateString);
+        if (isValid(date)) {
+            return format(date, 'PPP');
+        }
+    } catch (e) {
+        // Fallback for invalid date strings
     }
     return 'N/A';
   };
@@ -78,7 +85,7 @@ export function TaskTrackerPageContent({ initialTasks, personnel }: TaskTrackerP
       </CardHeader>
       <CardContent className="space-y-4">
         {Object.keys(groupedTasks).length > 0 ? (
-        <Accordion type="multiple" className="w-full">
+        <Accordion type="multiple" className="w-full" defaultValue={Object.keys(groupedTasks)}>
           {Object.entries(groupedTasks).map(([sourceTitle, group]) => (
             <AccordionItem value={sourceTitle} key={sourceTitle}>
               <AccordionTrigger>
@@ -95,22 +102,20 @@ export function TaskTrackerPageContent({ initialTasks, personnel }: TaskTrackerP
                             <TableHead>Responsible</TableHead>
                             <TableHead>Due Date</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Go To</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {group.tasks.map(task => (
-                            <TableRow key={task.id}>
+                            <TableRow 
+                                key={task.id} 
+                                onClick={() => router.push(getSourceLink(task))} 
+                                className="cursor-pointer hover:bg-muted/50"
+                            >
                                 <TableCell>{task.description}</TableCell>
                                 <TableCell>{task.responsiblePerson}</TableCell>
                                 <TableCell>{renderDueDate(task.dueDate)}</TableCell>
                                 <TableCell>
                                     <Badge variant={getStatusVariant(task.status)}>{task.status}</Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <Button asChild variant="outline" size="sm">
-                                        <Link href={getSourceLink(task)}>Source</Link>
-                                    </Button>
                                 </TableCell>
                             </TableRow>
                         ))}
