@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -7,7 +6,7 @@
  * - sendEmail - A function that handles sending emails.
  * - SendEmailInput - The input type for the sendEmail function.
  */
-import { ai } from '@/ai/genkit';
+import { getAi } from '@/ai/genkit';
 import { z } from 'zod';
 import { Resend } from 'resend';
 
@@ -27,7 +26,7 @@ export async function sendEmail(input: SendEmailInput): Promise<void> {
   return sendEmailFlow(input);
 }
 
-const sendEmailFlow = ai.defineFlow(
+const sendEmailFlow = getAi().defineFlow(
   {
     name: 'sendEmailFlow',
     inputSchema: SendEmailInputSchema,

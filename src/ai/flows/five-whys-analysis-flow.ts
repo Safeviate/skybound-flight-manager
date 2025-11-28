@@ -8,7 +8,7 @@
  * - FiveWhysAnalysisOutput - The return type for the function.
  */
 
-import {ai} from '@/ai/genkit';
+import { getAi } from '@/ai/genkit';
 import {z} from 'genkit';
 
 const FiveWhysAnalysisInputSchema = z.object({
@@ -34,7 +34,7 @@ export async function fiveWhysAnalysis(
   return fiveWhysAnalysisFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = getAi().definePrompt({
   name: 'fiveWhysAnalysisPrompt',
   input: {schema: z.object({ report: z.string() })},
   output: {schema: FiveWhysAnalysisOutputSchema},
@@ -62,7 +62,7 @@ const prompt = ai.definePrompt({
   Output the results in the required JSON format.`,
 });
 
-const fiveWhysAnalysisFlow = ai.defineFlow(
+const fiveWhysAnalysisFlow = getAi().defineFlow(
   {
     name: 'fiveWhysAnalysisFlow',
     inputSchema: FiveWhysAnalysisInputSchema,

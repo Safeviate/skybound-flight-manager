@@ -8,7 +8,7 @@
  * - AnalyzeSafetyReportToneOutput - The return type for the analyzeSafetyReportTone function.
  */
 
-import {ai} from '@/ai/genkit';
+import { getAi } from '@/ai/genkit';
 import {z} from 'genkit';
 
 const AnalyzeSafetyReportToneInputSchema = z.object({
@@ -60,7 +60,7 @@ export async function analyzeSafetyReportTone(
   return analyzeSafetyReportToneFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = getAi().definePrompt({
   name: 'analyzeSafetyReportTonePrompt',
   input: {schema: AnalyzeSafetyReportToneInputSchema},
   output: {schema: AnalyzeSafetyReportToneOutputSchema},
@@ -77,7 +77,7 @@ const prompt = ai.definePrompt({
   Output the results in JSON format.  The schema descriptions in AnalyzeSafetyReportToneOutputSchema provide more detail.`,
 });
 
-const analyzeSafetyReportToneFlow = ai.defineFlow(
+const analyzeSafetyReportToneFlow = getAi().defineFlow(
   {
     name: 'analyzeSafetyReportToneFlow',
     inputSchema: AnalyzeSafetyReportToneInputSchema,

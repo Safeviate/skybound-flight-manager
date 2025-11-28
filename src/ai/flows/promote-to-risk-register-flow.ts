@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -9,7 +8,7 @@
  * - PromoteToRiskRegisterOutput - The return type for the function.
  */
 
-import {ai} from '@/ai/genkit';
+import { getAi } from '@/ai/genkit';
 import {z} from 'genkit';
 import type {AssociatedRisk, SafetyReport, Risk} from '@/lib/types';
 
@@ -35,7 +34,7 @@ export async function promoteToRiskRegister(
   return promoteToRiskRegisterFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = getAi().definePrompt({
   name: 'promoteToRiskRegisterPrompt',
   input: {schema: z.object({ reportJson: z.string(), riskJson: z.string() }) },
   output: {schema: PromoteToRiskRegisterOutputSchema},
@@ -64,7 +63,7 @@ Based on this information:
 Output the results in the required JSON format.`,
 });
 
-const promoteToRiskRegisterFlow = ai.defineFlow(
+const promoteToRiskRegisterFlow = getAi().defineFlow(
   {
     name: 'promoteToRiskRegisterFlow',
     inputSchema: PromoteToRiskRegisterInputSchema,

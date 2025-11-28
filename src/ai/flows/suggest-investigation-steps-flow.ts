@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -9,7 +8,7 @@
  * - SuggestInvestigationStepsOutput - The return type for the suggestInvestigationSteps function.
  */
 
-import {ai} from '@/ai/genkit';
+import { getAi } from '@/ai/genkit';
 import {z} from 'genkit';
 import type { SafetyReport } from '@/lib/types';
 
@@ -32,7 +31,7 @@ export async function suggestInvestigationSteps(
   return suggestInvestigationStepsFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = getAi().definePrompt({
   name: 'suggestInvestigationStepsPrompt',
   input: {schema: z.object({ report: z.string() })},
   output: {schema: SuggestInvestigationStepsOutputSchema},
@@ -50,7 +49,7 @@ const prompt = ai.definePrompt({
   Output the results in JSON format. The schema descriptions in SuggestInvestigationStepsOutputSchema provide more detail on what is expected.`,
 });
 
-const suggestInvestigationStepsFlow = ai.defineFlow(
+const suggestInvestigationStepsFlow = getAi().defineFlow(
   {
     name: 'suggestInvestigationStepsFlow',
     inputSchema: SuggestInvestigationStepsInputSchema,

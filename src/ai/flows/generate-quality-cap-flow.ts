@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -9,7 +8,7 @@
  * - GenerateQualityCapOutput - The return type for the function.
  */
 
-import {ai} from '@/ai/genkit';
+import { getAi } from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateQualityCapInputSchema = z.object({
@@ -30,7 +29,7 @@ export async function generateQualityCap(
   return generateQualityCapFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = getAi().definePrompt({
   name: 'generateQualityCapPrompt',
   input: {schema: GenerateQualityCapInputSchema},
   output: {schema: GenerateQualityCapOutputSchema},
@@ -51,7 +50,7 @@ const prompt = ai.definePrompt({
   Output the results in the required JSON format.`,
 });
 
-const generateQualityCapFlow = ai.defineFlow(
+const generateQualityCapFlow = getAi().defineFlow(
   {
     name: 'generateQualityCapFlow',
     inputSchema: GenerateQualityCapInputSchema,

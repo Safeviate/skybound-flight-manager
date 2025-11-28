@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -9,7 +8,7 @@
  * - AnalyzeQualityAuditOutput - The return type for the analyzeQualityAudit function.
  */
 
-import {ai} from '@/ai/genkit';
+import { getAi } from '@/ai/genkit';
 import {z} from 'genkit';
 
 const AnalyzeQualityAuditInputSchema = z.object({
@@ -51,7 +50,7 @@ export async function analyzeQualityAudit(
   return analyzeQualityAuditFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = getAi().definePrompt({
   name: 'analyzeQualityAuditPrompt',
   input: {schema: AnalyzeQualityAuditInputSchema},
   output: {schema: AnalyzeQualityAuditOutputSchema},
@@ -66,7 +65,7 @@ const prompt = ai.definePrompt({
   Output the results in JSON format. The schema descriptions in AnalyzeQualityAuditOutputSchema provide more detail.`,
 });
 
-const analyzeQualityAuditFlow = ai.defineFlow(
+const analyzeQualityAuditFlow = getAi().defineFlow(
   {
     name: 'analyzeQualityAuditFlow',
     inputSchema: AnalyzeQualityAuditInputSchema,

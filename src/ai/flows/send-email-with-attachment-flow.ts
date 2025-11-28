@@ -1,10 +1,9 @@
-
 'use server';
 
 /**
  * @fileOverview A Genkit flow for sending emails with attachments using Resend.
  */
-import { ai } from '@/ai/genkit';
+import { getAi } from '@/ai/genkit';
 import { z } from 'zod';
 import { Resend } from 'resend';
 
@@ -24,7 +23,7 @@ export async function sendEmailWithAttachment(input: SendEmailWithAttachmentInpu
   return sendEmailWithAttachmentFlow(input);
 }
 
-const sendEmailWithAttachmentFlow = ai.defineFlow(
+const sendEmailWithAttachmentFlow = getAi().defineFlow(
   {
     name: 'sendEmailWithAttachmentFlow',
     inputSchema: SendEmailWithAttachmentInputSchema,

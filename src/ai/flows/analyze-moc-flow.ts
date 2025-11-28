@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -9,7 +8,7 @@
  * - AnalyzeMocOutput - The return type for the function.
  */
 
-import {ai} from '@/ai/genkit';
+import { getAi } from '@/ai/genkit';
 import {z} from 'genkit';
 import { RiskLikelihood, RiskSeverity } from '@/lib/types';
 
@@ -59,7 +58,7 @@ export async function analyzeMoc(
   return analyzeMocFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = getAi().definePrompt({
   name: 'analyzeMocPrompt',
   input: {schema: AnalyzeMocInputSchema},
   output: {schema: AnalyzeMocOutputSchema},
@@ -91,7 +90,7 @@ const prompt = ai.definePrompt({
   `,
 });
 
-const analyzeMocFlow = ai.defineFlow(
+const analyzeMocFlow = getAi().defineFlow(
   {
     name: 'analyzeMocFlow',
     inputSchema: AnalyzeMocInputSchema,

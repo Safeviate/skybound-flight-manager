@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -9,7 +8,7 @@
  * - GenerateCorrectiveActionPlanOutput - The return type for the function.
  */
 
-import {ai} from '@/ai/genkit';
+import { getAi } from '@/ai/genkit';
 import {z} from 'genkit';
 import type { GenerateCorrectiveActionPlanOutput, SafetyReport } from '@/lib/types';
 
@@ -37,7 +36,7 @@ export async function generateCorrectiveActionPlan(
   return generateCorrectiveActionPlanFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = getAi().definePrompt({
   name: 'generateCorrectiveActionPlanPrompt',
   input: {schema: z.object({ report: z.string() }) },
   output: {schema: GenerateCorrectiveActionPlanOutputSchema},
@@ -64,7 +63,7 @@ const prompt = ai.definePrompt({
   Output the results in the required JSON format. The schema descriptions provide more detail on what is expected for each field.`,
 });
 
-const generateCorrectiveActionPlanFlow = ai.defineFlow(
+const generateCorrectiveActionPlanFlow = getAi().defineFlow(
   {
     name: 'generateCorrectiveActionPlanFlow',
     inputSchema: GenerateCorrectiveActionPlanInputSchema,

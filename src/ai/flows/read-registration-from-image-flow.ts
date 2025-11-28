@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -9,7 +8,7 @@
  * - ReadRegistrationFromImageOutput - The return type for the function.
  */
 
-import {ai} from '@/ai/genkit';
+import { getAi } from '@/ai/genkit';
 import {z} from 'genkit';
 
 const ReadRegistrationFromImageInputSchema = z.object({
@@ -32,7 +31,7 @@ export async function readRegistrationFromImage(
   return readRegistrationFromImageFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = getAi().definePrompt({
   name: 'readRegistrationFromImagePrompt',
   input: {schema: ReadRegistrationFromImageInputSchema},
   output: {schema: ReadRegistrationFromImageOutputSchema},
@@ -47,7 +46,7 @@ Analyze the following image and return the value in the 'registration' field of 
 Photo: {{media url=photoDataUri}}`,
 });
 
-const readRegistrationFromImageFlow = ai.defineFlow(
+const readRegistrationFromImageFlow = getAi().defineFlow(
   {
     name: 'readRegistrationFromImageFlow',
     inputSchema: ReadRegistrationFromImageInputSchema,
