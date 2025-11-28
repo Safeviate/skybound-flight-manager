@@ -2,6 +2,7 @@
 import type {NextConfig} from 'next';
 import withPWA from 'next-pwa';
 
+// This comment is added to re-trigger the deployment process.
 const pwaConfig = withPWA({
   dest: 'public',
   register: true,
