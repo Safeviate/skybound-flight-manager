@@ -1,5 +1,6 @@
 
 import type {NextConfig} from 'next';
+<<<<<<< HEAD
 import withPWA from 'next-pwa';
 
 // This comment is added to re-trigger the deployment process.
@@ -22,9 +23,14 @@ const pwaConfig = withPWA({
   ],
 });
 
+=======
+>>>>>>> 17c1a388127b135d7d897244de86b45b2dff0c2a
 
 const nextConfig: NextConfig = {
   /* config options here */
+  env: {
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+  },
   async headers() {
     return [
       {
@@ -63,4 +69,4 @@ const nextConfig: NextConfig = {
   }
 };
 
-export default pwaConfig(nextConfig);
+export default nextConfig;

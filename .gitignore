@@ -24,6 +24,10 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+<<<<<<< HEAD
+=======
+pnpm-debug.log*
+>>>>>>> 17c1a388127b135d7d897244de86b45b2dff0c2a
 
 # local env files
 .env*.local
@@ -35,3 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+<<<<<<< HEAD
+=======
+
+# genkit
+.genkit/
+.genkit-cache.json
+
+# Firebase
+*-debug.log
+.firebase/
+*firebase-debug.log
+*ui-debug.log
+>>>>>>> 17c1a388127b135d7d897244de86b45b2dff0c2a

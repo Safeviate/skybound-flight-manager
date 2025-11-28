@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -8,8 +9,14 @@
  * - FiveWhysAnalysisOutput - The return type for the function.
  */
 
+<<<<<<< HEAD
 import { getAi } from '@/ai/genkit';
+=======
+import {ai, configureGenkit} from '@/ai/genkit';
+>>>>>>> 17c1a388127b135d7d897244de86b45b2dff0c2a
 import {z} from 'genkit';
+
+configureGenkit();
 
 const FiveWhysAnalysisInputSchema = z.object({
   report: z.any().describe('The full safety report object, including all details and investigation notes.'),

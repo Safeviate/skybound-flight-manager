@@ -8,8 +8,14 @@
  * - AnalyzeQualityAuditOutput - The return type for the analyzeQualityAudit function.
  */
 
+<<<<<<< HEAD
 import { getAi } from '@/ai/genkit';
+=======
+import {ai, configureGenkit} from '@/ai/genkit';
+>>>>>>> 17c1a388127b135d7d897244de86b45b2dff0c2a
 import {z} from 'genkit';
+
+configureGenkit();
 
 const AnalyzeQualityAuditInputSchema = z.object({
   auditText: z
