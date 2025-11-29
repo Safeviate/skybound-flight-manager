@@ -1,26 +1,5 @@
 
 import type {NextConfig} from 'next';
-import withPWA from 'next-pwa';
-
-const pwaConfig = withPWA({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
-  runtimeCaching: [
-    {
-      urlPattern: /^https?.*/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'offlineCache',
-        expiration: {
-          maxEntries: 200,
-        },
-      },
-    },
-  ],
-});
-
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -52,14 +31,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  webpack: (config, { isServer }) => {
-    // This is to fix a bug in genkit with handlebars
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      'handlebars': 'handlebars/dist/handlebars.js',
-    }
-    return config
-  }
 };
 
-export default pwaConfig(nextConfig);
+export default nextConfig;

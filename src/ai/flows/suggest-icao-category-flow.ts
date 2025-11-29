@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -13,7 +12,6 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { ICAO_OCCURRENCE_CATEGORIES } from '@/lib/types';
 import { ICAO_CODE_DEFINITIONS } from '@/lib/icao-codes';
-
 
 const SuggestIcaoCategoryInputSchema = z.object({
   reportText: z.string().describe('The full text of the safety report.'),

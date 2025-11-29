@@ -1,29 +1,11 @@
 
 import type {NextConfig} from 'next';
-import withPWA from 'next-pwa';
-
-const pwaConfig = withPWA({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
-  runtimeCaching: [
-    {
-      urlPattern: /^https?.*/,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'offlineCache',
-        expiration: {
-          maxEntries: 200,
-        },
-      },
-    },
-  ],
-});
-
 
 const nextConfig: NextConfig = {
   /* config options here */
+  env: {
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+  },
   async headers() {
     return [
       {
@@ -62,5 +44,4 @@ const nextConfig: NextConfig = {
   }
 };
 
-// We apply pwaConfig only in production.
-export default process.env.NODE_ENV === 'development' ? nextConfig : pwaConfig(nextConfig);
+export default nextConfig;
