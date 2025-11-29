@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@genkit-ai/google-genai": "1.13.0",
+    "@genkit-ai/google-genai": "^1.13.0",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
@@ -44,7 +44,7 @@
     "embla-carousel-react": "^8.6.0",
     "firebase": "^11.9.1",
     "firebase-admin": "^12.3.0",
-    "genkit": "1.13.0",
+    "genkit": "^1.13.0",
     "jsqr": "^1.4.0",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
@@ -66,7 +66,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@types/react-signature-canvas": "^1.0.5",
-    "genkit-cli": "1.13.0",
+    "genkit-cli": "^1.13.0",
     "postcss": "^8.4.39",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.5.3"
