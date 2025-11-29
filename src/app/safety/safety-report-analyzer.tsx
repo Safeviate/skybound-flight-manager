@@ -10,7 +10,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, AlertTriangle, CheckCircle, Info, BarChart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { analyzeReportAction } from './actions';
 
 const initialState = {
   message: '',
@@ -59,27 +58,16 @@ function AnalysisResult({ data }: { data: any }) {
 }
 
 export function SafetyReportAnalyzer() {
-  const [state, formAction] = useActionState(analyzeReportAction, initialState);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (state.message && state.message !== 'Invalid form data' && state.message !== 'Analysis complete') {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: state.message,
-      });
-    }
-  }, [state, toast]);
 
   return (
     <div className="space-y-8">
-      <form action={formAction}>
         <Card>
           <CardHeader>
             <CardTitle>Smart Safety Reporting Tool</CardTitle>
             <CardDescription>
-              Enter a safety report below. Our AI will assess the tone, severity, and potential issues.
+              Enter a safety report below. Our AI will assess the tone, severity, and potential issues. This feature is currently disabled.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -91,20 +79,16 @@ export function SafetyReportAnalyzer() {
                   name="reportText"
                   placeholder="Paste the full text of the safety report here..."
                   className="min-h-[200px]"
+                  disabled
                 />
-                {state.errors?.reportText && (
-                  <p className="text-sm text-destructive">{state.errors.reportText[0]}</p>
-                )}
               </div>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">The analysis is for informational purposes and should be verified by a qualified safety officer.</p>
-            <SubmitButton />
+            <Button disabled>Analyze Report</Button>
           </CardFooter>
         </Card>
-      </form>
-      {state.data && <AnalysisResult data={state.data as any} />}
     </div>
   );
 }

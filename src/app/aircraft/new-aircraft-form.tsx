@@ -27,7 +27,6 @@ import { CalendarIcon, Bot, FileUp, ImageIcon, Camera } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useState, useEffect, useCallback } from 'react';
-import { AircraftInfoScanner } from './aircraft-info-scanner';
 import { useSettings } from '@/context/settings-provider';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

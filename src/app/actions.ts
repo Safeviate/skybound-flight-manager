@@ -9,10 +9,6 @@ import type { User, Company, TrainingLogEntry } from '@/lib/types';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { format } from 'date-fns';
 
-// The sendEmail import that was causing the build to fail has been removed.
-// The AI email functionality is disabled.
-
-
 export async function createUserAndSendWelcomeEmail(
   userData: Omit<User, 'id'>, 
   companyId: string,
