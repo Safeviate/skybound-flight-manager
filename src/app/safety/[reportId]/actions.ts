@@ -1,183 +1,216 @@
 
-
 'use server';
 
 import { z } from 'zod';
-import { suggestInvestigationSteps } from '@/ai/flows/suggest-investigation-steps-flow';
-import { generateCorrectiveActionPlan } from '@/ai/flows/generate-corrective-action-plan-flow';
-import { promoteToRiskRegister } from '@/ai/flows/promote-to-risk-register-flow';
-import { fiveWhysAnalysis } from '@/ai/flows/five-whys-analysis-flow';
-import { suggestHazards } from '@/ai/flows/suggest-hazards-flow';
-import { suggestIcaoCategory } from '@/ai/flows/suggest-icao-category-flow';
-import type { SafetyReport, AssociatedRisk, SuggestInvestigationStepsOutput } from '@/lib/types';
+import type { AssociatedRisk, SafetyReport } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
+
+const suggestHazardsSchema = z.object({
+  reportText: z.string().min(20, 'Report text must be at least 20 characters long.'),
+});
+
+export async function suggestHazardsAction(prevState: any, formData: FormData) {
+    const validatedFields = suggestHazardsSchema.safeParse({
+        reportText: formData.get('reportText'),
+    });
+
+    if (!validatedFields.success) {
+        return {
+        message: 'Invalid form data',
+        errors: validatedFields.error.flatten().fieldErrors,
+        data: null,
+        };
+    }
+
+    try {
+        // AI functionality removed due to build errors.
+        return {
+            message: 'AI feature is currently disabled.',
+            data: { suggestedHazards: [] },
+            errors: null,
+        };
+    } catch (error) {
+        console.error(error);
+        return {
+        message: 'An error occurred during hazard suggestion.',
+        data: null,
+        errors: null,
+        };
+    }
+}
+
+const promoteRiskSchema = z.object({
+  riskToPromote: z.string(),
+  report: z.string(),
+});
+
+export async function promoteRiskAction(prevState: any, formData: FormData) {
+  const validatedFields = promoteRiskSchema.safeParse({
+    riskToPromote: formData.get('riskToPromote'),
+    report: formData.get('report'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      message: 'Invalid form data for promoting risk',
+      data: null,
+    };
+  }
+  
+  const riskToPromote: AssociatedRisk = JSON.parse(validatedFields.data.riskToPromote);
+  const report: SafetyReport = JSON.parse(validatedFields.data.report);
+
+  const newRisk = {
+    id: `risk-${Date.now()}`,
+    companyId: report.companyId,
+    description: riskToPromote.hazard,
+    hazard: riskToPromote.hazard,
+    risk: riskToPromote.risk,
+    consequences: [riskToPromote.risk],
+    likelihood: riskToPromote.likelihood,
+    severity: riskToPromote.severity,
+    riskScore: riskToPromote.riskScore,
+    mitigation: riskToPromote.mitigationControls || 'To be determined.',
+    status: 'Open',
+    dateIdentified: new Date().toISOString().split('T')[0],
+    hazardArea: riskToPromote.hazardArea,
+    process: riskToPromote.process,
+    reportNumber: report.reportNumber,
+  };
+
+  try {
+    const riskRef = doc(db, `companies/${report.companyId}/risks`, newRisk.id);
+    await setDoc(riskRef, newRisk);
+    return {
+      message: 'Risk promoted successfully',
+      data: newRisk,
+    };
+  } catch (error) {
+    console.error("Error promoting risk:", error);
+    return {
+      message: 'An error occurred while promoting the risk.',
+      data: null,
+    };
+  }
+}
 
 
-const reportSchema = z.object({
-  report: z.any(),
+const fiveWhysSchema = z.object({
+  report: z.string(),
+});
+
+export async function fiveWhysAnalysisAction(prevState: any, formData: FormData) {
+    const validatedFields = fiveWhysSchema.safeParse({
+        report: formData.get('report'),
+    });
+
+    if (!validatedFields.success) {
+        return { message: 'Invalid form data', data: null, errors: validatedFields.error.flatten().fieldErrors };
+    }
+
+    try {
+        // AI functionality removed due to build errors.
+        return {
+            message: 'AI feature is currently disabled.',
+            data: null,
+            errors: null,
+        };
+    } catch (error) {
+        console.error(error);
+        return { message: 'An error occurred during 5 Whys analysis.', data: null, errors: null };
+    }
+}
+
+
+const correctiveActionPlanSchema = z.object({
+  report: z.string(),
+});
+
+export async function generatePlanAction(prevState: any, formData: FormData) {
+  const validatedFields = correctiveActionPlanSchema.safeParse({
+    report: formData.get('report'),
+  });
+
+  if (!validatedFields.success) {
+    return { message: 'Invalid form data', data: null, errors: validatedFields.error.flatten().fieldErrors };
+  }
+
+  try {
+    // AI functionality removed due to build errors.
+    return {
+        message: 'AI feature is currently disabled.',
+        data: null,
+        errors: null,
+    };
+  } catch (error) {
+    console.error(error);
+    return { message: 'An error occurred during plan generation.', data: null, errors: null };
+  }
+}
+
+
+const suggestStepsSchema = z.object({
+    report: z.string(),
 });
 
 export async function suggestStepsAction(prevState: any, formData: FormData) {
-  const reportString = formData.get('report');
-
-  if (!reportString || typeof reportString !== 'string') {
-    return {
-      message: 'Invalid report data provided.',
-      data: null,
-      errors: null,
-    };
-  }
-  
-  const report: SafetyReport = JSON.parse(reportString);
-
-  const validatedFields = reportSchema.safeParse({ report });
-
-  if (!validatedFields.success) {
-    return {
-      message: 'Invalid form data',
-      errors: validatedFields.error.flatten().fieldErrors,
-      data: null,
-    };
-  }
-
-  try {
-    const result = await suggestInvestigationSteps({
-      report: validatedFields.data.report,
+    const validatedFields = suggestStepsSchema.safeParse({
+        report: formData.get('report'),
     });
-    
-    // Persist the suggestions to the report in Firestore
-    if (result && report.companyId && report.id) {
-        const reportRef = doc(db, `companies/${report.companyId}/safety-reports`, report.id);
-        await updateDoc(reportRef, {
-            aiSuggestedSteps: result
-        });
-    }
 
-    return {
-      message: 'Analysis complete',
-      data: result,
-      errors: null,
-    };
-  } catch (error) {
-    console.error(error);
-    return {
-      message: 'An error occurred during analysis.',
-      data: null,
-      errors: null,
-    };
-  }
-}
-
-export async function generatePlanAction(prevState: any, formData: FormData) {
-  const reportString = formData.get('report');
-
-  if (!reportString || typeof reportString !== 'string') {
-    return {
-      message: 'Invalid report data provided.',
-      data: null,
-      errors: null,
-    };
-  }
-  
-  const report: SafetyReport = JSON.parse(reportString);
-
-  const validatedFields = reportSchema.safeParse({ report });
-
-  if (!validatedFields.success) {
-    return {
-      message: 'Invalid form data',
-      errors: validatedFields.error.flatten().fieldErrors,
-      data: null,
-    };
-  }
-
-  try {
-    // The investigation notes are part of the report object from the form now
-    const result = await generateCorrectiveActionPlan({
-      report: validatedFields.data.report,
-    });
-    return {
-      message: 'Plan generated',
-      data: result,
-      errors: null,
-    };
-  } catch (error) {
-    console.error(error);
-    return {
-      message: 'An error occurred during plan generation.',
-      data: null,
-      errors: null,
-    };
-  }
-}
-
-export async function promoteRiskAction(prevState: any, formData: FormData) {
-    const reportString = formData.get('report');
-    const riskString = formData.get('riskToPromote');
-
-    if (!reportString || typeof reportString !== 'string' || !riskString || typeof riskString !== 'string') {
-        return { message: 'Invalid data provided.', data: null };
+    if (!validatedFields.success) {
+        return { message: 'Invalid form data', data: null, errors: validatedFields.error.flatten().fieldErrors };
     }
 
     try {
-        const report: SafetyReport = JSON.parse(reportString);
-        const riskToPromote: AssociatedRisk = JSON.parse(riskString);
-
-        const result = await promoteToRiskRegister({ report, riskToPromote });
-
-        return { message: 'Risk promoted successfully', data: { ...result, ...riskToPromote } };
+        // AI functionality removed due to build errors.
+        return {
+            message: 'AI feature is currently disabled.',
+            data: {
+                initialAssessment: '',
+                keyAreasToInvestigate: [],
+                recommendedActions: [],
+                potentialContributingFactors: [],
+            },
+            errors: null,
+        };
     } catch (error) {
         console.error(error);
-        return { message: 'An error occurred during promotion.', data: null };
+        return { message: 'An error occurred while generating investigation steps.', data: null, errors: null };
     }
 }
 
-export async function fiveWhysAnalysisAction(prevState: any, formData: FormData) {
-  const reportString = formData.get('report');
-
-  if (!reportString || typeof reportString !== 'string') {
-    return { message: 'Invalid report data provided.', data: null, errors: null };
-  }
-
-  try {
-    const report: SafetyReport = JSON.parse(reportString);
-    const result = await fiveWhysAnalysis({ report });
-    return { message: '5 Whys analysis complete.', data: result, errors: null };
-  } catch (error) {
-    console.error(error);
-    return { message: 'An error occurred during 5 Whys analysis.', data: null, errors: null };
-  }
-}
-
-export async function suggestHazardsAction(prevState: any, formData: FormData) {
-    const reportText = formData.get('reportText');
-
-    if (!reportText || typeof reportText !== 'string') {
-        return { message: 'Invalid report data provided.', data: null };
-    }
-
-    try {
-        const result = await suggestHazards({ reportText });
-        return { message: 'Hazard suggestion complete.', data: result };
-    } catch (error) {
-        console.error(error);
-        return { message: 'An error occurred during hazard suggestion.', data: null };
-    }
-}
+const suggestIcaoCategorySchema = z.object({
+  reportText: z.string().min(1, 'Report text cannot be empty.'),
+});
 
 export async function suggestIcaoCategoryAction(prevState: any, formData: FormData) {
-    const reportText = formData.get('reportText');
+    const validatedFields = suggestIcaoCategorySchema.safeParse({
+        reportText: formData.get('reportText'),
+    });
 
-    if (!reportText || typeof reportText !== 'string') {
-        return { message: 'Invalid report data provided.', data: null };
+    if (!validatedFields.success) {
+        return {
+            message: 'Invalid form data',
+            data: null,
+            errors: validatedFields.error.flatten().fieldErrors,
+        };
     }
 
     try {
-        const result = await suggestIcaoCategory({ reportText });
-        return { message: 'ICAO category suggestion complete.', data: result };
+        // AI functionality removed due to build errors.
+        return {
+            message: 'AI feature is currently disabled.',
+            data: null,
+            errors: null,
+        };
     } catch (error) {
-        console.error(error);
-        return { message: 'An error occurred during ICAO category suggestion.', data: null };
+        console.error("Error suggesting ICAO category:", error);
+        return {
+            message: 'An error occurred during ICAO category suggestion.',
+            data: null,
+            errors: null,
+        };
     }
 }

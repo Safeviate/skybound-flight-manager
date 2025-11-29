@@ -1,16 +1,16 @@
 
+
 'use client';
 
 import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
-import { analyzeReportAction } from './actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import type { AnalyzeSafetyReportToneOutput } from '@/ai/flows/analyze-safety-report-tone';
 import { Loader2, AlertTriangle, CheckCircle, Info, BarChart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { analyzeReportAction } from './actions';
 
 const initialState = {
   message: '',
@@ -28,7 +28,7 @@ function SubmitButton() {
   );
 }
 
-function AnalysisResult({ data }: { data: AnalyzeSafetyReportToneOutput }) {
+function AnalysisResult({ data }: { data: any }) {
     const resultItems = [
         { title: "Overall Tone", value: data.overallTone, icon: <Info className="text-primary"/> },
         { title: "Severity Level", value: data.severityLevel, icon: <AlertTriangle className="text-destructive"/> },
@@ -104,7 +104,7 @@ export function SafetyReportAnalyzer() {
           </CardFooter>
         </Card>
       </form>
-      {state.data && <AnalysisResult data={state.data as AnalyzeSafetyReportToneOutput} />}
+      {state.data && <AnalysisResult data={state.data as any} />}
     </div>
   );
 }

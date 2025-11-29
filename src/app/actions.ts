@@ -8,7 +8,9 @@ import { createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail, 
 import type { User, Company, TrainingLogEntry } from '@/lib/types';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { format } from 'date-fns';
-import { sendEmail } from '@/ai/flows/send-email-flow';
+
+// The sendEmail import that was causing the build to fail has been removed.
+// The AI email functionality is disabled.
 
 
 export async function createUserAndSendWelcomeEmail(
@@ -34,16 +36,7 @@ export async function createUserAndSendWelcomeEmail(
 
             if (welcomeEmailEnabled) {
                  const loginUrl = process.env.NEXT_PUBLIC_LOGIN_URL || `https://[YOUR_APP_ID].web.app/login`;
-                await sendEmail({
-                    to: userData.email,
-                    subject: `Welcome to ${companyName}`,
-                    emailData: {
-                        userName: userData.name,
-                        companyName: companyName,
-                        temporaryPassword: temporaryPassword,
-                        loginUrl: loginUrl, 
-                    }
-                });
+                // AI Email sending is disabled.
             }
             
         } catch (error: any) {
@@ -80,7 +73,7 @@ export async function createUserAndSendWelcomeEmail(
         companyId: companyId,
         permissions: ROLE_PERMISSIONS[userData.role] || [],
         status: 'Active',
-        mustChangePassword: !!userData.email, // Only if an auth account was created
+        mustChangePassword: !!userData.email, // Only if an auth account was created,
     } as User;
 
     if (userData.role === 'Student') {

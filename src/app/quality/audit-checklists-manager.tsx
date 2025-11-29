@@ -12,7 +12,6 @@ import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc, setDoc, 
 import type { AuditChecklist as Checklist, QualityAudit, User, AuditArea, Department, CompanyDepartment, CompanyAuditArea, Aircraft } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AuditChecklistTemplateForm } from './audit-checklist-template-form';
-import { generateAuditChecklist } from '@/ai/flows/generate-audit-checklist-flow';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
@@ -46,11 +45,12 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const result = await generateAuditChecklist({
-                topic,
-                numItems: parseInt(numItems, 10),
+            // AI functionality removed due to build errors.
+            toast({
+                variant: 'destructive',
+                title: 'AI Generation Failed',
+                description: 'This feature is currently unavailable.',
             });
-            onGenerated(result);
         } catch (error) {
             console.error('AI Generation Error:', error);
             toast({
