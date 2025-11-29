@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -12,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, Bot, Loader2, ChevronDown, Save, Signature as SignatureIcon, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, Bot, Loader2, ChevronDown, Save, ShieldAlert } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -29,7 +28,7 @@ import Image from 'next/image';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormMessage, FormLabel } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RiskAssessmentTool } from '../../[reportId]/risk-assessment-tool';
 import { SignaturePad } from '@/components/ui/signature-pad';
 
@@ -172,7 +171,7 @@ export default function MocDetailPage() {
         updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, description: formData.description } : s) } : p);
     } else if (type === 'addHazard') {
         const newHazard: MocHazard = { id: `hazard-${Date.now()}`, description: formData.description, risks: [] };
-        updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: [...(s.hazards || []), newHazard] } : s) } : s) } : p);
+        updatedPhases = updatedPhases.map(p => (p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => (s.id === data.stepId ? { ...s, hazards: [...(s.hazards || []), newHazard] } : s)) } : p));
     } else if (type === 'editHazard') {
         updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, description: formData.description } : h) } : s) } : p);
     } else if (type === 'addRisk') {
@@ -196,17 +195,18 @@ export default function MocDetailPage() {
   const handleDelete = (itemType: string, ids: Record<string, string>) => {
     if (!moc) return;
     let updatedPhases = JSON.parse(JSON.stringify(moc.phases || []));
+    const { phaseId, stepId, hazardId, riskId, mitigationId } = ids;
 
     if (itemType === 'phase') {
-        updatedPhases = updatedPhases.filter((p: MocPhase) => p.id !== ids.phaseId);
+        updatedPhases = updatedPhases.filter((p: MocPhase) => p.id !== phaseId);
     } else if (itemType === 'step') {
-        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === ids.phaseId ? { ...p, steps: p.steps?.filter(s => s.id !== ids.stepId) } : p);
+        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === phaseId ? { ...p, steps: p.steps?.filter(s => s.id !== stepId) } : p);
     } else if (itemType === 'hazard') {
-        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === ids.phaseId ? { ...p, steps: p.steps?.map(s => s.id === ids.stepId ? { ...s, hazards: s.hazards?.filter(h => h.id !== ids.hazardId) } : s) } : p);
+        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === phaseId ? { ...p, steps: p.steps?.map(s => s.id === stepId ? { ...s, hazards: s.hazards?.filter(h => h.id !== hazardId) } : s) } : p);
     } else if (itemType === 'risk') {
-        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === ids.phaseId ? { ...p, steps: p.steps?.map(s => s.id === ids.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: h.risks?.filter(r => r.id !== ids.riskId) } : h) } : s) } : p);
+        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === phaseId ? { ...p, steps: p.steps?.map(s => s.id === stepId ? { ...s, hazards: s.hazards?.map(h => h.id === hazardId ? { ...h, risks: h.risks?.filter(r => r.id !== riskId) } : h) } : s) } : p);
     } else if (itemType === 'mitigation') {
-        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === ids.phaseId ? { ...p, steps: p.steps?.map(s => s.id === ids.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: h.risks?.map(r => r.id === ids.riskId ? { ...r, mitigations: r.mitigations?.filter(m => m.id !== ids.mitigationId) } : r) } : h) } : s) } : p);
+        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === phaseId ? { ...p, steps: p.steps?.map(s => s.id === stepId ? { ...s, hazards: s.hazards?.map(h => h.id === hazardId ? { ...h, risks: h.risks?.map(r => r.id === riskId ? { ...r, mitigations: r.mitigations?.filter(m => m.id !== mitigationId) } : r) } : h) } : s) } : p);
     }
 
     handleUpdate({ phases: updatedPhases });
@@ -215,12 +215,13 @@ export default function MocDetailPage() {
   
     const handleMitigationStatusChange = (newStatus: MocMitigation['status'], ids: Record<string, string>) => {
         if (!moc) return;
+        const { phaseId, stepId, hazardId, riskId, mitigationId } = ids;
         let updatedPhases = JSON.parse(JSON.stringify(moc.phases || []));
-        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === ids.phaseId 
-            ? { ...p, steps: p.steps?.map(s => s.id === ids.stepId 
-                ? { ...s, hazards: s.hazards?.map(h => h.id === ids.hazardId 
-                    ? { ...h, risks: h.risks?.map(r => r.id === ids.riskId 
-                        ? { ...r, mitigations: r.mitigations?.map(m => m.id === ids.mitigationId ? { ...m, status: newStatus } : m) } 
+        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === phaseId 
+            ? { ...p, steps: p.steps?.map(s => s.id === stepId 
+                ? { ...s, hazards: s.hazards?.map(h => h.id === hazardId 
+                    ? { ...h, risks: h.risks?.map(r => r.id === riskId 
+                        ? { ...r, mitigations: r.mitigations?.map(m => m.id === mitigationId ? { ...m, status: newStatus } : m) } 
                         : r) } 
                     : h) } 
                 : s) } 
@@ -498,3 +499,5 @@ const MitigationForm = ({ onSubmit, mitigation, personnel }: { onSubmit: (data: 
 };
 
 MocDetailPage.title = "Management of Change";
+
+    

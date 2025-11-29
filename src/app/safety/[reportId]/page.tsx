@@ -37,7 +37,6 @@ import { MitigatedRiskAssessment } from './mitigated-risk-assessment';
 import { CorrectiveActionPlanGenerator } from './corrective-action-plan-generator';
 import { FinalReview } from './final-review';
 import { DiscussionSection } from './discussion-section';
-import { suggestIcaoCategoryAction } from './actions';
 import { InitialRiskAssessment } from './initial-risk-assessment';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -232,7 +231,6 @@ function SafetyReportInvestigationPage() {
   const [dataLoading, setDataLoading] = useState(true);
   const { toast } = useToast();
   
-  const [icaoState, icaoFormAction] = useActionState(suggestIcaoCategoryAction, { message: '', data: null });
   const [isIcaoLoading, setIsIcaoLoading] = React.useState(false);
 
   const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
@@ -343,19 +341,13 @@ function SafetyReportInvestigationPage() {
     }
   }
 
-  useEffect(() => {
+  const handleIcaoSuggest = async () => {
+    if (!report) return;
+    setIsIcaoLoading(true);
+    // AI functionality removed.
+    toast({ variant: 'destructive', title: 'AI Feature Disabled', description: 'AI category suggestion is currently unavailable.' });
     setIsIcaoLoading(false);
-    if (icaoState.data?.category && report) {
-      handleReportUpdate({ ...report, occurrenceCategory: icaoState.data.category }, true);
-      toast({
-        title: 'AI Suggestion Complete',
-        description: `Suggested category: ${icaoState.data.category}. ${icaoState.data.reasoning}`,
-      });
-    } else if (icaoState.message && !icaoState.message.includes('complete')) {
-       toast({ variant: 'destructive', title: 'Error', description: icaoState.message });
-    }
-  }, [icaoState.data, icaoState.message]);
-
+  }
 
   const handleReportUpdate = async (updatedReport: Partial<SafetyReport>, showToast = true) => {
     if (!report || !company) return;
@@ -370,7 +362,6 @@ function SafetyReportInvestigationPage() {
     } catch (error) {
         console.error("Error updating report:", error);
         toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save changes to the database.' });
-        // Optionally revert state here
     }
   };
 
@@ -696,12 +687,9 @@ function SafetyReportInvestigationPage() {
                                   />
                                 </div>
                                 <div className="hidden print:block p-2 border rounded-md h-10 w-full">{report.occurrenceCategory || 'N/A'}</div>
-                                  <form action={icaoFormAction} className="no-print">
-                                      <input type="hidden" name="reportText" value={report.details} />
-                                      <Button type="submit" variant="outline" size="icon" disabled={isIcaoLoading} onClick={() => setIsIcaoLoading(true)}>
-                                          {isIcaoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
-                                      </Button>
-                                  </form>
+                                  <Button type="button" variant="outline" size="icon" disabled={isIcaoLoading} onClick={handleIcaoSuggest}>
+                                      {isIcaoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
+                                  </Button>
                               </div>
                           </div>
                               <div className="space-y-2 flex-1 min-w-[200px]">
@@ -944,3 +932,5 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
+    
