@@ -8,6 +8,7 @@ import Loading from './loading';
 
 
 function RootPage() {
+  // Test change to trigger build
   const { user, loading } = useUser();
   const router = useRouter();
 
