@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -278,7 +279,7 @@ export default function MocDetailPage() {
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to MOC List
             </Button>
             <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={handleRequestProposerSignature}><SignatureIcon className="mr-2 h-4 w-4" /> Request Signature</Button>
+                <Button variant="outline" onClick={handleRequestProposerSignature}><Signature className="mr-2 h-4 w-4" /> Request Signature</Button>
                 <Button variant="outline" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Print</Button>
             </div>
         </div>
@@ -499,5 +500,3 @@ const MitigationForm = ({ onSubmit, mitigation, personnel }: { onSubmit: (data: 
 };
 
 MocDetailPage.title = "Management of Change";
-
-    

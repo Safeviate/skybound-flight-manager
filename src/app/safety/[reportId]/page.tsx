@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -11,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Risk, SafetyReport, User, InvestigationTask, TaskComment, CorrectiveAction, InvestigationTeamMember } from '@/lib/types';
-import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle, ListTodo, MessageSquare, ChevronDown, User as UserIcon, CheckCircle, XCircle, Edit } from 'lucide-react';
+import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle, ListTodo, MessageSquare, ChevronDown, User as UserIcon, CheckCircle, XCircle, Edit, Signature, RotateCw, Eraser } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
@@ -249,7 +250,7 @@ function SafetyReportInvestigationPage() {
         return;
     }
     
-    if (!company) {
+    if (!company?.id || !reportId) {
         setDataLoading(false);
         return;
     }
@@ -542,10 +543,10 @@ function SafetyReportInvestigationPage() {
        <div id="printable-report-area">
             <Tabs defaultValue="triage" className="w-full">
                 <TabsList className="grid w-full grid-cols-4 h-auto print:hidden">
-                    <TabsTrigger value="triage">Report &amp; Triage</TabsTrigger>
+                    <TabsTrigger value="triage">Report & Triage</TabsTrigger>
                     <TabsTrigger value="investigation">Investigation</TabsTrigger>
-                    <TabsTrigger value="mitigation">Mitigation &amp; CAP</TabsTrigger>
-                    <TabsTrigger value="review">Final Review &amp; Sign-off</TabsTrigger>
+                    <TabsTrigger value="mitigation">Mitigation & CAP</TabsTrigger>
+                    <TabsTrigger value="review">Final Review & Sign-off</TabsTrigger>
                 </TabsList>
             <TabsContent value="triage" id="triage-tab-content" className="mt-6 space-y-6">
                  <Card>
@@ -614,7 +615,7 @@ function SafetyReportInvestigationPage() {
 
               <Card id="classification-card">
                   <CardHeader>
-                        <CardTitle>Classification &amp; Categorization</CardTitle>
+                        <CardTitle>Classification & Categorization</CardTitle>
                         <CardDescription>Classify the report and assign an ICAO occurrence category.</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -733,7 +734,7 @@ function SafetyReportInvestigationPage() {
               
               <Card>
                   <CardHeader>
-                      <CardTitle>Investigation Plan &amp; Tools</CardTitle>
+                      <CardTitle>Investigation Plan & Tools</CardTitle>
                       <CardDescription>Use these tools to structure and guide the investigation process.</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -932,5 +933,3 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
-
-    
