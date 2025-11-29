@@ -33,6 +33,7 @@ export async function createUserAndSendWelcomeEmail(
             });
 
             if (welcomeEmailEnabled) {
+                 const loginUrl = process.env.NEXT_PUBLIC_LOGIN_URL || `https://[YOUR_APP_ID].web.app/login`;
                 await sendEmail({
                     to: userData.email,
                     subject: `Welcome to ${companyName}`,
@@ -40,7 +41,7 @@ export async function createUserAndSendWelcomeEmail(
                         userName: userData.name,
                         companyName: companyName,
                         temporaryPassword: temporaryPassword,
-                        loginUrl: `https://safeviate-develop--skybound-flight-manager.europe-west4.hosted.app/login`, 
+                        loginUrl: loginUrl, 
                     }
                 });
             }
