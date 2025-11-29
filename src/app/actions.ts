@@ -33,6 +33,7 @@ export async function createUserAndSendWelcomeEmail(
             });
 
             if (welcomeEmailEnabled) {
+                 const loginUrl = process.env.NEXT_PUBLIC_LOGIN_URL || `https://[YOUR_APP_ID].web.app/login`;
                 await sendEmail({
                     to: userData.email,
                     subject: `Welcome to ${companyName}`,
@@ -40,7 +41,7 @@ export async function createUserAndSendWelcomeEmail(
                         userName: userData.name,
                         companyName: companyName,
                         temporaryPassword: temporaryPassword,
-                        loginUrl: `https://safeviate-develop--skybound-flight-manager.europe-west4.hosted.app/login`, 
+                        loginUrl: loginUrl, 
                     }
                 });
             }
@@ -111,4 +112,31 @@ export async function createUserAndSendWelcomeEmail(
     }
     return { success: false, message: errorMessage };
   }
+}
+
+export async function resetUserPasswordAndSendWelcomeEmail(
+  user: User, 
+  company: Company,
+): Promise<{ success: boolean; message: string }> {
+    if (!user.email) {
+        return { success: false, message: 'User does not have an email address.' };
+    }
+    try {
+        await sendPasswordResetEmail(auth, user.email);
+        return { success: true, message: `A password reset link has been sent to ${user.email}.`};
+    } catch (error: any) {
+        console.error("Error sending password reset email:", error);
+        return { success: false, message: `Failed to send password reset email: ${error.message}` };
+    }
+}
+
+export async function manuallyResetPassword(
+  user: User,
+): Promise<{ success: boolean; message: string; temporaryPassword?: string }> {
+    const temporaryPassword = Math.random().toString(36).slice(-8);
+    // In a real app, you would have a backend function to update the user's password in Firebase Auth.
+    // For this simulation, we'll just return the temporary password.
+    console.log(`Simulating password reset for ${user.name}. New temp password: ${temporaryPassword}`);
+    
+    return { success: true, message: `A temporary password has been generated.`, temporaryPassword };
 }
