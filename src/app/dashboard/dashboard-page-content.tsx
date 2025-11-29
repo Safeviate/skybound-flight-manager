@@ -13,7 +13,6 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { differenceInDays } from 'date-fns';
-import { LiveLocationTracker } from '../training-schedule/live-location-tracker';
 
 
 interface LiveFlight {
@@ -208,12 +207,6 @@ export function DashboardPageContent({
 
     return (
         <main className="flex-1 p-4 md:p-8 space-y-6">
-             {settings.liveTrackingDevMode && activeTrackingAircraft && (
-                <LiveLocationTracker 
-                    aircraft={activeTrackingAircraft} 
-                    enabled={true} 
-                />
-            )}
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-6">
                     <Card>
