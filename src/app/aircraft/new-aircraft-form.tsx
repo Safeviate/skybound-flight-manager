@@ -69,8 +69,6 @@ const parseDoc = (doc?: AircraftDocument) => ({
 export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps) {
   const { toast } = useToast();
   const { company } = useUser();
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [scanMode, setScanMode] = useState<'registration' | 'hobbs' | null>(null);
   const { settings } = useSettings();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoTarget, setPhotoTarget] = useState<string | null>(null);
@@ -226,25 +224,6 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
     }
   }
   
-  const openScanner = (mode: 'registration' | 'hobbs') => {
-    setScanMode(mode);
-    setIsScannerOpen(true);
-  }
-
-  const handleScanSuccess = (data: { registration?: string; hobbs?: number }) => {
-    if (data.registration) {
-      form.setValue('tailNumber', data.registration);
-    }
-    if (data.hobbs) {
-      form.setValue('hours', data.hobbs);
-    }
-    setIsScannerOpen(false);
-    toast({
-      title: 'Scan Successful',
-      description: 'The form has been updated with the scanned value.',
-    });
-  };
-
   const DatePickerField = ({ name, label, urlFieldName, fileFieldName }: { name: keyof AircraftFormValues, label: string, urlFieldName: string, fileFieldName: string }) => {
       const documentUrl = watch(urlFieldName as keyof AircraftFormValues) as string;
     
@@ -321,9 +300,9 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="make" render={({ field }) => (<FormItem><FormLabel>Aircraft Make</FormLabel><FormControl><Input placeholder="e.g., Cessna" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="model" render={({ field }) => (<FormItem><FormLabel>Aircraft Model</FormLabel><FormControl><Input placeholder="e.g., 172 Skyhawk" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="tailNumber" render={({ field }) => (<FormItem><FormLabel>Aircraft Registration</FormLabel><div className="flex items-center gap-2"><FormControl><Input placeholder="e.g., ZS-ABC" {...field} /></FormControl>{settings.useAiChecklists && (<Button type="button" variant="outline" size="icon" onClick={() => openScanner('registration')}><Bot className="h-4 w-4" /></Button>)}</div><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="tailNumber" render={({ field }) => (<FormItem><FormLabel>Aircraft Registration</FormLabel><div className="flex items-center gap-2"><FormControl><Input placeholder="e.g., ZS-ABC" {...field} /></FormControl></div><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="aircraftType" render={({ field }) => (<FormItem><FormLabel>Aircraft Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select aircraft type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="SE">SE</SelectItem><SelectItem value="ME">ME</SelectItem><SelectItem value="FSTD">FSTD</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="hours" render={({ field }) => (<FormItem><FormLabel>Current Hobbs Hours</FormLabel><div className="flex items-center gap-2"><FormControl><Input type="number" step="0.1" placeholder="e.g., 1234.5" {...field} /></FormControl>{settings.useAiChecklists && (<Button type="button" variant="outline" size="icon" onClick={() => openScanner('hobbs')}><Bot className="h-4 w-4" /></Button>)}</div><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="hours" render={({ field }) => (<FormItem><FormLabel>Current Hobbs Hours</FormLabel><div className="flex items-center gap-2"><FormControl><Input type="number" step="0.1" placeholder="e.g., 1234.5" {...field} /></FormControl></div><FormMessage /></FormItem>)} />
                 </div>
                 
                 <Separator />
@@ -352,19 +331,6 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
         </div>
       </form>
     </Form>
-
-    <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
-        <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-                <DialogTitle>AI Aircraft Scanner</DialogTitle>
-                <DialogDescription>
-                  {scanMode === 'registration' && 'Capture an image of the aircraft registration number.'}
-                  {scanMode === 'hobbs' && 'Capture an image of the Hobbs meter.'}
-                </DialogDescription>
-            </DialogHeader>
-            {scanMode && <AircraftInfoScanner scanMode={scanMode} onSuccess={handleScanSuccess} />}
-        </DialogContent>
-    </Dialog>
 
      <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
       <DialogContent>
