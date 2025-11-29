@@ -9,15 +9,9 @@
  * - SuggestHazardsOutput - The return type for the function.
  */
 
-<<<<<<< HEAD
-import { getAi } from '@/ai/genkit';
-=======
-import {ai, configureGenkit} from '@/ai/genkit';
->>>>>>> 17c1a388127b135d7d897244de86b45b2dff0c2a
+import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import type { RiskLikelihood, RiskSeverity } from '@/lib/types';
-
-configureGenkit();
 
 const SuggestHazardsInputSchema = z.object({
   reportText: z.string().describe('The full text of the safety report.'),
@@ -42,7 +36,7 @@ export async function suggestHazards(
   return suggestHazardsFlow(input);
 }
 
-const prompt = getAi().definePrompt({
+const prompt = ai.definePrompt({
   name: 'suggestHazardsPrompt',
   input: {schema: SuggestHazardsInputSchema},
   output: {schema: SuggestHazardsOutputSchema},
@@ -64,7 +58,7 @@ const prompt = getAi().definePrompt({
   Output the results in the required JSON format.`,
 });
 
-const suggestHazardsFlow = getAi().defineFlow(
+const suggestHazardsFlow = ai.defineFlow(
   {
     name: 'suggestHazardsFlow',
     inputSchema: SuggestHazardsInputSchema,

@@ -8,15 +8,9 @@
  * - AnalyzeMocOutput - The return type for the function.
  */
 
-<<<<<<< HEAD
-import { getAi } from '@/ai/genkit';
-=======
-import {ai, configureGenkit} from '@/ai/genkit';
->>>>>>> 17c1a388127b135d7d897244de86b45b2dff0c2a
+import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { RiskLikelihood, RiskSeverity } from '@/lib/types';
-
-configureGenkit();
 
 const AnalyzeMocInputSchema = z.object({
   title: z.string().describe('The title of the proposed change.'),
@@ -64,7 +58,7 @@ export async function analyzeMoc(
   return analyzeMocFlow(input);
 }
 
-const prompt = getAi().definePrompt({
+const prompt = ai.definePrompt({
   name: 'analyzeMocPrompt',
   input: {schema: AnalyzeMocInputSchema},
   output: {schema: AnalyzeMocOutputSchema},
@@ -96,7 +90,7 @@ const prompt = getAi().definePrompt({
   `,
 });
 
-const analyzeMocFlow = getAi().defineFlow(
+const analyzeMocFlow = ai.defineFlow(
   {
     name: 'analyzeMocFlow',
     inputSchema: AnalyzeMocInputSchema,

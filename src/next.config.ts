@@ -1,30 +1,5 @@
 
 import type {NextConfig} from 'next';
-<<<<<<< HEAD
-import withPWA from 'next-pwa';
-
-// This comment is added to re-trigger the deployment process.
-const pwaConfig = withPWA({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development' || process.env.PWA_DISABLED === 'true',
-  runtimeCaching: [
-    {
-      urlPattern: /^https?.*/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'offlineCache',
-        expiration: {
-          maxEntries: 200,
-        },
-      },
-    },
-  ],
-});
-
-=======
->>>>>>> 17c1a388127b135d7d897244de86b45b2dff0c2a
 
 const nextConfig: NextConfig = {
   /* config options here */

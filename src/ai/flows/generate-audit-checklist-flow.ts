@@ -8,14 +8,8 @@
  * - GenerateAuditChecklistOutput - The return type for the function.
  */
 
-<<<<<<< HEAD
-import { getAi } from '@/ai/genkit';
-=======
-import {ai, configureGenkit} from '@/ai/genkit';
->>>>>>> 17c1a388127b135d7d897244de86b45b2dff0c2a
+import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-
-configureGenkit();
 
 const GenerateAuditChecklistInputSchema = z.object({
   topic: z.string().describe('The topic for the audit checklist (e.g., "Hangar Safety", "Flight Documentation").'),
@@ -40,7 +34,7 @@ export async function generateAuditChecklist(
   return generateAuditChecklistFlow(input);
 }
 
-const prompt = getAi().definePrompt({
+const prompt = ai.definePrompt({
   name: 'generateAuditChecklistPrompt',
   input: {schema: GenerateAuditChecklistInputSchema},
   output: {schema: GenerateAuditChecklistOutputSchema},
@@ -58,7 +52,7 @@ const prompt = getAi().definePrompt({
   Output the results in the required JSON format.`,
 });
 
-const generateAuditChecklistFlow = getAi().defineFlow(
+const generateAuditChecklistFlow = ai.defineFlow(
   {
     name: 'generateAuditChecklistFlow',
     inputSchema: GenerateAuditChecklistInputSchema,

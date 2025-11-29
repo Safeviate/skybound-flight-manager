@@ -8,14 +8,8 @@
  * - ReadHobbsFromImageOutput - The return type for the function.
  */
 
-<<<<<<< HEAD
-import { getAi } from '@/ai/genkit';
-=======
-import {ai, configureGenkit} from '@/ai/genkit';
->>>>>>> 17c1a388127b135d7d897244de86b45b2dff0c2a
+import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-
-configureGenkit();
 
 const ReadHobbsFromImageInputSchema = z.object({
   photoDataUri: z
@@ -37,7 +31,7 @@ export async function readHobbsFromImage(
   return readHobbsFromImageFlow(input);
 }
 
-const prompt = getAi().definePrompt({
+const prompt = ai.definePrompt({
   name: 'readHobbsFromImagePrompt',
   input: {schema: ReadHobbsFromImageInputSchema},
   output: {schema: ReadHobbsFromImageOutputSchema},
@@ -54,7 +48,7 @@ Analyze the following image and return the value in the 'hobbsValue' field of th
 Photo: {{media url=photoDataUri}}`,
 });
 
-const readHobbsFromImageFlow = getAi().defineFlow(
+const readHobbsFromImageFlow = ai.defineFlow(
   {
     name: 'readHobbsFromImageFlow',
     inputSchema: ReadHobbsFromImageInputSchema,

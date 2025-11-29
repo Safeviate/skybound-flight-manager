@@ -8,15 +8,9 @@
  * - PromoteToRiskRegisterOutput - The return type for the function.
  */
 
-<<<<<<< HEAD
-import { getAi } from '@/ai/genkit';
-=======
-import {ai, configureGenkit} from '@/ai/genkit';
->>>>>>> 17c1a388127b135d7d897244de86b45b2dff0c2a
+import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import type {AssociatedRisk, SafetyReport, Risk} from '@/lib/types';
-
-configureGenkit();
 
 const PromoteToRiskRegisterInputSchema = z.object({
   report: z.any().describe('The full safety report object.'),
@@ -40,7 +34,7 @@ export async function promoteToRiskRegister(
   return promoteToRiskRegisterFlow(input);
 }
 
-const prompt = getAi().definePrompt({
+const prompt = ai.definePrompt({
   name: 'promoteToRiskRegisterPrompt',
   input: {schema: z.object({ reportJson: z.string(), riskJson: z.string() }) },
   output: {schema: PromoteToRiskRegisterOutputSchema},
@@ -69,7 +63,7 @@ Based on this information:
 Output the results in the required JSON format.`,
 });
 
-const promoteToRiskRegisterFlow = getAi().defineFlow(
+const promoteToRiskRegisterFlow = ai.defineFlow(
   {
     name: 'promoteToRiskRegisterFlow',
     inputSchema: PromoteToRiskRegisterInputSchema,

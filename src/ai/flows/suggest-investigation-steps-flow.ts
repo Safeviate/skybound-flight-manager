@@ -8,15 +8,9 @@
  * - SuggestInvestigationStepsOutput - The return type for the suggestInvestigationSteps function.
  */
 
-<<<<<<< HEAD
-import { getAi } from '@/ai/genkit';
-=======
-import {ai, configureGenkit} from '@/ai/genkit';
->>>>>>> 17c1a388127b135d7d897244de86b45b2dff0c2a
+import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import type { SafetyReport } from '@/lib/types';
-
-configureGenkit();
 
 const SuggestInvestigationStepsInputSchema = z.object({
   report: z.any().describe('The full safety report object to be analyzed.'),
@@ -37,7 +31,7 @@ export async function suggestInvestigationSteps(
   return suggestInvestigationStepsFlow(input);
 }
 
-const prompt = getAi().definePrompt({
+const prompt = ai.definePrompt({
   name: 'suggestInvestigationStepsPrompt',
   input: {schema: z.object({ report: z.string() })},
   output: {schema: SuggestInvestigationStepsOutputSchema},
@@ -55,7 +49,7 @@ const prompt = getAi().definePrompt({
   Output the results in JSON format. The schema descriptions in SuggestInvestigationStepsOutputSchema provide more detail on what is expected.`,
 });
 
-const suggestInvestigationStepsFlow = getAi().defineFlow(
+const suggestInvestigationStepsFlow = ai.defineFlow(
   {
     name: 'suggestInvestigationStepsFlow',
     inputSchema: SuggestInvestigationStepsInputSchema,

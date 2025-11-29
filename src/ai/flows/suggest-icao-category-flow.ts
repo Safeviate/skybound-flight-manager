@@ -8,16 +8,10 @@
  * - SuggestIcaoCategoryOutput - The return type for the function.
  */
 
-<<<<<<< HEAD
-import { getAi } from '@/ai/genkit';
-=======
-import {ai, configureGenkit} from '@/ai/genkit';
->>>>>>> 17c1a388127b135d7d897244de86b45b2dff0c2a
+import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { ICAO_OCCURRENCE_CATEGORIES } from '@/lib/types';
 import { ICAO_CODE_DEFINITIONS } from '@/lib/icao-codes';
-
-configureGenkit();
 
 const SuggestIcaoCategoryInputSchema = z.object({
   reportText: z.string().describe('The full text of the safety report.'),
@@ -37,7 +31,7 @@ export async function suggestIcaoCategory(
   return suggestIcaoCategoryFlow(input);
 }
 
-const prompt = getAi().definePrompt({
+const prompt = ai.definePrompt({
   name: 'suggestIcaoCategoryPrompt',
   input: {schema: z.object({ reportText: z.string(), categories: z.string() }) },
   output: {schema: SuggestIcaoCategoryOutputSchema},
@@ -58,7 +52,7 @@ const prompt = getAi().definePrompt({
   Provide the category code and a brief reasoning for your choice.`,
 });
 
-const suggestIcaoCategoryFlow = getAi().defineFlow(
+const suggestIcaoCategoryFlow = ai.defineFlow(
   {
     name: 'suggestIcaoCategoryFlow',
     inputSchema: SuggestIcaoCategoryInputSchema,
