@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState, useActionState, Fragment } from 'react';
+import React, { useState, Fragment } from 'react';
 import { useForm, useFormContext } from 'react-hook-form';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
@@ -206,9 +206,9 @@ interface InitialRiskAssessmentProps {
 function SuggestHazardsButton() {
     const { pending } = useFormStatus();
     return (
-      <Button type="submit" variant="outline" size="sm" disabled={pending} className="w-full">
+      <Button type="submit" variant="outline" size="sm" disabled={true} className="w-full">
         {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-        AI Hazard Suggestions
+        AI Hazard Suggestions (Disabled)
       </Button>
     );
 }

@@ -318,7 +318,7 @@ export default function MocDetailPage() {
                         <Label htmlFor="analysis-params">AI Analysis Parameters (Optional)</Label>
                         <Textarea id="analysis-params" placeholder="Enter specific keywords for the AI to focus on, e.g., 'impact on flight crew duty times'..." value={analysisParams} onChange={(e) => setAnalysisParams(e.target.value)}/>
                         <div className="flex items-center gap-2 justify-end">
-                            <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />} Analyze with AI</Button>
+                            <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={true}>{isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />} Analyze with AI (Disabled)</Button>
                         </div>
                     </>)}
                 </div>

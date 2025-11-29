@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useActionState, useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2, Bot, Clipboard, CheckCircle, CalendarIcon, User, BookOpen, X, RefreshCw, ChevronDown } from 'lucide-react';
@@ -29,9 +29,9 @@ const initialState = {
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="outline" size="sm" disabled={pending} className="w-full">
+    <Button type="submit" variant="outline" size="sm" disabled={true} className="w-full">
       {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-      Generate Investigation Steps
+      Generate Investigation Steps (Disabled)
     </Button>
   );
 }
@@ -190,12 +190,10 @@ function AnalysisResult({ data, personnel, reportTasks, onAssignTasks }: { data:
 }
 
 export function InvestigationStepsGenerator({ report, personnel, onAssignTasks }: { report: SafetyReport, personnel: Personnel[], onAssignTasks: (tasks: Omit<InvestigationTask, 'id'|'status'>[]) => void; }) {
-  // AI functionality is disabled.
-  const [state, setState] = useState(initialState);
   const { toast } = useToast();
   const [showSuggestions, setShowSuggestions] = useState(!!report.aiSuggestedSteps);
 
-  const suggestionsToShow = state.data || report.aiSuggestedSteps;
+  const suggestionsToShow = report.aiSuggestedSteps;
 
   return (
     <Collapsible open={showSuggestions} onOpenChange={setShowSuggestions}>
