@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useActionState, Fragment } from 'react';
@@ -13,8 +14,7 @@ import { PlusCircle, ArrowUpCircle, Bot, Loader2, Edit, Save } from 'lucide-reac
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AddRiskForm } from './add-risk-form';
-import { promoteRiskAction, suggestHazardsAction } from './actions';
-import type { SuggestHazardsOutput } from '@/ai/flows/suggest-hazards-flow';
+import type { SuggestHazardsOutput } from '@/lib/types';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -216,7 +216,9 @@ function SuggestHazardsButton() {
 export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: InitialRiskAssessmentProps) {
   const [isAddRiskOpen, setIsAddRiskOpen] = useState(false);
   const { toast } = useToast();
-  const [suggestHazardsState, suggestHazardsFormAction] = useActionState(suggestHazardsAction, { message: '', data: null });
+  
+  // AI functionality is disabled.
+  const suggestHazardsState = { message: '', data: null };
 
   const handleAddRisk = (newRiskData: Omit<AssociatedRisk, 'id'>) => {
     const riskScore = getRiskScore(newRiskData.likelihood, newRiskData.severity);
@@ -263,10 +265,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                         <AddRiskForm onAddRisk={handleAddRisk} />
                     </DialogContent>
                 </Dialog>
-                <form action={suggestHazardsFormAction} className="w-full">
-                    <input type="hidden" name="reportText" value={report.details} />
-                    <SuggestHazardsButton />
-                </form>
+                <SuggestHazardsButton />
             </div>
         </div>
 
@@ -294,7 +293,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                             <TableCell className="max-w-xs">{risk.risk}</TableCell>
                             <TableCell>
                                 { !isNaN(risk.riskScore) ? (
-                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
+                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity), color: 'white' }}>
                                         {risk.riskScore}
                                     </Badge>
                                 ) : (
@@ -305,45 +304,10 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                                 <Badge variant="outline">{getRiskLevel(risk.riskScore)}</Badge>
                             </TableCell>
                             <TableCell className="text-right no-print">
-                                <form action={async (formData) => {
-                                    const result = await promoteRiskAction(null, formData);
-                                    if (result.data) {
-                                        toast({
-                                            title: 'Risk Promoted',
-                                            description: 'The hazard has been added to the central Risk Register.'
-                                        });
-                                        onUpdate({
-                                            ...report,
-                                            associatedRisks: report.associatedRisks?.map(r => r.id === risk.id ? { ...r, promotedToRegister: true } : r)
-                                        });
-                                        onPromoteRisk({
-                                            id: `risk-reg-${Date.now()}`,
-                                            companyId: report.companyId,
-                                            dateIdentified: new Date().toISOString().split('T')[0],
-                                            description: result.data.description,
-                                            consequences: [risk.risk], // Use the original risk as the consequence
-                                            hazard: risk.hazard,
-                                            risk: risk.risk,
-                                            likelihood: risk.likelihood,
-                                            severity: risk.severity,
-                                            riskScore: risk.riskScore,
-                                            status: result.data.status,
-                                            mitigation: result.data.mitigation,
-                                            hazardArea: result.data.hazardArea,
-                                            process: result.data.process,
-                                            reportNumber: result.data.reportNumber,
-                                        });
-                                    } else if (result.message) {
-                                        toast({ variant: 'destructive', title: 'Error', description: result.message });
-                                    }
-                                }}>
-                                    <input type="hidden" name="riskToPromote" value={JSON.stringify(risk)} />
-                                    <input type="hidden" name="report" value={JSON.stringify(report)} />
-                                    <Button size="sm" type="submit" disabled={risk.promotedToRegister}>
+                                    <Button size="sm" type="submit" disabled={true}>
                                         <ArrowUpCircle className="mr-2 h-4 w-4" />
-                                        {risk.promotedToRegister ? 'Promoted' : 'Promote'}
+                                        Promote
                                     </Button>
-                                </form>
                             </TableCell>
                         </TableRow>
                     ))}

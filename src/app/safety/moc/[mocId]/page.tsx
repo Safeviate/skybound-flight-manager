@@ -25,7 +25,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { analyzeMoc } from '@/ai/flows/analyze-moc-flow';
 import Image from 'next/image';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -145,42 +144,8 @@ export default function MocDetailPage() {
     if (!moc) return;
     setIsAiLoading(true);
     try {
-      const result = await analyzeMoc({
-        title: moc.title,
-        description: moc.description,
-        reason: moc.reason,
-        scope: moc.scope,
-        analysisParameters: analysisParams,
-      });
-
-      const newPhases: MocPhase[] = result.phases.map(phase => ({
-        id: `phase-${Date.now()}-${Math.random()}`,
-        description: phase.description,
-        steps: phase.steps.map(step => ({
-          id: `step-${Date.now()}-${Math.random()}`,
-          description: step.description,
-          hazards: step.hazards.map(hazard => ({
-            id: `hazard-${Date.now()}-${Math.random()}`,
-            description: hazard.description,
-            risks: hazard.risks.map(risk => ({
-              id: `risk-${Date.now()}-${Math.random()}`,
-              description: risk.description,
-              likelihood: risk.likelihood,
-              severity: risk.severity,
-              riskScore: getRiskScore(risk.likelihood, risk.severity),
-              mitigations: [{
-                  id: `mitigation-${Date.now()}-${Math.random()}`,
-                  description: risk.mitigation,
-                  responsiblePerson: risk.responsiblePerson,
-                  status: 'Open',
-              }],
-            })),
-          })),
-        }))
-      }));
-
-      handleUpdate({ phases: newPhases }, true);
-      toast({ title: 'AI Analysis Complete', description: 'Suggested implementation plan has been populated.' });
+      // AI functionality is disabled.
+      toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'This feature is currently unavailable.' });
     } catch (error) {
       console.error("AI Analysis Error:", error);
       toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'Could not generate an implementation plan.' });
@@ -207,7 +172,7 @@ export default function MocDetailPage() {
         updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, description: formData.description } : s) } : p);
     } else if (type === 'addHazard') {
         const newHazard: MocHazard = { id: `hazard-${Date.now()}`, description: formData.description, risks: [] };
-        updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: [...(s.hazards || []), newHazard] } : s) } : p);
+        updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: [...(s.hazards || []), newHazard] } : s) } : s) } : p);
     } else if (type === 'editHazard') {
         updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, description: formData.description } : h) } : s) } : p);
     } else if (type === 'addRisk') {

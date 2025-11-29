@@ -4,7 +4,7 @@
 
 import { db, auth } from '@/lib/firebase';
 import { collection, doc, setDoc, writeBatch, updateDoc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail, updatePassword as updateAuthPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import type { User, Company, TrainingLogEntry } from '@/lib/types';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { format } from 'date-fns';
