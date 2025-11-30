@@ -94,6 +94,8 @@ const analyzeMocFlow = ai.defineFlow(
     outputSchema: AnalyzeMocOutputSchema,
   },
   async input => {
+    console.log('DEBUG: Value of GEMINI_API_KEY:', process.env.GEMINI_API_KEY);
+    console.log('DEBUG: GEMINI_API_KEY length:', process.env.GEMINI_API_KEY?.length);
     const {output} = await prompt(input);
     return output!;
   }
