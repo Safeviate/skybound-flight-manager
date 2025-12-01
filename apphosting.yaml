@@ -19,6 +19,4 @@ env:
     availability:
       - RUNTIME
 build:
-  args:
-    # Pass the secret as a build argument to be used during the build process
-    BUILD_GEMINI_API_KEY: !secret gemini-api-key
+  args: {}
