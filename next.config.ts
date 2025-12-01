@@ -11,11 +11,6 @@ const pwaConfig = withPWA({
 
 const nextConfig: NextConfig = {
   /* config options here */
-  env: {
-    // This is a temporary measure to bypass build issues.
-    // The runtime will use the secret defined in the runConfig's env section.
-    GEMINI_API_KEY: "placeholder-for-build",
-  },
   async headers() {
     return [
       {

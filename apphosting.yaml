@@ -9,7 +9,8 @@ env:
   - variable: GEMINI_API_KEY
     secret: gemini-api-key
     availability:
-      - RUNTIME # Key will be available at RUNTIME from the secret
+      - BUILD
+      - RUNTIME
   - variable: RESEND_API_KEY
     secret: resend-api-key@3
     availability:
