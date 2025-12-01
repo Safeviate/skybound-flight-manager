@@ -8,7 +8,6 @@ runConfig:
   maxInstances: 1
 env:
   - variable: GEMINI_API_KEY
-    secret: gemini-api-key
     availability:
       - BUILD
       - RUNTIME
