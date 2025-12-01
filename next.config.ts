@@ -12,7 +12,9 @@ const pwaConfig = withPWA({
 const nextConfig: NextConfig = {
   /* config options here */
   env: {
-    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    // Use the build-time argument for the build process.
+    // The runtime will use the secret defined in the runConfig's env section.
+    GEMINI_API_KEY: process.env.BUILD_GEMINI_API_KEY,
   },
   async headers() {
     return [
