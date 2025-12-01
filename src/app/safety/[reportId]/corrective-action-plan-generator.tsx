@@ -2,15 +2,13 @@
 
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Bot, Check, ShieldCheck, PlusCircle, Send, MessageSquare, Trash2, Edit, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { SafetyReport, User, Alert, CorrectiveAction, TaskComment } from '@/lib/types';
-import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
-import { generatePlanAction } from './actions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
@@ -32,13 +30,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 
-
-const initialState = {
-  message: '',
-  data: null,
-  errors: null,
-};
-
 const commentFormSchema = z.object({
   message: z.string().min(1, "Comment cannot be empty."),
 });
@@ -56,22 +47,6 @@ const extensionFormSchema = z.object({
     extensionRequestReason: z.string().min(10, 'A reason for the request is required.'),
 });
 type ExtensionFormValues = z.infer<typeof extensionFormSchema>;
-
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-      Generate Corrective Action Plan
-    </Button>
-  );
-}
-
-function AnalysisResult({ data, onAccept }: { data: GenerateCorrectiveActionPlanOutput, onAccept: (plan: GenerateCorrectiveActionPlanOutput) => void }) {
-  // This component remains largely unchanged as it's for the initial AI suggestion
-  // ... (implementation from previous turn)
-}
 
 const ActionItem = ({ action, personnel, onUpdate, onAddComment, onRequestExtension, onApproveExtension, onRejectExtension }: { action: CorrectiveAction, personnel: User[], onUpdate: (action: CorrectiveAction) => void, onAddComment: (actionId: string, comment: string) => void, onRequestExtension: (actionId: string, reason: string, newDeadline: string) => void, onApproveExtension: (actionId: string) => void, onRejectExtension: (actionId: string) => void }) => {
     const { user } = useUser();
@@ -223,21 +198,10 @@ export function CorrectiveActionPlanGenerator({
     personnel: User[],
     onUpdate: (updatedReport: Partial<SafetyReport>) => void; 
 }) {
-  const [state, formAction] = useActionState(generatePlanAction, initialState);
   const { toast } = useToast();
   const { user, company } = useUser();
   const [isAddingAction, setIsAddingAction] = useState(false);
   const addActionForm = useForm<ActionFormValues>({ resolver: zodResolver(actionFormSchema) });
-
-  useEffect(() => {
-    if (state.message && !state.message.includes('generated')) {
-      toast({ variant: 'destructive', title: 'Error', description: state.message });
-    }
-  }, [state, toast]);
-
-  const handleAcceptPlan = async (plan: GenerateCorrectiveActionPlanOutput) => {
-    // ... (implementation from previous turn)
-  };
 
   const updateActions = (newActions: CorrectiveAction[]) => {
       onUpdate({ correctiveActionPlan: { ...report.correctiveActionPlan!, correctiveActions: newActions } });
@@ -303,16 +267,14 @@ export function CorrectiveActionPlanGenerator({
       return (
          <Card>
             <CardHeader>
-                <CardTitle>Corrective Action Plan Generator</CardTitle>
-                <CardDescription>Use the AI assistant to generate a corrective action plan based on the full investigation.</CardDescription>
+                <CardTitle>Corrective Action Plan</CardTitle>
+                <CardDescription>A corrective action plan has not been generated for this report.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <form action={formAction}>
-                    <input type="hidden" name="report" value={JSON.stringify(report)} />
-                    <SubmitButton />
-                </form>
-                {state.data && <AnalysisResult data={state.data as GenerateCorrectiveActionPlanOutput} onAccept={handleAcceptPlan} />}
-            </CardContent>
+             <CardContent>
+                <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground">No CAP available.</p>
+                </div>
+             </CardContent>
         </Card>
       )
   }

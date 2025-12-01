@@ -1,14 +1,13 @@
 
+
 'use client';
 
 import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
-import { analyzeReportAction } from './actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import type { AnalyzeSafetyReportToneOutput } from '@/ai/flows/analyze-safety-report-tone';
 import { Loader2, AlertTriangle, CheckCircle, Info, BarChart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -28,7 +27,7 @@ function SubmitButton() {
   );
 }
 
-function AnalysisResult({ data }: { data: AnalyzeSafetyReportToneOutput }) {
+function AnalysisResult({ data }: { data: any }) {
     const resultItems = [
         { title: "Overall Tone", value: data.overallTone, icon: <Info className="text-primary"/> },
         { title: "Severity Level", value: data.severityLevel, icon: <AlertTriangle className="text-destructive"/> },
@@ -59,27 +58,16 @@ function AnalysisResult({ data }: { data: AnalyzeSafetyReportToneOutput }) {
 }
 
 export function SafetyReportAnalyzer() {
-  const [state, formAction] = useActionState(analyzeReportAction, initialState);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (state.message && state.message !== 'Invalid form data' && state.message !== 'Analysis complete') {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: state.message,
-      });
-    }
-  }, [state, toast]);
 
   return (
     <div className="space-y-8">
-      <form action={formAction}>
         <Card>
           <CardHeader>
             <CardTitle>Smart Safety Reporting Tool</CardTitle>
             <CardDescription>
-              Enter a safety report below. Our AI will assess the tone, severity, and potential issues.
+              Enter a safety report below. Our AI will assess the tone, severity, and potential issues. This feature is currently disabled.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -91,20 +79,16 @@ export function SafetyReportAnalyzer() {
                   name="reportText"
                   placeholder="Paste the full text of the safety report here..."
                   className="min-h-[200px]"
+                  disabled
                 />
-                {state.errors?.reportText && (
-                  <p className="text-sm text-destructive">{state.errors.reportText[0]}</p>
-                )}
               </div>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">The analysis is for informational purposes and should be verified by a qualified safety officer.</p>
-            <SubmitButton />
+            <Button disabled>Analyze Report</Button>
           </CardFooter>
         </Card>
-      </form>
-      {state.data && <AnalysisResult data={state.data as AnalyzeSafetyReportToneOutput} />}
     </div>
   );
 }

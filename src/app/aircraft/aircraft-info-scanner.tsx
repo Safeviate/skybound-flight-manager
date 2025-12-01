@@ -5,8 +5,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Camera, Loader2, Check, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { readHobbsFromImage } from '@/ai/flows/read-hobbs-from-image-flow';
-import { readRegistrationFromImage } from '@/ai/flows/read-registration-from-image-flow';
 import Image from 'next/image';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
@@ -68,17 +66,8 @@ export function AircraftInfoScanner({ scanMode, onSuccess }: AircraftInfoScanner
       setScanResult({});
 
       try {
-        if (scanMode === 'registration') {
-            const result = await readRegistrationFromImage({ photoDataUri: dataUrl });
-            if (result.registration) {
-                setScanResult({ registration: result.registration });
-            }
-        } else if (scanMode === 'hobbs') {
-            const result = await readHobbsFromImage({ photoDataUri: dataUrl });
-             if (result.hobbsValue) {
-                setScanResult({ hobbs: result.hobbsValue });
-            }
-        }
+        // AI scanning logic removed
+        toast({ variant: 'destructive', title: 'AI Feature Disabled', description: 'AI scanning is currently unavailable.' });
       } catch (error) {
         console.error("AI scan failed:", error);
         toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'Could not read data from the image.' });

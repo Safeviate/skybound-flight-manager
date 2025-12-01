@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -11,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Risk, SafetyReport, User, InvestigationTask, TaskComment, CorrectiveAction, InvestigationTeamMember } from '@/lib/types';
-import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle, ListTodo, MessageSquare, ChevronDown, User as UserIcon, CheckCircle, XCircle, Edit } from 'lucide-react';
+import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle, ListTodo, MessageSquare, ChevronDown, User as UserIcon, CheckCircle, XCircle, Edit, Signature, RotateCw, Eraser } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
@@ -37,7 +38,6 @@ import { MitigatedRiskAssessment } from './mitigated-risk-assessment';
 import { CorrectiveActionPlanGenerator } from './corrective-action-plan-generator';
 import { FinalReview } from './final-review';
 import { DiscussionSection } from './discussion-section';
-import { suggestIcaoCategoryAction } from './actions';
 import { InitialRiskAssessment } from './initial-risk-assessment';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -85,7 +85,7 @@ const manualTaskFormSchema = z.object({
 type ManualTaskFormValues = z.infer<typeof manualTaskFormSchema>;
 
 
-const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, isLoading, onMarkCommentsRead, onManualTaskAdd, onRequestExtension, onApproveExtension, onRejectExtension }: { report: SafetyReport, personnel: User[], onUpdateTask: (taskId: string, status: 'Open' | 'Completed') => void, onAddComment: (taskId: string, message: string) => void, isLoading: boolean, onMarkCommentsRead: (taskId: string) => void, onManualTaskAdd: (task: Omit<InvestigationTask, 'id'|'status'>) => void, onRequestExtension: (taskId: string, reason: string, newDeadline: string) => void, onApproveExtension: (taskId: string) => void, onRejectExtension: (taskId: string) => void }) => {
+const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, isLoading, onMarkCommentsRead, onManualTaskAdd, onRequestExtension, onApproveExtension, onRejectExtension }: { report: SafetyReport, personnel: User[], onUpdateTask: (taskId: string, status: 'Open' | 'Completed' | 'In Progress' | 'Not Started') => void, onAddComment: (taskId: string, message: string) => void, isLoading: boolean, onMarkCommentsRead: (taskId: string) => void, onManualTaskAdd: (task: Omit<InvestigationTask, 'id'|'status'>) => void, onRequestExtension: (taskId: string, reason: string, newDeadline: string) => void, onApproveExtension: (taskId: string) => void, onRejectExtension: (taskId: string) => void }) => {
     const tasks = report.tasks || [];
     const [isManualTaskOpen, setIsManualTaskOpen] = useState(false);
 
@@ -232,7 +232,6 @@ function SafetyReportInvestigationPage() {
   const [dataLoading, setDataLoading] = useState(true);
   const { toast } = useToast();
   
-  const [icaoState, icaoFormAction] = useActionState(suggestIcaoCategoryAction, { message: '', data: null });
   const [isIcaoLoading, setIsIcaoLoading] = React.useState(false);
 
   const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
@@ -251,7 +250,7 @@ function SafetyReportInvestigationPage() {
         return;
     }
     
-    if (!company) {
+    if (!company?.id || !reportId) {
         setDataLoading(false);
         return;
     }
@@ -343,19 +342,13 @@ function SafetyReportInvestigationPage() {
     }
   }
 
-  useEffect(() => {
+  const handleIcaoSuggest = async () => {
+    if (!report) return;
+    setIsIcaoLoading(true);
+    // AI functionality removed.
+    toast({ variant: 'destructive', title: 'AI Feature Disabled', description: 'AI category suggestion is currently unavailable.' });
     setIsIcaoLoading(false);
-    if (icaoState.data?.category && report) {
-      handleReportUpdate({ ...report, occurrenceCategory: icaoState.data.category }, true);
-      toast({
-        title: 'AI Suggestion Complete',
-        description: `Suggested category: ${icaoState.data.category}. ${icaoState.data.reasoning}`,
-      });
-    } else if (icaoState.message && !icaoState.message.includes('complete')) {
-       toast({ variant: 'destructive', title: 'Error', description: icaoState.message });
-    }
-  }, [icaoState.data, icaoState.message]);
-
+  }
 
   const handleReportUpdate = async (updatedReport: Partial<SafetyReport>, showToast = true) => {
     if (!report || !company) return;
@@ -370,7 +363,6 @@ function SafetyReportInvestigationPage() {
     } catch (error) {
         console.error("Error updating report:", error);
         toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save changes to the database.' });
-        // Optionally revert state here
     }
   };
 
@@ -427,7 +419,7 @@ function SafetyReportInvestigationPage() {
     });
   };
 
-  const handleUpdateTaskStatus = (taskId: string, status: 'Open' | 'Completed') => {
+  const handleUpdateTaskStatus = (taskId: string, status: 'Open' | 'Completed' | 'In Progress' | 'Not Started') => {
     if (!report) return;
     
     const updatedTasks = report.tasks?.map(task => 
@@ -487,7 +479,7 @@ function SafetyReportInvestigationPage() {
       if (!taskToUpdate || !taskToUpdate.requestedDeadline) return;
       
       const updatedTasks = report?.tasks?.map(t =>
-          t.id === taskId ? { ...t, deadline: t.requestedDeadline!, extensionStatus: 'Approved' } : a
+          t.id === taskId ? { ...t, deadline: t.requestedDeadline!, extensionStatus: 'Approved' } : t
       );
       handleReportUpdate({ tasks: updatedTasks || [] }, true);
       toast({ title: 'Extension Approved', description: `The deadline has been updated.`});
@@ -551,10 +543,10 @@ function SafetyReportInvestigationPage() {
        <div id="printable-report-area">
             <Tabs defaultValue="triage" className="w-full">
                 <TabsList className="grid w-full grid-cols-4 h-auto print:hidden">
-                    <TabsTrigger value="triage">Report &amp; Triage</TabsTrigger>
+                    <TabsTrigger value="triage">Report & Triage</TabsTrigger>
                     <TabsTrigger value="investigation">Investigation</TabsTrigger>
-                    <TabsTrigger value="mitigation">Mitigation &amp; CAP</TabsTrigger>
-                    <TabsTrigger value="review">Final Review &amp; Sign-off</TabsTrigger>
+                    <TabsTrigger value="mitigation">Mitigation & CAP</TabsTrigger>
+                    <TabsTrigger value="review">Final Review & Sign-off</TabsTrigger>
                 </TabsList>
             <TabsContent value="triage" id="triage-tab-content" className="mt-6 space-y-6">
                  <Card>
@@ -623,7 +615,7 @@ function SafetyReportInvestigationPage() {
 
               <Card id="classification-card">
                   <CardHeader>
-                        <CardTitle>Classification &amp; Categorization</CardTitle>
+                        <CardTitle>Classification & Categorization</CardTitle>
                         <CardDescription>Classify the report and assign an ICAO occurrence category.</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -696,12 +688,9 @@ function SafetyReportInvestigationPage() {
                                   />
                                 </div>
                                 <div className="hidden print:block p-2 border rounded-md h-10 w-full">{report.occurrenceCategory || 'N/A'}</div>
-                                  <form action={icaoFormAction} className="no-print">
-                                      <input type="hidden" name="reportText" value={report.details} />
-                                      <Button type="submit" variant="outline" size="icon" disabled={isIcaoLoading} onClick={() => setIsIcaoLoading(true)}>
-                                          {isIcaoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
-                                      </Button>
-                                  </form>
+                                  <Button type="button" variant="outline" size="icon" disabled={isIcaoLoading} onClick={handleIcaoSuggest}>
+                                      {isIcaoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
+                                  </Button>
                               </div>
                           </div>
                               <div className="space-y-2 flex-1 min-w-[200px]">
@@ -745,7 +734,7 @@ function SafetyReportInvestigationPage() {
               
               <Card>
                   <CardHeader>
-                      <CardTitle>Investigation Plan &amp; Tools</CardTitle>
+                      <CardTitle>Investigation Plan & Tools</CardTitle>
                       <CardDescription>Use these tools to structure and guide the investigation process.</CardDescription>
                   </CardHeader>
                   <CardContent>

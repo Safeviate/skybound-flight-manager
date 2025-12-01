@@ -59,6 +59,7 @@ export const navItems: {
   { href: '/my-dashboard', label: 'My Dashboard', icon: LayoutDashboard },
   { href: '/personnel/me', label: 'My Profile', icon: UserCircle },
   { href: '/dashboard', label: 'Company Dashboard', icon: LayoutDashboard },
+  { href: '/task-tracker', label: 'Task Tracker', icon: ListChecks },
   { href: '/aircraft', label: 'Aircraft Management', icon: Plane, requiredFeature: 'Aircraft' },
   { href: '/quick-reports', label: 'Quick Reports', icon: ClipboardCheck },
   { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },

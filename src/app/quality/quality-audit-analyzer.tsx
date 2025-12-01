@@ -4,14 +4,10 @@
 
 import { useActionState, useEffect, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { generateCapAction } from '@/app/quality/[auditId]/actions';
-import { analyzeAuditAction } from '@/app/quality/actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import type { AnalyzeQualityAuditOutput } from '@/ai/flows/analyze-quality-audit-flow';
-import type { GenerateQualityCapOutput } from '@/ai/flows/generate-quality-cap-flow';
 import { Loader2, AlertTriangle, CheckCircle, Trophy, Edit, Bot, FileText, ShieldCheck, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -49,7 +45,7 @@ function SuggestCapButton() {
     );
 }
 
-function AnalysisResult({ data }: { data: AnalyzeQualityAuditOutput }) {
+function AnalysisResult({ data }: { data: any }) {
     const resultItems = [
         { title: "Overall Compliance", value: data.overallCompliance, icon: <CheckCircle className="text-green-600"/> },
         { title: "Non-Conformance Issues", value: data.nonConformanceIssues, icon: <AlertTriangle className="text-destructive"/> },
@@ -77,7 +73,7 @@ function AnalysisResult({ data }: { data: AnalyzeQualityAuditOutput }) {
   );
 }
 
-function CapResult({ data, onAccept }: { data: GenerateQualityCapOutput, onAccept: (data: GenerateQualityCapOutput) => void }) {
+function CapResult({ data, onAccept }: { data: any, onAccept: (data: any) => void }) {
   const resultItems = [
     { title: "Suggested Root Cause", value: data.rootCause, icon: <FileText className="text-primary"/> },
     { title: "Suggested Corrective Action", value: data.correctiveAction, icon: <Edit className="text-amber-600"/> },
@@ -111,35 +107,9 @@ function CapResult({ data, onAccept }: { data: GenerateQualityCapOutput, onAccep
 }
 
 
-export function QualityAuditAnalyzer({ auditText, onCapSuggested }: { auditText?: string, onCapSuggested: (data: GenerateQualityCapOutput) => void }) {
-  const [analysisState, analysisAction] = useActionState(analyzeAuditAction, initialAnalysisState);
-  const [capState, capAction] = useActionState(generateCapAction, initialCapState);
+export function QualityAuditAnalyzer({ auditText, onCapSuggested }: { auditText?: string, onCapSuggested: (data: any) => void }) {
   const { toast } = useToast();
   const [currentAuditText, setCurrentAuditText] = useState(auditText || '');
-
-  useEffect(() => {
-    setCurrentAuditText(auditText || '');
-  }, [auditText]);
-
-  useEffect(() => {
-    if (analysisState.message && analysisState.message !== 'Invalid form data' && analysisState.message !== 'Analysis complete') {
-      toast({
-        variant: 'destructive',
-        title: 'Error Analyzing Text',
-        description: analysisState.message,
-      });
-    }
-  }, [analysisState, toast]);
-
-  useEffect(() => {
-    if (capState.message && capState.message !== 'Invalid form data' && capState.message !== 'CAP suggestion complete') {
-      toast({
-        variant: 'destructive',
-        title: 'Error Generating CAP',
-        description: capState.message,
-      });
-    }
-  }, [capState, toast]);
 
   return (
     <ScrollArea className="h-[70vh] pr-6">
@@ -152,7 +122,7 @@ export function QualityAuditAnalyzer({ auditText, onCapSuggested }: { auditText?
         <div className="space-y-8 py-4">
             <Card className="h-full flex flex-col">
             <CardContent className="flex-1 flex flex-col pt-6">
-                 <form action={analysisAction}>
+                 <form>
                     <div className="flex flex-col space-y-1.5 flex-1">
                         <Label htmlFor="auditText">Quality Audit Report</Label>
                         <Textarea
@@ -163,29 +133,15 @@ export function QualityAuditAnalyzer({ auditText, onCapSuggested }: { auditText?
                         value={currentAuditText}
                         onChange={(e) => setCurrentAuditText(e.target.value)}
                         />
-                        {(analysisState.errors?.auditText) && (
-                            <p className="text-sm text-destructive">{analysisState.errors.auditText[0]}</p>
-                        )}
                     </div>
                  </form>
             </CardContent>
             <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
                 <p className="text-sm text-muted-foreground text-center sm:text-left">This analysis should be verified by a qualified Quality Manager.</p>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <form action={analysisAction} className="w-full">
-                        <input type="hidden" name="auditText" value={currentAuditText}/>
-                        <AnalyzeButton />
-                    </form>
-                    <form action={capAction} className="w-full">
-                         <input type="hidden" name="auditText" value={currentAuditText}/>
-                        <SuggestCapButton />
-                    </form>
                 </div>
             </CardFooter>
             </Card>
-
-            {analysisState.data && <AnalysisResult data={analysisState.data as AnalyzeQualityAuditOutput} />}
-            {capState.data && <CapResult data={capState.data as GenerateQualityCapOutput} onAccept={onCapSuggested} />}
         </div>
     </ScrollArea>
   );

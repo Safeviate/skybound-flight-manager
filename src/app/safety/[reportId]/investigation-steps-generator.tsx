@@ -2,17 +2,17 @@
 
 'use client';
 
-import { useActionState, useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2, Bot, Clipboard, CheckCircle, CalendarIcon, User, BookOpen, X, RefreshCw, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { SafetyReport, SuggestInvestigationStepsOutput, InvestigationTask, User as Personnel } from '@/lib/types';
-import { suggestStepsAction } from './actions';
+import type { SafetyReport, InvestigationTask, User as Personnel } from '@/lib/types';
+import type { SuggestInvestigationStepsOutput } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format, addDays } from 'date-fns';
@@ -29,9 +29,9 @@ const initialState = {
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="outline" size="sm" disabled={pending} className="w-full">
+    <Button type="submit" variant="outline" size="sm" disabled={true} className="w-full">
       {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-      Generate Investigation Steps
+      Generate Investigation Steps (Disabled)
     </Button>
   );
 }
@@ -190,24 +190,10 @@ function AnalysisResult({ data, personnel, reportTasks, onAssignTasks }: { data:
 }
 
 export function InvestigationStepsGenerator({ report, personnel, onAssignTasks }: { report: SafetyReport, personnel: Personnel[], onAssignTasks: (tasks: Omit<InvestigationTask, 'id'|'status'>[]) => void; }) {
-  const [state, formAction] = useActionState(suggestStepsAction, initialState);
   const { toast } = useToast();
   const [showSuggestions, setShowSuggestions] = useState(!!report.aiSuggestedSteps);
 
-  useEffect(() => {
-    if (state.data) {
-      setShowSuggestions(true);
-    }
-    if (state.message && state.message !== 'Analysis complete') {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: state.message,
-      });
-    }
-  }, [state, toast]);
-
-  const suggestionsToShow = state.data || report.aiSuggestedSteps;
+  const suggestionsToShow = report.aiSuggestedSteps;
 
   return (
     <Collapsible open={showSuggestions} onOpenChange={setShowSuggestions}>
@@ -226,10 +212,7 @@ export function InvestigationStepsGenerator({ report, personnel, onAssignTasks }
                     </Button>
                 </CollapsibleTrigger>
              ) : (
-                <form action={formAction}>
-                    <input type="hidden" name="report" value={JSON.stringify(report)} />
-                    <SubmitButton />
-                </form>
+                <SubmitButton />
              )}
         </div>
 

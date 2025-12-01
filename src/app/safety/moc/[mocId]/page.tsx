@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -11,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, Bot, Loader2, ChevronDown, Save } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, Bot, Loader2, ChevronDown, Save, ShieldAlert } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -22,19 +23,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { getRiskScore, getRiskScoreColor } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, Signature as SignatureIcon } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { analyzeMoc } from '@/ai/flows/analyze-moc-flow';
 import Image from 'next/image';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormMessage, FormLabel } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RiskAssessmentTool } from '../../[reportId]/risk-assessment-tool';
 import { SignaturePad } from '@/components/ui/signature-pad';
 
 const probabilityOptions: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
 const severityOptions: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
+const statusOptions: MocMitigation['status'][] = ['Open', 'In Progress', 'Closed'];
 
 const getAlphanumericCode = (likelihood: RiskLikelihood, severity: RiskSeverity): string => {
     const likelihoodMap: Record<RiskLikelihood, number> = { 'Frequent': 5, 'Occasional': 4, 'Remote': 3, 'Improbable': 2, 'Extremely Improbable': 1 };
@@ -143,37 +144,8 @@ export default function MocDetailPage() {
     if (!moc) return;
     setIsAiLoading(true);
     try {
-      const result = await analyzeMoc({
-        title: moc.title,
-        description: moc.description,
-        reason: moc.reason,
-        scope: moc.scope,
-        analysisParameters: analysisParams,
-      });
-
-      const newPhases: MocPhase[] = result.phases.map(phase => ({
-        id: `phase-${Date.now()}-${Math.random()}`,
-        description: phase.description,
-        steps: phase.steps.map(step => ({
-          id: `step-${Date.now()}-${Math.random()}`,
-          description: step.description,
-          hazards: step.hazards.map(hazard => ({
-            id: `hazard-${Date.now()}-${Math.random()}`,
-            description: hazard.description,
-            risks: hazard.risks.map(risk => ({
-              id: `risk-${Date.now()}-${Math.random()}`,
-              description: risk.description,
-              likelihood: risk.likelihood,
-              severity: risk.severity,
-              riskScore: getRiskScore(risk.likelihood, risk.severity),
-              mitigations: [],
-            })),
-          })),
-        }))
-      }));
-
-      handleUpdate({ phases: newPhases }, true);
-      toast({ title: 'AI Analysis Complete', description: 'Suggested implementation plan has been populated.' });
+      // AI functionality is disabled.
+      toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'This feature is currently unavailable.' });
     } catch (error) {
       console.error("AI Analysis Error:", error);
       toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'Could not generate an implementation plan.' });
@@ -200,7 +172,7 @@ export default function MocDetailPage() {
         updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, description: formData.description } : s) } : p);
     } else if (type === 'addHazard') {
         const newHazard: MocHazard = { id: `hazard-${Date.now()}`, description: formData.description, risks: [] };
-        updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: [...(s.hazards || []), newHazard] } : s) } : p);
+        updatedPhases = updatedPhases.map(p => (p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => (s.id === data.stepId ? { ...s, hazards: [...(s.hazards || []), newHazard] } : s)) } : p));
     } else if (type === 'editHazard') {
         updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, description: formData.description } : h) } : s) } : p);
     } else if (type === 'addRisk') {
@@ -224,23 +196,49 @@ export default function MocDetailPage() {
   const handleDelete = (itemType: string, ids: Record<string, string>) => {
     if (!moc) return;
     let updatedPhases = JSON.parse(JSON.stringify(moc.phases || []));
+    const { phaseId, stepId, hazardId, riskId, mitigationId } = ids;
 
     if (itemType === 'phase') {
-        updatedPhases = updatedPhases.filter((p: MocPhase) => p.id !== ids.phaseId);
+        updatedPhases = updatedPhases.filter((p: MocPhase) => p.id !== phaseId);
     } else if (itemType === 'step') {
-        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === ids.phaseId ? { ...p, steps: p.steps?.filter(s => s.id !== ids.stepId) } : p);
+        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === phaseId ? { ...p, steps: p.steps?.filter(s => s.id !== stepId) } : p);
     } else if (itemType === 'hazard') {
-        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === ids.phaseId ? { ...p, steps: p.steps?.map(s => s.id === ids.stepId ? { ...s, hazards: s.hazards?.filter(h => h.id !== ids.hazardId) } : s) } : p);
+        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === phaseId ? { ...p, steps: p.steps?.map(s => s.id === stepId ? { ...s, hazards: s.hazards?.filter(h => h.id !== hazardId) } : s) } : p);
     } else if (itemType === 'risk') {
-        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: h.risks?.filter(r => r.id !== ids.riskId) } : h) } : s) } : p);
+        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === phaseId ? { ...p, steps: p.steps?.map(s => s.id === stepId ? { ...s, hazards: s.hazards?.map(h => h.id === hazardId ? { ...h, risks: h.risks?.filter(r => r.id !== riskId) } : h) } : s) } : p);
     } else if (itemType === 'mitigation') {
-        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: h.risks?.map(r => r.id === data.riskId ? { ...r, mitigations: r.mitigations?.filter(m => m.id !== ids.mitigationId) } : r) } : h) } : s) } : p);
+        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === phaseId ? { ...p, steps: p.steps?.map(s => s.id === stepId ? { ...s, hazards: s.hazards?.map(h => h.id === hazardId ? { ...h, risks: h.risks?.map(r => r.id === riskId ? { ...r, mitigations: r.mitigations?.filter(m => m.id !== mitigationId) } : r) } : h) } : s) } : p);
     }
 
     handleUpdate({ phases: updatedPhases });
     toast({ title: 'Item Deleted', description: 'The selected item has been removed.' });
   };
   
+    const handleMitigationStatusChange = (newStatus: MocMitigation['status'], ids: Record<string, string>) => {
+        if (!moc) return;
+        const { phaseId, stepId, hazardId, riskId, mitigationId } = ids;
+        let updatedPhases = JSON.parse(JSON.stringify(moc.phases || []));
+        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === phaseId 
+            ? { ...p, steps: p.steps?.map(s => s.id === stepId 
+                ? { ...s, hazards: s.hazards?.map(h => h.id === hazardId 
+                    ? { ...h, risks: h.risks?.map(r => r.id === riskId 
+                        ? { ...r, mitigations: r.mitigations?.map(m => m.id === mitigationId ? { ...m, status: newStatus } : m) } 
+                        : r) } 
+                    : h) } 
+                : s) } 
+            : p);
+        handleUpdate({ phases: updatedPhases }, true);
+    };
+
+    const getStatusBadgeVariant = (status: MocMitigation['status']) => {
+        switch (status) {
+            case 'Open': return 'warning';
+            case 'In Progress': return 'primary';
+            case 'Closed': return 'success';
+            default: return 'outline';
+        }
+    };
+
   const handleRequestProposerSignature = async () => {
     if (!moc || !company || !user) return;
 
@@ -281,7 +279,7 @@ export default function MocDetailPage() {
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to MOC List
             </Button>
             <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={handleRequestProposerSignature}><SignatureIcon className="mr-2 h-4 w-4" /> Request Signature</Button>
+                <Button variant="outline" onClick={handleRequestProposerSignature}><Signature className="mr-2 h-4 w-4" /> Request Signature</Button>
                 <Button variant="outline" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Print</Button>
             </div>
         </div>
@@ -322,7 +320,7 @@ export default function MocDetailPage() {
                         <Label htmlFor="analysis-params">AI Analysis Parameters (Optional)</Label>
                         <Textarea id="analysis-params" placeholder="Enter specific keywords for the AI to focus on, e.g., 'impact on flight crew duty times'..." value={analysisParams} onChange={(e) => setAnalysisParams(e.target.value)}/>
                         <div className="flex items-center gap-2 justify-end">
-                            <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />} Analyze with AI</Button>
+                            <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={true}>{isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />} Analyze with AI (Disabled)</Button>
                         </div>
                     </>)}
                 </div>
@@ -342,7 +340,7 @@ export default function MocDetailPage() {
                              <CardContent className="p-4 pt-0 space-y-4">
                                  {phase.steps?.map((step, stepIndex) => (
                                      <div key={step.id} className="p-3 border rounded-md">
-                                          <div className="flex items-center gap-2"><p className="font-semibold">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</p>
+                                         <div className="flex items-center gap-2"><p className="font-semibold">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</p>
                                              {canEdit && <div className="flex items-center gap-1 no-print">
                                                  <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editStep', data: { phaseId: phase.id, stepId: step.id, description: step.description }})}><Edit className="h-3 w-3" /></Button>
                                                  <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('step', { phaseId: phase.id, stepId: step.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
@@ -350,16 +348,16 @@ export default function MocDetailPage() {
                                          </div>
                                           {step.hazards?.map(hazard => (
                                              <div key={hazard.id} className="pl-4 pt-2 mt-2 border-t">
-                                                 <div className="flex items-center gap-2"><p className="font-semibold text-sm">Hazard: {hazard.description}</p>
+                                                 <div className="flex items-center gap-2 moc-print-hazard-title"><p className="font-semibold text-sm">Hazard: {hazard.description}</p>
                                                      {canEdit && <div className="flex items-center gap-1 no-print">
                                                          <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editHazard', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, description: hazard.description }})}><Edit className="h-3 w-3" /></Button>
                                                          <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('hazard', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                                                      </div>}
                                                  </div>
                                                  {hazard.risks?.map(risk => (
-                                                 <div key={risk.id} className="pl-6 pt-2 mt-2 border-t border-dashed">
+                                                 <div key={risk.id} className="pl-6 pt-2 mt-2 border-t border-dashed moc-print-risk-wrapper">
                                                      <div className="flex justify-between items-start">
-                                                         <div className="flex items-center gap-2"><p className="text-sm">Risk: {risk.description}</p>
+                                                         <div className="flex items-center gap-2 moc-print-risk-title"><p className="text-sm">Risk: {risk.description}</p>
                                                              {canEdit && <div className="flex items-center gap-1 no-print">
                                                                  <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editRisk', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, risk } })}><Edit className="h-3 w-3" /></Button>
                                                                  <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('risk', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
@@ -367,6 +365,42 @@ export default function MocDetailPage() {
                                                          </div>
                                                          <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity, company?.riskMatrixColors), color: 'black' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
                                                      </div>
+                                                     {risk.mitigations?.map(mitigation => (
+                                                        <div key={mitigation.id} className="pl-6 pt-2 mt-2 border-t border-dashed moc-print-mitigation-wrapper">
+                                                            <div className="flex justify-between items-start gap-2">
+                                                                <div className="flex-1">
+                                                                    <p className="font-semibold text-sm moc-print-mitigation-title">Mitigation: <span className="font-normal text-foreground">{mitigation.description}</span></p>
+                                                                    <p className="text-xs text-muted-foreground">Responsible: {mitigation.responsiblePerson || 'N/A'}</p>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    {mitigation.residualLikelihood && mitigation.residualSeverity && (
+                                                                        <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(mitigation.residualLikelihood, mitigation.residualSeverity, company?.riskMatrixColors), color: 'black' }}>
+                                                                            {getAlphanumericCode(mitigation.residualLikelihood, mitigation.residualSeverity)}
+                                                                        </Badge>
+                                                                    )}
+                                                                    {canEdit && (
+                                                                        <div className="flex items-center gap-1 no-print">
+                                                                            <Select value={mitigation.status} onValueChange={(value: MocMitigation['status']) => handleMitigationStatusChange(value, { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigationId: mitigation.id })}>
+                                                                                <SelectTrigger className={cn("h-8 text-xs w-[130px]",
+                                                                                    mitigation.status === 'Open' && 'bg-warning text-warning-foreground',
+                                                                                    mitigation.status === 'In Progress' && 'bg-primary text-primary-foreground',
+                                                                                    mitigation.status === 'Closed' && 'bg-success text-success-foreground'
+                                                                                )}>
+                                                                                    <SelectValue />
+                                                                                </SelectTrigger>
+                                                                                <SelectContent>
+                                                                                    {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                                                                </SelectContent>
+                                                                            </Select>
+                                                                            <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editMitigation', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigation } })}><Edit className="h-3 w-3" /></Button>
+                                                                            <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('mitigation', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigationId: mitigation.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                     ))}
+                                                      {canEdit && <div className="flex gap-2 mt-2 no-print"><Button variant="link" size="sm" onClick={() => setDialogState({ type: 'addMitigation', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id }})}>Add Mitigation</Button></div>}
                                                  </div>
                                                  ))}
                                                  {canEdit && <div className="flex gap-2 mt-2 no-print"><Button variant="link" size="sm" onClick={() => setDialogState({ type: 'addRisk', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id }})}>Add Risk</Button></div>}
@@ -440,8 +474,8 @@ export default function MocDetailPage() {
                 {dialogState?.type === 'editHazard' && <TextareaForm onSubmit={handleDialogSubmit} placeholder="Enter hazard description..." initialValue={dialogState.data.description} />}
                 {dialogState?.type === 'addRisk' && <RiskForm onSubmit={handleDialogSubmit} />}
                 {dialogState?.type === 'editRisk' && <RiskForm onSubmit={handleDialogSubmit} risk={dialogState.data.risk} />}
-                {dialogState?.type === 'addMitigation' && <MitigationForm onSubmit={handleDialogSubmit} />}
-                {dialogState?.type === 'editMitigation' && <MitigationForm onSubmit={handleDialogSubmit} mitigation={dialogState.data.mitigation} />}
+                {dialogState?.type === 'addMitigation' && <MitigationForm onSubmit={handleDialogSubmit} personnel={personnel} />}
+                {dialogState?.type === 'editMitigation' && <MitigationForm onSubmit={handleDialogSubmit} mitigation={dialogState.data.mitigation} personnel={personnel} />}
             </DialogContent>
         </Dialog>
     </main>
@@ -459,10 +493,10 @@ const RiskForm = ({ onSubmit, risk }: { onSubmit: (data: any) => void, risk?: Mo
     return (<Form {...form}><form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4"><FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormControl><Textarea placeholder="Describe the risk..." {...field} /></FormControl><FormMessage /></FormItem>)} /><div className="grid grid-cols-2 gap-4"><FormField control={form.control} name="likelihood" render={({ field }) => (<FormItem><FormLabel>Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Likelihood" /></SelectTrigger><SelectContent>{probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={form.control} name="severity" render={({ field }) => (<FormItem><FormLabel>Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Severity" /></SelectTrigger><SelectContent>{severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /></div><DialogFooter><Button type="submit">Save Risk</Button></DialogFooter></form></Form>);
 };
 
-const mitigationFormSchema = z.object({ description: z.string().min(1, 'Description is required'), residualLikelihood: z.enum(probabilityOptions), residualSeverity: z.enum(severityOptions), responsiblePerson: z.string().optional(), completionDate: z.date().optional() });
-const MitigationForm = ({ onSubmit, mitigation }: { onSubmit: (data: any) => void, mitigation?: MocMitigation }) => {
-    const form = useForm<z.infer<typeof mitigationFormSchema>>({ resolver: zodResolver(mitigationFormSchema), defaultValues: mitigation ? { ...mitigation, completionDate: mitigation.completionDate ? parseISO(mitigation.completionDate) : undefined } : { responsiblePerson: '' } });
-    return (<Form {...form}><form onSubmit={form.handleSubmit((data) => onSubmit({...data, completionDate: data.completionDate ? format(data.completionDate, 'yyyy-MM-dd') : undefined }))} className="space-y-4 py-4"><FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Mitigation Action</FormLabel><FormControl><Textarea placeholder="Describe the mitigation..." {...field} /></FormControl><FormMessage /></FormItem>)} /><div className="grid grid-cols-2 gap-4"><FormField control={form.control} name="residualLikelihood" render={({ field }) => (<FormItem><FormLabel>Residual Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Likelihood" /></SelectTrigger><SelectContent>{probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={form.control} name="residualSeverity" render={({ field }) => (<FormItem><FormLabel>Residual Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Severity" /></SelectTrigger><SelectContent>{severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /></div><div className="grid grid-cols-2 gap-4"><FormField control={form.control} name="responsiblePerson" render={({ field }) => (<FormItem><FormLabel>Responsible Person</FormLabel><FormControl><Input placeholder="e.g., Safety Manager" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="completionDate" render={({ field }) => (<FormItem><FormLabel>Completion Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} /></div><DialogFooter><Button type="submit">Save Mitigation</Button></DialogFooter></form></Form>);
+const mitigationFormSchema = z.object({ description: z.string().min(1, 'Description is required'), residualLikelihood: z.enum(probabilityOptions), residualSeverity: z.enum(severityOptions), responsiblePerson: z.string().optional(), completionDate: z.date().optional(), status: z.enum(['Open', 'In Progress', 'Closed']).default('Open') });
+const MitigationForm = ({ onSubmit, mitigation, personnel }: { onSubmit: (data: any) => void, mitigation?: MocMitigation, personnel: User[] }) => {
+    const form = useForm<z.infer<typeof mitigationFormSchema>>({ resolver: zodResolver(mitigationFormSchema), defaultValues: mitigation ? { ...mitigation, completionDate: mitigation.completionDate ? parseISO(mitigation.completionDate) : undefined } : { responsiblePerson: '', status: 'Open' } });
+    return (<Form {...form}><form onSubmit={form.handleSubmit((data) => onSubmit({...data, completionDate: data.completionDate ? format(data.completionDate, 'yyyy-MM-dd') : undefined }))} className="space-y-4 py-4"><FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Mitigation Action</FormLabel><FormControl><Textarea placeholder="Describe the mitigation..." {...field} /></FormControl><FormMessage /></FormItem>)} /><div className="grid grid-cols-2 gap-4"><FormField control={form.control} name="residualLikelihood" render={({ field }) => (<FormItem><FormLabel>Residual Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Likelihood" /></SelectTrigger><SelectContent>{probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={form.control} name="residualSeverity" render={({ field }) => (<FormItem><FormLabel>Residual Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Severity" /></SelectTrigger><SelectContent>{severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /></div><div className="grid grid-cols-2 gap-4"><FormField control={form.control} name="responsiblePerson" render={({ field }) => (<FormItem><FormLabel>Responsible Person</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a person" /></SelectTrigger></FormControl><SelectContent>{personnel.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={form.control} name="completionDate" render={({ field }) => (<FormItem><FormLabel>Completion Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} /></div><DialogFooter><Button type="submit">Save Mitigation</Button></DialogFooter></form></Form>);
 };
 
 MocDetailPage.title = "Management of Change";

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -39,7 +38,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import Loading from '../loading';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { LiveLocationTracker } from '../training-schedule/live-location-tracker';
 
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
     if (!companyId || !aircraftId) return [];
@@ -1065,10 +1063,11 @@ export function AircraftPageContent() {
   return (
     <main className="flex-1 p-4 md:p-8 space-y-6">
         {settings.liveTrackingDevMode && devTrackingAircraftId && (
-            <LiveLocationTracker 
-                aircraft={aircraftList.find(a => a.id === devTrackingAircraftId)!} 
-                enabled={true} 
-            />
+            <div className="text-center p-4 bg-yellow-100 border border-yellow-300 rounded-lg">
+                <p className="font-semibold text-yellow-800">
+                    Dev mode tracking is active for an aircraft. This is a placeholder for a real map.
+                </p>
+            </div>
         )}
       <Card>
         <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -1376,5 +1375,3 @@ export function AircraftPageContent() {
     </main>
   );
 }
-
-    

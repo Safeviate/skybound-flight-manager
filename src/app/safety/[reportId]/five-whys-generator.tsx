@@ -1,14 +1,14 @@
 
+
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2, Bot, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { SafetyReport } from '@/lib/types';
-import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
-import { fiveWhysAnalysisAction } from './actions';
+import type { FiveWhysAnalysisOutput } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -102,22 +102,10 @@ function AnalysisResult({ initialData, onSave }: { initialData: FiveWhysAnalysis
 }
 
 export function FiveWhysGenerator({ report, onUpdate }: { report: SafetyReport, onUpdate?: (data: Partial<SafetyReport>) => void }) {
-  const [state, formAction] = useActionState(fiveWhysAnalysisAction, initialState);
+  // AI functionality is disabled.
+  const [state, setState] = useState(initialState);
   const { toast } = useToast();
   const [analysisData, setAnalysisData] = useState<FiveWhysAnalysisOutput | null>(report.fiveWhysAnalysis || null);
-
-  useEffect(() => {
-    if (state.data) {
-        setAnalysisData(state.data as FiveWhysAnalysisOutput);
-    }
-    if (state.message && !state.message.includes('complete')) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: state.message,
-      });
-    }
-  }, [state, toast]);
 
   const handleSave = (data: FiveWhysAnalysisOutput) => {
     if (typeof onUpdate === 'function') {
@@ -132,10 +120,7 @@ export function FiveWhysGenerator({ report, onUpdate }: { report: SafetyReport, 
   return (
     <div>
       <p className="text-xs text-muted-foreground mb-2">Use the 5 Whys method to drill down to the root cause of the incident.</p>
-      <form action={formAction}>
-          <input type="hidden" name="report" value={JSON.stringify(report)} />
-          <SubmitButton />
-      </form>
+      <SubmitButton />
       {analysisData && <AnalysisResult initialData={analysisData} onSave={handleSave} />}
     </div>
   );

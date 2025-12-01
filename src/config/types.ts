@@ -1,13 +1,5 @@
 
 
-import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
-export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
-import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
-export type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
-import type { SuggestInvestigationStepsOutput } from '@/ai/flows/suggest-investigation-steps-flow';
-export type { SuggestInvestigationStepsOutput } from '@/ai/flows/suggest-investigation-steps-flow';
-
-
 export type Airport = {
   id: string;
   name: string;
@@ -344,9 +336,6 @@ export type SafetyReport = {
   investigationNotes?: string;
   discussion?: DiscussionEntry[];
   associatedRisks?: AssociatedRisk[];
-  correctiveActionPlan?: GenerateCorrectiveActionPlanOutput;
-  fiveWhysAnalysis?: FiveWhysAnalysisOutput;
-  aiSuggestedSteps?: SuggestInvestigationStepsOutput;
   // Dynamic fields based on category
   phaseOfFlight?: string;
   crewInvolved?: string;
@@ -381,12 +370,8 @@ export type CorrectiveAction = {
     id: string;
     action: string;
     responsiblePerson: string;
-    deadline: string;
-    status: 'Not Started' | 'In Progress' | 'Completed';
-    comments?: TaskComment[];
-    extensionRequestReason?: string;
-    requestedDeadline?: string;
-    extensionStatus?: 'Pending' | 'Approved' | 'Rejected' | null;
+    completionDate: string;
+    status: 'Open' | 'Closed' | 'In Progress';
 }
 
 export type RiskLikelihood = 'Frequent' | 'Occasional' | 'Remote' | 'Improbable' | 'Extremely Improbable';
@@ -495,6 +480,7 @@ export type NonConformanceIssue = {
   comment?: string;
   reference?: string;
   correctiveActionPlan?: CorrectiveActionPlan | null;
+  photo?: string;
 };
 
 export type QualityAudit = {
@@ -536,29 +522,170 @@ export type AuditScheduleItem = {
   status: AuditStatus;
 };
 
+export type AlertAcknowledgement = {
+    userId: string;
+    date: string;
+};
+
 export type Alert = {
   id: string;
   companyId?: string;
   number?: number;
-  type: 'Red Tag' | 'Yellow Tag' | 'Task' | 'Signature Request' | 'System Health';
+  type: 'Red Tag' | 'Yellow Tag' | 'General Notice' | 'Task' | 'Signature Request' | 'System Health';
   title: string;
-  description: string;
+  description?: string; // This is now optional as it's replaced by more specific fields
   author: string;
   date: string;
-  readBy: string[];
+  department?: Department;
+  readBy: AlertAcknowledgement[];
   targetUserId?: string;
   relatedLink?: string;
+  // New fields
+  background?: string;
+  purpose?: string;
+  instruction?: string;
+  reviewDate?: string;
+  reviewerId?: string;
 };
 
 export type ComplianceItem = {
     id: string;
     companyId: string;
     regulation: string;
-    process: string;
+    regulationStatement: string;
+    companyReference?: string;
     responsibleManager: string;
     lastAuditDate?: string;
     nextAuditDate?: string;
     findings?: string;
+};
+
+export type MocMitigation = {
+  id: string;
+  description: string;
+  responsiblePerson?: string;
+  completionDate?: string;
+  status: 'Open' | 'In Progress' | 'Closed';
+  residualLikelihood?: RiskLikelihood;
+  residualSeverity?: RiskSeverity;
+  residualRiskScore?: number;
+};
+
+
+export type MocRisk = {
+  id: string;
+  description: string;
+  likelihood: RiskLikelihood;
+  severity: RiskSeverity;
+  riskScore: number;
+  mitigations?: MocMitigation[];
+};
+
+export type MocHazard = {
+  id: string;
+  description: string;
+  risks?: MocRisk[];
+};
+
+export type MocStep = {
+    id: string;
+    description: string;
+    hazards?: MocHazard[];
+};
+
+export type MocPhase = {
+  id: string;
+  description: string;
+  steps: MocStep[];
+};
+
+export type ManagementOfChange = {
+  id: string;
+  companyId: string;
+  mocNumber: string;
+  title: string;
+  description: string;
+  reason: string;
+  scope: string;
+  proposedBy: string;
+  proposalDate: string;
+  status: 'Proposed' | 'Under Review' | 'Approved' | 'Rejected' | 'Implemented' | 'Closed';
+  phases?: MocPhase[];
+  proposerSignature?: Signature;
+  approverName?: string;
+  approverSignature?: Signature;
+};
+
+export type TechnicalReport = {
+  id: string;
+  companyId: string;
+  reportNumber: string;
+  aircraftRegistration: string;
+  component: string; // This is now 'System'
+  subcomponent?: string; // This is now 'Component'
+  otherComponent?: string;
+  otherInstrument?: string;
+  componentDetails?: string;
+  description: string;
+  reportedBy: string;
+  dateReported: string;
+  status?: 'Open' | 'Rectified';
+  rectificationDetails?: string;
+  componentsReplaced?: string;
+  physicalLogEntry?: string;
+  rectifiedBy?: string;
+  rectificationDate?: string;
+  photo?: string;
+};
+
+export type ExamQuestion = {
+  id: string;
+  text: string;
+  options: { id: string; text: string }[];
+  correctAnswer: string; // This will be the id of the correct option
+  explanation?: string;
+};
+
+export type ExamAssignment = {
+  userId: string;
+  name: string;
+  status: 'Not Started' | 'In Progress' | 'Completed' | 'Passed' | 'Failed';
+  score?: number;
+  attemptId?: string; // Link to the detailed ExamAttempt
+};
+
+export type Exam = {
+  id: string;
+  companyId: string;
+  title: string;
+  category: string;
+  questions: ExamQuestion[];
+  assignedTo?: ExamAssignment[];
+};
+
+export type UserAnswer = {
+  questionId: string;
+  selectedOptionId: string;
+};
+
+export type ExamAttempt = {
+  id: string;
+  examId: string;
+  userId: string;
+  dateTaken: string;
+  score: number; // Percentage
+  answers: UserAnswer[];
+};
+
+export type UnifiedTask = {
+    id: string;
+    description: string;
+    responsiblePerson: string;
+    dueDate: string;
+    status: 'Open' | 'In Progress' | 'Completed' | 'Not Started';
+    sourceType: 'Quality Audit' | 'Safety Report' | 'MOC';
+    sourceId: string;
+    sourceTitle: string;
 };
 
 export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department> = {
@@ -581,6 +708,7 @@ export const VIEW_ALL_PAGES: Permission[] = [
   'Aircraft:View',
   'Students:View',
   'Personnel:View',
+  'HireAndFly:View',
   'Safety:View',
   'Quality:View',
   'Checklists:View',
@@ -589,24 +717,86 @@ export const VIEW_ALL_PAGES: Permission[] = [
   'Bookings:View',
 ];
 
-export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+export type CompanyPermission = {
+    id: string;
+    name: Permission;
+    description?: string;
+}
+
+export type CompanyRole = {
+    id: string;
+    name: string;
+    permissions: Permission[];
+};
+
+export type CompanyDepartment = {
+    id: string;
+    name: string;
+};
+
+export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   'Super User': ['Super User'],
-  'Accountable Manager': ['Super User'],
   'System Admin': ['Super User'],
-  'Admin': ['Super User'],
-  'Operations Manager': ['Super User'],
-  'HR Manager': [...VIEW_ALL_PAGES, 'Personnel:Edit', 'Settings:Edit'],
-  'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
-  'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Quality:Delete', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
-  'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Alerts:Edit'],
-  'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Checklists:Edit'],
-  'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
-  'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
-  'Instructor': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
-  'Student': ['Aircraft:View', 'Students:View', 'Alerts:View', 'Bookings:View', 'Bookings:Edit'],
+  'Accountable Manager': [
+    'Aircraft:View',
+    'Students:View',
+    'Personnel:View',
+    'Safety:View',
+    'Quality:View',
+    'Checklists:View',
+    'Alerts:View',
+    'Reports:View',
+    'Bookings:View',
+    'Settings:Edit',
+  ],
+  'Admin': [
+    'Aircraft:Edit',
+    'Students:Edit',
+    'Personnel:Edit',
+    'Safety:View',
+    'Quality:View',
+    'Checklists:Edit',
+    'Alerts:Edit',
+    'Reports:View',
+    'Bookings:Edit',
+    'Settings:Edit',
+  ],
+  'Operations Manager': [
+    'Aircraft:View',
+    'Bookings:Edit',
+    'Personnel:View',
+  ],
+  'HR Manager': ['Personnel:View', 'Personnel:Edit', 'Students:View', 'HireAndFly:View'],
+  'Safety Manager': ['Safety:View', 'Safety:Edit', 'Reports:View', 'Aircraft:View'],
+  'Quality Manager': ['Quality:View', 'Quality:Edit', 'Reports:View', 'Aircraft:View'],
+  'Aircraft Manager': ['Aircraft:View', 'Aircraft:Edit', 'Aircraft:UpdateHobbs'],
+  'Maintenance': ['Aircraft:View', 'Aircraft:Edit', 'Checklists:View', 'Checklists:Edit'],
+  'Chief Flight Instructor': [
+    'Students:View',
+    'Students:Edit',
+    'Personnel:View',
+    'HireAndFly:View',
+    'Bookings:View',
+    'Bookings:Edit',
+    'Checklists:View',
+    'Exams:Edit',
+  ],
+  'Head Of Training': [
+    'Students:View',
+    'Students:Edit',
+    'Personnel:View',
+    'HireAndFly:View',
+    'Bookings:View',
+    'Bookings:Edit',
+    'Checklists:View',
+    'Exams:Edit',
+  ],
+  'Instructor': ['Students:View', 'Bookings:View', 'Checklists:View', 'Exams:View'],
+  'Student': ['Students:View', 'Bookings:View', 'Exams:View'],
+  'Hire and Fly': ['Bookings:View'],
   'Auditee': ['Quality:View'],
   'Driver': [],
-  'Front Office': ['Bookings:View', 'Bookings:Edit', 'Students:View', 'Personnel:View']
+  'Front Office': ['Bookings:View', 'Bookings:Edit', 'Students:View', 'Personnel:View', 'HireAndFly:View']
 };
 
 export const ICAO_OCCURRENCE_CATEGORIES: string[] = [
@@ -629,12 +819,19 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Post-impact'
 ];
 
+export const HIRE_AND_FLY_DOCUMENTS = [
+  "Pilot License",
+  "Medical Certificate",
+  "Identification",
+  "Passport",
+] as const;
 
-
-
-
-
-
-
-
-
+export type RiskLikelihood = 'Frequent' | 'Occasional' | 'Remote' | 'Improbable' | 'Extremely Improbable';
+export type RiskSeverity = 'Catastrophic' | 'Hazardous' | 'Major' | 'Minor' | 'Negligible';
+export type RiskStatus = 'Open' | 'Mitigated' | 'Closed';
+export type AuditArea = string;
+export type FindingStatus = 'Compliant' | 'Non Compliant' | 'Partial' | 'Not Applicable' | 'Observation';
+export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Finding' | 'Observation' | null;
+export type ChecklistCategory = 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
+export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs' | 'Header';
+export type AuditChecklistItem = { id: string; text: string; finding: FindingStatus | null; level: FindingLevel; observation?: string; findingNotes?: string; evidence?: string; regulationReference?: string; reference?: string; comment?: string; photo?: string; suggestedImprovement?: string; type?: ChecklistItemType; };

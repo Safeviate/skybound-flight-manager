@@ -29,7 +29,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { LiveLocationTracker } from './live-location-tracker';
 import { InFlightNotes } from './in-flight-notes';
 
 interface TrainingSchedulePageContentProps {
@@ -68,7 +67,6 @@ const FlightHub = ({
                             <TabsTrigger value="notes">In-Flight Notes</TabsTrigger>
                         </TabsList>
                         <TabsContent value="checklist" className="mt-4">
-                             <LiveLocationTracker aircraft={activeFlight.aircraft} enabled={true} />
                             <PostFlightChecklistForm 
                                 onSuccess={handleChecklistSuccess}
                                 aircraft={activeFlight.aircraft}

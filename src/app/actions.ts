@@ -4,13 +4,10 @@
 
 import { db, auth } from '@/lib/firebase';
 import { collection, doc, setDoc, writeBatch, updateDoc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail, updatePassword as updateAuthPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import type { User, Company, TrainingLogEntry } from '@/lib/types';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { format } from 'date-fns';
-import { sendEmail } from '@/ai/flows/send-email-flow';
-import { adminResetPassword } from '@/ai/flows/admin-reset-password-flow';
-
 
 export async function createUserAndSendWelcomeEmail(
   userData: Omit<User, 'id'>, 
@@ -34,16 +31,8 @@ export async function createUserAndSendWelcomeEmail(
             });
 
             if (welcomeEmailEnabled) {
-                await sendEmail({
-                    to: userData.email,
-                    subject: `Welcome to ${companyName}`,
-                    emailData: {
-                        userName: userData.name,
-                        companyName: companyName,
-                        temporaryPassword: temporaryPassword,
-                        loginUrl: `https://safeviate-develop--skybound-flight-manager.europe-west4.hosted.app/login`, 
-                    }
-                });
+                 const loginUrl = process.env.NEXT_PUBLIC_LOGIN_URL || `https://[YOUR_APP_ID].web.app/login`;
+                // AI Email sending is disabled.
             }
             
         } catch (error: any) {
@@ -80,7 +69,7 @@ export async function createUserAndSendWelcomeEmail(
         companyId: companyId,
         permissions: ROLE_PERMISSIONS[userData.role] || [],
         status: 'Active',
-        mustChangePassword: !!userData.email, // Only if an auth account was created
+        mustChangePassword: !!userData.email, // Only if an auth account was created,
     } as User;
 
     if (userData.role === 'Student') {
@@ -114,73 +103,29 @@ export async function createUserAndSendWelcomeEmail(
   }
 }
 
-export async function manuallyResetPassword(person: User): Promise<{ success: boolean; message: string; temporaryPassword?: string }> {
-    if (!person.email) {
-        return { success: false, message: 'This user does not have an email address on file.' };
+export async function resetUserPasswordAndSendWelcomeEmail(
+  user: User, 
+  company: Company,
+): Promise<{ success: boolean; message: string }> {
+    if (!user.email) {
+        return { success: false, message: 'User does not have an email address.' };
     }
-
-    const temporaryPassword = Math.random().toString(36).slice(-8);
-
     try {
-        const result = await adminResetPassword({ userId: person.id, newPassword: temporaryPassword });
-
-        if (!result.success) {
-            throw new Error(result.message);
-        }
-        
-        let collectionName = 'users';
-        if (person.role === 'Student') {
-            collectionName = 'students';
-        } else if (person.role === 'Hire and Fly') {
-            collectionName = 'hire-and-fly';
-        }
-
-        const userRef = doc(db, `companies/${person.companyId}/${collectionName}`, person.id);
-        await updateDoc(userRef, { mustChangePassword: true });
-        
-        return { success: true, message: `Password for ${person.name} has been reset.`, temporaryPassword: result.temporaryPassword };
-
+        await sendPasswordResetEmail(auth, user.email);
+        return { success: true, message: `A password reset link has been sent to ${user.email}.`};
     } catch (error: any) {
-        console.error("Error resetting password:", error);
-        return { success: false, message: `Could not reset password: ${error.message}` };
+        console.error("Error sending password reset email:", error);
+        return { success: false, message: `Failed to send password reset email: ${error.message}` };
     }
 }
 
-export async function resetUserPasswordAndSendWelcomeEmail(person: User, company: Company): Promise<{ success: boolean; message: string }> {
-    if (!person.email) {
-        return { success: false, message: 'This user does not have an email address on file.' };
-    }
-
+export async function manuallyResetPassword(
+  user: User,
+): Promise<{ success: boolean; message: string; temporaryPassword?: string }> {
     const temporaryPassword = Math.random().toString(36).slice(-8);
-
-    try {
-        await adminResetPassword({ userId: person.id, newPassword: temporaryPassword });
-        
-        let collectionName = 'users';
-        if (person.role === 'Student') {
-            collectionName = 'students';
-        } else if (person.role === 'Hire and Fly') {
-            collectionName = 'hire-and-fly';
-        }
-
-        const userRef = doc(db, `companies/${company.id}/${collectionName}`, person.id);
-        await updateDoc(userRef, { mustChangePassword: true });
-        
-        await sendEmail({
-            to: person.email,
-            subject: `Welcome to ${company.name}`,
-            emailData: {
-                userName: person.name,
-                companyName: company.name,
-                temporaryPassword: temporaryPassword,
-                loginUrl: `https://safeviate-develop--skybound-flight-manager.europe-west4.hosted.app/login`,
-            }
-        });
-        
-        return { success: true, message: `A new welcome email with a temporary password has been sent to ${person.name}.` };
-
-    } catch (error: any) {
-        console.error("Error sending welcome email:", error);
-        return { success: false, message: `Could not send the welcome email: ${error.message}` };
-    }
+    // In a real app, you would have a backend function to update the user's password in Firebase Auth.
+    // For this simulation, we'll just return the temporary password.
+    console.log(`Simulating password reset for ${user.name}. New temp password: ${temporaryPassword}`);
+    
+    return { success: true, message: `A temporary password has been generated.`, temporaryPassword };
 }

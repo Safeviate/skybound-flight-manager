@@ -8,6 +8,7 @@ import Loading from './loading';
 
 
 function RootPage() {
+  // This is a small change to verify the build process.
   const { user, loading } = useUser();
   const router = useRouter();
 

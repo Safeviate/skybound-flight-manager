@@ -253,7 +253,7 @@ export const ALL_PERMISSIONS: Permission[] = [
 export type Role = string;
 export type Department = string;
 
-export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Fleet Track' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Hire and Fly' | 'Training Schedule' | 'Flight Logs' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart' | 'Roles & Departments' | 'Meetings' | 'Exams';
+export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Task Tracker' | 'Fleet Track' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Hire and Fly' | 'Training Schedule' | 'Flight Logs' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart' | 'Roles & Departments' | 'Meetings' | 'Exams';
 
 export type User = {
     id: string;
@@ -559,10 +559,12 @@ export type MocMitigation = {
   description: string;
   responsiblePerson?: string;
   completionDate?: string;
-  residualLikelihood: RiskLikelihood;
-  residualSeverity: RiskSeverity;
-  residualRiskScore: number;
+  status: 'Open' | 'In Progress' | 'Closed';
+  residualLikelihood?: RiskLikelihood;
+  residualSeverity?: RiskSeverity;
+  residualRiskScore?: number;
 };
+
 
 export type MocRisk = {
   id: string;
@@ -643,7 +645,6 @@ export type ExamAssignment = {
   name: string;
   status: 'Not Started' | 'In Progress' | 'Completed' | 'Passed' | 'Failed';
   score?: number;
-  dateCompleted?: string;
   attemptId?: string; // Link to the detailed ExamAttempt
 };
 
@@ -668,6 +669,17 @@ export type ExamAttempt = {
   dateTaken: string;
   score: number; // Percentage
   answers: UserAnswer[];
+};
+
+export type UnifiedTask = {
+    id: string;
+    description: string;
+    responsiblePerson: string;
+    dueDate: string;
+    status: 'Open' | 'In Progress' | 'Completed' | 'Not Started';
+    sourceType: 'Quality Audit' | 'Safety Report' | 'MOC';
+    sourceId: string;
+    sourceTitle: string;
 };
 
 export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department> = {

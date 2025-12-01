@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, GroupedRisk, Booking } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, GroupedRisk, Booking, UnifiedTask } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -508,6 +509,7 @@ export function QualityPageContent({
     initialPersonnel,
     initialDepartments,
     initialAircraft,
+    initialTasks,
 }: {
     initialAudits: QualityAudit[],
     initialSchedule: AuditScheduleItem[],
@@ -515,6 +517,7 @@ export function QualityPageContent({
     initialPersonnel: User[],
     initialDepartments: CompanyDepartment[],
     initialAircraft: Aircraft[],
+    initialTasks: UnifiedTask[],
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -869,7 +872,7 @@ export function QualityPageContent({
                     <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                     <TabsTrigger value="audits">Audits</TabsTrigger>
                     <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
-                    <TabsTrigger value="cap-tracker">CAP Tracker</TabsTrigger>
+                    <TabsTrigger value="task-tracker">Task Tracker</TabsTrigger>
                     <TabsTrigger value="coherence-matrix">Coherence Matrix</TabsTrigger>
                 </TabsList>
                 <ScrollBar orientation="horizontal" />
@@ -979,8 +982,8 @@ export function QualityPageContent({
                 initialAircraft={initialAircraft}
               />
           </TabsContent>
-          <TabsContent value="cap-tracker" className="mt-4">
-              <CapTracker audits={audits} personnel={initialPersonnel} onUpdateAudit={handleAuditUpdate} />
+          <TabsContent value="task-tracker" className="mt-4">
+             <p>Task Tracker will be implemented here.</p>
           </TabsContent>
           <TabsContent value="coherence-matrix" className="mt-4">
             <ScrollArea className="w-full whitespace-nowrap">
