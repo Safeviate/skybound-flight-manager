@@ -1,4 +1,4 @@
-# Settings to manage and configure a Firebase App Hosting backend.Add a small text to make it possible to edit it.
+# Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
 runConfig:
@@ -13,10 +13,6 @@ env:
       - RUNTIME
   - variable: RESEND_API_KEY
     secret: resend-api-key@3
-    availability:
-      - RUNTIME
-  - variable: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-    secret: google-maps-api-key
     availability:
       - RUNTIME
 build:
