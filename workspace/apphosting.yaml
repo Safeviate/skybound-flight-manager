@@ -1,6 +1,5 @@
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
-# This comment is added to re-trigger the deployment process.
 
 runConfig:
   # Increase this value if you'd like to automatically spin up
@@ -10,8 +9,7 @@ env:
   - variable: GEMINI_API_KEY
     secret: gemini-api-key
     availability:
-      - BUILD
-      - RUNTIME
+      - RUNTIME # Key will be available at RUNTIME from the secret
   - variable: RESEND_API_KEY
     secret: resend-api-key@3
     availability:
@@ -20,3 +18,7 @@ env:
     secret: google-maps-api-key
     availability:
       - RUNTIME
+build:
+  args:
+    # Pass the secret as a build argument to be used during the build process
+    BUILD_GEMINI_API_KEY: !secret gemini-api-key
