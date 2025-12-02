@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@genkit-ai/google-genai": "1.24.0",
@@ -67,7 +68,9 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@types/react-signature-canvas": "^1.0.5",
+    "patch-package": "^8.0.0",
     "postcss": "^8.4.39",
+    "postinstall-postinstall": "^2.1.0",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.5.3"
   },
