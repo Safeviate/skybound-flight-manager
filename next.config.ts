@@ -35,7 +35,7 @@ const nextConfig: NextConfig = {
     // This is to fix a bug in genkit with handlebars
     config.resolve.alias = {
       ...config.resolve.alias,
-      'handlebars': 'handlebars/dist/cjs/handlebars.js',
+      'handlebars/dist/cjs/handlebars.js': 'handlebars/dist/cjs/handlebars.js',
     }
     return config
   }
