@@ -1,21 +1,8 @@
 
 import type {NextConfig} from 'next';
-import withPWA from 'next-pwa';
-
-const pwaConfig = withPWA({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development' || process.env.PWA_DISABLED === 'true',
-});
 
 const nextConfig: NextConfig = {
   /* config options here */
-  env: {
-    // This is a temporary measure to bypass build issues.
-    // The runtime will use the secret defined in the runConfig's env section.
-    GEMINI_API_KEY: "placeholder-for-build",
-  },
   async headers() {
     return [
       {
@@ -54,4 +41,4 @@ const nextConfig: NextConfig = {
   }
 };
 
-export default pwaConfig(nextConfig);
+export default nextConfig;
