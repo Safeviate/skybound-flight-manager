@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileoverview Centralized Genkit initialization and configuration.
@@ -16,8 +17,4 @@ const googleGenai = googleAI({
 // Configure and export the global Genkit instance.
 export const ai = genkit({
   plugins: [googleGenai],
-  // Log all AI model requests and responses to the console for debugging.
-  logLevel: 'debug',
-  // Prevent Genkit from writing telemetry data.
-  enableTracing: false,
 });
