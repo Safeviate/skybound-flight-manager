@@ -10,21 +10,24 @@
  */
 
 import type { GenerateMocPlanInput, GenerateMocPlanOutput } from './internal/generate-moc-plan-flow-internal';
-import { POST } from '@/app/api/genkit-flow/route';
 
 // Export the types for client-side usage.
 export type { GenerateMocPlanInput, GenerateMocPlanOutput };
 
 /**
  * Server Action to generate a Management of Change (MOC) implementation plan.
- * This function now calls the API route's logic directly as a function
- * to avoid server-side `fetch` errors.
+ * It makes a `fetch` call to a dedicated API route to run the Genkit flow,
+ * isolating the Genkit dependency from the Server Action build process.
  * @param input The MOC details.
  * @returns A promise that resolves to the generated plan.
  */
 export async function generateMocPlan(input: GenerateMocPlanInput): Promise<GenerateMocPlanOutput> {
-  // Create a mock Request object to pass to the POST handler.
-  const mockRequest = new Request('http://localhost/api/genkit-flow', {
+  // Determine the base URL for the API call.
+  // In a Vercel environment (production), we use the public URL.
+  // In local development, we use the localhost address.
+  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+  
+  const response = await fetch(`${baseUrl}/api/genkit-flow`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -32,8 +35,6 @@ export async function generateMocPlan(input: GenerateMocPlanInput): Promise<Gene
     body: JSON.stringify(input),
   });
 
-  const response = await POST(mockRequest);
-  
   if (!response.ok) {
     const errorBody = await response.text();
     console.error('Genkit flow execution failed:', errorBody);
