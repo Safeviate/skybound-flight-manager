@@ -71,6 +71,10 @@
     "typescript": "^5.5.3"
   },
   "overrides": {
-    "@so-ric/colorspace": "1.1.5"
+    "browserslist": "^4.23.0",
+    "@so-ric/colorspace": "1.1.5",
+    "@babel/compat-data": "7.24.7",
+    "@babel/traverse": "7.24.7",
+    "@babel/types": "7.24.7"
   }
 }
