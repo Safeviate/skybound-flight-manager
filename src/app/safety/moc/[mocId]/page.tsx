@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -32,6 +31,7 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RiskAssessmentTool } from '../../[reportId]/risk-assessment-tool';
 import { SignaturePad } from '@/components/ui/signature-pad';
+import { generateMocPlan } from '@/ai/flows/generate-moc-plan-flow';
 
 const probabilityOptions: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
 const severityOptions: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
@@ -144,8 +144,14 @@ export default function MocDetailPage() {
     if (!moc) return;
     setIsAiLoading(true);
     try {
-      // AI functionality is disabled.
-      toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'This feature is currently unavailable.' });
+      const result = await generateMocPlan({
+          title: moc.title,
+          description: moc.description,
+          reason: moc.reason,
+          scope: moc.scope,
+      });
+      handleUpdate({ phases: result }, true);
+      toast({ title: 'AI Analysis Complete', description: 'A draft implementation plan has been generated.' });
     } catch (error) {
       console.error("AI Analysis Error:", error);
       toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'Could not generate an implementation plan.' });
@@ -320,7 +326,7 @@ export default function MocDetailPage() {
                         <Label htmlFor="analysis-params">AI Analysis Parameters (Optional)</Label>
                         <Textarea id="analysis-params" placeholder="Enter specific keywords for the AI to focus on, e.g., 'impact on flight crew duty times'..." value={analysisParams} onChange={(e) => setAnalysisParams(e.target.value)}/>
                         <div className="flex items-center gap-2 justify-end">
-                            <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={true}>{isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />} Analyze with AI (Disabled)</Button>
+                            <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />} Analyze with AI</Button>
                         </div>
                     </>)}
                 </div>
@@ -500,4 +506,3 @@ const MitigationForm = ({ onSubmit, mitigation, personnel }: { onSubmit: (data: 
 };
 
 MocDetailPage.title = "Management of Change";
-
