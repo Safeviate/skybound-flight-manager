@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { generateMocPlanFlow } from '@/ai/flows/internal/generate-moc-plan-flow-internal'; 
 import type { GenerateMocPlanInput } from '@/ai/flows/internal/generate-moc-plan-flow-internal';
 
-// This handler receives the request from your Server Action
+// This handler is now exported so it can be called directly from Server Actions.
 export async function POST(request: Request) {
   try {
     const args = (await request.json()) as GenerateMocPlanInput;
