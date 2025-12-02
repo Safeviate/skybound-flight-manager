@@ -3,6 +3,7 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
+  transpilePackages: ['@genkit-ai/core', 'dotprompt'],
   async headers() {
     return [
       {
@@ -35,7 +36,7 @@ const nextConfig: NextConfig = {
     // This is to fix a bug in genkit with handlebars
     config.resolve.alias = {
       ...config.resolve.alias,
-      'handlebars/dist/cjs/handlebars.js': 'handlebars/dist/cjs/handlebars.js',
+      'handlebars/dist/cjs/handlebars.js': 'handlebars',
     }
     return config
   }
