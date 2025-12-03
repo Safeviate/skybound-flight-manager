@@ -11,12 +11,10 @@ import { generateMocPlanFlow } from '@/ai/flows/internal/generate-moc-plan-flow-
 export async function POST(req: Request) {
   try {
     const input = await req.json();
-    console.log('API route /api/genkit-flow received request:', input);
     
     // Directly invoke the Genkit flow with the parsed input.
     const result = await generateMocPlanFlow(input);
     
-    console.log('Genkit flow executed successfully in API route.');
     return NextResponse.json({ result });
   } catch (error: any) {
     console.error('Error in /api/genkit-flow:', error);
