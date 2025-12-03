@@ -8,6 +8,8 @@
 import { NextResponse } from 'next/server';
 import { generateMocPlanFlow } from '@/ai/flows/internal/generate-moc-plan-flow-internal';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     const input = await req.json();

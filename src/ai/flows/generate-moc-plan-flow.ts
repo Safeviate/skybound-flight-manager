@@ -24,9 +24,11 @@ export type { GenerateMocPlanInput, GenerateMocPlanOutput };
  */
 export async function generateMocPlan(input: GenerateMocPlanInput): Promise<GenerateMocPlanOutput> {
   // Determine the base URL for the API call.
-  // In a Vercel environment (production), we use the public URL.
+  // In a Vercel/App Hosting environment, we use the public URL.
   // In local development, we use the localhost address.
-  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL 
+    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` 
+    : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const flowUrl = `${baseUrl}/api/genkit-flow`;
   
   const response = await fetch(flowUrl, {
@@ -35,6 +37,7 @@ export async function generateMocPlan(input: GenerateMocPlanInput): Promise<Gene
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(input),
+    cache: 'no-store',
   });
 
   if (!response.ok) {
