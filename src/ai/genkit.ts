@@ -14,9 +14,10 @@ let aiInstance: any;
 function getAiInstance() {
   if (!aiInstance) {
     // Initialize the googleAI plugin with the API key from environment variables.
-    // This now happens at runtime, not build time.
+    // Provide a fallback dummy key for the build process to prevent resolution errors.
+    // The real key will be available at runtime.
     const googleGenai = googleAI({
-      apiKey: process.env.GEMINI_API_KEY,
+      apiKey: process.env.GEMINI_API_KEY || 'YOUR_API_KEY',
     });
 
     // Configure and export the global Genkit instance.
