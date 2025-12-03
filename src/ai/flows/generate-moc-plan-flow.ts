@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A server action for generating a draft implementation plan for a Management of Change (MOC).
@@ -26,8 +27,14 @@ export async function generateMocPlan(input: GenerateMocPlanInput): Promise<Gene
   // In a Vercel environment (production), we use the public URL.
   // In local development, we use the localhost address.
   const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+  const flowUrl = `${baseUrl}/api/genkit-flow`;
+
+  // --- START DIAGNOSTIC LOGGING ---
+  console.log('Attempting to call Genkit flow at:', flowUrl);
+  console.log('Request body:', JSON.stringify(input, null, 2));
+  // --- END DIAGNOSTIC LOGGING ---
   
-  const response = await fetch(`${baseUrl}/api/genkit-flow`, {
+  const response = await fetch(flowUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
