@@ -6,53 +6,29 @@
  * - ScanAircraftInfoInput - The input type for the scanAircraftInfo function.
  * - ScanAircraftInfoOutput - The return type for the scanAircraftInfo function.
  */
+import type { ScanAircraftInfoInput, ScanAircraftInfoOutput } from './internal/scan-aircraft-info-flow-internal';
 
-import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-
-const ScanAircraftInfoInputSchema = z.object({
-  photoDataUri: z.string().describe("A photo of the aircraft instrument or tail, as a data URI."),
-  scanMode: z.enum(['registration', 'hobbs']).describe("Specifies whether to look for the tail number or the Hobbs meter reading."),
-});
-export type ScanAircraftInfoInput = z.infer<typeof ScanAircraftInfoInputSchema>;
-
-const ScanAircraftInfoOutputSchema = z.object({
-  registration: z.string().optional().describe('The aircraft registration number, formatted as ZS-XXX or ZU-XXX.'),
-  hobbs: z.number().optional().describe('The Hobbs meter reading as a number with one decimal place.'),
-});
-export type ScanAircraftInfoOutput = z.infer<typeof ScanAircraftInfoOutputSchema>;
+export type { ScanAircraftInfoInput, ScanAircraftInfoOutput };
 
 export async function scanAircraftInfo(input: ScanAircraftInfoInput): Promise<ScanAircraftInfoOutput> {
-  return scanAircraftInfoFlow(input);
-}
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const flowUrl = `${baseUrl}/api/genkit-flow`;
 
-const scanAircraftInfoFlow = ai.defineFlow(
-  {
-    name: 'scanAircraftInfoFlow',
-    inputSchema: ScanAircraftInfoInputSchema,
-    outputSchema: ScanAircraftInfoOutputSchema,
-  },
-  async ({ photoDataUri, scanMode }) => {
-    const prompt = `
-      Analyze the attached image.
-      You are looking for specific aircraft information.
+  const response = await fetch(flowUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ flow: 'scanAircraftInfo', input }),
+    cache: 'no-store',
+  });
 
-      If scanMode is 'registration', find the aircraft tail number / registration mark. It typically starts with ZS or ZU.
-      If scanMode is 'hobbs', find the Hobbs meter and extract its numerical value. Include the decimal.
-
-      Return only the requested information in the specified format. If the information is not clearly visible, return null for that field.
-
-      Image: {{media url=photoDataUri}}
-    `;
-
-    const llmResponse = await ai.generate({
-      prompt,
-      model: 'googleai/gemini-1.5-flash',
-      output: {
-        schema: ScanAircraftInfoOutputSchema,
-      },
-    });
-
-    return llmResponse.output!;
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error('Genkit flow execution failed:', errorBody);
+    throw new Error(`Genkit flow failed with status: ${response.status}`);
   }
-);
+
+  const data = await response.json();
+  return data.result;
+}

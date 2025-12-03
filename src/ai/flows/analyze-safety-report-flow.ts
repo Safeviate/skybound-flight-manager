@@ -7,54 +7,29 @@
  * - AnalyzeSafetyReportOutput - The return type for the analyzeSafetyReport function.
  */
 
-import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import type { AnalyzeSafetyReportInput, AnalyzeSafetyReportOutput } from './internal/analyze-safety-report-flow-internal';
 
-const AnalyzeSafetyReportInputSchema = z.object({
-  reportText: z.string().describe('The full text of the safety report to be analyzed.'),
-});
-export type AnalyzeSafetyReportInput = z.infer<typeof AnalyzeSafetyReportInputSchema>;
-
-const AnalyzeSafetyReportOutputSchema = z.object({
-  overallTone: z.string().describe('A brief (2-3 word) description of the overall tone of the report (e.g., "Urgent and Concerned", "Formal and Factual").'),
-  severityLevel: z.enum(['Critical', 'High', 'Medium', 'Low', 'Informational']).describe('The assessed severity level of the reported incident.'),
-  potentialSafetyIssues: z.array(z.string()).describe('A list of potential safety issues identified in the report.'),
-  areasForInvestigation: z.array(z.string()).describe('A list of specific areas or topics that warrant further investigation.'),
-  complianceConcerns: z.array(z.string()).describe('A list of any potential regulatory compliance issues or concerns mentioned.'),
-  impactOnOperations: z.string().describe('A brief summary of the potential or actual impact on flight or ground operations.'),
-});
-export type AnalyzeSafetyReportOutput = z.infer<typeof AnalyzeSafetyReportOutputSchema>;
+export type { AnalyzeSafetyReportInput, AnalyzeSafetyReportOutput };
 
 export async function analyzeSafetyReport(input: AnalyzeSafetyReportInput): Promise<AnalyzeSafetyReportOutput> {
-  return analyzeSafetyReportFlow(input);
-}
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const flowUrl = `${baseUrl}/api/genkit-flow`;
+  
+  const response = await fetch(flowUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ flow: 'analyzeSafetyReport', input }),
+    cache: 'no-store',
+  });
 
-const analyzeSafetyReportFlow = ai.defineFlow(
-  {
-    name: 'analyzeSafetyReportFlow',
-    inputSchema: AnalyzeSafetyReportInputSchema,
-    outputSchema: AnalyzeSafetyReportOutputSchema,
-  },
-  async (input) => {
-    const prompt = `
-      You are an expert aviation safety officer. Analyze the following safety report text.
-      Your task is to assess its tone, severity, and identify key areas for follow-up.
-      Provide a structured analysis based on the output schema.
-
-      Report Text:
-      """
-      ${input.reportText}
-      """
-    `;
-
-    const llmResponse = await ai.generate({
-      prompt,
-      model: 'googleai/gemini-1.5-flash',
-      output: {
-        schema: AnalyzeSafetyReportOutputSchema,
-      },
-    });
-
-    return llmResponse.output!;
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error('Genkit flow execution failed:', errorBody);
+    throw new Error(`Genkit flow failed with status: ${response.status}`);
   }
-);
+
+  const data = await response.json();
+  return data.result;
+}

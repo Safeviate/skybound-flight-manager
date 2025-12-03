@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A server action for generating a draft implementation plan for a Management of Change (MOC).
@@ -23,12 +22,7 @@ export type { GenerateMocPlanInput, GenerateMocPlanOutput };
  * @returns A promise that resolves to the generated plan.
  */
 export async function generateMocPlan(input: GenerateMocPlanInput): Promise<GenerateMocPlanOutput> {
-  // Determine the base URL for the API call.
-  // In a Vercel/App Hosting environment, we use the public URL.
-  // In local development, we use the localhost address.
-  const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL 
-    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` 
-    : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const flowUrl = `${baseUrl}/api/genkit-flow`;
   
   const response = await fetch(flowUrl, {
@@ -36,7 +30,7 @@ export async function generateMocPlan(input: GenerateMocPlanInput): Promise<Gene
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(input),
+    body: JSON.stringify({ flow: 'generateMocPlan', input }),
     cache: 'no-store',
   });
 
