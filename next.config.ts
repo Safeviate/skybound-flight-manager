@@ -2,7 +2,7 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // This is a trivial comment to force a recompilation and fix chunk loading errors.
   webpack: (config, { isServer }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
