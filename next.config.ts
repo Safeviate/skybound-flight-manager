@@ -1,6 +1,10 @@
 
 import type {NextConfig} from 'next';
 
+// Load environment variables from .env.local
+import dotenv from 'dotenv';
+dotenv.config({ path: './.env.local' });
+
 const nextConfig: NextConfig = {
   // This is a trivial comment to force a recompilation and fix chunk loading errors.
   webpack: (config, { isServer }) => {
