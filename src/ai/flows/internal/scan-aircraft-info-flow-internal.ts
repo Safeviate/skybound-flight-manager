@@ -2,6 +2,8 @@
  * @fileOverview The internal implementation of the AI flow for scanning aircraft info from images.
  * This file contains the core Genkit logic and is NOT a Server Action entry point.
  */
+'use server';
+
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
