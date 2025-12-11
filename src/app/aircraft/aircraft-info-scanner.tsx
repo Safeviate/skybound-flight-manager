@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { scanAircraftInfo } from '@/ai/flows/scan-aircraft-info-flow';
 
 interface AircraftInfoScannerProps {
   scanMode: 'registration' | 'hobbs';
@@ -66,8 +67,11 @@ export function AircraftInfoScanner({ scanMode, onSuccess }: AircraftInfoScanner
       setScanResult({});
 
       try {
-        // AI scanning logic removed
-        toast({ variant: 'destructive', title: 'AI Feature Disabled', description: 'AI scanning is currently unavailable.' });
+        const result = await scanAircraftInfo({ photoDataUri: dataUrl, scanMode });
+        setScanResult(result);
+        if ((scanMode === 'registration' && !result.registration) || (scanMode === 'hobbs' && !result.hobbs)) {
+            toast({ variant: 'destructive', title: 'Scan Failed', description: 'Could not automatically read the data. Please try again.' });
+        }
       } catch (error) {
         console.error("AI scan failed:", error);
         toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'Could not read data from the image.' });
