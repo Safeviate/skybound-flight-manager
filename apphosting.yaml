@@ -5,19 +5,3 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
-iam:
-  serviceAccount: app-hosting-managed-backend
-  roles:
-    - type: secretmanager.secretAccessor
-      secrets: [gemini-api-key]
-env:
-  - variable: GEMINI_API_KEY
-    secret: gemini-api-key
-    availability:
-      - RUNTIME
-build:
-  env:
-    - variable: GEMINI_API_KEY
-      secret: gemini-api-key
-      availability:
-        - BUILD
