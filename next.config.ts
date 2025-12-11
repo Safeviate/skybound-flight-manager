@@ -1,9 +1,9 @@
 
 import type {NextConfig} from 'next';
 
-// Load environment variables from .env.local
+// Load environment variables from .env file
 import dotenv from 'dotenv';
-dotenv.config({ path: './.env.local' });
+dotenv.config();
 
 const nextConfig: NextConfig = {
   // This is a trivial comment to force a recompilation and fix chunk loading errors.
