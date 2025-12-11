@@ -31,7 +31,6 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RiskAssessmentTool } from '../../[reportId]/risk-assessment-tool';
 import { SignaturePad } from '@/components/ui/signature-pad';
-import { generateMocPlan } from '@/ai/flows/generate-moc-plan-flow';
 
 const probabilityOptions: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
 const severityOptions: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
@@ -144,14 +143,7 @@ export default function MocDetailPage() {
     if (!moc) return;
     setIsAiLoading(true);
     try {
-      const result = await generateMocPlan({
-          title: moc.title,
-          description: moc.description,
-          reason: moc.reason,
-          scope: moc.scope,
-      });
-      handleUpdate({ phases: result }, true);
-      toast({ title: 'AI Analysis Complete', description: 'A draft implementation plan has been generated.' });
+        toast({ variant: 'destructive', title: 'AI Feature Disabled', description: 'This feature is temporarily unavailable.' });
     } catch (error) {
       console.error("AI Analysis Error:", error);
       toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'Could not generate an implementation plan.' });
