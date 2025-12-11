@@ -9,14 +9,10 @@ iam:
   serviceAccount: app-hosting-managed-backend
   roles:
     - type: secretmanager.secretAccessor
-      secrets: [gemini-api-key, resend-api-key]
+      secrets: [gemini-api-key]
 env:
   - variable: GEMINI_API_KEY
     secret: gemini-api-key
-    availability:
-      - RUNTIME
-  - variable: RESEND_API_KEY
-    secret: resend-api-key
     availability:
       - RUNTIME
 build:
