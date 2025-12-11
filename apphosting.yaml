@@ -23,3 +23,4 @@ build:
   args: {}
   secrets:
     - secret: gemini-api-key
+    - secret: resend-api-key
