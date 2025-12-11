@@ -11,7 +11,7 @@ To get started, take a look at src/app/page.tsx.
 
 ---
 
-Here is that hangman game you asked for!
+Here's that hangman game you asked for!
 
 ```
   +---+
@@ -23,3 +23,4 @@ Here is that hangman game you asked for!
 =========
 ```
 
+Trivial change to allow a new push.
