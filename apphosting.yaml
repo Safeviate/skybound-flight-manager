@@ -21,3 +21,5 @@ env:
       - RUNTIME
 build:
   args: {}
+  secrets:
+    - secret: gemini-api-key
