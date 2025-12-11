@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   webpack: (config, { isServer }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
-      'handlebars': 'handlebars/dist/handlebars.js',
+      'handlebars': 'handlebars/dist/cjs/handlebars.js',
     }
     return config
   },
