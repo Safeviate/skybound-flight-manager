@@ -13,7 +13,6 @@ To get started, take a look at src/app/page.tsx.
 
 Here's that hangman game you asked for!
 
-```
   +---+
   |   |
   O   |
@@ -21,7 +20,7 @@ Here's that hangman game you asked for!
  / \  |
       |
 =========
-```
+
 
 Trivial change to allow a new push.
 
@@ -30,3 +29,5 @@ Another small change.
 One more trivial change for a push.
 
 Final trivial change.
+
+Let's force a build and see what happens.
