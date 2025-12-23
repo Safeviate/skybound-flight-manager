@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -165,7 +166,6 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
     const newEntry = {
       ...data,
       flightDuration: duration,
-      date: format(data.date, 'yyyy-MM-dd'),
       studentSignatureRequired: !data.studentSignature,
     };
     

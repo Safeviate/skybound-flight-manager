@@ -35,6 +35,9 @@ const alertFormSchema = z.object({
   type: z.enum(['Red Tag', 'Yellow Tag', 'General Notice'], {
     required_error: 'Please select an alert type.',
   }),
+  date: z.date({
+    required_error: 'An issue date is required.',
+  }),
   title: z.string().min(5, {
     message: 'Title must be at least 5 characters.',
   }),
@@ -51,7 +54,7 @@ const alertFormSchema = z.object({
 type AlertFormValues = z.infer<typeof alertFormSchema>;
 
 interface NewAlertFormProps {
-  onSubmit: (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => void;
+  onSubmit: (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author'>) => void;
   onSaveProgress: (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => void;
   existingAlert?: Alert | null;
   allUsers: User[];
@@ -66,6 +69,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert, allUsers
     resolver: zodResolver(alertFormSchema),
     defaultValues: {
       type: undefined,
+      date: new Date(),
       title: '',
       targetType: 'department',
       department: 'all',
@@ -113,6 +117,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert, allUsers
       
       form.reset({
         type: existingAlert.type as 'Red Tag' | 'Yellow Tag' | 'General Notice',
+        date: existingAlert.date ? parseISO(existingAlert.date) : new Date(),
         title: existingAlert.title || '',
         targetType: targetTypeValue,
         department: departmentValue,
@@ -126,6 +131,7 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert, allUsers
     } else {
       form.reset({
         type: undefined,
+        date: new Date(),
         title: '',
         targetType: 'department',
         department: 'all',
@@ -142,9 +148,10 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert, allUsers
   function handleFormSubmit(data: AlertFormValues) {
     const finalData = {
         ...data,
+        date: data.date ? format(data.date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
         reviewerId: data.reviewerId === 'none' ? null : data.reviewerId,
     };
-    onSubmit(finalData as Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>);
+    onSubmit(finalData as Omit<Alert, 'id' | 'number' | 'readBy' | 'author'>);
     form.reset();
   }
   
@@ -203,6 +210,38 @@ export function NewAlertForm({ onSubmit, onSaveProgress, existingAlert, allUsers
                   <FormMessage />
                 </FormItem>
               )}
+            />
+
+            <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                    <FormLabel>Issue Date</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button
+                            variant={"outline"}
+                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                            >
+                            {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                        />
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                    </FormItem>
+                )}
             />
             
             <FormField

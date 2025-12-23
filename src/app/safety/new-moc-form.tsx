@@ -16,11 +16,17 @@ import { addDoc, collection, getCountFromServer, query } from 'firebase/firestor
 import { format } from 'date-fns';
 import { useState, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+
 
 const mocFormSchema = z.object({
   title: z.string().min(10, 'Title must be at least 10 characters.'),
   department: z.string().min(1, 'Department is required.'),
   proposedBy: z.string().min(1, 'Proposed by is required.'),
+  proposalDate: z.date({ required_error: 'A proposal date is required.'}),
   description: z.string().min(20, 'Description must be at least 20 characters.'),
   reason: z.string().min(20, 'Reason for change must be at least 20 characters.'),
   scope: z.string().min(20, 'Scope of change must be at least 20 characters.'),
@@ -46,6 +52,7 @@ export function NewMocForm({ onClose, onUpdate, personnel, departments }: NewMoc
         title: '',
         department: '',
         proposedBy: '',
+        proposalDate: new Date(),
         description: '',
         reason: '',
         scope: '',
@@ -73,7 +80,7 @@ export function NewMocForm({ onClose, onUpdate, personnel, departments }: NewMoc
         ...data,
         companyId: company.id,
         mocNumber: mocNumber,
-        proposalDate: new Date().toISOString(),
+        proposalDate: format(data.proposalDate, 'yyyy-MM-dd'),
         status: 'Proposed',
       };
 
@@ -156,6 +163,29 @@ export function NewMocForm({ onClose, onUpdate, personnel, departments }: NewMoc
             )}
           />
         </div>
+        <FormField
+            control={form.control}
+            name="proposalDate"
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Proposal Date</FormLabel>
+                     <Popover>
+                        <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                    {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
         <FormField
           control={form.control}
           name="description"

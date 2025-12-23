@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -37,7 +36,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 
 const logbookFormSchema = z.object({
-  date: z.date().optional().nullable(),
+  date: z.date({ required_error: 'A date is required.' }),
   aircraft: z.string().optional(),
   make: z.string().optional(),
   aircraftType: z.string().optional(),
@@ -156,7 +155,6 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit, onDelete }: AddLogboo
       ...data,
       flightDuration: duration,
       dayTime: dayTime,
-      date: data.date ? format(data.date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
     };
     onSubmit(newEntry, logToEdit?.id);
     form.reset();
