@@ -12,7 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { Bot, Camera, Plane, Hash, Image as ImageIcon, AlertTriangle, Send } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AircraftInfoScanner } from '../aircraft/aircraft-info-scanner';
 import { Input } from '@/components/ui/input';
 import type { Aircraft } from '@/lib/types';
 import { StandardCamera } from '@/components/ui/standard-camera';
@@ -161,7 +160,7 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
                                                 />
                                             </FormControl>
                                             {settings.useAiChecklists && (
-                                                <Button type="button" variant="outline" size="icon" onClick={() => setIsScannerOpen(true)}>
+                                                <Button type="button" variant="outline" size="icon" onClick={() => toast({ title: 'AI Scanner Disabled', description: 'This feature is temporarily unavailable.' })}>
                                                     <Bot className="h-4 w-4" />
                                                 </Button>
                                             )}
@@ -313,18 +312,6 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
                  <Button type="submit" className="w-full">Submit Post-Flight Checklist</Button>
             </CardFooter>
         </Card>
-        
-        <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle>AI Hobbs Scanner</DialogTitle>
-                    <DialogDescription>
-                        Capture a clear image of the Hobbs meter.
-                    </DialogDescription>
-                </DialogHeader>
-                <AircraftInfoScanner scanMode="hobbs" onSuccess={handleScanSuccess} />
-            </DialogContent>
-        </Dialog>
         
         <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
             <DialogContent className="sm:max-w-md">

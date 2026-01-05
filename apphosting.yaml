@@ -5,15 +5,3 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
-env:
-  - variable: GEMINI_API_KEY
-    secret: gemini-api-key
-    availability:
-      - BUILD
-      - RUNTIME
-  - variable: RESEND_API_KEY
-    secret: resend-api-key@3
-    availability:
-      - RUNTIME
-build:
-  args: {}

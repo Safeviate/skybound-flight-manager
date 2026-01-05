@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser } from '@/context/user-provider';
@@ -6,7 +7,7 @@ export default function Footer() {
   const { company } = useUser();
   const trademark = company?.trademark || 'SkyBound Flight Manager';
   const companyName = company?.name || 'SkyBound Flight Manager';
-  const appVersion = process.env.NEXT_PUBLIC_APP_VERSION || '0.1.0';
+  const appVersion = '0.1.3'; // Hardcoded to remove process.env dependency
 
   return (
     <footer
@@ -16,7 +17,7 @@ export default function Footer() {
       <p>
         &copy; {new Date().getFullYear()} {companyName}. "{trademark}" is a trademark of the project owner. All rights reserved. Unauthorized use of this name is strictly prohibited.
         <span className="mx-2">|</span>
-        Version {appVersion} 🍻🍻🍻
+        Version {appVersion}
       </p>
     </footer>
   );

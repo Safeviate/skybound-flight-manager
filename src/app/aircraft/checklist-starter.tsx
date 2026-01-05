@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Bot, List } from 'lucide-react';
+import { List } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -19,12 +19,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { AircraftInfoScanner } from './aircraft-info-scanner';
 import { useToast } from '@/hooks/use-toast';
 import type { Aircraft } from '@/lib/types';
-import { Separator } from '@/components/ui/separator';
 import { useSettings } from '@/context/settings-provider';
-import { cn } from '@/lib/utils';
 
 interface ChecklistStarterProps {
   aircraftList: Aircraft[];
