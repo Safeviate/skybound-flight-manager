@@ -165,74 +165,86 @@ const SwimlaneCalendar = ({
     };
 
     return (
-        <div className="relative flex" style={{ height: `${24 * 60 * 2}px` }}>
-            {/* Time Column */}
-            <div className="w-16 flex-shrink-0">
-                {Array.from({ length: 24 }).map((_, i) => (
-                    <div key={i} className="h-[120px] text-xs text-center text-muted-foreground border-r border-t border-border relative">
-                        <span className="absolute -translate-y-1/2 left-1">{((i + 6) % 24).toString().padStart(2, '0')}:00</span>
-                    </div>
-                ))}
-            </div>
-
-            {/* Resource Lanes */}
-            <div className="flex-grow grid" style={{ gridTemplateColumns: `repeat(${resources.length}, 1fr)` }}>
-                {resources.map((resource, index) => (
-                    <div key={resource[resourceKey]} className={cn("relative border-r", index === resources.length - 1 && "border-r-0")}>
-                        <div className="sticky top-0 z-10 bg-card py-2 text-center font-medium text-sm border-b">
+        <div className="relative border-t border-l">
+            {/* Header row */}
+            <div className="sticky top-0 z-20 flex bg-card">
+                <div className="w-16 flex-shrink-0 border-r py-2 text-center font-medium text-sm">Time</div>
+                <div className="flex-grow grid" style={{ gridTemplateColumns: `repeat(${resources.length}, 1fr)` }}>
+                    {resources.map((resource) => (
+                        <div key={resource[resourceKey]} className="border-r py-2 text-center font-medium text-sm truncate px-1">
                             {resource[resourceNameKey]}
                         </div>
-                        {/* Time slot lines for clicking */}
-                        {Array.from({ length: 24 * 60 }).map((_, i) => {
-                            const minuteOfDay = (6 * 60) + i;
-                            const hour = Math.floor(minuteOfDay / 60);
-                            const minute = minuteOfDay % 60;
-                            const time = `${(hour % 24).toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-                            return (
-                                <div
-                                    key={time}
-                                    className="h-[2px] border-t border-dashed border-border/20 hover:bg-primary/10 cursor-pointer"
-                                    onClick={() => onSlotClick(resource, time)}
-                                />
-                            )
-                        })}
+                    ))}
+                </div>
+            </div>
 
-                        {/* Booking blocks */}
-                        {bookings
-                            .filter(b => (b.resourceType === 'facility' ? b.facilityId : b.aircraft) === resource[resourceKey])
-                            .map(booking => {
-                                const startMinutes = timeToMinutes(booking.startTime);
-                                const endMinutes = timeToMinutes(booking.endTime);
-                                const duration = isBefore(parseISO(`${booking.date}T${booking.endTime}`), parseISO(`${booking.date}T${booking.startTime}`))
-                                    ? (24 * 60 - startMinutes) + endMinutes
-                                    : endMinutes - startMinutes;
-                                
-                                const top = minutesToTop(startMinutes);
-                                const height = duration * 2;
-                                const variant = getBookingVariant(booking);
+            {/* Scrollable Content */}
+            <div className="relative flex" style={{ height: `${18 * 60 * 2}px` }}>
+                {/* Time Gutter */}
+                <div className="w-16 flex-shrink-0">
+                    {Array.from({ length: 18 }).map((_, i) => (
+                        <div key={i} className="h-[120px] text-xs text-center text-muted-foreground border-r border-t relative">
+                            <span className="absolute -translate-y-1/2 left-1">{((i + 6) % 24).toString().padStart(2, '0')}:00</span>
+                        </div>
+                    ))}
+                </div>
 
+                {/* Main Grid */}
+                <div className="flex-grow grid" style={{ gridTemplateColumns: `repeat(${resources.length}, 1fr)` }}>
+                    {resources.map((resource, index) => (
+                        <div key={resource[resourceKey]} className={cn("relative border-r", index === resources.length - 1 && "border-r-0")}>
+                            {/* Time slot lines for clicking */}
+                            {Array.from({ length: 18 * 60 }).map((_, i) => {
+                                const minuteOfDay = (6 * 60) + i;
+                                const hour = Math.floor(minuteOfDay / 60);
+                                const minute = minuteOfDay % 60;
+                                const time = `${(hour % 24).toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
                                 return (
-                                    <TooltipProvider key={booking.id}>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <div
-                                                    onClick={() => onBookingClick(booking)}
-                                                    className={cn("absolute w-full text-white text-xs rounded-md overflow-hidden border", variant.className, variant.isClickable ? 'cursor-pointer' : 'cursor-not-allowed')}
-                                                    style={{ ...variant.style, top: `${top}px`, height: `${height}px` }}
-                                                >
-                                                    {getBookingLabel(booking)}
-                                                </div>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <BookingTooltipContent booking={booking} />
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
+                                    <div
+                                        key={time}
+                                        className="h-[2px] border-t border-dashed border-border/20 hover:bg-primary/10 cursor-pointer"
+                                        onClick={() => onSlotClick(resource, time)}
+                                    />
                                 )
-                            })
-                        }
-                    </div>
-                ))}
+                            })}
+
+                            {/* Booking blocks */}
+                            {bookings
+                                .filter(b => (b.resourceType === 'facility' ? b.facilityId : b.aircraft) === resource[resourceKey])
+                                .map(booking => {
+                                    const startMinutes = timeToMinutes(booking.startTime);
+                                    const endMinutes = timeToMinutes(booking.endTime);
+                                    const duration = isBefore(parseISO(`${booking.date}T${booking.endTime}`), parseISO(`${booking.date}T${booking.startTime}`))
+                                        ? (24 * 60 - startMinutes) + endMinutes
+                                        : endMinutes - startMinutes;
+                                    
+                                    const top = minutesToTop(startMinutes);
+                                    const height = duration * 2;
+                                    const variant = getBookingVariant(booking);
+
+                                    return (
+                                        <TooltipProvider key={booking.id}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <div
+                                                        onClick={() => onBookingClick(booking)}
+                                                        className={cn("absolute w-full text-white text-xs rounded-md overflow-hidden border", variant.className, variant.isClickable ? 'cursor-pointer' : 'cursor-not-allowed')}
+                                                        style={{ ...variant.style, top: `${top}px`, height: `${height}px` }}
+                                                    >
+                                                        {getBookingLabel(booking)}
+                                                    </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <BookingTooltipContent booking={booking} />
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )
+                                })
+                            }
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
@@ -627,7 +639,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-gray-400"></div>Completed</div>
                                 <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-destructive"></div>In Maintenance</div>
                             </div>
-                            <ScrollArea>
+                            <ScrollArea className="w-full">
                                 <SwimlaneCalendar 
                                     resources={aircraft} 
                                     bookings={dailyAircraftBookings}
@@ -642,7 +654,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                             </ScrollArea>
                         </TabsContent>
                         <TabsContent value="facilities">
-                            <ScrollArea>
+                            <ScrollArea className="w-full">
                                 <SwimlaneCalendar 
                                     resources={company?.facilities || []}
                                     bookings={dailyFacilityBookings}
