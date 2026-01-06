@@ -16,7 +16,7 @@ import { Loader2, AlertTriangle, Calendar as CalendarIcon, Search, Trash2, Edit 
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { format, parse, parseISO, setHours, setMinutes, isBefore, addDays, startOfDay, endOfDay, isWithinInterval, isSameDay, add, sub, isAfter } from 'date-fns';
+import { format, parse, parseISO, setHours, setMinutes, isBefore, addDays, startOfDay, endOfDay, isWithinInterval, isSameDay, add, sub, isAfter, differenceInMinutes } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useSettings } from '@/context/settings-provider';
@@ -115,10 +115,9 @@ const timeSlots = Array.from({ length: 24 * 4 }, (_, i) => {
 
 const hourlyTimeSlots = Array.from({ length: 24 }, (_, i) => `${((i + 6) % 24).toString().padStart(2, '0')}:00`);
 
-const GanttChart = ({ 
+const SwimlaneCalendar = ({ 
     resources, 
     bookings, 
-    aircraft,
     onSlotClick,
     onBookingClick,
     resourceKey,
@@ -128,7 +127,6 @@ const GanttChart = ({
 }: { 
     resources: any[], 
     bookings: Booking[], 
-    aircraft?: Aircraft[],
     onSlotClick: (resource: any, time: string) => void,
     onBookingClick: (booking: Booking) => void,
     resourceKey: string,
@@ -139,57 +137,12 @@ const GanttChart = ({
     const timeToMinutes = (time: string) => {
         const [hours, minutes] = time.split(':').map(Number);
         return hours * 60 + minutes;
-    }
+    };
     
-    const getBookingForSlot = (resourceIdentifier: string, time: string) => {
-        const [slotHour, slotMinute] = time.split(':').map(Number);
-        const isNextDaySlot = slotHour < 6;
-        const slotDate = isNextDaySlot ? addDays(startOfDay(selectedDate), 1) : startOfDay(selectedDate);
-        const slotDateTime = setMinutes(setHours(slotDate, slotHour), slotMinute);
-
-        return bookings.find(b => {
-            const bookingResourceIdentifier = b.resourceType === 'facility' ? b.facilityId : b.aircraft;
-            if (bookingResourceIdentifier !== resourceIdentifier) return false;
-            
-            const bookingStartDateTime = parseISO(`${b.date}T${b.startTime}`);
-            let bookingEndDateTime = parseISO(`${b.endDate || b.date}T${b.endTime}`);
-            
-            if (isBefore(bookingEndDateTime, bookingStartDateTime)) {
-                bookingEndDateTime = addDays(bookingEndDateTime, 1);
-            }
-            
-            return isWithinInterval(slotDateTime, { start: bookingStartDateTime, end: bookingEndDateTime });
-        });
-    };
-
-    const calculateColSpan = (booking: Booking, time: string) => {
-        const viewStart = setHours(startOfDay(selectedDate), 6);
-        const viewEnd = addDays(viewStart, 1);
-
-        const bookingStart = parseISO(`${booking.date}T${booking.startTime}`);
-        let bookingEnd = parseISO(`${booking.endDate || booking.date}T${booking.endTime}`);
-        if(isBefore(bookingEnd, bookingStart)) bookingEnd = addDays(bookingEnd, 1);
-
-        const visibleBookingStart = isAfter(bookingStart, viewStart) ? bookingStart : viewStart;
-        const visibleBookingEnd = isBefore(bookingEnd, viewEnd) ? bookingEnd : viewEnd;
-        
-        let startTimeToRender;
-        const bookingStartInMinutes = timeToMinutes(format(visibleBookingStart, 'HH:mm'));
-        const slotTimeInMinutes = timeToMinutes(time);
-
-        if (isBefore(bookingStart, viewStart) && time === '06:00') {
-             startTimeToRender = '06:00';
-        } else if (bookingStartInMinutes === slotTimeInMinutes) {
-             startTimeToRender = time;
-        } else {
-            return 0;
-        }
-
-        if (time !== startTimeToRender) return 0;
-        
-        const durationInMinutes = (visibleBookingEnd.getTime() - visibleBookingStart.getTime()) / (1000 * 60);
-        return Math.ceil(durationInMinutes / 15);
-    };
+    const minutesToTop = (minutes: number) => {
+        // Each hour is 60px, so each minute is 1px
+        return (minutes - (6 * 60)) * 1;
+    }
 
     const getBookingLabel = (booking: Booking) => {
         const bookingNumPart = booking.bookingNumber ? `${booking.bookingNumber} - ` : '';
@@ -211,75 +164,82 @@ const GanttChart = ({
         }
 
         return (
-            <div className="flex flex-col">
-                <span className="font-semibold">{line1}</span>
-                <span className="text-xs opacity-90">{line2}</span>
+            <div className="flex flex-col p-1 overflow-hidden">
+                <span className="font-semibold truncate">{line1}</span>
+                <span className="text-xs opacity-90 truncate">{line2}</span>
             </div>
         );
     };
 
     return (
-        <div className="relative mt-4">
-            <table className="w-full border-collapse" style={{ minWidth: '4758px', tableLayout: 'fixed' }}>
-                <thead>
-                    <tr>
-                        <th className="sticky top-0 z-20 bg-card text-center p-2 w-[90px] border-r">Resource</th>
-                        {hourlyTimeSlots.map(time => <th key={time} colSpan={4} className="text-center p-2 sticky top-0 z-10 bg-card border-l">{time}</th>)}
-                    </tr>
-                </thead>
-                <tbody>
-                    {resources.map(resource => {
-                        const renderedSlots = new Set();
-                        return (
-                        <tr key={resource[resourceKey]}>
-                            <td className="sticky left-0 z-10 bg-card font-medium text-center p-2 w-[90px] border-r">{resource[resourceNameKey]}</td>
-                            {timeSlots.map(time => {
-                                if (renderedSlots.has(time)) return null;
+        <div className="relative flex" style={{ height: `${24 * 60}px` }}>
+            {/* Time Column */}
+            <div className="w-16 flex-shrink-0">
+                {Array.from({ length: 24 }).map((_, i) => (
+                    <div key={i} className="h-[60px] text-xs text-center text-muted-foreground border-r border-t border-border relative">
+                        <span className="absolute -top-2 left-1">{((i + 6) % 24).toString().padStart(2, '0')}:00</span>
+                    </div>
+                ))}
+            </div>
 
-                                const booking = getBookingForSlot(resource[resourceKey], time);
-                                if (booking) {
-                                    const colSpan = calculateColSpan(booking, time);
-                                    if (colSpan > 0) {
-                                        
-                                        const [startHour, startMinute] = time.split(':').map(Number);
-                                        const startTimeInMinutes = startHour * 60 + startMinute;
-                                        
-                                        for (let i = 1; i < colSpan; i++) {
-                                            const nextSlotTimeInMinutes = startTimeInMinutes + i * 15;
-                                            const nextHour = Math.floor(nextSlotTimeInMinutes / 60) % 24;
-                                            const nextMinute = nextSlotTimeInMinutes % 60;
-                                            renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:${nextMinute.toString().padStart(2, '0')}`);
-                                        }
-                                        const variant = getBookingVariant(booking);
-                                        return (
-                                            <td key={time} colSpan={colSpan} className="p-0 h-[50px]">
-                                                <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <div 
-                                                            onClick={() => onBookingClick(booking)}
-                                                            className={cn('h-full flex items-center p-2 text-white text-xs whitespace-nowrap overflow-hidden border-r border-white/20', variant.className, (variant.isClickable) ? 'cursor-pointer' : 'cursor-not-allowed')} style={variant.style}>
-                                                            {getBookingLabel(booking)}
-                                                        </div>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <BookingTooltipContent booking={booking} />
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                                </TooltipProvider>
-                                            </td>
-                                        )
-                                    }
-                                }
+            {/* Resource Lanes */}
+            <div className="flex-grow grid" style={{ gridTemplateColumns: `repeat(${resources.length}, 1fr)` }}>
+                {resources.map((resource, index) => (
+                    <div key={resource[resourceKey]} className={cn("relative border-r", index === resources.length - 1 && "border-r-0")}>
+                        <div className="sticky top-0 z-10 bg-card py-2 text-center font-medium text-sm border-b">
+                            {resource[resourceNameKey]}
+                        </div>
+                        {/* Time slot lines for clicking */}
+                        {Array.from({ length: 24 * 4 }).map((_, i) => {
+                            const hour = 6 + Math.floor(i / 4);
+                            const minute = (i % 4) * 15;
+                            const time = `${(hour % 24).toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                            return (
+                                <div
+                                    key={time}
+                                    className="h-[15px] border-t border-dashed border-border/50 hover:bg-primary/10 cursor-pointer"
+                                    onClick={() => onSlotClick(resource, time)}
+                                />
+                            )
+                        })}
+
+                        {/* Booking blocks */}
+                        {bookings
+                            .filter(b => (b.resourceType === 'facility' ? b.facilityId : b.aircraft) === resource[resourceKey])
+                            .map(booking => {
+                                const startMinutes = timeToMinutes(booking.startTime);
+                                const endMinutes = timeToMinutes(booking.endTime);
+                                const duration = isBefore(parseISO(`${booking.date}T${booking.endTime}`), parseISO(`${booking.date}T${booking.startTime}`))
+                                    ? (24 * 60 - startMinutes) + endMinutes
+                                    : endMinutes - startMinutes;
+                                
+                                const top = minutesToTop(startMinutes);
+                                const height = duration * 1;
+                                const variant = getBookingVariant(booking);
+
                                 return (
-                                    <td key={time} className="h-[50px] p-0 border hover:bg-primary/10 cursor-pointer" onClick={() => onSlotClick(resource, time)}></td>
-                                );
-                            })}
-                        </tr>
-                        )
-                    })}
-                </tbody>
-            </table>
+                                    <TooltipProvider key={booking.id}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div
+                                                    onClick={() => onBookingClick(booking)}
+                                                    className={cn("absolute w-full text-white text-xs rounded-md overflow-hidden border", variant.className, variant.isClickable ? 'cursor-pointer' : 'cursor-not-allowed')}
+                                                    style={{ ...variant.style, top: `${top}px`, height: `${height}px` }}
+                                                >
+                                                    {getBookingLabel(booking)}
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <BookingTooltipContent booking={booking} />
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )
+                            })
+                        }
+                    </div>
+                ))}
+            </div>
         </div>
     );
 };
@@ -287,7 +247,6 @@ const GanttChart = ({
 export function TrainingSchedulePageContent({ initialAircraft, initialBookings, initialUsers, initialHireAndFly }: TrainingSchedulePageContentProps) {
   const { user, company } = useUser();
   const { toast } = useToast();
-  const { settings } = useSettings();
   const [aircraft, setAircraft] = useState<Aircraft[]>(initialAircraft);
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [users, setUsers] = useState<User[]>(initialUsers);
@@ -298,23 +257,18 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const [activeFlight, setActiveFlight] = useState<{ booking: Booking, aircraft: Aircraft } | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   
-  const timeToMinutes = (time: string) => {
-    const [hours, minutes] = time.split(':').map(Number);
-    return hours * 60 + minutes;
-  };
-
     const getBookingVariant = useCallback((booking: Booking): { className?: string, style?: React.CSSProperties, isClickable: boolean } => {
         if (booking.status === 'Completed') {
-            return { className: 'bg-gray-400 text-white', isClickable: true };
+            return { className: 'bg-gray-400', isClickable: true };
         }
         if (booking.purpose === 'Maintenance') {
-            return { className: 'bg-destructive text-white', isClickable: true };
+            return { className: 'bg-destructive', isClickable: true };
         }
         if (booking.purpose === 'Post-Maintenance Flight') {
-            return { className: 'bg-purple-600 text-white', isClickable: true };
+            return { className: 'bg-purple-600', isClickable: true };
         }
         if (booking.resourceType === 'facility') {
-            return { className: 'bg-sky-500 text-white', isClickable: true };
+            return { className: 'bg-sky-500', isClickable: true };
         }
 
         const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
@@ -327,15 +281,15 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         const activeBookingForAircraft = allAircraftBookings.find(b => b.status !== 'Completed');
 
         if (!activeBookingForAircraft || booking.id !== activeBookingForAircraft.id) {
-            return { className: 'bg-green-500 text-white opacity-50', isClickable: false };
+            return { className: 'bg-green-500 opacity-50', isClickable: false };
         }
         
         if (ac.checklistStatus === 'needs-post-flight') {
-            return { className: 'bg-blue-500 text-white', isClickable: true };
+            return { className: 'bg-blue-500', isClickable: true };
         }
 
-        return { className: 'bg-green-500 text-white', isClickable: true };
-    }, [aircraft, bookings, selectedDate]);
+        return { className: 'bg-green-500', isClickable: true };
+    }, [aircraft, bookings]);
   
   useEffect(() => {
     if (!company) {
@@ -343,25 +297,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         return;
     }
     
-    // Attempt to load from cache first
-    try {
-        const cachedBookings = localStorage.getItem(`schedule-bookings-${company.id}`);
-        const cachedAircraft = localStorage.getItem(`schedule-aircraft-${company.id}`);
-        const cachedUsers = localStorage.getItem(`schedule-users-${company.id}`);
-        const cachedHireAndFly = localStorage.getItem(`schedule-hireandfly-${company.id}`);
-        
-        if (cachedBookings) setBookings(JSON.parse(cachedBookings));
-        if (cachedAircraft) setAircraft(JSON.parse(cachedAircraft));
-        if (cachedUsers) setUsers(JSON.parse(cachedUsers));
-        if (cachedHireAndFly) setHireAndFly(JSON.parse(cachedHireAndFly));
-
-        if (cachedBookings || cachedAircraft) {
-            setLoading(false); // Render with cached data immediately
-        }
-    } catch (e) {
-        console.warn("Could not retrieve schedule data from localStorage.");
-    }
-
     setLoading(true);
     
     const aircraftBookingsQuery = query(collection(db, `companies/${company.id}/aircraft-bookings`));
@@ -369,11 +304,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
     const unsubAircraftBookings = onSnapshot(aircraftBookingsQuery, (snapshot) => {
         const aircraftBookingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-        setBookings(prev => {
-            const newBookings = [...aircraftBookingsData, ...prev.filter(b => b.resourceType === 'facility')];
-            localStorage.setItem(`schedule-bookings-${company.id}`, JSON.stringify(newBookings));
-            return newBookings;
-        });
+        setBookings(prev => [...aircraftBookingsData, ...prev.filter(b => b.resourceType === 'facility')]);
         setLoading(false);
     }, (error) => {
         console.error("Error fetching real-time aircraft bookings:", error);
@@ -383,11 +314,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     
     const unsubFacilityBookings = onSnapshot(facilityBookingsQuery, (snapshot) => {
         const facilityBookingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-        setBookings(prev => {
-            const newBookings = [...facilityBookingsData, ...prev.filter(b => b.resourceType === 'aircraft')];
-            localStorage.setItem(`schedule-bookings-${company.id}`, JSON.stringify(newBookings));
-            return newBookings;
-        });
+        setBookings(prev => [...facilityBookingsData, ...prev.filter(b => b.resourceType === 'aircraft')]);
         setLoading(false);
     }, (error) => {
         console.error("Error fetching real-time facility bookings:", error);
@@ -398,7 +325,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     const aircraftUnsub = onSnapshot(collection(db, `companies/${company.id}/aircraft`), (snapshot) => {
         const aircraftData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
         setAircraft(aircraftData);
-        localStorage.setItem(`schedule-aircraft-${company.id}`, JSON.stringify(aircraftData));
     });
     
     const fetchAllUsers = async () => {
@@ -419,8 +345,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         const allUsers = [...personnel, ...students];
         setUsers(allUsers);
         setHireAndFly(hireAndFlyData);
-        localStorage.setItem(`schedule-users-${company.id}`, JSON.stringify(allUsers));
-        localStorage.setItem(`schedule-hireandfly-${company.id}`, JSON.stringify(hireAndFlyData));
     };
     fetchAllUsers();
     
@@ -432,42 +356,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 }, [company, toast]);
 
     const dailyAircraftBookings = useMemo(() => {
-        const startOfView = setHours(startOfDay(selectedDate), 6);
-        const endOfView = addDays(startOfView, 1);
-        
-        return bookings.filter(b => {
-            if (b.status === 'Cancelled' || !b.date || b.resourceType !== 'aircraft') return false;
-            
-            const bookingStart = parseISO(`${b.date}T${b.startTime}`);
-            let bookingEnd = parseISO(`${b.endDate || b.date}T${b.endTime}`);
-
-            if (isBefore(bookingEnd, bookingStart)) {
-                bookingEnd = addDays(bookingEnd, 1);
-            }
-            
-            const viewInterval = { start: sub(startOfView, {days: 1}), end: endOfView };
-
-            return isWithinInterval(bookingStart, { start: sub(startOfView, {days: 1}), end: endOfView }) ||
-                   isWithinInterval(bookingEnd, { start: startOfView, end: add(endOfView, {days: 1}) }) ||
-                   (isBefore(bookingStart, startOfView) && isAfter(bookingEnd, endOfView));
-        });
+        return bookings.filter(b => b.resourceType === 'aircraft' && isSameDay(parseISO(b.date), selectedDate));
     }, [bookings, selectedDate]);
 
     const dailyFacilityBookings = useMemo(() => {
-        const startOfView = setHours(startOfDay(selectedDate), 6);
-        const endOfView = addDays(startOfView, 1);
-
-        return bookings.filter(b => {
-            if (b.status === 'Cancelled' || !b.date || b.resourceType !== 'facility') return false;
-
-            const bookingStart = parseISO(`${b.date}T${b.startTime}`);
-            let bookingEnd = parseISO(`${b.endDate || b.date}T${b.endTime}`);
-            if (isBefore(bookingEnd, bookingStart)) bookingEnd = addDays(bookingEnd, 1);
-
-            return isWithinInterval(bookingStart, { start: sub(startOfView, {days: 1}), end: endOfView }) ||
-                   isWithinInterval(bookingEnd, { start: startOfView, end: add(endOfView, {days: 1}) }) ||
-                   (isBefore(bookingStart, startOfView) && isAfter(bookingEnd, endOfView));
-        });
+        return bookings.filter(b => b.resourceType === 'facility' && isSameDay(parseISO(b.date), selectedDate));
     }, [bookings, selectedDate]);
   
   const handleBookingSubmit = async (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking, studentRef?: any, logEntry?: TrainingLogEntry) => {
@@ -741,40 +634,31 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-destructive"></div>In Maintenance</div>
                             </div>
                             <ScrollArea>
-                                <div className="relative">
-                                    <TooltipProvider>
-                                        <GanttChart 
-                                            resources={aircraft} 
-                                            bookings={dailyAircraftBookings}
-                                            aircraft={aircraft}
-                                            onSlotClick={handleNewBookingClick}
-                                            onBookingClick={handleBookingClick}
-                                            resourceKey="tailNumber"
-                                            resourceNameKey="tailNumber"
-                                            getBookingVariant={getBookingVariant}
-                                            selectedDate={selectedDate}
-                                        />
-                                    </TooltipProvider>
-                                </div>
+                                <SwimlaneCalendar 
+                                    resources={aircraft} 
+                                    bookings={dailyAircraftBookings}
+                                    onSlotClick={handleNewBookingClick}
+                                    onBookingClick={handleBookingClick}
+                                    resourceKey="tailNumber"
+                                    resourceNameKey="tailNumber"
+                                    getBookingVariant={getBookingVariant}
+                                    selectedDate={selectedDate}
+                                />
                                 <ScrollBar orientation="horizontal" />
                             </ScrollArea>
                         </TabsContent>
                         <TabsContent value="facilities">
                             <ScrollArea>
-                                <div className="relative">
-                                    <TooltipProvider>
-                                        <GanttChart 
-                                            resources={company?.facilities || []}
-                                            bookings={dailyFacilityBookings}
-                                            onSlotClick={handleNewBookingClick}
-                                            onBookingClick={handleBookingClick}
-                                            resourceKey="id"
-                                            resourceNameKey="name"
-                                            getBookingVariant={getBookingVariant}
-                                            selectedDate={selectedDate}
-                                        />
-                                    </TooltipProvider>
-                                </div>
+                                <SwimlaneCalendar 
+                                    resources={company?.facilities || []}
+                                    bookings={dailyFacilityBookings}
+                                    onSlotClick={handleNewBookingClick}
+                                    onBookingClick={handleBookingClick}
+                                    resourceKey="id"
+                                    resourceNameKey="name"
+                                    getBookingVariant={getBookingVariant}
+                                    selectedDate={selectedDate}
+                                />
                                 <ScrollBar orientation="horizontal" />
                             </ScrollArea>
                         </TabsContent>
