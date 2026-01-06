@@ -177,7 +177,7 @@ const SwimlaneCalendar = ({
             <div className="w-16 flex-shrink-0">
                 {Array.from({ length: 24 }).map((_, i) => (
                     <div key={i} className="h-[60px] text-xs text-center text-muted-foreground border-r border-t border-border relative">
-                        <span className="absolute -top-2 left-1">{((i + 6) % 24).toString().padStart(2, '0')}:00</span>
+                        <span className="absolute -translate-y-1/2 left-1">{((i + 6) % 24).toString().padStart(2, '0')}:00</span>
                     </div>
                 ))}
             </div>
