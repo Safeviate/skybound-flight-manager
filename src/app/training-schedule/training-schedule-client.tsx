@@ -107,12 +107,6 @@ const BookingTooltipContent = ({ booking }: { booking: Booking }) => (
     </div>
 );
 
-const timeSlots = Array.from({ length: 24 * 4 }, (_, i) => {
-    const hour = (6 + Math.floor(i / 4)) % 24;
-    const minute = (i % 4) * 15;
-    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-});
-
 const hourlyTimeSlots = Array.from({ length: 24 }, (_, i) => `${((i + 6) % 24).toString().padStart(2, '0')}:00`);
 
 const SwimlaneCalendar = ({ 
@@ -140,8 +134,7 @@ const SwimlaneCalendar = ({
     };
     
     const minutesToTop = (minutes: number) => {
-        // Each hour is 60px, so each minute is 1px
-        return (minutes - (6 * 60)) * 1;
+        return (minutes - (6 * 60)) * 2; // Each minute is 2px
     }
 
     const getBookingLabel = (booking: Booking) => {
@@ -172,11 +165,11 @@ const SwimlaneCalendar = ({
     };
 
     return (
-        <div className="relative flex" style={{ height: `${24 * 60}px` }}>
+        <div className="relative flex" style={{ height: `${24 * 60 * 2}px` }}>
             {/* Time Column */}
             <div className="w-16 flex-shrink-0">
                 {Array.from({ length: 24 }).map((_, i) => (
-                    <div key={i} className="h-[60px] text-xs text-center text-muted-foreground border-r border-t border-border relative">
+                    <div key={i} className="h-[120px] text-xs text-center text-muted-foreground border-r border-t border-border relative">
                         <span className="absolute -translate-y-1/2 left-1">{((i + 6) % 24).toString().padStart(2, '0')}:00</span>
                     </div>
                 ))}
@@ -190,14 +183,15 @@ const SwimlaneCalendar = ({
                             {resource[resourceNameKey]}
                         </div>
                         {/* Time slot lines for clicking */}
-                        {Array.from({ length: 24 * 4 }).map((_, i) => {
-                            const hour = 6 + Math.floor(i / 4);
-                            const minute = (i % 4) * 15;
+                        {Array.from({ length: 24 * 60 }).map((_, i) => {
+                            const minuteOfDay = (6 * 60) + i;
+                            const hour = Math.floor(minuteOfDay / 60);
+                            const minute = minuteOfDay % 60;
                             const time = `${(hour % 24).toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
                             return (
                                 <div
                                     key={time}
-                                    className="h-[15px] border-t border-dashed border-border/50 hover:bg-primary/10 cursor-pointer"
+                                    className="h-[2px] border-t border-dashed border-border/20 hover:bg-primary/10 cursor-pointer"
                                     onClick={() => onSlotClick(resource, time)}
                                 />
                             )
@@ -214,7 +208,7 @@ const SwimlaneCalendar = ({
                                     : endMinutes - startMinutes;
                                 
                                 const top = minutesToTop(startMinutes);
-                                const height = duration * 1;
+                                const height = duration * 2;
                                 const variant = getBookingVariant(booking);
 
                                 return (
