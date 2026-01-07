@@ -206,6 +206,7 @@ export type Permission =
   | 'Settings:Edit'
   | 'Bookings:View'
   | 'Bookings:Edit'
+  | 'MOC:View'
   | 'MOC:Edit'
   | 'Exams:View'
   | 'Exams:Edit'
@@ -242,6 +243,7 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Settings:Edit',
     'Bookings:View',
     'Bookings:Edit',
+    'MOC:View',
     'MOC:Edit',
     'Exams:View',
     'Exams:Edit',
@@ -742,6 +744,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     'Reports:View',
     'Bookings:View',
     'Settings:Edit',
+    'MOC:View',
   ],
   'Admin': [
     'Aircraft:Edit',
@@ -761,8 +764,8 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     'Personnel:View',
   ],
   'HR Manager': ['Personnel:View', 'Personnel:Edit', 'Students:View', 'HireAndFly:View'],
-  'Safety Manager': ['Safety:View', 'Safety:Edit', 'Reports:View', 'Aircraft:View'],
-  'Quality Manager': ['Quality:View', 'Quality:Edit', 'Reports:View', 'Aircraft:View'],
+  'Safety Manager': ['Safety:View', 'Safety:Edit', 'Reports:View', 'Aircraft:View', 'MOC:View', 'MOC:Edit'],
+  'Quality Manager': ['Quality:View', 'Quality:Edit', 'Reports:View', 'Aircraft:View', 'MOC:View'],
   'Aircraft Manager': ['Aircraft:View', 'Aircraft:Edit', 'Aircraft:UpdateHobbs'],
   'Maintenance': ['Aircraft:View', 'Aircraft:Edit', 'Checklists:View', 'Checklists:Edit'],
   'Chief Flight Instructor': [
