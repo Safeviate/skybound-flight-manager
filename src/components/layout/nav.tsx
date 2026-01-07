@@ -11,6 +11,7 @@ import {
   SidebarContent,
   SidebarFooter,
   useSidebar,
+  SidebarMenuSub,
 } from '@/components/ui/sidebar';
 import {
   LayoutDashboard,
