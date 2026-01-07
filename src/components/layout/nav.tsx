@@ -50,29 +50,60 @@ import Image from 'next/image';
 
 
 export const navItems: {
-  href: string;
+  href?: string;
   label: NavMenuItem;
   icon: React.ElementType;
   requiredPermissions?: Permission[];
   requiredFeature?: Feature;
+  subItems?: {
+    href: string;
+    label: NavMenuItem;
+    icon: React.ElementType;
+    requiredPermissions?: Permission[];
+    requiredFeature?: Feature;
+  }[];
 }[] = [
   { href: '/my-dashboard', label: 'My Dashboard', icon: LayoutDashboard },
   { href: '/personnel/me', label: 'My Profile', icon: UserCircle },
   { href: '/dashboard', label: 'Company Dashboard', icon: LayoutDashboard },
-  { href: '/task-tracker', label: 'Task Tracker', icon: ListChecks },
-  { href: '/aircraft', label: 'Aircraft Management', icon: Plane, requiredFeature: 'Aircraft' },
-  { href: '/quick-reports', label: 'Quick Reports', icon: ClipboardCheck },
-  { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
-  { href: '/students', label: 'Students', icon: Users, requiredFeature: 'Students' },
-  { href: '/exams', label: 'Exams', icon: FileQuestion, requiredPermissions: ['Exams:View'] },
-  { href: '/hire-and-fly', label: 'Hire and Fly', icon: Contact, requiredFeature: 'Personnel' },
-  { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredFeature: 'Personnel' },
-  { href: '/training-schedule', label: 'Training Schedule', icon: Calendar, requiredFeature: 'Bookings' },
-  { href: '/meetings', label: 'Meetings', icon: Users, requiredFeature: 'Bookings' },
-  { href: '/flight-logs', label: 'Flight Logs', icon: BookOpen },
-  { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredFeature: 'AdvancedAnalytics' },
+  {
+    label: 'Operations',
+    icon: Rocket,
+    subItems: [
+        { href: '/training-schedule', label: 'Training Schedule', icon: Calendar, requiredFeature: 'Bookings' },
+        { href: '/meetings', label: 'Meetings', icon: Users, requiredFeature: 'Bookings' },
+        { href: '/flight-logs', label: 'Flight Logs', icon: BookOpen },
+    ]
+  },
+  {
+      label: 'Training',
+      icon: BookOpen,
+      subItems: [
+        { href: '/students', label: 'Students', icon: Users, requiredFeature: 'Students' },
+        { href: '/exams', label: 'Exams', icon: FileQuestion, requiredPermissions: ['Exams:View'] },
+      ]
+  },
   { href: '/safety', label: 'Safety', icon: Shield, requiredFeature: 'Safety' },
   { href: '/quality', label: 'Quality', icon: CheckSquare, requiredFeature: 'Quality' },
+  {
+      label: 'Assets',
+      icon: Building,
+      subItems: [
+          { href: '/aircraft', label: 'Aircraft Management', icon: Plane, requiredFeature: 'Aircraft' },
+      ]
+  },
+  {
+    label: 'Administration',
+    icon: Cog,
+    subItems: [
+        { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredFeature: 'Personnel' },
+        { href: '/hire-and-fly', label: 'Hire and Fly', icon: Contact, requiredFeature: 'Personnel' },
+        { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredFeature: 'AdvancedAnalytics' },
+        { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
+        { href: '/quick-reports', label: 'Quick Reports', icon: ClipboardCheck },
+        { href: '/task-tracker', label: 'Task Tracker', icon: ListChecks },
+    ]
+  },
   { href: '/settings/contacts', label: 'External Contacts', icon: Contact, requiredPermissions: ['Settings:Edit'] },
   { href: '/settings', label: 'Appearance', icon: Settings },
   { href: '/settings/company', label: 'Company Settings', icon: Cog },
@@ -111,7 +142,7 @@ export default function Nav() {
     setOpenMobile(false);
   };
   
-  const isMenuItemVisible = (item: { label: NavMenuItem, requiredPermissions?: Permission[] }) => {
+  const isMenuItemVisible = (item: { label: NavMenuItem, requiredPermissions?: Permission[], subItems?: any[] }) => {
     if (!user) return false;
     
     if (user.permissions?.includes('Super User')) {
@@ -122,6 +153,12 @@ export default function Nav() {
     if (user.visibleMenuItems && !user.visibleMenuItems.includes(item.label)) {
         return false;
     }
+
+    // If it's a parent menu, show it if any of its children are visible
+    if (item.subItems) {
+        return item.subItems.some(subItem => isMenuItemVisible(subItem));
+    }
+
     // If no specific permissions are required, show the item
     if (!item.requiredPermissions || item.requiredPermissions.length === 0) {
         return true;
@@ -130,23 +167,18 @@ export default function Nav() {
     return item.requiredPermissions.some(p => user.permissions.includes(p));
   }
 
-  const getIsActive = (href: string) => {
-    // For the root dashboard, we want an exact match.
+  const getIsActive = (href?: string, subItems?: any[]) => {
+    if (!href && subItems) {
+        return subItems.some(item => pathname.startsWith(item.href));
+    }
     if (href === '/my-dashboard' || href === '/dashboard') {
         return pathname === href;
     }
-    // For other parent routes, we check if the current path starts with the href.
-    // We also ensure it's not a more specific route that also starts with the same href.
-    if (pathname.startsWith(href) && href !== '/') {
-        // If there's another, more specific nav item that also matches, this one isn't active.
-        const moreSpecificItem = navItems.find(item => 
-            item.href.startsWith(href) && item.href.length > href.length && pathname.startsWith(item.href)
-        );
-        return !moreSpecificItem || pathname === href;
+    if (href) {
+        return pathname.startsWith(href);
     }
-    return pathname.startsWith(href);
+    return false;
   };
-
 
   if (!user) {
     return null; // Don't render nav if not logged in
@@ -172,18 +204,49 @@ export default function Nav() {
       <SidebarContent>
         <SidebarMenu>
           {visibleNavItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <Link href={item.href} passHref>
+            <SidebarMenuItem key={item.label}>
+             {item.href ? (
+                 <Link href={item.href} passHref>
+                    <SidebarMenuButton
+                      as="a"
+                      isActive={getIsActive(item.href)}
+                      tooltip={{ children: item.label }}
+                      onClick={handleLinkClick}
+                    >
+                      <item.icon />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                </Link>
+             ) : (
                 <SidebarMenuButton
-                  as="a"
-                  isActive={getIsActive(item.href)}
-                  tooltip={{ children: item.label }}
-                  onClick={handleLinkClick}
-                >
-                  <item.icon />
-                  <span>{item.label}</span>
+                    isSubmenu
+                    isActive={getIsActive(undefined, item.subItems)}
+                    tooltip={{ children: item.label }}
+                    >
+                    <item.icon />
+                    <span>{item.label}</span>
                 </SidebarMenuButton>
-              </Link>
+             )}
+            {item.subItems && (
+                <SidebarMenuSub>
+                    {item.subItems.filter(isMenuItemVisible).map(subItem => (
+                        <SidebarMenuItem key={subItem.href}>
+                             <Link href={subItem.href} passHref>
+                                <SidebarMenuButton
+                                    as="a"
+                                    isActive={getIsActive(subItem.href)}
+                                    size="sm"
+                                    tooltip={{ children: subItem.label }}
+                                    onClick={handleLinkClick}
+                                >
+                                <subItem.icon />
+                                <span>{subItem.label}</span>
+                                </SidebarMenuButton>
+                            </Link>
+                        </SidebarMenuItem>
+                    ))}
+                </SidebarMenuSub>
+            )}
             </SidebarMenuItem>
           ))}
           {!isMobile && showAdminMenu && (

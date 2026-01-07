@@ -4,7 +4,7 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
-import { PanelLeft } from "lucide-react"
+import { PanelLeft, ChevronDown } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -550,6 +550,7 @@ const SidebarMenuButton = React.forwardRef<
   React.ComponentProps<"button"> & {
     asChild?: boolean
     isActive?: boolean
+    isSubmenu?: boolean;
     tooltip?: string | React.ComponentProps<typeof TooltipContent>
   } & VariantProps<typeof sidebarMenuButtonVariants>
 >(
@@ -557,6 +558,7 @@ const SidebarMenuButton = React.forwardRef<
     {
       asChild = false,
       isActive = false,
+      isSubmenu = false,
       variant = "default",
       size = "default",
       tooltip,
@@ -568,6 +570,17 @@ const SidebarMenuButton = React.forwardRef<
   ) => {
     const Comp = asChild ? Slot : "button"
     const { isMobile, state } = useSidebar()
+    const [isOpen, setIsOpen] = React.useState(false);
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (isSubmenu) {
+        e.preventDefault();
+        setIsOpen(!isOpen);
+      }
+      if (props.onClick) {
+        props.onClick(e);
+      }
+    };
 
     const button = (
       <Comp
@@ -575,14 +588,19 @@ const SidebarMenuButton = React.forwardRef<
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}
+        data-state={isSubmenu ? (isOpen ? 'open' : 'closed') : undefined}
         data-nosnippet
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
         {...props}
+        onClick={handleClick}
       >
         {isActive && (
             <div className="absolute left-0 h-6 w-1 bg-primary rounded-r-full" />
         )}
         {children}
+        {isSubmenu && (
+          <ChevronDown className={cn("ml-auto h-4 w-4 shrink-0 transition-transform duration-200", isOpen && "rotate-180")} />
+        )}
       </Comp>
     )
 
@@ -711,6 +729,7 @@ const SidebarMenuSub = React.forwardRef<
     className={cn(
       "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-sidebar-border px-2.5 py-0.5",
       "group-data-[collapsible=icon]:hidden",
+      "peer-data-[state=closed]/menu-button:hidden",
       className
     )}
     {...props}
