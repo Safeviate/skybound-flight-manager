@@ -43,6 +43,8 @@ import {
   Network,
   Map,
   FileQuestion,
+  TrendingUp,
+  ShieldAlert,
 } from 'lucide-react';
 import type { Permission, Feature, NavMenuItem } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -84,7 +86,18 @@ export const navItems: {
         { href: '/exams', label: 'Exams', icon: FileQuestion, requiredPermissions: ['Exams:View'] },
       ]
   },
-  { href: '/safety', label: 'Safety', icon: Shield, requiredFeature: 'Safety' },
+  {
+    label: 'Safety',
+    icon: Shield,
+    requiredFeature: 'Safety',
+    subItems: [
+      { href: '/safety?tab=dashboard', label: 'Safety Dashboard', icon: LayoutDashboard },
+      { href: '/safety?tab=reports', label: 'Safety Reports', icon: ShieldAlert },
+      { href: '/safety?tab=register', label: 'Risk Register', icon: ListChecks },
+      { href: '/safety?tab=spis', label: 'SPIs', icon: TrendingUp },
+      { href: '/safety?tab=moc', label: 'MOC', icon: Network },
+    ],
+  },
   {
     label: 'Quality',
     icon: CheckSquare,
