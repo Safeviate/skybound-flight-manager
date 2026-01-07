@@ -109,8 +109,8 @@ export const navItems: {
       { href: '/quality?tab=dashboard', label: 'Quality Dashboard', icon: LayoutDashboard },
       { href: '/quality?tab=audits', label: 'Audits', icon: ClipboardCheck },
       { href: '/quality?tab=checklists', label: 'Audit Checklists', icon: ListChecks },
+      { href: '/quality?tab=task-tracker', label: 'Task Tracker', icon: ListChecks },
       { href: '/quality?tab=coherence-matrix', label: 'Coherence Matrix', icon: Network },
-      { href: '/task-tracker', label: 'Task Tracker', icon: ListChecks },
     ],
   },
   {
@@ -126,12 +126,12 @@ export const navItems: {
     subItems: [
         { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredFeature: 'Personnel' },
         { href: '/hire-and-fly', label: 'Hire and Fly', icon: Contact, requiredFeature: 'Personnel' },
+        { href: '/settings/contacts', label: 'External Contacts', icon: Contact, requiredPermissions: ['Settings:Edit'] },
+        { href: '/settings', label: 'Appearance', icon: Settings },
+        { href: '/settings/company', label: 'Company Settings', icon: Cog },
+        { href: '/settings/roles', label: 'Roles & Departments', icon: Network, requiredPermissions: ['Roles & Departments:View'] },
     ]
   },
-  { href: '/settings/contacts', label: 'External Contacts', icon: Contact, requiredPermissions: ['Settings:Edit'] },
-  { href: '/settings', label: 'Appearance', icon: Settings },
-  { href: '/settings/company', label: 'Company Settings', icon: Cog },
-  { href: '/settings/roles', label: 'Roles & Departments', icon: Network, requiredPermissions: ['Roles & Departments:View'] },
 ];
 
 export const adminNavItems = [
