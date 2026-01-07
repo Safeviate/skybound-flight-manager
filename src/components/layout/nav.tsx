@@ -76,6 +76,9 @@ export const navItems: {
         { href: '/training-schedule', label: 'Training Schedule', icon: Calendar, requiredFeature: 'Bookings' },
         { href: '/meetings', label: 'Meetings', icon: Users, requiredFeature: 'Bookings' },
         { href: '/flight-logs', label: 'Flight Logs', icon: BookOpen },
+        { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredFeature: 'AdvancedAnalytics' },
+        { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
+        { href: '/quick-reports', label: 'Quick Reports', icon: ClipboardCheck },
     ]
   },
   {
@@ -123,9 +126,6 @@ export const navItems: {
     subItems: [
         { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredFeature: 'Personnel' },
         { href: '/hire-and-fly', label: 'Hire and Fly', icon: Contact, requiredFeature: 'Personnel' },
-        { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredFeature: 'AdvancedAnalytics' },
-        { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
-        { href: '/quick-reports', label: 'Quick Reports', icon: ClipboardCheck },
     ]
   },
   { href: '/settings/contacts', label: 'External Contacts', icon: Contact, requiredPermissions: ['Settings:Edit'] },
