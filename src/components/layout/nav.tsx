@@ -106,8 +106,8 @@ export const navItems: {
       { href: '/quality?tab=dashboard', label: 'Quality Dashboard', icon: LayoutDashboard },
       { href: '/quality?tab=audits', label: 'Audits', icon: ClipboardCheck },
       { href: '/quality?tab=checklists', label: 'Audit Checklists', icon: ListChecks },
-      { href: '/quality?tab=task-tracker', label: 'Task Tracker', icon: ListChecks },
       { href: '/quality?tab=coherence-matrix', label: 'Coherence Matrix', icon: Network },
+      { href: '/task-tracker', label: 'Task Tracker', icon: ListChecks },
     ],
   },
   {
@@ -126,7 +126,6 @@ export const navItems: {
         { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredFeature: 'AdvancedAnalytics' },
         { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
         { href: '/quick-reports', label: 'Quick Reports', icon: ClipboardCheck },
-        { href: '/task-tracker', label: 'Task Tracker', icon: ListChecks },
     ]
   },
   { href: '/settings/contacts', label: 'External Contacts', icon: Contact, requiredPermissions: ['Settings:Edit'] },
