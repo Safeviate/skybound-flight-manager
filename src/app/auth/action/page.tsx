@@ -96,7 +96,7 @@ export default function AuthActionPage() {
         <div className="text-center space-y-4">
             <CheckCircle className="h-12 w-12 text-success mx-auto" />
             <h2 className="text-xl font-semibold">Password Changed!</h2>
-            <p>Your password has been successfully updated.</p>
+            <p>Your password has been successfully updated. You can now log in with your new password.</p>
             <Button asChild>
                 <Link href="/login">
                     <LogIn className="mr-2 h-4 w-4" />
