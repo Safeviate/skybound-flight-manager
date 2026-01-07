@@ -85,7 +85,18 @@ export const navItems: {
       ]
   },
   { href: '/safety', label: 'Safety', icon: Shield, requiredFeature: 'Safety' },
-  { href: '/quality', label: 'Quality', icon: CheckSquare, requiredFeature: 'Quality' },
+  {
+    label: 'Quality',
+    icon: CheckSquare,
+    requiredFeature: 'Quality',
+    subItems: [
+      { href: '/quality?tab=dashboard', label: 'Quality Dashboard', icon: LayoutDashboard },
+      { href: '/quality?tab=audits', label: 'Audits', icon: ClipboardCheck },
+      { href: '/quality?tab=checklists', label: 'Audit Checklists', icon: ListChecks },
+      { href: '/quality?tab=task-tracker', label: 'Task Tracker', icon: ListChecks },
+      { href: '/quality?tab=coherence-matrix', label: 'Coherence Matrix', icon: Network },
+    ],
+  },
   {
       label: 'Assets',
       icon: Building,

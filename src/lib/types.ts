@@ -255,7 +255,7 @@ export const ALL_PERMISSIONS: Permission[] = [
 export type Role = string;
 export type Department = string;
 
-export type NavMenuItem = 'My Dashboard' | 'My Profile' | 'Company Dashboard' | 'Operations' | 'Training' | 'Safety' | 'Quality' | 'Assets' | 'Administration' | 'Task Tracker' | 'Fleet Track' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Hire and Fly' | 'Training Schedule' | 'Flight Logs' | 'Flight Statistics' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart' | 'Roles & Departments' | 'Meetings' | 'Exams';
+export type NavMenuItem = 'My Dashboard' | 'My Profile' | 'Company Dashboard' | 'Operations' | 'Training' | 'Safety' | 'Quality' | 'Assets' | 'Administration' | 'Task Tracker' | 'Fleet Track' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Hire and Fly' | 'Training Schedule' | 'Flight Logs' | 'Flight Statistics' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart' | 'Roles & Departments' | 'Meetings' | 'Exams' | 'Quality Dashboard' | 'Audits' | 'Audit Checklists' | 'Coherence Matrix';
 
 export type User = {
     id: string;
@@ -832,4 +832,3 @@ export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Find
 export type ChecklistCategory = 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
 export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs' | 'Header';
 export type AuditChecklistItem = { id: string; text: string; finding: FindingStatus | null; level: FindingLevel; observation?: string; findingNotes?: string; evidence?: string; regulationReference?: string; reference?: string; comment?: string; photo?: string; suggestedImprovement?: string; type?: ChecklistItemType; };
-
