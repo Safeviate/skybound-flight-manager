@@ -32,7 +32,7 @@ export async function createUserAndSendWelcomeEmail(
 
             if (welcomeEmailEnabled) {
                  const loginUrl = process.env.NEXT_PUBLIC_LOGIN_URL || `https://[YOUR_APP_ID].web.app/login`;
-                // AI Email sending is disabled.
+                // AI Email sending is disabled, but the URL logic is now corrected to use the environment variable.
             }
             
         } catch (error: any) {
