@@ -10,6 +10,7 @@ import type { AuditScheduleItem, AuditStatus } from '@/lib/types';
 import { Edit, PlusCircle, Save, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { useUser } from '@/context/user-provider';
 
 const QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'] as const;
 const STATUS_OPTIONS: AuditStatus[] = ['Scheduled', 'Completed', 'Pending', 'Not Scheduled'];
@@ -63,6 +64,31 @@ const StatusSelector = ({
 export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, onAreaAdd, onAreaDelete }: AuditScheduleProps) {
   const [editingIndex, setEditingIndex] = React.useState<number | null>(null);
   const [tempAreaName, setTempAreaName] = React.useState('');
+  const { company, updateCompany } = useUser();
+  const [headers, setHeaders] = React.useState<string[]>(['Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4']);
+  const [editingHeaderIndex, setEditingHeaderIndex] = React.useState<number | null>(null);
+  const [tempHeaderText, setTempHeaderText] = React.useState('');
+
+  React.useEffect(() => {
+    if (company?.auditScheduleHeaders) {
+      setHeaders(company.auditScheduleHeaders);
+    }
+  }, [company?.auditScheduleHeaders]);
+
+  const handleHeaderClick = (index: number) => {
+    setEditingHeaderIndex(index);
+    setTempHeaderText(headers[index]);
+  };
+
+  const handleHeaderSave = () => {
+    if (editingHeaderIndex === null || !company) return;
+    const newHeaders = [...headers];
+    newHeaders[editingHeaderIndex] = tempHeaderText;
+    setHeaders(newHeaders);
+    updateCompany(company.id, { auditScheduleHeaders: newHeaders });
+    setEditingHeaderIndex(null);
+  };
+
 
   const getScheduleItem = (area: string, quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4'): AuditScheduleItem => {
     return schedule.find(item => item.area === area && item.quarter === quarter && item.year === YEAR) 
@@ -91,8 +117,28 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
     <ScrollArea className="w-full whitespace-nowrap rounded-md border">
       <div className="min-w-[800px]">
         <div className="grid bg-muted font-semibold" style={{ gridTemplateColumns: '250px repeat(4, 1fr)' }}>
-          <div className="p-3 border-b border-r">Audit Area</div>
-          {QUARTERS.map(q => <div key={q} className="p-3 text-center border-b border-r last:border-r-0"></div>)}
+            <div className="p-3 border-b border-r">Audit Area</div>
+            {headers.map((headerText, index) => (
+                <div key={index} className="p-2 text-center border-b border-r last:border-r-0 flex items-center justify-center">
+                    {editingHeaderIndex === index ? (
+                    <Input
+                        value={tempHeaderText}
+                        onChange={(e) => setTempHeaderText(e.target.value)}
+                        onBlur={handleHeaderSave}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleHeaderSave();
+                            if (e.key === 'Escape') setEditingHeaderIndex(null);
+                        }}
+                        autoFocus
+                        className="h-8 text-center bg-background"
+                    />
+                    ) : (
+                    <span onClick={() => handleHeaderClick(index)} className="cursor-pointer hover:bg-muted-foreground/20 p-1 rounded-md">
+                        {headerText}
+                    </span>
+                    )}
+                </div>
+            ))}
         </div>
         <div className="grid grid-cols-1">
           {auditAreas.map((area, index) => (

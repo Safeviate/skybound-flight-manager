@@ -83,6 +83,9 @@ export type Company = {
   findingOptions?: FindingOption[];
   bookingPurposes?: BookingPurpose[];
   instructorIds?: string[];
+  auditScheduleMonths?: string[];
+  auditScheduleYear?: number;
+  auditScheduleHeaders?: string[];
   auditAreas?: CompanyAuditArea[];
 };
 
@@ -503,8 +506,12 @@ export type QualityAudit = {
   discussion?: DiscussionEntry[];
   auditTeam?: string[];
   auditeeTeam?: string[];
-  auditorSignature?: Signature;
-  auditeeSignature?: Signature;
+  auditorSignature?: string;
+  auditorSignatureDate?: string;
+  auditeeSignature?: string;
+  auditeeSignatureDate?: string;
+  scope?: string;
+  evidenceReference?: string;
 };
 
 export type AuditStatus = 'Scheduled' | 'Completed' | 'Pending' | 'Not Scheduled';
@@ -832,3 +839,4 @@ export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Find
 export type ChecklistCategory = 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
 export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs' | 'Header';
 export type AuditChecklistItem = { id: string; text: string; finding: FindingStatus | null; level: FindingLevel; observation?: string; findingNotes?: string; evidence?: string; regulationReference?: string; reference?: string; comment?: string; photo?: string; suggestedImprovement?: string; type?: ChecklistItemType; };
+
