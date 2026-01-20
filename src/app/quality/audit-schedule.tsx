@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -12,9 +13,8 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useUser } from '@/context/user-provider';
 
-const QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'] as const;
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const STATUS_OPTIONS: AuditStatus[] = ['Scheduled', 'Completed', 'Pending', 'Not Scheduled'];
-const YEAR = new Date().getFullYear();
 
 interface AuditScheduleProps {
   auditAreas: string[];
@@ -62,18 +62,26 @@ const StatusSelector = ({
 
 
 export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, onAreaAdd, onAreaDelete }: AuditScheduleProps) {
-  const [editingIndex, setEditingIndex] = React.useState<number | null>(null);
-  const [tempAreaName, setTempAreaName] = React.useState('');
   const { company, updateCompany } = useUser();
   const [headers, setHeaders] = React.useState<string[]>(['Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4']);
+  const [monthHeaders, setMonthHeaders] = React.useState<string[]>(MONTHS);
+  const [year, setYear] = React.useState(new Date().getFullYear());
+  
   const [editingHeaderIndex, setEditingHeaderIndex] = React.useState<number | null>(null);
   const [tempHeaderText, setTempHeaderText] = React.useState('');
+  const [editingMonthHeaderIndex, setEditingMonthHeaderIndex] = React.useState<number | null>(null);
+  const [tempMonthHeaderText, setTempMonthHeaderText] = React.useState('');
+  const [isYearEditing, setIsYearEditing] = React.useState(false);
+  const [tempYear, setTempYear] = React.useState(year.toString());
 
+  const [editingIndex, setEditingIndex] = React.useState<number | null>(null);
+  const [tempAreaName, setTempAreaName] = React.useState('');
+  
   React.useEffect(() => {
-    if (company?.auditScheduleHeaders) {
-      setHeaders(company.auditScheduleHeaders);
-    }
-  }, [company?.auditScheduleHeaders]);
+    if (company?.auditScheduleHeaders) setHeaders(company.auditScheduleHeaders);
+    if (company?.auditScheduleMonthHeaders) setMonthHeaders(company.auditScheduleMonthHeaders);
+    if (company?.auditScheduleYear) setYear(company.auditScheduleYear);
+  }, [company]);
 
   const handleHeaderClick = (index: number) => {
     setEditingHeaderIndex(index);
@@ -88,11 +96,33 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
     updateCompany(company.id, { auditScheduleHeaders: newHeaders });
     setEditingHeaderIndex(null);
   };
+  
+  const handleMonthHeaderClick = (index: number) => {
+    setEditingMonthHeaderIndex(index);
+    setTempMonthHeaderText(monthHeaders[index]);
+  };
 
+  const handleMonthHeaderSave = () => {
+    if (editingMonthHeaderIndex === null || !company) return;
+    const newHeaders = [...monthHeaders];
+    newHeaders[editingMonthHeaderIndex] = tempMonthHeaderText;
+    setMonthHeaders(newHeaders);
+    updateCompany(company.id, { auditScheduleMonthHeaders: newHeaders });
+    setEditingMonthHeaderIndex(null);
+  };
 
-  const getScheduleItem = (area: string, quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4'): AuditScheduleItem => {
-    return schedule.find(item => item.area === area && item.quarter === quarter && item.year === YEAR) 
-           || { id: `${area}-${quarter}-${YEAR}`, area, quarter, year: YEAR, status: 'Not Scheduled' };
+  const handleYearSave = () => {
+    const newYear = parseInt(tempYear, 10);
+    if (!isNaN(newYear) && company) {
+      setYear(newYear);
+      updateCompany(company.id, { auditScheduleYear: newYear });
+    }
+    setIsYearEditing(false);
+  };
+  
+  const getScheduleItem = (area: string, monthIndex: number): AuditScheduleItem => {
+    return schedule.find(item => item.area === area && item.monthIndex === monthIndex && item.year === year) 
+           || { id: `${area}-${monthIndex}-${year}`, area, monthIndex, year: year, status: 'Not Scheduled' };
   };
 
   const handleStatusChange = (item: AuditScheduleItem, newStatus: AuditStatus) => {
@@ -114,12 +144,35 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
   };
 
   return (
+    <div className="w-full">
+         <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-lg font-semibold">Annual Audit Schedule for</h3>
+            {isYearEditing ? (
+                <Input
+                    type="number"
+                    value={tempYear}
+                    onChange={(e) => setTempYear(e.target.value)}
+                    onBlur={handleYearSave}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleYearSave();
+                        if (e.key === 'Escape') setIsYearEditing(false);
+                    }}
+                    autoFocus
+                    className="h-8 w-24 text-lg font-semibold p-1"
+                />
+            ) : (
+                <button onClick={() => { setIsYearEditing(true); setTempYear(year.toString()); }} className="text-lg font-semibold p-1 rounded-md hover:bg-muted">
+                    {year}
+                </button>
+            )}
+        </div>
     <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-      <div className="min-w-[800px]">
-        <div className="grid bg-muted font-semibold" style={{ gridTemplateColumns: '250px repeat(4, 1fr)' }}>
-            <div className="p-3 border-b border-r">Audit Area</div>
-            {headers.map((headerText, index) => (
-                <div key={index} className="p-2 text-center border-b border-r last:border-r-0 flex items-center justify-center">
+      <div className="min-w-[1600px]">
+        <div className="sticky top-0 z-20 bg-card">
+            <div className="grid font-semibold" style={{ gridTemplateColumns: '250px repeat(4, 1fr)' }}>
+                <div className="p-3 border-b border-r text-center flex items-center justify-center">Audit Area</div>
+                {headers.map((headerText, index) => (
+                <div key={index} className="p-3 text-center border-b border-r last:border-r-0 flex items-center justify-center">
                     {editingHeaderIndex === index ? (
                     <Input
                         value={tempHeaderText}
@@ -138,11 +191,36 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
                     </span>
                     )}
                 </div>
-            ))}
+                ))}
+            </div>
+             <div className="grid font-semibold" style={{ gridTemplateColumns: '250px repeat(12, 1fr)' }}>
+                <div className="p-2 border-b border-r"></div>
+                 {monthHeaders.map((headerText, index) => (
+                    <div key={index} className="p-2 text-center border-b border-r last:border-r-0 flex items-center justify-center text-sm">
+                        {editingMonthHeaderIndex === index ? (
+                            <Input
+                                value={tempMonthHeaderText}
+                                onChange={(e) => setTempMonthHeaderText(e.target.value)}
+                                onBlur={handleMonthHeaderSave}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleMonthHeaderSave();
+                                    if (e.key === 'Escape') setEditingMonthHeaderIndex(null);
+                                }}
+                                autoFocus
+                                className="h-7 text-center text-sm bg-background"
+                            />
+                        ) : (
+                            <span onClick={() => handleMonthHeaderClick(index)} className="cursor-pointer hover:bg-muted-foreground/20 p-1 rounded-md">
+                                {headerText}
+                            </span>
+                        )}
+                    </div>
+                ))}
+            </div>
         </div>
         <div className="grid grid-cols-1">
           {auditAreas.map((area, index) => (
-            <div key={index} className="grid items-stretch" style={{ gridTemplateColumns: '250px repeat(4, 1fr)' }}>
+            <div key={index} className="grid items-stretch" style={{ gridTemplateColumns: '250px repeat(12, 1fr)' }}>
               <div className="p-2 border-b border-r font-medium flex items-center justify-between gap-2">
                 {editingIndex === index ? (
                   <Input 
@@ -170,10 +248,10 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
                     )}
                 </div>
               </div>
-              {QUARTERS.map(quarter => {
-                const item = getScheduleItem(area, quarter);
+              {Array.from({ length: 12 }).map((_, monthIndex) => {
+                const item = getScheduleItem(area, monthIndex);
                 return (
-                  <Popover key={quarter}>
+                  <Popover key={monthIndex}>
                     <PopoverTrigger asChild>
                       <button className={cn(
                         "p-3 text-center border-b border-r last:border-r-0 hover:bg-muted/50 cursor-pointer flex items-center justify-center",
@@ -207,5 +285,6 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
       </div>
        <ScrollBar orientation="horizontal" />
     </ScrollArea>
+    </div>
   );
 }

@@ -83,9 +83,9 @@ export type Company = {
   findingOptions?: FindingOption[];
   bookingPurposes?: BookingPurpose[];
   instructorIds?: string[];
-  auditScheduleMonths?: string[];
-  auditScheduleYear?: number;
   auditScheduleHeaders?: string[];
+  auditScheduleMonthHeaders?: string[];
+  auditScheduleYear?: number;
   auditAreas?: CompanyAuditArea[];
 };
 
@@ -521,7 +521,7 @@ export type AuditScheduleItem = {
   companyId?: string;
   area: string;
   year: number;
-  quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4';
+  monthIndex: number;
   status: AuditStatus;
 };
 
