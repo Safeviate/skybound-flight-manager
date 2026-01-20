@@ -92,7 +92,7 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
       <div className="min-w-[800px]">
         <div className="grid bg-muted font-semibold" style={{ gridTemplateColumns: '250px repeat(4, 1fr)' }}>
           <div className="p-3 border-b border-r">Audit Area</div>
-          {QUARTERS.map(q => <div key={q} className="p-3 text-center border-b border-r last:border-r-0">{YEAR}</div>)}
+          {QUARTERS.map(q => <div key={q} className="p-3 text-center border-b border-r last:border-r-0"></div>)}
         </div>
         <div className="grid grid-cols-1">
           {auditAreas.map((area, index) => (
