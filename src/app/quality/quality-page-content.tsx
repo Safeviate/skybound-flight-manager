@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -43,6 +42,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { EditSpiForm, type SpiConfig } from '@/app/safety/edit-spi-form';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Label } from '@/components/ui/label';
+import { TaskTrackerPageContent } from '@/app/task-tracker/task-tracker-page-content';
 
 
 const ComplianceItemForm = ({
@@ -983,7 +983,10 @@ export function QualityPageContent({
               />
           </TabsContent>
           <TabsContent value="task-tracker" className="mt-4">
-             <p>Task Tracker will be implemented here.</p>
+            <TaskTrackerPageContent 
+                initialTasks={initialTasks}
+                personnel={initialPersonnel}
+            />
           </TabsContent>
           <TabsContent value="coherence-matrix" className="mt-4">
             <ScrollArea className="w-full whitespace-nowrap">
