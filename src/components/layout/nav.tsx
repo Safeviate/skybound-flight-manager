@@ -45,6 +45,7 @@ import {
   FileQuestion,
   TrendingUp,
   ShieldAlert,
+  ShieldCheck,
 } from 'lucide-react';
 import type { Permission, Feature, NavMenuItem } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -110,6 +111,7 @@ export const navItems: {
       { href: '/quality?tab=audits', label: 'Audits', icon: ClipboardCheck },
       { href: '/quality?tab=checklists', label: 'Audit Checklists', icon: ListChecks },
       { href: '/quality?tab=task-tracker', label: 'Task Tracker', icon: ListChecks },
+      { href: '/quality?tab=cap-tracker', label: 'CAP Tracker', icon: ShieldCheck },
       { href: '/quality?tab=coherence-matrix', label: 'Coherence Matrix', icon: Network },
     ],
   },

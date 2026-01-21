@@ -873,6 +873,7 @@ export function QualityPageContent({
                     <TabsTrigger value="audits">Audits</TabsTrigger>
                     <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
                     <TabsTrigger value="task-tracker">Task Tracker</TabsTrigger>
+                    <TabsTrigger value="cap-tracker">CAP Tracker</TabsTrigger>
                     <TabsTrigger value="coherence-matrix">Coherence Matrix</TabsTrigger>
                 </TabsList>
                 <ScrollBar orientation="horizontal" />
@@ -987,6 +988,9 @@ export function QualityPageContent({
                 initialTasks={initialTasks}
                 personnel={initialPersonnel}
             />
+          </TabsContent>
+          <TabsContent value="cap-tracker" className="mt-4">
+            <CapTracker audits={initialAudits} />
           </TabsContent>
           <TabsContent value="coherence-matrix" className="mt-4">
             <ScrollArea className="w-full whitespace-nowrap">
