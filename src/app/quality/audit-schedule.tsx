@@ -144,7 +144,7 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
 
   return (
     <div className="w-full">
-         <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-2">
             <h3 className="text-lg font-semibold">Annual Audit Schedule for</h3>
             {isYearEditing ? (
                 <Input
@@ -216,23 +216,27 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
                 ))}
             </div>
         </div>
-        <div className="grid grid-cols-1">
-          {auditAreas.map((area, index) => (
-            <div key={index} className="grid items-stretch" style={{ gridTemplateColumns: '250px repeat(12, 1fr)' }}>
-              <div className="p-2 border-b border-r font-medium flex items-center justify-between gap-2">
+        <div className="grid" style={{ gridTemplateColumns: '250px repeat(12, 1fr)' }}>
+          {auditAreas.flatMap((area, index) => [
+              <div key={`${area}-label`} className="p-2 border-b border-r font-medium flex items-center justify-between gap-2">
                 {editingIndex === index ? (
-                  <Input 
+                  <Input
                     value={tempAreaName}
                     onChange={(e) => setTempAreaName(e.target.value)}
                     className="h-8"
                   />
                 ) : (
-                   <span>{area}</span>
+                  <span>{area}</span>
                 )}
                 <div className="flex items-center">
                     {editingIndex === index ? (
                         <>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleSaveClick(index)}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => handleSaveClick(index)}
+                            >
                                 <Save className="h-4 w-4 text-primary" />
                             </Button>
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onAreaDelete(index)}>
@@ -245,34 +249,33 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
                         </Button>
                     )}
                 </div>
-              </div>
-              {Array.from({ length: 12 }).map((_, monthIndex) => {
-                const item = getScheduleItem(area, monthIndex);
-                return (
-                  <Popover key={monthIndex}>
-                    <PopoverTrigger asChild>
-                      <button className={cn(
-                        "p-3 text-center border-b border-r last:border-r-0 hover:bg-muted/50 cursor-pointer flex items-center justify-center",
-                        item.status !== 'Not Scheduled' && 'bg-muted/30'
-                      )}>
-                        {item.status !== 'Not Scheduled' ? (
-                          <Badge variant={getStatusBadgeVariant(item.status)}>{item.status}</Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">Click to schedule</span>
-                        )}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <StatusSelector 
-                        currentStatus={item.status}
-                        onSelect={(newStatus) => handleStatusChange(item, newStatus)}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                );
-              })}
-            </div>
-          ))}
+              </div>,
+              ...Array.from({ length: 12 }).map((_, monthIndex) => {
+                  const item = getScheduleItem(area, monthIndex);
+                  return (
+                    <Popover key={`${area}-${monthIndex}`}>
+                        <PopoverTrigger asChild>
+                        <button className={cn(
+                            "p-3 text-center border-b border-r last:border-r-0 hover:bg-muted/50 cursor-pointer flex items-center justify-center",
+                            item.status !== 'Not Scheduled' && 'bg-muted/30'
+                        )}>
+                            {item.status !== 'Not Scheduled' ? (
+                            <Badge variant={getStatusBadgeVariant(item.status)}>{item.status}</Badge>
+                            ) : (
+                            <span className="text-muted-foreground text-xs">Click to schedule</span>
+                            )}
+                        </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                        <StatusSelector
+                            currentStatus={item.status}
+                            onSelect={(newStatus) => handleStatusChange(item, newStatus)}
+                        />
+                        </PopoverContent>
+                    </Popover>
+                  );
+              })
+          ])}
         </div>
         <div className="p-2 border-t">
             <Button variant="outline" size="sm" onClick={onAreaAdd}>
