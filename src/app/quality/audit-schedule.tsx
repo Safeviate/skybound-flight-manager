@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -169,32 +168,31 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
     <ScrollArea className="w-full whitespace-nowrap rounded-md border">
       <div className="min-w-[1600px]">
         <div className="sticky top-0 z-20 bg-card">
-            <div className="grid font-semibold" style={{ gridTemplateColumns: '250px repeat(4, 1fr)' }}>
-                <div className="p-3 border-b border-r text-center flex items-center justify-center">Audit Area</div>
+            <div className="grid font-semibold" style={{ gridTemplateColumns: '250px repeat(12, 1fr)' }}>
+                <div className="p-3 border-b border-r text-center flex items-center justify-center row-span-2">Audit Area</div>
+                
                 {headers.map((headerText, index) => (
-                <div key={index} className="p-3 text-center border-b border-r last:border-r-0 flex items-center justify-center">
-                    {editingHeaderIndex === index ? (
-                    <Input
-                        value={tempHeaderText}
-                        onChange={(e) => setTempHeaderText(e.target.value)}
-                        onBlur={handleHeaderSave}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleHeaderSave();
-                            if (e.key === 'Escape') setEditingHeaderIndex(null);
-                        }}
-                        autoFocus
-                        className="h-8 text-center bg-background"
-                    />
-                    ) : (
-                    <span onClick={() => handleHeaderClick(index)} className="cursor-pointer hover:bg-muted-foreground/20 p-1 rounded-md">
-                        {headerText}
-                    </span>
-                    )}
-                </div>
+                    <div key={index} className="p-3 text-center border-b border-r last:border-r-0 flex items-center justify-center" style={{ gridColumn: `span 3 / span 3`}}>
+                        {editingHeaderIndex === index ? (
+                        <Input
+                            value={tempHeaderText}
+                            onChange={(e) => setTempHeaderText(e.target.value)}
+                            onBlur={handleHeaderSave}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleHeaderSave();
+                                if (e.key === 'Escape') setEditingHeaderIndex(null);
+                            }}
+                            autoFocus
+                            className="h-8 text-center bg-background"
+                        />
+                        ) : (
+                        <span onClick={() => handleHeaderClick(index)} className="cursor-pointer hover:bg-muted-foreground/20 p-1 rounded-md">
+                            {headerText}
+                        </span>
+                        )}
+                    </div>
                 ))}
-            </div>
-             <div className="grid font-semibold" style={{ gridTemplateColumns: '250px repeat(12, 1fr)' }}>
-                <div className="p-2 border-b border-r"></div>
+
                  {monthHeaders.map((headerText, index) => (
                     <div key={index} className="p-2 text-center border-b border-r last:border-r-0 flex items-center justify-center text-sm">
                         {editingMonthHeaderIndex === index ? (
