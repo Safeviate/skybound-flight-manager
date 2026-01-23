@@ -22,7 +22,7 @@ interface TaskTrackerProps {
 
 const getCategoryName = (sourceType: string) => {
     switch (sourceType) {
-        case 'Quality Audit': return 'Corrective Action Plan';
+        case 'Quality Audit': return 'Corrective Action Plan (CAP)';
         case 'Safety Report': return 'Safety Task';
         case 'MOC': return 'Change Mitigation';
         default: return 'Task';
