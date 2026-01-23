@@ -25,7 +25,6 @@ import { useTableControls } from '@/hooks/use-table-controls.ts';
 import { AuditChecklistsManager } from '../quality/audit-checklists-manager';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CapTracker } from '../quality/cap-tracker';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { complianceData as seedComplianceData } from '@/lib/data-provider';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -873,7 +872,6 @@ export function QualityPageContent({
                     <TabsTrigger value="audits">Audits</TabsTrigger>
                     <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
                     <TabsTrigger value="task-tracker">Task Tracker</TabsTrigger>
-                    <TabsTrigger value="cap-tracker">CAP Tracker</TabsTrigger>
                     <TabsTrigger value="coherence-matrix">Coherence Matrix</TabsTrigger>
                 </TabsList>
                 <ScrollBar orientation="horizontal" />
@@ -988,9 +986,6 @@ export function QualityPageContent({
                 initialTasks={initialTasks}
                 personnel={initialPersonnel}
             />
-          </TabsContent>
-          <TabsContent value="cap-tracker" className="mt-4">
-            <CapTracker audits={initialAudits} />
           </TabsContent>
           <TabsContent value="coherence-matrix" className="mt-4">
             <ScrollArea className="w-full whitespace-nowrap">

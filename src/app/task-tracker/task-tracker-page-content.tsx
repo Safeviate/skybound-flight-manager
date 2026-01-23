@@ -20,6 +20,15 @@ interface TaskTrackerProps {
   personnel: User[];
 }
 
+const getCategoryName = (sourceType: string) => {
+    switch (sourceType) {
+        case 'Quality Audit': return 'Corrective Action Plan';
+        case 'Safety Report': return 'Safety Task';
+        case 'MOC': return 'Change Mitigation';
+        default: return 'Task';
+    }
+};
+
 export function TaskTrackerPageContent({ initialTasks, personnel }: TaskTrackerProps) {
   const [tasks, setTasks] = React.useState<UnifiedTask[]>(initialTasks);
   const router = useRouter();
@@ -30,7 +39,8 @@ export function TaskTrackerPageContent({ initialTasks, personnel }: TaskTrackerP
 
   const groupedTasks = React.useMemo(() => {
     return tasks.reduce((acc, task) => {
-      const sourceKey = `${task.sourceType}: ${task.sourceTitle}`;
+      const categoryName = getCategoryName(task.sourceType);
+      const sourceKey = `${categoryName}: ${task.sourceTitle}`;
       if (!acc[sourceKey]) {
         acc[sourceKey] = {
           sourceId: task.sourceId,
