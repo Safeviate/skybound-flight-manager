@@ -4,7 +4,7 @@
 
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, where } from 'firebase/firestore';
-import type { QualityAudit, AuditScheduleItem, AuditChecklist, User, CompanyDepartment, Aircraft, SafetyReport, ManagementOfChange, UnifiedTask } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, AuditChecklist, User, CompanyDepartment, Aircraft, SafetyReport, ManagementOfChange, UnifiedTask, CompanyAuditArea } from '@/lib/types';
 
 export async function getQualityPageData(companyId: string) {
     if (!companyId) {
@@ -17,6 +17,7 @@ export async function getQualityPageData(companyId: string) {
             departmentsList: [], 
             aircraftList: [],
             unifiedTasks: [],
+            auditAreasList: [],
         };
     }
 
@@ -29,9 +30,10 @@ export async function getQualityPageData(companyId: string) {
         const aircraftQuery = query(collection(db, `companies/${companyId}/aircraft`));
         const safetyReportsQuery = query(collection(db, `companies/${companyId}/safety-reports`));
         const mocQuery = query(collection(db, `companies/${companyId}/management-of-change`));
+        const auditAreasQuery = query(collection(db, `companies/${companyId}/audit-areas`));
 
 
-        const [auditsSnapshot, scheduleSnapshot, checklistsSnapshot, personnelSnapshot, departmentsSnapshot, aircraftSnapshot, safetyReportsSnapshot, mocSnapshot] = await Promise.all([
+        const [auditsSnapshot, scheduleSnapshot, checklistsSnapshot, personnelSnapshot, departmentsSnapshot, aircraftSnapshot, safetyReportsSnapshot, mocSnapshot, auditAreasSnapshot] = await Promise.all([
             getDocs(auditsQuery),
             getDocs(scheduleQuery),
             getDocs(checklistsQuery),
@@ -40,6 +42,7 @@ export async function getQualityPageData(companyId: string) {
             getDocs(aircraftQuery),
             getDocs(safetyReportsQuery),
             getDocs(mocQuery),
+            getDocs(auditAreasQuery),
         ]);
         
         const auditsList = auditsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QualityAudit));
@@ -50,6 +53,7 @@ export async function getQualityPageData(companyId: string) {
         const aircraftList = aircraftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
         const safetyReportsList = safetyReportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SafetyReport));
         const mocList = mocSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ManagementOfChange));
+        const auditAreasList = auditAreasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyAuditArea));
 
         const unifiedTasks: UnifiedTask[] = [];
 
@@ -110,9 +114,9 @@ export async function getQualityPageData(companyId: string) {
             });
         });
 
-        return { auditsList, scheduleList, checklistsList, personnelList, departmentsList, aircraftList, unifiedTasks };
+        return { auditsList, scheduleList, checklistsList, personnelList, departmentsList, aircraftList, unifiedTasks, auditAreasList };
     } catch (error) {
         console.error(`Failed to fetch quality page data for company ${companyId}:`, error);
-        return { auditsList: [], scheduleList: [], checklistsList: [], personnelList: [], departmentsList: [], aircraftList: [], unifiedTasks: [] };
+        return { auditsList: [], scheduleList: [], checklistsList: [], personnelList: [], departmentsList: [], aircraftList: [], unifiedTasks: [], auditAreasList: [] };
     }
 }

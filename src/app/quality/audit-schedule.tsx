@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -6,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils.tsx';
-import type { AuditScheduleItem, AuditStatus } from '@/lib/types';
+import type { AuditScheduleItem, AuditStatus, CompanyAuditArea } from '@/lib/types';
 import { Edit, PlusCircle, Save, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -16,12 +17,12 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const STATUS_OPTIONS: AuditStatus[] = ['Scheduled', 'Completed', 'Pending', 'Not Scheduled'];
 
 interface AuditScheduleProps {
-  auditAreas: string[];
+  auditAreas: CompanyAuditArea[];
   schedule: AuditScheduleItem[];
   onUpdate: (item: AuditScheduleItem) => void;
-  onAreaUpdate: (index: number, newName: string) => void;
+  onAreaUpdate: (areaId: string, newName: string) => void;
   onAreaAdd: () => void;
-  onAreaDelete: (index: number) => void;
+  onAreaDelete: (areaId: string) => void;
 }
 
 const getStatusBadgeVariant = (status: AuditStatus) => {
@@ -119,22 +120,22 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
     setIsYearEditing(false);
   };
   
-  const getScheduleItem = (area: string, monthIndex: number): AuditScheduleItem => {
-    return schedule.find(item => item.area === area && item.monthIndex === monthIndex && item.year === year) 
-           || { id: `${area}-${monthIndex}-${year}`, area, monthIndex, year: year, status: 'Not Scheduled' };
+  const getScheduleItem = (area: CompanyAuditArea, monthIndex: number): AuditScheduleItem => {
+    return schedule.find(item => item.area === area.name && item.monthIndex === monthIndex && item.year === year) 
+           || { id: `${area.id}-${monthIndex}-${year}`, area: area.name, monthIndex, year: year, status: 'Not Scheduled' };
   };
 
   const handleStatusChange = (item: AuditScheduleItem, newStatus: AuditStatus) => {
     onUpdate({ ...item, status: newStatus });
   };
 
-  const handleEditClick = (index: number) => {
+  const handleEditClick = (index: number, name: string) => {
     setEditingIndex(index);
-    setTempAreaName(auditAreas[index]);
+    setTempAreaName(name);
   };
 
-  const handleSaveClick = (index: number) => {
-    onAreaUpdate(index, tempAreaName);
+  const handleSaveClick = (areaId: string) => {
+    onAreaUpdate(areaId, tempAreaName);
     setEditingIndex(null);
   };
   
@@ -218,7 +219,7 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
         </div>
         <div className="grid" style={{ gridTemplateColumns: '250px repeat(12, 1fr)' }}>
           {auditAreas.flatMap((area, index) => [
-              <div key={`${area}-label`} className="p-2 border-b border-r font-medium flex items-center justify-between gap-2">
+              <div key={area.id} className="p-2 border-b border-r font-medium flex items-center justify-between gap-2">
                 {editingIndex === index ? (
                   <Input
                     value={tempAreaName}
@@ -226,7 +227,7 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
                     className="h-8"
                   />
                 ) : (
-                  <span>{area}</span>
+                  <span>{area.name}</span>
                 )}
                 <div className="flex items-center">
                     {editingIndex === index ? (
@@ -235,16 +236,16 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7"
-                              onClick={() => handleSaveClick(index)}
+                              onClick={() => handleSaveClick(area.id)}
                             >
                                 <Save className="h-4 w-4 text-primary" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onAreaDelete(index)}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onAreaDelete(area.id)}>
                                 <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                         </>
                     ) : (
-                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditClick(index)}>
+                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditClick(index, area.name)}>
                             <Edit className="h-4 w-4" />
                         </Button>
                     )}
@@ -253,7 +254,7 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
               ...Array.from({ length: 12 }).map((_, monthIndex) => {
                   const item = getScheduleItem(area, monthIndex);
                   return (
-                    <Popover key={`${area}-${monthIndex}`}>
+                    <Popover key={`${area.id}-${monthIndex}`}>
                         <PopoverTrigger asChild>
                         <button className={cn(
                             "p-3 text-center border-b border-r last:border-r-0 hover:bg-muted/50 cursor-pointer flex items-center justify-center",

@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, GroupedRisk, Booking, UnifiedTask } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, GroupedRisk, Booking, UnifiedTask, CompanyAuditArea } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -42,6 +43,7 @@ import { EditSpiForm, type SpiConfig } from '@/app/safety/edit-spi-form';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Label } from '@/components/ui/label';
 import { TaskTrackerPageContent } from '@/app/task-tracker/task-tracker-page-content';
+import { getQualityPageData } from './data';
 
 
 const ComplianceItemForm = ({
@@ -509,6 +511,7 @@ export function QualityPageContent({
     initialDepartments,
     initialAircraft,
     initialTasks,
+    initialAuditAreas,
 }: {
     initialAudits: QualityAudit[],
     initialSchedule: AuditScheduleItem[],
@@ -517,6 +520,7 @@ export function QualityPageContent({
     initialDepartments: CompanyDepartment[],
     initialAircraft: Aircraft[],
     initialTasks: UnifiedTask[],
+    initialAuditAreas: CompanyAuditArea[],
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -524,17 +528,26 @@ export function QualityPageContent({
 
   const [audits, setAudits] = useState<QualityAudit[]>(initialAudits);
   const [schedule, setSchedule] = useState<AuditScheduleItem[]>(initialSchedule);
-  const [auditAreas, setAuditAreas] = useState<string[]>(INITIAL_AUDIT_AREAS);
+  const [auditAreas, setAuditAreas] = useState<CompanyAuditArea[]>(initialAuditAreas);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
   const { user, company, loading } = useUser();
   const { toast } = useToast();
   const [showArchived, setShowArchived] = useState(false);
   const [selectedAudits, setSelectedAudits] = useState<string[]>([]);
   
+  const fetchData = React.useCallback(async () => {
+    if (!company) return;
+    const { auditsList, scheduleList, checklistsList, personnelList, departmentsList, aircraftList, unifiedTasks, auditAreasList } = await getQualityPageData(company.id);
+    setAudits(auditsList);
+    setSchedule(scheduleList);
+    setAuditAreas(auditAreasList);
+  }, [company]);
+
   useEffect(() => {
     setAudits(initialAudits);
     setSchedule(initialSchedule);
-  }, [initialAudits, initialSchedule]);
+    setAuditAreas(initialAuditAreas);
+  }, [initialAudits, initialSchedule, initialAuditAreas]);
 
   const activeAudits = useMemo(() => audits.filter(audit => audit.status !== 'Archived'), [audits]);
   const archivedAudits = useMemo(() => audits.filter(audit => audit.status === 'Archived'), [audits]);
@@ -585,27 +598,70 @@ export function QualityPageContent({
     }
   };
 
-  const handleAreaUpdate = (index: number, newName: string) => {
-    const oldName = auditAreas[index];
-    setAuditAreas(prevAreas => {
-        const newAreas = [...prevAreas];
-        newAreas[index] = newName;
-        return newAreas;
-    });
-    setSchedule(prevSchedule =>
-      prevSchedule.map(item => (item.area === oldName ? { ...item, area: newName } : item))
-    );
+  const handleAreaUpdate = async (areaId: string, newName: string) => {
+    if (!company) return;
+    const oldArea = auditAreas.find(a => a.id === areaId);
+    if (!oldArea || oldArea.name === newName) return;
+
+    try {
+        const docRef = doc(db, `companies/${company.id}/audit-areas`, areaId);
+        await updateDoc(docRef, { name: newName });
+
+        // Update schedule items with the new name
+        const scheduleBatch = writeBatch(db);
+        schedule.forEach(item => {
+            if (item.area === oldArea.name) {
+                const scheduleRef = doc(db, `companies/${company.id}/audit-schedule-items`, item.id);
+                scheduleBatch.update(scheduleRef, { area: newName });
+            }
+        });
+        await scheduleBatch.commit();
+        
+        fetchData();
+        toast({ title: "Audit Area Updated" });
+    } catch(e) {
+        console.error(e);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not update audit area.' });
+    }
   };
 
-  const handleAreaAdd = () => {
-      const newAreaName = `New Area ${auditAreas.length + 1}`;
-      setAuditAreas(prev => [...prev, newAreaName]);
+  const handleAreaAdd = async () => {
+    if (!company) return;
+    const newAreaName = `New Area ${auditAreas.length + 1}`;
+    try {
+        await addDoc(collection(db, `companies/${company.id}/audit-areas`), { name: newAreaName });
+        fetchData();
+        toast({ title: "Audit Area Added" });
+    } catch(e) {
+        console.error(e);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not add new audit area.' });
+    }
   };
 
-  const handleAreaDelete = (index: number) => {
-    const areaToDelete = auditAreas[index];
-    setAuditAreas(prev => prev.filter((_, i) => i !== index));
-    setSchedule(prevSchedule => prevSchedule.filter(item => item.area !== areaToDelete));
+  const handleAreaDelete = async (areaId: string) => {
+    if (!company) return;
+    const areaToDelete = auditAreas.find(a => a.id === areaId);
+    if (!areaToDelete) return;
+
+    try {
+        const batch = writeBatch(db);
+        const docRef = doc(db, `companies/${company.id}/audit-areas`, areaId);
+        batch.delete(docRef);
+
+        schedule.forEach(item => {
+            if (item.area === areaToDelete.name) {
+                const scheduleRef = doc(db, `companies/${company.id}/audit-schedule-items`, item.id);
+                batch.delete(scheduleRef);
+            }
+        });
+
+        await batch.commit();
+        fetchData();
+        toast({ title: "Audit Area Deleted" });
+    } catch(e) {
+        console.error(e);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not delete audit area.' });
+    }
   };
   
   const handleArchiveAudit = async (auditId: string) => {
