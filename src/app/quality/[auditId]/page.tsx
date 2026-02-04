@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -54,6 +53,16 @@ const getFindingInfo = (finding: FindingStatus | null) => {
         case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const, text: 'Observation' };
         case 'Not Applicable': return { icon: <Ban className="h-5 w-5 text-gray-500" />, variant: 'outline' as const, text: 'N/A' };
         default: return { icon: <ListChecks className="h-5 w-5" />, variant: 'outline' as const, text: 'Not Set' };
+    }
+};
+
+const getLevelInfo = (level: FindingLevel) => {
+    switch (level) {
+        case 'Level 1 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
+        case 'Level 2 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-orange-600" />, variant: 'orange' as const };
+        case 'Level 3 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
+        case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const };
+        default: return null;
     }
 };
 
@@ -455,9 +464,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                         {audit.auditorSignature && audit.auditorSignature.signature ? (
                             <div>
                                 <Image src={audit.auditorSignature.signature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
-                                {audit.auditorSignature.date && (
-                                    <p className="text-xs text-muted-foreground mt-1">Signed on: {format(parseISO(audit.auditorSignature.date), 'PPP p')}</p>
-                                )}
                             </div>
                         ) : canSign(user, audit.auditor) ? (
                              <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditorSignature: { signature, date: new Date().toISOString() } }, true)} />
@@ -470,9 +476,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                          {audit.auditeeSignature && audit.auditeeSignature.signature ? (
                             <div>
                                 <Image src={audit.auditeeSignature.signature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
-                                {audit.auditeeSignature.date && (
-                                    <p className="text-xs text-muted-foreground mt-1">Signed by {audit.auditeeName} on: {format(parseISO(audit.auditeeSignature.date), 'PPP p')}</p>
-                                )}
                             </div>
                         ) : canSign(user, audit.auditeeName) ? (
                              <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditeeSignature: { signature, date: new Date().toISOString() } }, true)} />
@@ -726,7 +729,7 @@ export default function QualityAuditDetailPage() {
               <div>
                   <CardTitle className="text-2xl">{audit.title}</CardTitle>
                   <CardDescription>
-                  Conducting {audit.type} audit on {format(parseISO(audit.date), 'MMMM d, yyyy')}.
+                  Conducting {audit.type} audit on {format(parseISO(audit.date), 'MMMM d, yuyy')}.
                   </CardDescription>
               </div>
               <Badge variant="outline">{audit.status}</Badge>
@@ -988,5 +991,3 @@ export default function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
-
-    
