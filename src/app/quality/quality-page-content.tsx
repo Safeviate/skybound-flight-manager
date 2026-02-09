@@ -1,12 +1,13 @@
+
 'use client';
 
 import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, Booking, CompanyAuditArea, CoherenceMatrixCategory, FindingStatus, FindingLevel, AuditChecklistItem, FindingOption } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, Booking, CompanyAuditArea, CoherenceMatrixCategory, FindingStatus, FindingLevel, AuditChecklistItem, UnifiedTask } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
-import { format, parseISO, startOfMonth, differenceInDays, isAfter } from 'date-fns';
+import { format, parseISO, startOfMonth, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, ChevronDown, MinusCircle, XCircle, MessageSquareWarning, Ban, Check, CalendarIcon, Signature } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -39,8 +40,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { TaskTrackerPageContent } from '@/app/task-tracker/task-tracker-page-content';
 import { Label } from '@/components/ui/label';
+import { type SpiConfig, EditSpiForm } from './edit-spi-form';
 
-// Helper components and logic defined at the top level
+// --- Helper Functions & Constants ---
+
 const getFindingInfo = (finding: FindingStatus | null) => {
     switch (finding) {
         case 'Compliant': return { icon: <CheckCircle className="h-5 w-5 text-green-600" />, variant: 'success' as const, text: 'Compliant' };
@@ -74,6 +77,35 @@ const groupAuditsByDepartment = (reportList: QualityAudit[]) => {
     acc[dept].push(audit);
     return acc;
   }, {} as Record<string, QualityAudit[]>);
+};
+
+// --- Top-Level UI Components ---
+
+const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
+  const chartData = data.map(audit => ({ date: format(parseISO(audit.date), 'MMM yy'), score: audit.complianceScore, })).reverse();
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <LineChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="date" /><YAxis domain={[80, 100]} unit="%" /><Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', }} /><Legend /><Line type="monotone" dataKey="score" name="Compliance Score" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+};
+
+const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
+    const conformanceCounts: { [key: string]: number } = {};
+    data.flatMap(audit => audit.nonConformanceIssues).forEach(issue => {
+        const category = issue.regulationReference?.split(' ')[0] || 'Uncategorized';
+        conformanceCounts[category] = (conformanceCounts[category] || 0) + 1;
+    });
+    const chartData = Object.keys(conformanceCounts).map(key => ({ name: key, count: conformanceCounts[key], }));
+    return (
+        <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" /><XAxis type="number" /><YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} /><Tooltip cursor={{fill: 'hsl(var(--muted))'}} contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', }} /><Legend /><Bar dataKey="count" name="Issues" fill="hsl(var(--primary))" />
+            </BarChart>
+        </ResponsiveContainer>
+    );
 };
 
 interface ReportTableProps {
@@ -154,7 +186,7 @@ const ReportTable = ({
                                                     </AlertDialogTrigger>
                                                     <AlertDialogContent>
                                                         <AlertDialogHeader>
-                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                                             <AlertDialogDescription>This will permanently delete the audit.</AlertDialogDescription>
                                                         </AlertDialogHeader>
                                                         <AlertDialogFooter>
@@ -175,33 +207,6 @@ const ReportTable = ({
             </Table>
             <ScrollBar orientation="horizontal" />
         </ScrollArea>
-    );
-};
-
-const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
-  const chartData = data.map(audit => ({ date: format(parseISO(audit.date), 'MMM yy'), score: audit.complianceScore, })).reverse();
-  return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="date" /><YAxis domain={[80, 100]} unit="%" /><Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', }} /><Legend /><Line type="monotone" dataKey="score" name="Compliance Score" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
-      </LineChart>
-    </ResponsiveContainer>
-  );
-};
-
-const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
-    const conformanceCounts: { [key: string]: number } = {};
-    data.flatMap(audit => audit.nonConformanceIssues).forEach(issue => {
-        const category = issue.regulationReference?.split(' ')[0] || 'Uncategorized';
-        conformanceCounts[category] = (conformanceCounts[category] || 0) + 1;
-    });
-    const chartData = Object.keys(conformanceCounts).map(key => ({ name: key, count: conformanceCounts[key], }));
-    return (
-        <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" /><XAxis type="number" /><YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} /><Tooltip cursor={{fill: 'hsl(var(--muted))'}} contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', }} /><Legend /><Bar dataKey="count" name="Issues" fill="hsl(var(--primary))" />
-            </BarChart>
-        </ResponsiveContainer>
     );
 };
 
@@ -653,6 +658,8 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
         </Card>
     );
 };
+
+// --- Main Quality Page Content ---
 
 export function QualityPageContent({
     initialAudits,
