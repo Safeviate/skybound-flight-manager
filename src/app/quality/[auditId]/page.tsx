@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -68,8 +69,8 @@ const getLevelInfo = (level: FindingLevel) => {
 
 const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
 
-const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit: QualityAudit, onUpdate: (updatedAudit: QualityAudit, showToast?: boolean) => void, personnel: User[], onNavigateBack: () => void }) => {
-    const { user, company } = useUser();
+const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack, company }: { audit: QualityAudit, onUpdate: (updatedAudit: QualityAudit, showToast?: boolean) => void, personnel: User[], onNavigateBack: () => void, company: any }) => {
+    const { user } = useUser();
     const { toast } = useToast();
     const discussionForm = useForm<DiscussionFormValues>({
         resolver: zodResolver(discussionFormSchema),
@@ -87,8 +88,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
         return audit.auditTeam.filter(name => name !== user.name);
     }, [audit.auditTeam, user]);
 
-    // *** COLOR LOGIC IS HERE (for the report view) ***
-    // This function determines the style for the finding level badges.
     const getLevelDisplayInfo = (level: FindingLevel) => {
         const defaultLevels = {
             'Level 1 Finding': { icon: <AlertTriangle className="h-5 w-5" />, variant: 'warning' as const },
@@ -99,14 +98,11 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
 
         if (!level) return null;
         
-        // 1. Check for a custom color in the company settings.
         const customColor = company?.findingLevelColors?.[level];
         if (customColor) {
-            // 2. If a custom color exists, apply it directly using an inline style.
             return { style: { backgroundColor: customColor, color: '#ffffff' }, variant: 'default' as const, icon: <AlertTriangle className="h-5 w-5 text-white" /> };
         }
         
-        // 3. If no custom color is found, fall back to the default system styles.
         const defaultStyle = defaultLevels[level];
         return defaultStyle ? { ...defaultStyle, style: {} } : null;
     }
@@ -180,7 +176,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
         const alertsCollection = collection(db, `companies/${company.id}/alerts`);
 
         for (const sigUser of signatureUsers) {
-            const targetUser = personnel.find(p => p.name === sigUser);
+            const targetUser = personnel.find(p => p.id === sigUser);
             if(targetUser) {
                  const newAlert: Omit<Alert, 'id' | 'number'> = {
                     companyId: company.id,
@@ -719,7 +715,7 @@ export default function QualityAuditDetailPage() {
       </AlertDialog>
 
       {isAuditClosed ? (
-          <AuditReportView audit={audit} onUpdate={handleAuditUpdate} personnel={personnel} onNavigateBack={handleNavigateBack} />
+          <AuditReportView audit={audit} onUpdate={handleAuditUpdate} personnel={personnel} onNavigateBack={handleNavigateBack} company={company} />
       ) : (
       <>
           <h2 className="text-2xl font-bold">Audit Questionnaire</h2>
@@ -729,7 +725,7 @@ export default function QualityAuditDetailPage() {
               <div>
                   <CardTitle className="text-2xl">{audit.title}</CardTitle>
                   <CardDescription>
-                  Conducting {audit.type} audit on {format(parseISO(audit.date), 'MMMM d, yuyy')}.
+                  Conducting {audit.type} audit on {format(parseISO(audit.date), 'MMMM d, yyyy')}.
                   </CardDescription>
               </div>
               <Badge variant="outline">{audit.status}</Badge>

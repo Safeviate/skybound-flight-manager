@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -8,7 +9,7 @@ import type { QualityAudit, AuditScheduleItem, User, ComplianceItem, CompanyDepa
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, isAfter, startOfMonth } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, ArrowLeft, TrendingUp, AlertTriangle, Clock, MapPin, ArrowUpDown, ChevronDown, CheckCircle, MinusCircle, XCircle, MessageSquareWarning, Ban, Check } from 'lucide-react';
+import { ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, ArrowLeft, TrendingUp, AlertTriangle, Clock, MapPin, ArrowUpDown, ChevronDown, CheckCircle, MinusCircle, XCircle, MessageSquareWarning, Ban, Check, CalendarIcon, Signature } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { AuditSchedule } from '../quality/audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -28,19 +29,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { TaskTrackerPageContent } from '@/app/task-tracker/task-tracker-page-content';
-import { getQualityPageData } from './data';
-import { Label } from '@/components/ui/label';
 
 const getFindingInfo = (finding: FindingStatus | null) => {
     switch (finding) {
@@ -181,7 +176,7 @@ const ComplianceItemForm = ({
           )}
         />
          <div className="space-y-2">
-            <Label>Filter by Department</Label>
+            <p className="text-sm font-medium">Filter by Department</p>
             <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
                 <SelectTrigger>
                     <SelectValue placeholder="All Departments" />
@@ -254,7 +249,7 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
     const [categories, setCategories] = useState<CoherenceMatrixCategory[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
-    const [editingItem, setEditingItem] = setEditingItem = useState<ComplianceItem | null>(null);
+    const [editingItem, setEditingItem] = useState<ComplianceItem | null>(null);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [preSelectedCategoryName, setPreSelectedCategoryName] = useState<string | undefined>();
     const [editingCategory, setEditingCategory] = useState<CoherenceMatrixCategory | null>(null);
@@ -549,6 +544,74 @@ const groupAuditsByDepartment = (reportList: QualityAudit[]) => {
   }, {} as Record<string, QualityAudit[]>);
 };
 
+interface ReportTableProps {
+    audits: QualityAudit[];
+    isArchivedTable: boolean;
+    controls: any;
+    selectedAudits: string[];
+    handleSelectAll: (checked: boolean, controls: any) => void;
+    handleSelectOne: (auditId: string, checked: boolean) => void;
+    handleRestoreAudit: (id: string) => void;
+    handleArchiveAudit: (id: string) => void;
+    handleDeleteAudit: (id: string) => void;
+    getComplianceColor: (score: number) => string;
+    getStatusVariant: (status: any) => any;
+}
+
+const ReportTable = ({ 
+    audits: reportList, 
+    isArchivedTable = false, 
+    controls, 
+    selectedAudits, 
+    handleSelectAll, 
+    handleSelectOne, 
+    handleRestoreAudit, 
+    handleArchiveAudit, 
+    handleDeleteAudit, 
+    getComplianceColor, 
+    getStatusVariant 
+}: ReportTableProps) => {
+    return (
+        <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                    {isArchivedTable && (
+                        <TableHead className="w-12">
+                            <Checkbox onCheckedChange={(checked) => handleSelectAll(Boolean(checked), controls)} checked={selectedAudits.length > 0 && selectedAudits.length === controls.items.length} />
+                        </TableHead>
+                    )}
+                    <TableHead>Audit ID</TableHead><TableHead>Audit Date</TableHead><TableHead>Report Heading</TableHead><TableHead>Auditee</TableHead><TableHead>Audit Reference</TableHead><TableHead>Asset</TableHead><TableHead>Type</TableHead><TableHead>Compliance</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {reportList.length > 0 ? (
+                        reportList.map(audit => (
+                        <TableRow key={audit.id} data-state={selectedAudits.includes(audit.id) && "selected"}>
+                            {isArchivedTable && (<TableCell><Checkbox checked={selectedAudits.includes(audit.id)} onCheckedChange={(checked) => handleSelectOne(audit.id, !!checked)} /></TableCell>)}
+                            <TableCell><Link href={`/quality/${audit.id}`} className="hover:underline">{audit.auditNumber || audit.id.substring(0, 8)}</Link></TableCell>
+                            <TableCell>{format(parseISO(audit.date), 'MMM d, yyyy')}</TableCell><TableCell>{audit.title}</TableCell><TableCell>{audit.auditeeName || 'N/A'}</TableCell><TableCell>{audit.area}</TableCell><TableCell>{audit.aircraftInvolved || 'N/A'}</TableCell><TableCell>{audit.type}</TableCell><TableCell><div className={`flex items-center gap-1 font-semibold ${getComplianceColor(audit.complianceScore)}`}><Percent className="h-4 w-4" />{audit.complianceScore}%</div></TableCell><TableCell><Badge variant={getStatusVariant(audit.status)}>{audit.status}</Badge></TableCell>
+                            <TableCell className="text-right">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                        <DropdownMenuItem asChild><Link href={`/quality/${audit.id}`}><FileText className="mr-2 h-4 w-4" />View Report</Link></DropdownMenuItem>
+                                        {isArchivedTable ? (
+                                            <><DropdownMenuItem onSelect={() => handleRestoreAudit(audit.id)}><RotateCw className="mr-2 h-4 w-4" />Restore</DropdownMenuItem><DropdownMenuSeparator /><AlertDialog><AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the audit.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteAudit(audit.id)}>Yes, delete audit</AlertDialogAction></AlertDialogFooter></AlertDialog></>
+                                        ) : (<DropdownMenuItem onSelect={() => handleArchiveAudit(audit.id)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>)}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
+                        </TableRow>
+                        ))
+                    ) : (<TableRow><TableCell colSpan={isArchivedTable ? 11 : 10} className="text-center h-24">No audit reports found.</TableCell></TableRow>)}
+                </TableBody>
+            </Table>
+            <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+    );
+};
+
 export function QualityPageContent({
     initialAudits,
     initialSchedule,
@@ -576,17 +639,21 @@ export function QualityPageContent({
   const [schedule, setSchedule] = useState<AuditScheduleItem[]>(initialSchedule);
   const [auditAreas, setAuditAreas] = useState<CompanyAuditArea[]>(initialAuditAreas);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
-  const { company } = useUser();
+  const { user, company, loading } = useUser();
   const { toast } = useToast();
   const [showArchived, setShowArchived] = useState(false);
   const [selectedAudits, setSelectedAudits] = useState<string[]>([]);
   
   const fetchData = useCallback(async () => {
     if (!company) return;
-    const data = await getQualityPageData(company.id);
-    setAudits(data.auditsList);
-    setSchedule(data.scheduleList);
-    setAuditAreas(data.auditAreasList);
+    const data = await getDocs(collection(db, `companies/${company.id}/quality-audits`));
+    setAudits(data.docs.map(doc => ({ ...doc.data(), id: doc.id } as QualityAudit)));
+    
+    const scheduleData = await getDocs(collection(db, `companies/${company.id}/audit-schedule-items`));
+    setSchedule(scheduleData.docs.map(doc => ({ ...doc.data(), id: doc.id } as AuditScheduleItem)));
+    
+    const areasData = await getDocs(collection(db, `companies/${company.id}/audit-areas`));
+    setAuditAreas(areasData.docs.map(doc => ({ ...doc.data(), id: doc.id } as CompanyAuditArea)));
   }, [company]);
 
   useEffect(() => {
@@ -730,49 +797,6 @@ export function QualityPageContent({
   const groupedActiveAudits = useMemo(() => groupAuditsByDepartment(reportsControls.items), [reportsControls.items]);
   const groupedArchivedAudits = useMemo(() => groupAuditsByDepartment(archivedReportsControls.items), [archivedReportsControls.items]);
 
-  const ReportTable = ({ audits: reportList, isArchivedTable = false }: { audits: QualityAudit[], isArchivedTable?: boolean }) => {
-    const controls = isArchivedTable ? archivedReportsControls : reportsControls;
-    return (
-        <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                    {isArchivedTable && (
-                        <TableHead className="w-12">
-                            <Checkbox onCheckedChange={(checked) => handleSelectAll(Boolean(checked), controls)} checked={selectedAudits.length > 0 && selectedAudits.length === controls.items.length} />
-                        </TableHead>
-                    )}
-                    <TableHead>Audit ID</TableHead><TableHead>Audit Date</TableHead><TableHead>Report Heading</TableHead><TableHead>Auditee</TableHead><TableHead>Audit Reference</TableHead><TableHead>Asset</TableHead><TableHead>Type</TableHead><TableHead>Compliance</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {reportList.length > 0 ? (
-                        reportList.map(audit => (
-                        <TableRow key={audit.id} data-state={selectedAudits.includes(audit.id) && "selected"}>
-                            {isArchivedTable && (<TableCell><Checkbox checked={selectedAudits.includes(audit.id)} onCheckedChange={(checked) => handleSelectOne(audit.id, !!checked)} /></TableCell>)}
-                            <TableCell><Link href={`/quality/${audit.id}`} className="hover:underline">{audit.auditNumber || audit.id.substring(0, 8)}</Link></TableCell>
-                            <TableCell>{format(parseISO(audit.date), 'MMM d, yyyy')}</TableCell><TableCell>{audit.title}</TableCell><TableCell>{audit.auditeeName || 'N/A'}</TableCell><TableCell>{audit.area}</TableCell><TableCell>{audit.aircraftInvolved || 'N/A'}</TableCell><TableCell>{audit.type}</TableCell><TableCell><div className={`flex items-center gap-1 font-semibold ${getComplianceColor(audit.complianceScore)}`}><Percent className="h-4 w-4" />{audit.complianceScore}%</div></TableCell><TableCell><Badge variant={getStatusVariant(audit.status)}>{audit.status}</Badge></TableCell>
-                            <TableCell className="text-right">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                        <DropdownMenuItem asChild><Link href={`/quality/${audit.id}`}><FileText className="mr-2 h-4 w-4" />View Report</Link></DropdownMenuItem>
-                                        {isArchivedTable ? (
-                                            <><DropdownMenuItem onSelect={() => handleRestoreAudit(audit.id)}><RotateCw className="mr-2 h-4 w-4" />Restore</DropdownMenuItem><DropdownMenuSeparator /><AlertDialog><AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the audit.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteAudit(audit.id)}>Yes, delete audit</AlertDialogAction></AlertDialogFooter></AlertDialog></>
-                                        ) : (<DropdownMenuItem onSelect={() => handleArchiveAudit(audit.id)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>)}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </TableCell>
-                        </TableRow>
-                        ))
-                    ) : (<TableRow><TableCell colSpan={isArchivedTable ? 11 : 10} className="text-center h-24">No audit reports found.</TableCell></TableRow>)}
-                </TableBody>
-            </Table>
-            <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-    );
-  };
-
   return (
       <main className="flex-1 p-4 md:p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -802,13 +826,43 @@ export function QualityPageContent({
                         </div>
                         <TabsContent value="active" className="mt-4 space-y-8">
                              {Object.keys(groupedActiveAudits).sort().map(department => (
-                                <div key={department}><h3 className="text-lg font-semibold mb-2">{department}</h3><ReportTable audits={groupedActiveAudits[department]} isArchivedTable={false} /></div>
+                                <div key={department}>
+                                    <h3 className="text-lg font-semibold mb-2">{department}</h3>
+                                    <ReportTable 
+                                        audits={groupedActiveAudits[department]} 
+                                        isArchivedTable={false} 
+                                        controls={reportsControls}
+                                        selectedAudits={selectedAudits}
+                                        handleSelectAll={handleSelectAll}
+                                        handleSelectOne={handleSelectOne}
+                                        handleRestoreAudit={handleRestoreAudit}
+                                        handleArchiveAudit={handleArchiveAudit}
+                                        handleDeleteAudit={handleDeleteAudit}
+                                        getComplianceColor={getComplianceColor}
+                                        getStatusVariant={getStatusVariant}
+                                    />
+                                </div>
                             ))}
                         </TabsContent>
                          <TabsContent value="archived" className="mt-4 space-y-8">
                             <div className="flex justify-end mb-4">{selectedAudits.length > 0 && (<Button variant="outline" onClick={handleBulkRestore}><RotateCw className="mr-2 h-4 w-4" />Restore Selected ({selectedAudits.length})</Button>)}</div>
                             {Object.keys(groupedArchivedAudits).sort().map(department => (
-                                <div key={department}><h3 className="text-lg font-semibold mb-2">{department}</h3><ReportTable audits={groupedArchivedAudits[department]} isArchivedTable={true} /></div>
+                                <div key={department}>
+                                    <h3 className="text-lg font-semibold mb-2">{department}</h3>
+                                    <ReportTable 
+                                        audits={groupedArchivedAudits[department]} 
+                                        isArchivedTable={true} 
+                                        controls={archivedReportsControls}
+                                        selectedAudits={selectedAudits}
+                                        handleSelectAll={handleSelectAll}
+                                        handleSelectOne={handleSelectOne}
+                                        handleRestoreAudit={handleRestoreAudit}
+                                        handleArchiveAudit={handleArchiveAudit}
+                                        handleDeleteAudit={handleDeleteAudit}
+                                        getComplianceColor={getComplianceColor}
+                                        getStatusVariant={getStatusVariant}
+                                    />
+                                </div>
                             ))}
                         </TabsContent>
                     </Tabs>

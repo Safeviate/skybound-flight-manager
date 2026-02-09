@@ -462,6 +462,10 @@ export type CorrectiveAction = {
     completionDate: string;
     status: 'Open' | 'Closed' | 'In Progress';
     isPreventative: boolean;
+    comments?: TaskComment[];
+    extensionRequestReason?: string;
+    requestedDeadline?: string;
+    extensionStatus?: 'Pending' | 'Approved' | 'Rejected' | null;
 };
 
 export type CorrectiveActionPlan = {
