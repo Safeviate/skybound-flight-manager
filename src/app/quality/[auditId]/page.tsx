@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem, User, DiscussionEntry, Alert, Signature as SignatureType } from '@/lib/types';
+import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem, User, DiscussionEntry, Alert } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -433,7 +432,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                 <CardContent className="grid md:grid-cols-2 gap-8">
                     <div className="space-y-2">
                         <h4 className="font-semibold">Lead Auditor: {audit.auditor}</h4>
-                        {audit.auditorSignature ? (
+                        {audit.auditorSignature && audit.auditorSignature.signature ? (
                             <div>
                                 <Image src={audit.auditorSignature.signature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
                             </div>
@@ -445,7 +444,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                     </div>
                      <div className="space-y-2">
                         <h4 className="font-semibold">Auditee: {audit.auditeeName}</h4>
-                         {audit.auditeeSignature ? (
+                         {audit.auditeeSignature && audit.auditeeSignature.signature ? (
                             <div>
                                 <Image src={audit.auditeeSignature.signature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
                             </div>
@@ -961,5 +960,3 @@ export default function QualityAuditDetailPage() {
     </main>
   );
 }
-
-QualityAuditDetailPage.title = "Quality Audit Investigation";

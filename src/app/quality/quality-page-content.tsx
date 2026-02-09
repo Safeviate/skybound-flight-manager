@@ -1,21 +1,20 @@
-
 'use client';
 
 import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, Booking, CompanyAuditArea, CoherenceMatrixCategory, FindingStatus, FindingLevel, AuditChecklistItem, UnifiedTask } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, Risk, User, ComplianceItem, CompanyDepartment, Aircraft, UnifiedTask, CompanyAuditArea, CoherenceMatrixCategory, FindingStatus, FindingLevel } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, ReferenceLine } from 'recharts';
-import { format, parseISO, startOfMonth, isAfter } from 'date-fns';
+import { format, parseISO, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, ChevronDown, MinusCircle, XCircle, MessageSquareWarning, Ban, Check, CalendarIcon, Signature } from 'lucide-react';
+import { ChevronRight, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, ChevronDown, MinusCircle, XCircle, MessageSquareWarning, Ban, Check, CalendarIcon, Signature } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { AuditSchedule } from '../quality/audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch, deleteDoc, where, orderBy, limit } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, doc, updateDoc, writeBatch, deleteDoc, where, orderBy, limit, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -41,7 +40,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { TaskTrackerPageContent } from '@/app/task-tracker/task-tracker-page-content';
 import { Label } from '@/components/ui/label';
 
-// --- Helper Components ---
+// --- Helper Components defined outside to prevent parser confusion ---
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({ date: format(parseISO(audit.date), 'MMM yy'), score: audit.complianceScore, })).reverse();
@@ -56,7 +55,7 @@ const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
 
 const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
     const conformanceCounts: { [key: string]: number } = {};
-    data.flatMap(audit => audit.nonConformanceIssues).forEach(issue => {
+    data.flatMap(audit => audit.nonConformanceIssues || []).forEach(issue => {
         const category = issue.regulationReference?.split(' ')[0] || 'Uncategorized';
         conformanceCounts[category] = (conformanceCounts[category] || 0) + 1;
     });
@@ -163,7 +162,7 @@ const ReportTable = ({
                                                     </AlertDialogTrigger>
                                                     <AlertDialogContent>
                                                         <AlertDialogHeader>
-                                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                             <AlertDialogDescription>This will permanently delete the audit.</AlertDialogDescription>
                                                         </AlertDialogHeader>
                                                         <AlertDialogFooter>
@@ -202,8 +201,6 @@ const ComplianceItemForm = ({
   existingItem?: ComplianceItem | null;
   preSelectedParentId?: string;
 }) => {
-  const [departmentFilter, setDepartmentFilter] = useState('');
-
   const complianceItemSchema = z.object({
     parentRegulation: z.string().optional(),
     regulation: z.string().min(3, 'Regulation point is required.'),
@@ -240,15 +237,6 @@ const ComplianceItemForm = ({
         nextAuditDate: data.nextAuditDate ? format(data.nextAuditDate, 'yyyy-MM-dd') : undefined,
     } as any);
   };
-  
-  const filteredPersonnel = useMemo(() => {
-    const eligiblePersonnel = personnel.filter(p => p.role !== 'Student' && p.role !== 'Hire and Fly');
-    if (!departmentFilter || departmentFilter === 'all') {
-        return eligiblePersonnel;
-    }
-    return eligiblePersonnel.filter(p => p.department === departmentFilter);
-  }, [personnel, departmentFilter]);
-
 
   return (
     <Form {...form}>
@@ -260,392 +248,25 @@ const ComplianceItemForm = ({
             <FormItem>
               <FormLabel>Top Level Regulation</FormLabel>
               <Select onValueChange={field.onChange} value={field.value || 'none'}>
-                <FormControl><SelectTrigger><SelectValue placeholder="Select parent regulation" /></SelectTrigger></FormControl>
+                <FormControl><SelectTrigger><SelectValue placeholder="Select parent" /></SelectTrigger></FormControl>
                 <SelectContent>
                   <SelectItem value="none">None / Uncategorized</SelectItem>
-                  {categories.map(cat => (
-                    <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormDescription>Select the primary regulatory category for this requirement.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="regulation"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Sub-regulation / Point (e.g., 141.02.3)</FormLabel>
-              <FormControl><Input {...field} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="regulationStatement"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Regulation Statement</FormLabel>
-              <FormControl><Textarea placeholder="Describe the regulation statement..." {...field} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="companyReference"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Company Reference</FormLabel>
-              <FormControl><Textarea placeholder="Reference to company procedure, manual section, etc." {...field} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-         <div className="space-y-2">
-            <p className="text-sm font-medium">Filter by Department</p>
-            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                <SelectTrigger>
-                    <SelectValue placeholder="All Departments" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Departments</SelectItem>
-                    {departments.map(dept => (
-                        <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-        </div>
-        <FormField
-          control={form.control}
-          name="responsibleManager"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Responsible Manager</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl><SelectTrigger><SelectValue placeholder="Select a person" /></SelectTrigger></FormControl>
-                <SelectContent>
-                  {filteredPersonnel.map(p => (
-                    <SelectItem key={p.id} value={p.name}>{p.name} ({p.role})</SelectItem>
-                  ))}
+                  {categories.map(cat => <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>)}
                 </SelectContent>
               </Select>
               <FormMessage />
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-2 gap-4">
-            <FormField
-                control={form.control}
-                name="nextAuditDate"
-                render={({ field }) => (
-                    <FormItem className="flex flex-col pt-2">
-                        <FormLabel>Next Audit Date</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn( "w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                                >
-                                {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus/></PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </div>
-
-        <div className="flex justify-end pt-2">
-          <Button type="submit">{existingItem ? 'Save Changes' : 'Add Item'}</Button>
-        </div>
+        <FormField control={form.control} name="regulation" render={({ field }) => (<FormItem><FormLabel>Regulation Point</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+        <FormField control={form.control} name="regulationStatement" render={({ field }) => (<FormItem><FormLabel>Statement</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
+        <FormField control={form.control} name="companyReference" render={({ field }) => (<FormItem><FormLabel>Company Reference</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
+        <FormField control={form.control} name="responsibleManager" render={({ field }) => (<FormItem><FormLabel>Manager</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{personnel.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+        <FormField control={form.control} name="nextAuditDate" render={({ field }) => (<FormItem><FormLabel>Next Audit</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : "Pick a date"}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+        <DialogFooter><Button type="submit">Save Requirement</Button></DialogFooter>
       </form>
     </Form>
   );
-};
-
-const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, departments: initialDepartments }: { audits: QualityAudit[], personnel: User[], departments: CompanyDepartment[] }) => {
-    const { company, user } = useUser();
-    const { toast } = useToast();
-    const [complianceItems, setComplianceItems] = useState<ComplianceItem[]>([]);
-    const [categories, setCategories] = useState<CoherenceMatrixCategory[]>([]);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
-    const [editingItem, setEditingItem] = useState<ComplianceItem | null>(null);
-    const [newCategoryName, setNewCategoryName] = useState('');
-    const [preSelectedCategoryName, setPreSelectedCategoryName] = useState<string | undefined>();
-    const [editingCategory, setEditingCategory] = useState<CoherenceMatrixCategory | null>(null);
-
-    const fetchData = useCallback(async () => {
-        if (!company) return;
-        try {
-            const complianceQuery = query(collection(db, `companies/${company.id}/compliance-matrix`));
-            const complianceSnapshot = await getDocs(complianceQuery);
-            setComplianceItems(complianceSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ComplianceItem)));
-            
-            const categoriesQuery = query(collection(db, `companies/${company.id}/coherence-matrix-categories`));
-            const categoriesSnapshot = await getDocs(categoriesQuery);
-            setCategories(categoriesSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as CoherenceMatrixCategory)));
-        } catch (error) {
-            console.error("Error fetching data:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not load coherence matrix data.' });
-        }
-    }, [company, toast]);
-
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
-    
-    const getAuditDataForRegulation = (regulation: string) => {
-        const relevantAudits = initialAudits.filter(audit =>
-            audit.checklistItems && audit.checklistItems.some(item => item.regulationReference === regulation)
-        );
-
-        if (relevantAudits.length === 0) {
-            return { lastAuditDate: 'N/A', findings: 'None' };
-        }
-
-        const mostRecentAudit = relevantAudits.reduce((latest, current) => {
-            return isAfter(parseISO(current.date), parseISO(latest.date)) ? current : latest;
-        });
-        
-        const findings = mostRecentAudit.nonConformanceIssues
-            .filter(issue => issue.regulationReference === regulation)
-            .map(issue => issue.itemText)
-            .join(', ');
-
-        return {
-            lastAuditDate: format(parseISO(mostRecentAudit.date), 'dd MMM yyyy'),
-            findings: findings || 'None',
-        };
-    };
-
-    const canEdit = user?.permissions.includes('Quality:Edit') || user?.permissions.includes('Super User');
-
-    const handleFormSubmit = async (data: Omit<ComplianceItem, 'id' | 'companyId'>) => {
-        if (!company) return;
-
-        const itemData = { ...data, companyId: company.id };
-
-        try {
-            if (editingItem) {
-                const itemRef = doc(db, `companies/${company.id}/compliance-matrix`, editingItem.id);
-                await updateDoc(itemRef, itemData);
-                toast({ title: 'Item Updated' });
-            } else {
-                await addDoc(collection(db, `companies/${company.id}/compliance-matrix`), itemData);
-                toast({ title: 'Item Added' });
-            }
-            fetchData();
-            setIsDialogOpen(false);
-            setEditingItem(null);
-            setPreSelectedCategoryName(undefined);
-        } catch(e) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to save item.' });
-        }
-    };
-    
-    const handleCategorySubmit = async () => {
-        if (!company || !newCategoryName.trim()) return;
-        try {
-            if (editingCategory) {
-                const batch = writeBatch(db);
-                const catRef = doc(db, `companies/${company.id}/coherence-matrix-categories`, editingCategory.id);
-                batch.update(catRef, { name: newCategoryName.trim() });
-
-                const oldName = editingCategory.name;
-                const newName = newCategoryName.trim();
-                complianceItems.forEach(item => {
-                    if (item.parentRegulation === oldName) {
-                        const itemRef = doc(db, `companies/${company.id}/compliance-matrix`, item.id);
-                        batch.update(itemRef, { parentRegulation: newName });
-                    }
-                });
-
-                await batch.commit();
-                toast({ title: 'Top Level Regulation Updated' });
-            } else {
-                await addDoc(collection(db, `companies/${company.id}/coherence-matrix-categories`), { name: newCategoryName.trim() });
-                toast({ title: 'Top Level Regulation Added' });
-            }
-            setNewCategoryName('');
-            setEditingCategory(null);
-            setIsCategoryDialogOpen(false);
-            fetchData();
-        } catch (e) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to save category.' });
-        }
-    };
-
-    const handleDeleteCategory = async (catId: string) => {
-        if (!company) return;
-        try {
-            await deleteDoc(doc(db, `companies/${company.id}/coherence-matrix-categories`, catId));
-            toast({ title: 'Category Deleted' });
-            fetchData();
-        } catch (e) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete category.' });
-        }
-    };
-    
-    const handleDeleteItem = async (itemId: string) => {
-        if (!company) return;
-        try {
-            const docRef = doc(db, `companies/${company.id}/compliance-matrix`, itemId);
-            await deleteDoc(docRef);
-            fetchData();
-            toast({title: 'Item Deleted'});
-        } catch (e) {
-             toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete item.' });
-        }
-    };
-    
-    const groupedItems = useMemo(() => {
-        const grouped: Record<string, ComplianceItem[]> = {};
-        categories.forEach(cat => { grouped[cat.name] = []; });
-        complianceItems.forEach(item => {
-            const parent = item.parentRegulation || 'Other / Uncategorized';
-            if (!grouped[parent]) grouped[parent] = [];
-            grouped[parent].push(item);
-        });
-        return grouped;
-    }, [complianceItems, categories]);
-
-    return (
-        <Card>
-            <CardHeader className="flex-row justify-between items-start">
-                <div>
-                    <CardTitle>Coherence Matrix</CardTitle>
-                    <CardDescription>Applicable regulatory requirements and compliance processes.</CardDescription>
-                </div>
-                <div className="flex gap-2">
-                    {canEdit && (
-                        <>
-                            <Dialog open={isCategoryDialogOpen} onOpenChange={(open) => { setIsCategoryDialogOpen(open); if (!open) { setEditingCategory(null); setNewCategoryName(''); } }}>
-                                <DialogTrigger asChild><Button variant="outline"><PlusCircle className="mr-2 h-4 w-4" /> Add Top Level</Button></DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader><DialogTitle>{editingCategory ? 'Rename' : 'Add'} Top Level Regulation</DialogTitle></DialogHeader>
-                                    <div className="space-y-4 pt-4">
-                                        <div className="space-y-2">
-                                            <Label>Regulation Name</Label>
-                                            <Input value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="Enter regulation title..." />
-                                        </div>
-                                        <DialogFooter><Button onClick={handleCategorySubmit}>{editingCategory ? 'Save Changes' : 'Add Category'}</Button></DialogFooter>
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
-                            <Button onClick={() => { setPreSelectedCategoryName(undefined); setEditingItem(null); setIsDialogOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Sub-Regulation</Button>
-                        </>
-                    )}
-                </div>
-            </CardHeader>
-            <CardContent>
-                <div className="border rounded-md overflow-hidden">
-                    <div className="grid grid-cols-[1fr,2fr,1fr] p-4 font-semibold border-b bg-muted/30">
-                        <div>Regulation / Section</div><div>Regulation Statement</div><div className="text-right">Next Audit</div>
-                    </div>
-                    {Object.keys(groupedItems).length > 0 ? (
-                        <Accordion type="multiple" className="w-full">
-                            {Object.keys(groupedItems).sort().map(parentReg => (
-                                <AccordionItem value={parentReg} key={parentReg} className="border-b last:border-b-0">
-                                    <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/20">
-                                        <div className="flex items-center justify-between w-full pr-4">
-                                            <div className="flex items-center gap-2"><Badge variant="outline" className="font-bold text-sm">{parentReg}</Badge><span className="text-xs text-muted-foreground">({groupedItems[parentReg].length} items)</span></div>
-                                            {canEdit && (
-                                                <div className="flex items-center gap-2 no-print" onClick={(e) => e.stopPropagation()}>
-                                                    <Button size="sm" variant="ghost" onClick={() => { setPreSelectedCategoryName(parentReg === 'Other / Uncategorized' ? undefined : parentReg); setEditingItem(null); setIsDialogOpen(true); }}>
-                                                        <PlusCircle className="h-4 w-4 mr-1" /> Add Requirement
-                                                    </Button>
-                                                    {(() => {
-                                                        const cat = categories.find(c => c.name === parentReg);
-                                                        return cat && (
-                                                            <>
-                                                                <Button size="sm" variant="ghost" onClick={() => { setEditingCategory(cat); setNewCategoryName(cat.name); setIsCategoryDialogOpen(true); }} className="h-8 w-8 p-0"><Edit className="h-4 w-4" /></Button>
-                                                                <AlertDialog>
-                                                                    <AlertDialogTrigger asChild><Button size="sm" variant="ghost" className="text-destructive h-8 w-8 p-0"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
-                                                                    <AlertDialogContent>
-                                                                        <AlertDialogHeader><AlertDialogTitle>Delete Top Level Regulation?</AlertDialogTitle><AlertDialogDescription>This will remove "{parentReg}". Items will be moved to "Uncategorized".</AlertDialogDescription></AlertDialogHeader>
-                                                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteCategory(cat.id)} className="bg-destructive">Delete</AlertDialogAction></AlertDialogFooter>
-                                                                    </AlertDialogContent>
-                                                                </AlertDialog>
-                                                            </>
-                                                        )
-                                                    })()}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="p-0">
-                                        <div className="divide-y bg-muted/5">
-                                            {groupedItems[parentReg].length > 0 ? groupedItems[parentReg].map(item => {
-                                                const { lastAuditDate, findings } = getAuditDataForRegulation(item.regulation);
-                                                return (
-                                                    <Collapsible key={item.id} className="w-full">
-                                                        <CollapsibleTrigger className="w-full">
-                                                            <div className="grid grid-cols-[1fr,2fr,1fr] p-4 text-left hover:bg-muted/50 transition-colors">
-                                                                <div className="font-semibold text-primary">{item.regulation}</div><div className="truncate pr-4 text-sm">{item.regulationStatement}</div><div className="text-right flex items-center justify-end gap-2 text-sm">{item.nextAuditDate ? format(parseISO(item.nextAuditDate), 'dd MMM yyyy') : 'N/A'}<ChevronDown className="h-4 w-4" /></div>
-                                                            </div>
-                                                        </CollapsibleTrigger>
-                                                        <CollapsibleContent>
-                                                            <div className="px-8 py-4 bg-background border-t space-y-4 shadow-inner">
-                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                                    <div className="space-y-4">
-                                                                        <div><h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Regulation Statement</h4><p className="text-sm whitespace-pre-wrap leading-relaxed">{item.regulationStatement}</p></div>
-                                                                        <div><h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Company Reference</h4><p className="text-sm whitespace-pre-wrap leading-relaxed">{item.companyReference || 'N/A'}</p></div>
-                                                                    </div>
-                                                                    <div className="space-y-4">
-                                                                        <div className="grid grid-cols-2 gap-4">
-                                                                            <div><h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Manager</h4><p className="text-sm font-medium">{item.responsibleManager}</p></div>
-                                                                            <div><h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Last Audit</h4><p className="text-sm">{lastAuditDate}</p></div>
-                                                                            <div><h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Next Audit</h4><p className="text-sm">{item.nextAuditDate ? format(parseISO(item.nextAuditDate), 'dd MMM yyyy') : 'N/A'}</p></div>
-                                                                            <div><h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Findings</h4><Badge variant={findings === 'None' ? 'success' : 'destructive'} className="text-[10px] uppercase">{findings}</Badge></div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                {canEdit && (
-                                                                    <div className="flex justify-end gap-2 pt-4 border-t">
-                                                                        <Button variant="outline" size="sm" onClick={() => { setEditingItem(item); setIsDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</Button>
-                                                                        <AlertDialog>
-                                                                            <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="text-destructive border-destructive hover:bg-destructive hover:text-white"><Trash2 className="mr-2 h-4 w-4" /> Delete</Button></AlertDialogTrigger>
-                                                                            <AlertDialogContent>
-                                                                                <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-                                                                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteItem(item.id)} className="bg-destructive">Yes, Delete</AlertDialogAction></AlertDialogFooter>
-                                                                            </AlertDialogContent>
-                                                                        </AlertDialog>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </CollapsibleContent>
-                                                    </Collapsible>
-                                                )
-                                            }) : (<div className="p-4 text-center text-xs text-muted-foreground italic">No items.</div>)}
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            ))}
-                        </Accordion>
-                    ) : (<div className="p-10 text-center text-sm text-muted-foreground">No regulations added yet.</div>)}
-                </div>
-            </CardContent>
-            {canEdit && (
-                <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingItem(null); }}>
-                    <DialogContent className="sm:max-w-2xl">
-                        <DialogHeader><DialogTitle>{editingItem ? 'Edit' : 'Add'} Compliance Requirement</DialogTitle></DialogHeader>
-                        <ComplianceItemForm onSubmit={handleFormSubmit} personnel={initialPersonnel} departments={initialDepartments} categories={categories} existingItem={editingItem} preSelectedParentId={preSelectedCategoryName} />
-                    </DialogContent>
-                </Dialog>
-            )}
-        </Card>
-    );
 };
 
 // --- Main Quality Page Content ---
@@ -669,40 +290,28 @@ export function QualityPageContent({
     initialTasks: UnifiedTask[],
     initialAuditAreas: CompanyAuditArea[],
 }) {
-  const searchParams = useSearchParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
+  const { company, user, updateCompany } = useUser();
+  const { toast } = useToast();
 
   const [audits, setAudits] = useState<QualityAudit[]>(initialAudits);
   const [schedule, setSchedule] = useState<AuditScheduleItem[]>(initialSchedule);
   const [auditAreas, setAuditAreas] = useState<CompanyAuditArea[]>(initialAuditAreas);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
-  const { company } = useUser();
-  const { toast } = useToast();
-  const [showArchived, setShowArchived] = useState(false);
-  const [selectedAudits, setSelectedAudits] = useState<string[]>([]);
-  
-  const fetchData = useCallback(async () => {
-    if (!company) return;
-    const data = await getDocs(collection(db, `companies/${company.id}/quality-audits`));
-    setAudits(data.docs.map(doc => ({ ...doc.data(), id: doc.id } as QualityAudit)));
-    
-    const scheduleData = await getDocs(collection(db, `companies/${company.id}/audit-schedule-items`));
-    setSchedule(scheduleData.docs.map(doc => ({ ...doc.data(), id: doc.id } as AuditScheduleItem)));
-    
-    const areasData = await getDocs(collection(db, `companies/${company.id}/audit-areas`));
-    setAuditAreas(areasData.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyAuditArea)));
-  }, [company]);
+  const [complianceItems, setComplianceItems] = useState<ComplianceItem[]>([]);
+  const [categories, setCategories] = useState<CoherenceMatrixCategory[]>([]);
+  const [isComplianceDialogOpen, setIsComplianceDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<ComplianceItem | null>(null);
+  const [editingCategory, setEditingCategory] = useState<CoherenceMatrixCategory | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [preSelectedCategoryName, setPreSelectedCategoryName] = useState<string | undefined>();
 
-  useEffect(() => {
-    setAudits(initialAudits);
-    setSchedule(initialSchedule);
-    setAuditAreas(initialAuditAreas);
-  }, [initialAudits, initialSchedule, initialAuditAreas]);
+  const activeAudits = useMemo(() => audits.filter(a => a.status !== 'Archived'), [audits]);
+  const archivedAudits = useMemo(() => audits.filter(a => a.status === 'Archived'), [audits]);
 
-  const activeAudits = useMemo(() => audits.filter(audit => audit.status !== 'Archived'), [audits]);
-  const archivedAudits = useMemo(() => audits.filter(audit => audit.status === 'Archived'), [audits]);
-  
   const reportsControls = useTableControls(activeAudits, {
     initialSort: { key: 'date', direction: 'desc' },
     searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department', 'auditeeName', 'area'],
@@ -713,111 +322,93 @@ export function QualityPageContent({
     searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department', 'auditeeName', 'area'],
   });
 
-  const handleScheduleUpdate = async (updatedItem: AuditScheduleItem) => {
+  const fetchMatrixData = useCallback(async () => {
     if (!company) return;
-    setSchedule(prev => {
-        const idx = prev.findIndex(item => item.id === updatedItem.id);
-        if (idx > -1) { const next = [...prev]; next[idx] = updatedItem; return next; }
-        return [...prev, updatedItem];
+    try {
+        const compQuery = query(collection(db, `companies/${company.id}/compliance-matrix`));
+        const catQuery = query(collection(db, `companies/${company.id}/coherence-matrix-categories`));
+        const [compSnap, catSnap] = await Promise.all([getDocs(compQuery), getDocs(catQuery)]);
+        setComplianceItems(compSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as ComplianceItem)));
+        setCategories(catSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as CoherenceMatrixCategory)));
+    } catch (e) { console.error(e); }
+  }, [company]);
+
+  useEffect(() => { fetchMatrixData(); }, [fetchMatrixData]);
+
+  const groupedMatrix = useMemo(() => {
+    const grouped: Record<string, ComplianceItem[]> = {};
+    categories.forEach(cat => { grouped[cat.name] = []; });
+    complianceItems.forEach(item => {
+        const parent = item.parentRegulation || 'Other / Uncategorized';
+        if (!grouped[parent]) grouped[parent] = [];
+        grouped[parent].push(item);
     });
-    try {
-        const scheduleRef = doc(db, `companies/${company.id}/audit-schedule-items`, updatedItem.id);
-        await setDoc(scheduleRef, updatedItem, { merge: true });
-    } catch(error) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not save schedule update.' });
-    }
-  };
+    return grouped;
+  }, [complianceItems, categories]);
 
-  const handleAreaUpdate = async (areaId: string, newName: string) => {
-    if (!company) return;
-    const oldArea = auditAreas.find(a => a.id === areaId);
-    if (!oldArea || oldArea.name === newName) return;
-    try {
-        const docRef = doc(db, `companies/${company.id}/audit-areas`, areaId);
-        await updateDoc(docRef, { name: newName });
-        const batch = writeBatch(db);
-        schedule.forEach(item => { if (item.area === oldArea.name) batch.update(doc(db, `companies/${company.id}/audit-schedule-items`, item.id), { area: newName }); });
-        await batch.commit();
-        fetchData();
-        toast({ title: "Audit Area Updated" });
-    } catch(e) { toast({ variant: 'destructive', title: 'Error' }); }
-  };
-
-  const handleAreaAdd = async () => {
+  const handleMatrixSubmit = async (data: Omit<ComplianceItem, 'id' | 'companyId'>) => {
     if (!company) return;
     try {
-        await addDoc(collection(db, `companies/${company.id}/audit-areas`), { name: `New Area ${auditAreas.length + 1}` });
-        fetchData(); toast({ title: "Audit Area Added" });
-    } catch(e) { toast({ variant: 'destructive', title: 'Error' }); }
+        if (editingItem) {
+            await updateDoc(doc(db, `companies/${company.id}/compliance-matrix`, editingItem.id), data);
+            toast({ title: 'Requirement Updated' });
+        } else {
+            await addDoc(collection(db, `companies/${company.id}/compliance-matrix`), { ...data, companyId: company.id });
+            toast({ title: 'Requirement Added' });
+        }
+        setIsComplianceDialogOpen(false); setEditingItem(null); setPreSelectedCategoryName(undefined);
+        fetchMatrixData();
+    } catch (e) { toast({ variant: 'destructive', title: 'Error' }); }
   };
 
-  const handleAreaDelete = async (areaId: string) => {
-    if (!company) return;
-    const area = auditAreas.find(a => a.id === areaId);
-    if (!area) return;
+  const handleCategorySubmit = async () => {
+    if (!company || !newCategoryName.trim()) return;
     try {
-        const batch = writeBatch(db);
-        batch.delete(doc(db, `companies/${company.id}/audit-areas`, areaId));
-        schedule.forEach(item => { if (item.area === area.name) batch.delete(doc(db, `companies/${company.id}/audit-schedule-items`, item.id)); });
-        await batch.commit();
-        fetchData(); toast({ title: "Audit Area Deleted" });
-    } catch(e) { toast({ variant: 'destructive', title: 'Error' }); }
-  };
-  
-  const handleArchiveAudit = async (auditId: string) => {
-    if (!company) return;
-    try {
-        const batch = writeBatch(db);
-        batch.update(doc(db, `companies/${company.id}/quality-audits`, auditId), { status: 'Archived' });
-        const alertsSnap = await getDocs(query(collection(db, `companies/${company.id}/alerts`), where("relatedLink", "==", `/quality/${auditId}`)));
-        alertsSnap.forEach(d => batch.delete(d.ref));
-        await batch.commit();
-        setAudits(prev => prev.map(a => a.id === auditId ? { ...a, status: 'Archived' } : a));
-        toast({ title: 'Audit Archived' });
-    } catch (error) { toast({ variant: 'destructive', title: 'Error' }); }
-  };
-  
-  const handleRestoreAudit = async (auditId: string) => {
-    if (!company) return;
-    try {
-        await updateDoc(doc(db, `companies/${company.id}/quality-audits`, auditId), { status: 'Closed' });
-        setAudits(prev => prev.map(a => a.id === auditId ? { ...a, status: 'Closed' } : a));
-        toast({ title: 'Audit Restored' });
-    } catch (error) { toast({ variant: 'destructive', title: 'Error' }); }
-  };
-  
-  const handleBulkRestore = async () => {
-    if (!company || selectedAudits.length === 0) return;
-    const batch = writeBatch(db);
-    selectedAudits.forEach(id => batch.update(doc(db, `companies/${company.id}/quality-audits`, id), { status: 'Closed' }));
-    try {
-        await batch.commit();
-        setAudits(prev => prev.map(a => selectedAudits.includes(a.id) ? { ...a, status: 'Closed' } : a));
-        setSelectedAudits([]);
-        toast({ title: 'Audits Restored' });
-    } catch (error) { toast({ variant: 'destructive', title: 'Error' }); }
-  };
-  
-  const handleSelectAll = (checked: boolean, controls: any) => {
-    if (checked) setSelectedAudits(controls.items.map((a: any) => a.id));
-    else setSelectedAudits([]);
-  }
-
-  const handleSelectOne = (auditId: string, checked: boolean) => {
-    if (checked) setSelectedAudits(prev => [...prev, auditId]);
-    else setSelectedAudits(prev => prev.filter(id => id !== auditId));
-  }
-
-  const handleDeleteAudit = async (auditId: string) => {
-    if (!company) return;
-    try {
-      await deleteDoc(doc(db, `companies/${company.id}/quality-audits`, auditId));
-      setAudits(prev => prev.filter(a => a.id !== auditId));
-      toast({ title: 'Audit Deleted' });
-    } catch (error) { toast({ variant: 'destructive', title: 'Error' }); }
+        if (editingCategory) {
+            const batch = writeBatch(db);
+            const oldName = editingCategory.name;
+            const newName = newCategoryName.trim();
+            batch.update(doc(db, `companies/${company.id}/coherence-matrix-categories`, editingCategory.id), { name: newName });
+            complianceItems.forEach(item => {
+                if (item.parentRegulation === oldName) {
+                    batch.update(doc(db, `companies/${company.id}/compliance-matrix`, item.id), { parentRegulation: newName });
+                }
+            });
+            await batch.commit();
+            toast({ title: 'Category Renamed' });
+        } else {
+            await addDoc(collection(db, `companies/${company.id}/coherence-matrix-categories`), { name: newCategoryName.trim() });
+            toast({ title: 'Category Created' });
+        }
+        setIsCategoryDialogOpen(false); setEditingCategory(null); setNewCategoryName('');
+        fetchMatrixData();
+    } catch (e) { toast({ variant: 'destructive', title: 'Error' }); }
   };
 
-  const groupAuditsByDepartment = (list: QualityAudit[]) => {
+  const handleArchiveAudit = async (id: string) => {
+    if (!company) return;
+    await updateDoc(doc(db, `companies/${company.id}/quality-audits`, id), { status: 'Archived' });
+    setAudits(prev => prev.map(a => a.id === id ? { ...a, status: 'Archived' } : a));
+    toast({ title: 'Audit Archived' });
+  };
+
+  const handleRestoreAudit = async (id: string) => {
+    if (!company) return;
+    await updateDoc(doc(db, `companies/${company.id}/quality-audits`, id), { status: 'Closed' });
+    setAudits(prev => prev.map(a => a.id === id ? { ...a, status: 'Closed' } : a));
+    toast({ title: 'Audit Restored' });
+  };
+
+  const handleDeleteAudit = async (id: string) => {
+    if (!company) return;
+    await deleteDoc(doc(db, `companies/${company.id}/quality-audits`, id));
+    setAudits(prev => prev.filter(a => a.id !== id));
+    toast({ title: 'Audit Deleted' });
+  };
+
+  const canEdit = user?.permissions.includes('Quality:Edit') || user?.permissions.includes('Super User');
+
+  const groupAudits = (list: QualityAudit[]) => {
     return list.reduce((acc, audit) => {
       const dept = audit.department || 'Uncategorized';
       if (!acc[dept]) acc[dept] = [];
@@ -826,105 +417,118 @@ export function QualityPageContent({
     }, {} as Record<string, QualityAudit[]>);
   };
 
-  const groupedActiveAudits = useMemo(() => groupAuditsByDepartment(reportsControls.items), [reportsControls.items]);
-  const groupedArchivedAudits = useMemo(() => groupAuditsByDepartment(archivedReportsControls.items), [archivedReportsControls.items]);
-
-  const SortableHeader = ({ label, sortKey }: { label: string, sortKey: string }) => {
-    const controls = showArchived ? archivedReportsControls : reportsControls;
-    return (
-        <Button variant="ghost" onClick={() => controls.requestSort(sortKey)}>
-            {label}
-            {controls.sortConfig?.key === sortKey ? (
-                <ArrowUpDown className={cn("ml-2 h-4 w-4", controls.sortConfig.direction === 'desc' && "rotate-180")} />
-            ) : (
-                <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />
-            )}
-        </Button>
-    );
-  };
+  const groupedActive = useMemo(() => groupAudits(reportsControls.items), [reportsControls.items]);
+  const groupedArchived = useMemo(() => groupAudits(archivedReportsControls.items), [archivedReportsControls.items]);
 
   return (
-      <main className="flex-1 p-4 md:p-8">
+    <main className="flex-1 p-4 md:p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4 no-print">
-            <ScrollArea className="w-full whitespace-nowrap">
-                <TabsList>
-                    <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                    <TabsTrigger value="audits">Audits</TabsTrigger>
-                    <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
-                    <TabsTrigger value="task-tracker">Task Tracker</TabsTrigger>
-                    <TabsTrigger value="coherence-matrix">Coherence Matrix</TabsTrigger>
-                </TabsList>
-                <ScrollBar orientation="horizontal" />
-            </ScrollArea>
-          </div>
-          <TabsContent value="dashboard" className="space-y-8 mt-4">
-               <Card><CardHeader><CardTitle>Annual Audit Schedule</CardTitle><CardDescription>Plan and track internal and external audits.</CardDescription></CardHeader><CardContent><AuditSchedule auditAreas={auditAreas} schedule={schedule} onUpdate={handleScheduleUpdate} onAreaUpdate={handleAreaUpdate} onAreaAdd={handleAreaAdd} onAreaDelete={handleAreaDelete} /></CardContent></Card>
-              <div className="grid gap-8 md:grid-cols-2">
-                  <Card><CardHeader><CardTitle>Compliance Score Over Time</CardTitle></CardHeader><CardContent><ComplianceChart data={activeAudits} /></CardContent></Card>
-                  <Card><CardHeader><CardTitle>Non-Conformance Categories</CardTitle></CardHeader><CardContent><NonConformanceChart data={activeAudits} /></CardContent></Card>
-              </div>
-          </TabsContent>
-          <TabsContent value="audits" className="mt-4">
-              <Card>
-                  <CardHeader><CardTitle>Audit Reports</CardTitle><CardDescription>Review all quality audit reports.</CardDescription></CardHeader>
-                  <CardContent>
-                    <Tabs defaultValue="active">
-                        <TabsList><TabsTrigger value="active" onClick={() => setShowArchived(false)}>Active Audits</TabsTrigger><TabsTrigger value="archived" onClick={() => setShowArchived(true)}>Archived Audits</TabsTrigger></TabsList>
-                         <div className="flex items-center py-4">
-                            <div className="relative w-full max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search audits..." value={showArchived ? archivedReportsControls.searchTerm : reportsControls.searchTerm} onChange={(e) => showArchived ? archivedReportsControls.setSearchTerm(e.target.value) : reportsControls.setSearchTerm(e.target.value)} className="pl-10" /></div>
+            <TabsList className="mb-4 no-print">
+                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                <TabsTrigger value="audits">Audits</TabsTrigger>
+                <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
+                <TabsTrigger value="task-tracker">Task Tracker</TabsTrigger>
+                <TabsTrigger value="coherence-matrix">Coherence Matrix</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="dashboard" className="space-y-8">
+                <Card><CardHeader><CardTitle>Audit Schedule</CardTitle></CardHeader><CardContent><AuditSchedule auditAreas={auditAreas} schedule={schedule} onUpdate={async (item) => { if (!company) return; await setDoc(doc(db, `companies/${company.id}/audit-schedule-items`, item.id), item, { merge: true }); fetchData(); }} onAreaUpdate={async (id, name) => { if (!company) return; await updateDoc(doc(db, `companies/${company.id}/audit-areas`, id), { name }); fetchData(); }} onAreaAdd={async () => { if (!company) return; await addDoc(collection(db, `companies/${company.id}/audit-areas`), { name: 'New Area' }); fetchData(); }} onAreaDelete={async (id) => { if (!company) return; await deleteDoc(doc(db, `companies/${company.id}/audit-areas`, id)); fetchData(); }} /></CardContent></Card>
+                <div className="grid md:grid-cols-2 gap-8">
+                    <Card><CardHeader><CardTitle>Compliance Score</CardTitle></CardHeader><CardContent><ComplianceChart data={activeAudits} /></CardContent></Card>
+                    <Card><CardHeader><CardTitle>Non-Conformance Breakdown</CardTitle></CardHeader><CardContent><NonConformanceChart data={activeAudits} /></CardContent></Card>
+                </div>
+            </TabsContent>
+
+            <TabsContent value="audits" className="space-y-8">
+                <Card>
+                    <CardHeader><CardTitle>Active Audit Reports</CardTitle></CardHeader>
+                    <CardContent>
+                        {Object.keys(groupedActive).sort().map(dept => (
+                            <div key={dept} className="mb-8">
+                                <h3 className="font-semibold mb-2">{dept}</h3>
+                                <ReportTable reportList={groupedActive[dept]} controls={reportsControls} selectedAudits={[]} handleSelectAll={() => {}} handleSelectOne={() => {}} handleRestoreAudit={() => {}} handleArchiveAudit={handleArchiveAudit} handleDeleteAudit={handleDeleteAudit} />
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader><CardTitle>Archived Audit Reports</CardTitle></CardHeader>
+                    <CardContent>
+                        {Object.keys(groupedArchived).sort().map(dept => (
+                            <div key={dept} className="mb-8">
+                                <h3 className="font-semibold mb-2">{dept}</h3>
+                                <ReportTable reportList={groupedArchived[dept]} isArchivedTable controls={archivedReportsControls} selectedAudits={[]} handleSelectAll={() => {}} handleSelectOne={() => {}} handleRestoreAudit={handleRestoreAudit} handleArchiveAudit={() => {}} handleDeleteAudit={handleDeleteAudit} />
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            </TabsContent>
+
+            <TabsContent value="checklists">
+                <AuditChecklistsManager initialTemplates={initialChecklists} initialPersonnel={initialPersonnel} initialDepartments={initialDepartments} initialAircraft={initialAircraft} />
+            </TabsContent>
+
+            <TabsContent value="task-tracker">
+                <TaskTrackerPageContent initialTasks={initialTasks} personnel={initialPersonnel} />
+            </TabsContent>
+
+            <TabsContent value="coherence-matrix">
+                <Card>
+                    <CardHeader className="flex-row justify-between items-center">
+                        <div><CardTitle>Coherence Matrix</CardTitle><CardDescription>Regulatory compliance and oversight register.</CardDescription></div>
+                        <div className="flex gap-2">
+                            {canEdit && (
+                                <>
+                                    <Button variant="outline" onClick={() => setIsCategoryDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add Top Level</Button>
+                                    <Button onClick={() => setIsComplianceDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add Sub-Regulation</Button>
+                                </>
+                            )}
                         </div>
-                        <TabsContent value="active" className="mt-4 space-y-8">
-                             {Object.keys(groupedActiveAudits).sort().map(department => (
-                                <div key={department}>
-                                    <h3 className="text-lg font-semibold mb-2">{department}</h3>
-                                    <ReportTable 
-                                        reportList={groupedActiveAudits[department]} 
-                                        isArchivedTable={false} 
-                                        controls={reportsControls}
-                                        selectedAudits={selectedAudits}
-                                        handleSelectAll={handleSelectAll}
-                                        handleSelectOne={handleSelectOne}
-                                        handleRestoreAudit={handleRestoreAudit}
-                                        handleArchiveAudit={handleArchiveAudit}
-                                        handleDeleteAudit={handleDeleteAudit}
-                                    />
-                                </div>
+                    </CardHeader>
+                    <CardContent>
+                        <Accordion type="multiple" className="w-full">
+                            {Object.keys(groupedMatrix).sort().map(catName => (
+                                <AccordionItem key={catName} value={catName}>
+                                    <AccordionTrigger className="px-4 hover:bg-muted/50 transition-colors">
+                                        <div className="flex items-center justify-between w-full pr-4">
+                                            <div className="flex items-center gap-2"><Badge variant="outline">{catName}</Badge></div>
+                                            {canEdit && catName !== 'Other / Uncategorized' && (
+                                                <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                                                    <Button size="sm" variant="ghost" onClick={() => { setEditingCategory(categories.find(c => c.name === catName)!); setNewCategoryName(catName); setIsCategoryDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                                                    <Button size="sm" variant="ghost" onClick={async () => { if (!company) return; const catId = categories.find(c => c.name === catName)?.id; if (catId) await deleteDoc(doc(db, `companies/${company.id}/coherence-matrix-categories`, catId)); fetchMatrixData(); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        <Table>
+                                            <TableHeader><TableRow><TableHead>Regulation</TableHead><TableHead>Statement</TableHead><TableHead>Manager</TableHead><TableHead>Next Audit</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                                            <TableBody>
+                                                {groupedMatrix[catName].map(item => (
+                                                    <TableRow key={item.id}>
+                                                        <TableCell className="font-semibold">{item.regulation}</TableCell>
+                                                        <TableCell className="max-w-xs truncate">{item.regulationStatement}</TableCell>
+                                                        <TableCell>{item.responsibleManager}</TableCell>
+                                                        <TableCell>{item.nextAuditDate || 'N/A'}</TableCell>
+                                                        <TableCell className="text-right">
+                                                            <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setIsComplianceDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                                                            <Button variant="ghost" size="icon" onClick={async () => { if (!company) return; await deleteDoc(doc(db, `companies/${company.id}/compliance-matrix`, item.id)); fetchMatrixData(); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </AccordionContent>
+                                </AccordionItem>
                             ))}
-                        </TabsContent>
-                         <TabsContent value="archived" className="mt-4 space-y-8">
-                            <div className="flex justify-end mb-4">{selectedAudits.length > 0 && (<Button variant="outline" onClick={handleBulkRestore}><RotateCw className="mr-2 h-4 w-4" />Restore Selected ({selectedAudits.length})</Button>)}</div>
-                            {Object.keys(groupedArchivedAudits).sort().map(department => (
-                                <div key={department}>
-                                    <h3 className="text-lg font-semibold mb-2">{department}</h3>
-                                    <ReportTable 
-                                        reportList={groupedArchivedAudits[department]} 
-                                        isArchivedTable={true} 
-                                        controls={archivedReportsControls}
-                                        selectedAudits={selectedAudits}
-                                        handleSelectAll={handleSelectAll}
-                                        handleSelectOne={handleSelectOne}
-                                        handleRestoreAudit={handleRestoreAudit}
-                                        handleArchiveAudit={handleArchiveAudit}
-                                        handleDeleteAudit={handleDeleteAudit}
-                                    />
-                                </div>
-                            ))}
-                        </TabsContent>
-                    </Tabs>
-                  </CardContent>
-              </Card>
-          </TabsContent>
-          <TabsContent value="checklists" className="mt-4">
-              <AuditChecklistsManager initialTemplates={initialChecklists} initialPersonnel={initialPersonnel} initialDepartments={initialDepartments} initialAircraft={initialAircraft} />
-          </TabsContent>
-          <TabsContent value="task-tracker" className="mt-4">
-            <TaskTrackerPageContent initialTasks={initialTasks} personnel={initialPersonnel} />
-          </TabsContent>
-          <TabsContent value="coherence-matrix" className="mt-4">
-            <CoherenceMatrix audits={audits} personnel={initialPersonnel} departments={initialDepartments} />
-          </TabsContent>
+                        </Accordion>
+                    </CardContent>
+                </Card>
+            </TabsContent>
         </Tabs>
-      </main>
+
+        <Dialog open={isComplianceDialogOpen} onOpenChange={setIsComplianceDialogOpen}><DialogContent className="sm:max-w-2xl"><DialogHeader><DialogTitle>{editingItem ? 'Edit' : 'Add'} Compliance Requirement</DialogTitle></DialogHeader><ComplianceItemForm onSubmit={handleMatrixSubmit} personnel={initialPersonnel} departments={initialDepartments} categories={categories} existingItem={editingItem} preSelectedParentId={preSelectedCategoryName} /></DialogContent></Dialog>
+        <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}><DialogContent><DialogHeader><DialogTitle>{editingCategory ? 'Rename' : 'Add'} Top Level Regulation</DialogTitle></DialogHeader><div className="space-y-4 pt-4"><div className="space-y-2"><Label>Regulation Name</Label><Input value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} /></div><DialogFooter><Button onClick={handleCategorySubmit}>{editingCategory ? 'Save Changes' : 'Add'}</Button></DialogFooter></div></DialogContent></Dialog>
+    </main>
   );
 }
