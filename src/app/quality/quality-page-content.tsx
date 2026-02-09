@@ -6,10 +6,10 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, Booking, CompanyAuditArea, CoherenceMatrixCategory, FindingStatus, FindingLevel, AuditChecklistItem, UnifiedTask } from '@/lib/types';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, ChevronDown, MinusCircle, XCircle, MessageSquareWarning, Ban, Check, CalendarIcon, Signature } from 'lucide-react';
+import { ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, ChevronDown, MinusCircle, XCircle, MessageSquareWarning, Ban, Check, CalendarIcon, Signature } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { AuditSchedule } from '../quality/audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -40,7 +40,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { TaskTrackerPageContent } from '@/app/task-tracker/task-tracker-page-content';
 import { Label } from '@/components/ui/label';
-import { type SpiConfig, EditSpiForm } from './edit-spi-form';
 
 // --- Helper Functions & Constants ---
 
@@ -228,7 +227,7 @@ const ComplianceItemForm = ({
   const [departmentFilter, setDepartmentFilter] = useState('');
 
   const complianceItemSchema = z.object({
-    parentRegulation: z.string().min(1, 'Parent Regulation is required.'),
+    parentRegulation: z.string().optional(),
     regulation: z.string().min(3, 'Regulation point is required.'),
     regulationStatement: z.string().min(5, 'Regulation statement is required.'),
     companyReference: z.string().optional(),
@@ -243,11 +242,12 @@ const ComplianceItemForm = ({
     defaultValues: existingItem
       ? {
           ...existingItem,
+          parentRegulation: existingItem.parentRegulation || 'none',
           regulationStatement: existingItem.regulationStatement || '',
           nextAuditDate: existingItem.nextAuditDate ? parseISO(existingItem.nextAuditDate) : null,
         }
       : {
-          parentRegulation: preSelectedParentId || '',
+          parentRegulation: preSelectedParentId || 'none',
           regulation: '',
           regulationStatement: '',
           companyReference: '',
@@ -258,6 +258,7 @@ const ComplianceItemForm = ({
   const handleFormSubmit = (data: ComplianceFormValues) => {
     onSubmit({
         ...data,
+        parentRegulation: data.parentRegulation === 'none' ? undefined : data.parentRegulation,
         nextAuditDate: data.nextAuditDate ? format(data.nextAuditDate, 'yyyy-MM-dd') : undefined,
     } as any);
   };
@@ -280,9 +281,10 @@ const ComplianceItemForm = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Top Level Regulation</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value || 'none'}>
                 <FormControl><SelectTrigger><SelectValue placeholder="Select parent regulation" /></SelectTrigger></FormControl>
                 <SelectContent>
+                  <SelectItem value="none">None / Uncategorized</SelectItem>
                   {categories.map(cat => (
                     <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                   ))}
@@ -582,15 +584,21 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
                                             <div className="flex items-center gap-2"><Badge variant="outline" className="font-bold text-sm">{parentReg}</Badge><span className="text-xs text-muted-foreground">({groupedItems[parentReg].length} items)</span></div>
                                             {canEdit && (
                                                 <div className="flex items-center gap-2 no-print" onClick={(e) => e.stopPropagation()}>
-                                                    <Button size="sm" variant="ghost" onClick={() => { setPreSelectedCategoryName(parentReg); setEditingItem(null); setIsDialogOpen(true); }}><PlusCircle className="h-4 w-4 mr-1" /> Add Requirement</Button>
-                                                    <Button size="sm" variant="ghost" onClick={() => { const cat = categories.find(c => c.name === parentReg); if(cat){ setEditingCategory(cat); setNewCategoryName(cat.name); setIsCategoryDialogOpen(true); } }} className="h-8 w-8 p-0"><Edit className="h-4 w-4" /></Button>
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild><Button size="sm" variant="ghost" className="text-destructive h-8 w-8 p-0"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader><AlertDialogTitle>Delete Top Level Regulation?</AlertDialogTitle><AlertDialogDescription>This will remove "{parentReg}". Items will be moved to "Uncategorized".</AlertDialogDescription></AlertDialogHeader>
-                                                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => { const cat = categories.find(c => c.name === parentReg); if (cat) handleDeleteCategory(cat.id); }} className="bg-destructive">Delete</AlertDialogAction></AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
+                                                    <Button size="sm" variant="ghost" onClick={() => { setPreSelectedCategoryName(parentReg === 'Other / Uncategorized' ? undefined : parentReg); setEditingItem(null); setIsDialogOpen(true); }}>
+                                                        <PlusCircle className="h-4 w-4 mr-1" /> Add Requirement
+                                                    </Button>
+                                                    {parentReg !== 'Other / Uncategorized' && (
+                                                        <>
+                                                            <Button size="sm" variant="ghost" onClick={() => { const cat = categories.find(c => c.name === parentReg); if(cat){ setEditingCategory(cat); setNewCategoryName(cat.name); setIsCategoryDialogOpen(true); } }} className="h-8 w-8 p-0"><Edit className="h-4 w-4" /></Button>
+                                                            <AlertDialog>
+                                                                <AlertDialogTrigger asChild><Button size="sm" variant="ghost" className="text-destructive h-8 w-8 p-0"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                                                                <AlertDialogContent>
+                                                                    <AlertDialogHeader><AlertDialogTitle>Delete Top Level Regulation?</AlertDialogTitle><AlertDialogDescription>This will remove "{parentReg}". Items will be moved to "Uncategorized".</AlertDialogDescription></AlertDialogHeader>
+                                                                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => { const cat = categories.find(c => c.name === parentReg); if (cat) handleDeleteCategory(cat.id); }} className="bg-destructive">Delete</AlertDialogAction></AlertDialogFooter>
+                                                                </AlertDialogContent>
+                                                            </AlertDialog>
+                                                        </>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -688,7 +696,7 @@ export function QualityPageContent({
   const [schedule, setSchedule] = useState<AuditScheduleItem[]>(initialSchedule);
   const [auditAreas, setAuditAreas] = useState<CompanyAuditArea[]>(initialAuditAreas);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
-  const { user, company } = useUser();
+  const { company } = useUser();
   const { toast } = useToast();
   const [showArchived, setShowArchived] = useState(false);
   const [selectedAudits, setSelectedAudits] = useState<string[]>([]);
