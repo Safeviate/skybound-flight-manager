@@ -4,9 +4,9 @@ import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Risk, User, ComplianceItem, CompanyDepartment, Aircraft, UnifiedTask, CompanyAuditArea, CoherenceMatrixCategory, FindingStatus, FindingLevel } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, User, ComplianceItem, CompanyDepartment, Aircraft, UnifiedTask, CompanyAuditArea, CoherenceMatrixCategory, FindingStatus, FindingLevel } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, ReferenceLine } from 'recharts';
-import { format, parseISO, isAfter } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, ChevronDown, MinusCircle, XCircle, MessageSquareWarning, Ban, Check, CalendarIcon, Signature } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -36,18 +36,26 @@ import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { TaskTrackerPageContent } from '@/app/task-tracker/task-tracker-page-content';
 import { Label } from '@/components/ui/label';
 
-// --- Helper Components defined outside to prevent parser confusion ---
+// --- Top Level Helper Components ---
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
-  const chartData = data.map(audit => ({ date: format(parseISO(audit.date), 'MMM yy'), score: audit.complianceScore, })).reverse();
+  const chartData = data.map(audit => ({ 
+    date: format(parseISO(audit.date), 'MMM yy'), 
+    score: audit.complianceScore, 
+  })).reverse();
+  
   return (
     <ResponsiveContainer width="100%" height={300}>
       <LineChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="date" /><YAxis domain={[80, 100]} unit="%" /><Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', }} /><Legend /><Line type="monotone" dataKey="score" name="Compliance Score" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="date" />
+        <YAxis domain={[80, 100]} unit="%" />
+        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }} />
+        <Legend />
+        <Line type="monotone" dataKey="score" name="Compliance Score" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -59,14 +67,128 @@ const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
         const category = issue.regulationReference?.split(' ')[0] || 'Uncategorized';
         conformanceCounts[category] = (conformanceCounts[category] || 0) + 1;
     });
-    const chartData = Object.keys(conformanceCounts).map(key => ({ name: key, count: conformanceCounts[key], }));
+    const chartData = Object.keys(conformanceCounts).map(key => ({ name: key, count: conformanceCounts[key] }));
+    
     return (
         <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" /><XAxis type="number" /><YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} /><Tooltip cursor={{fill: 'hsl(var(--muted))'}} contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', }} /><Legend /><Bar dataKey="count" name="Issues" fill="hsl(var(--primary))" />
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" />
+                <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
+                <Tooltip cursor={{fill: 'hsl(var(--muted))'}} contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }} />
+                <Legend />
+                <Bar dataKey="count" name="Issues" fill="hsl(var(--primary))" />
             </BarChart>
         </ResponsiveContainer>
     );
+};
+
+const ComplianceItemForm = ({
+  onSubmit,
+  personnel,
+  departments,
+  categories,
+  existingItem,
+  preSelectedParentId,
+}: {
+  onSubmit: (data: Omit<ComplianceItem, 'id' | 'companyId'>) => void;
+  personnel: User[];
+  departments: CompanyDepartment[];
+  categories: CoherenceMatrixCategory[];
+  existingItem?: ComplianceItem | null;
+  preSelectedParentId?: string;
+}) => {
+  const complianceItemSchema = z.object({
+    parentRegulation: z.string().optional(),
+    regulation: z.string().min(3, 'Regulation point is required.'),
+    regulationStatement: z.string().min(5, 'Regulation statement is required.'),
+    companyReference: z.string().optional(),
+    responsibleManager: z.string().min(1, 'Responsible Manager is required.'),
+    nextAuditDate: z.date().optional().nullable(),
+  });
+
+  type ComplianceFormValues = z.infer<typeof complianceItemSchema>;
+  
+  const form = useForm<ComplianceFormValues>({
+    resolver: zodResolver(complianceItemSchema),
+    defaultValues: existingItem
+      ? {
+          ...existingItem,
+          parentRegulation: existingItem.parentRegulation || 'none',
+          regulationStatement: existingItem.regulationStatement || '',
+          nextAuditDate: existingItem.nextAuditDate ? parseISO(existingItem.nextAuditDate) : null,
+        }
+      : {
+          parentRegulation: preSelectedParentId || 'none',
+          regulation: '',
+          regulationStatement: '',
+          companyReference: '',
+          responsibleManager: '',
+        },
+  });
+
+  const handleFormSubmit = (data: ComplianceFormValues) => {
+    onSubmit({
+        ...data,
+        parentRegulation: data.parentRegulation === 'none' ? undefined : data.parentRegulation,
+        nextAuditDate: data.nextAuditDate ? format(data.nextAuditDate, 'yyyy-MM-dd') : undefined,
+    } as any);
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="parentRegulation"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Top Level Regulation</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value || 'none'}>
+                <FormControl><SelectTrigger><SelectValue placeholder="Select parent" /></SelectTrigger></FormControl>
+                <SelectContent>
+                  <SelectItem value="none">None / Uncategorized</SelectItem>
+                  {categories.map(cat => <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField control={form.control} name="regulation" render={({ field }) => (<FormItem><FormLabel>Regulation Point</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+        <FormField control={form.control} name="regulationStatement" render={({ field }) => (<FormItem><FormLabel>Statement</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
+        <FormField control={form.control} name="companyReference" render={({ field }) => (<FormItem><FormLabel>Company Reference</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
+        <FormField control={form.control} name="responsibleManager" render={({ field }) => (
+            <FormItem>
+                <FormLabel>Manager</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select manager" /></SelectTrigger></FormControl>
+                    <SelectContent>{personnel.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent>
+                </Select>
+                <FormMessage />
+            </FormItem>
+        )} />
+        <FormField control={form.control} name="nextAuditDate" render={({ field }) => (
+            <FormItem>
+                <FormLabel>Next Audit</FormLabel>
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button variant="outline" className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                {field.value ? format(field.value, "PPP") : "Pick a date"}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                        </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus /></PopoverContent>
+                </Popover>
+                <FormMessage />
+            </FormItem>
+        )} />
+        <DialogFooter><Button type="submit">Save Requirement</Button></DialogFooter>
+      </form>
+    </Form>
+  );
 };
 
 interface ReportTableProps {
@@ -186,89 +308,6 @@ const ReportTable = ({
     );
 };
 
-const ComplianceItemForm = ({
-  onSubmit,
-  personnel,
-  departments,
-  categories,
-  existingItem,
-  preSelectedParentId,
-}: {
-  onSubmit: (data: Omit<ComplianceItem, 'id' | 'companyId'>) => void;
-  personnel: User[];
-  departments: CompanyDepartment[];
-  categories: CoherenceMatrixCategory[];
-  existingItem?: ComplianceItem | null;
-  preSelectedParentId?: string;
-}) => {
-  const complianceItemSchema = z.object({
-    parentRegulation: z.string().optional(),
-    regulation: z.string().min(3, 'Regulation point is required.'),
-    regulationStatement: z.string().min(5, 'Regulation statement is required.'),
-    companyReference: z.string().optional(),
-    responsibleManager: z.string().min(1, 'Responsible Manager is required.'),
-    nextAuditDate: z.date().optional().nullable(),
-  });
-
-  type ComplianceFormValues = z.infer<typeof complianceItemSchema>;
-  
-  const form = useForm<ComplianceFormValues>({
-    resolver: zodResolver(complianceItemSchema),
-    defaultValues: existingItem
-      ? {
-          ...existingItem,
-          parentRegulation: existingItem.parentRegulation || 'none',
-          regulationStatement: existingItem.regulationStatement || '',
-          nextAuditDate: existingItem.nextAuditDate ? parseISO(existingItem.nextAuditDate) : null,
-        }
-      : {
-          parentRegulation: preSelectedParentId || 'none',
-          regulation: '',
-          regulationStatement: '',
-          companyReference: '',
-          responsibleManager: '',
-        },
-  });
-
-  const handleFormSubmit = (data: ComplianceFormValues) => {
-    onSubmit({
-        ...data,
-        parentRegulation: data.parentRegulation === 'none' ? undefined : data.parentRegulation,
-        nextAuditDate: data.nextAuditDate ? format(data.nextAuditDate, 'yyyy-MM-dd') : undefined,
-    } as any);
-  };
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="parentRegulation"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Top Level Regulation</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value || 'none'}>
-                <FormControl><SelectTrigger><SelectValue placeholder="Select parent" /></SelectTrigger></FormControl>
-                <SelectContent>
-                  <SelectItem value="none">None / Uncategorized</SelectItem>
-                  {categories.map(cat => <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField control={form.control} name="regulation" render={({ field }) => (<FormItem><FormLabel>Regulation Point</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-        <FormField control={form.control} name="regulationStatement" render={({ field }) => (<FormItem><FormLabel>Statement</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-        <FormField control={form.control} name="companyReference" render={({ field }) => (<FormItem><FormLabel>Company Reference</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-        <FormField control={form.control} name="responsibleManager" render={({ field }) => (<FormItem><FormLabel>Manager</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{personnel.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-        <FormField control={form.control} name="nextAuditDate" render={({ field }) => (<FormItem><FormLabel>Next Audit</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : "Pick a date"}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-        <DialogFooter><Button type="submit">Save Requirement</Button></DialogFooter>
-      </form>
-    </Form>
-  );
-};
-
 // --- Main Quality Page Content ---
 
 export function QualityPageContent({
@@ -322,6 +361,23 @@ export function QualityPageContent({
     searchKeys: ['auditNumber', 'title', 'auditor', 'status', 'type', 'department', 'auditeeName', 'area'],
   });
 
+  const fetchData = useCallback(async () => {
+    if (!company) return;
+    const auditsQuery = query(collection(db, `companies/${company.id}/quality-audits`));
+    const scheduleQuery = query(collection(db, `companies/${company.id}/audit-schedule-items`));
+    const auditAreasQuery = query(collection(db, `companies/${company.id}/audit-areas`));
+    
+    const [auditsSnap, scheduleSnap, auditAreasSnap] = await Promise.all([
+        getDocs(auditsQuery),
+        getDocs(scheduleQuery),
+        getDocs(auditAreasQuery),
+    ]);
+    
+    setAudits(auditsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as QualityAudit)));
+    setSchedule(scheduleSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as AuditScheduleItem)));
+    setAuditAreas(auditAreasSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as CompanyAuditArea)));
+  }, [company]);
+
   const fetchMatrixData = useCallback(async () => {
     if (!company) return;
     try {
@@ -333,7 +389,10 @@ export function QualityPageContent({
     } catch (e) { console.error(e); }
   }, [company]);
 
-  useEffect(() => { fetchMatrixData(); }, [fetchMatrixData]);
+  useEffect(() => { 
+    fetchData();
+    fetchMatrixData(); 
+  }, [fetchData, fetchMatrixData]);
 
   const groupedMatrix = useMemo(() => {
     const grouped: Record<string, ComplianceItem[]> = {};
@@ -408,7 +467,7 @@ export function QualityPageContent({
 
   const canEdit = user?.permissions.includes('Quality:Edit') || user?.permissions.includes('Super User');
 
-  const groupAudits = (list: QualityAudit[]) => {
+  const groupAuditsByDept = (list: QualityAudit[]) => {
     return list.reduce((acc, audit) => {
       const dept = audit.department || 'Uncategorized';
       if (!acc[dept]) acc[dept] = [];
@@ -417,8 +476,8 @@ export function QualityPageContent({
     }, {} as Record<string, QualityAudit[]>);
   };
 
-  const groupedActive = useMemo(() => groupAudits(reportsControls.items), [reportsControls.items]);
-  const groupedArchived = useMemo(() => groupAudits(archivedReportsControls.items), [archivedReportsControls.items]);
+  const groupedActive = useMemo(() => groupAuditsByDept(reportsControls.items), [reportsControls.items]);
+  const groupedArchived = useMemo(() => groupAuditsByDept(archivedReportsControls.items), [archivedReportsControls.items]);
 
   return (
     <main className="flex-1 p-4 md:p-8">
@@ -432,7 +491,35 @@ export function QualityPageContent({
             </TabsList>
 
             <TabsContent value="dashboard" className="space-y-8">
-                <Card><CardHeader><CardTitle>Audit Schedule</CardTitle></CardHeader><CardContent><AuditSchedule auditAreas={auditAreas} schedule={schedule} onUpdate={async (item) => { if (!company) return; await setDoc(doc(db, `companies/${company.id}/audit-schedule-items`, item.id), item, { merge: true }); fetchData(); }} onAreaUpdate={async (id, name) => { if (!company) return; await updateDoc(doc(db, `companies/${company.id}/audit-areas`, id), { name }); fetchData(); }} onAreaAdd={async () => { if (!company) return; await addDoc(collection(db, `companies/${company.id}/audit-areas`), { name: 'New Area' }); fetchData(); }} onAreaDelete={async (id) => { if (!company) return; await deleteDoc(doc(db, `companies/${company.id}/audit-areas`, id)); fetchData(); }} /></CardContent></Card>
+                <Card>
+                    <CardHeader><CardTitle>Audit Schedule</CardTitle></CardHeader>
+                    <CardContent>
+                        <AuditSchedule 
+                            auditAreas={auditAreas} 
+                            schedule={schedule} 
+                            onUpdate={async (item) => { 
+                                if (!company) return; 
+                                await setDoc(doc(db, `companies/${company.id}/audit-schedule-items`, item.id), item, { merge: true }); 
+                                fetchData(); 
+                            }} 
+                            onAreaUpdate={async (id, name) => { 
+                                if (!company) return; 
+                                await updateDoc(doc(db, `companies/${company.id}/audit-areas`, id), { name }); 
+                                fetchData(); 
+                            }} 
+                            onAreaAdd={async () => { 
+                                if (!company) return; 
+                                await addDoc(collection(db, `companies/${company.id}/audit-areas`), { name: 'New Area' }); 
+                                fetchData(); 
+                            }} 
+                            onAreaDelete={async (id) => { 
+                                if (!company) return; 
+                                await deleteDoc(doc(db, `companies/${company.id}/audit-areas`, id)); 
+                                fetchData(); 
+                            }} 
+                        />
+                    </CardContent>
+                </Card>
                 <div className="grid md:grid-cols-2 gap-8">
                     <Card><CardHeader><CardTitle>Compliance Score</CardTitle></CardHeader><CardContent><ComplianceChart data={activeAudits} /></CardContent></Card>
                     <Card><CardHeader><CardTitle>Non-Conformance Breakdown</CardTitle></CardHeader><CardContent><NonConformanceChart data={activeAudits} /></CardContent></Card>
@@ -446,7 +533,16 @@ export function QualityPageContent({
                         {Object.keys(groupedActive).sort().map(dept => (
                             <div key={dept} className="mb-8">
                                 <h3 className="font-semibold mb-2">{dept}</h3>
-                                <ReportTable reportList={groupedActive[dept]} controls={reportsControls} selectedAudits={[]} handleSelectAll={() => {}} handleSelectOne={() => {}} handleRestoreAudit={() => {}} handleArchiveAudit={handleArchiveAudit} handleDeleteAudit={handleDeleteAudit} />
+                                <ReportTable 
+                                    reportList={groupedActive[dept]} 
+                                    controls={reportsControls} 
+                                    selectedAudits={[]} 
+                                    handleSelectAll={() => {}} 
+                                    handleSelectOne={() => {}} 
+                                    handleRestoreAudit={() => {}} 
+                                    handleArchiveAudit={handleArchiveAudit} 
+                                    handleDeleteAudit={handleDeleteAudit} 
+                                />
                             </div>
                         ))}
                     </CardContent>
@@ -457,7 +553,17 @@ export function QualityPageContent({
                         {Object.keys(groupedArchived).sort().map(dept => (
                             <div key={dept} className="mb-8">
                                 <h3 className="font-semibold mb-2">{dept}</h3>
-                                <ReportTable reportList={groupedArchived[dept]} isArchivedTable controls={archivedReportsControls} selectedAudits={[]} handleSelectAll={() => {}} handleSelectOne={() => {}} handleRestoreAudit={handleRestoreAudit} handleArchiveAudit={() => {}} handleDeleteAudit={handleDeleteAudit} />
+                                <ReportTable 
+                                    reportList={groupedArchived[dept]} 
+                                    isArchivedTable 
+                                    controls={archivedReportsControls} 
+                                    selectedAudits={[]} 
+                                    handleSelectAll={() => {}} 
+                                    handleSelectOne={() => {}} 
+                                    handleRestoreAudit={handleRestoreAudit} 
+                                    handleArchiveAudit={() => {}} 
+                                    handleDeleteAudit={handleDeleteAudit} 
+                                />
                             </div>
                         ))}
                     </CardContent>
@@ -465,7 +571,12 @@ export function QualityPageContent({
             </TabsContent>
 
             <TabsContent value="checklists">
-                <AuditChecklistsManager initialTemplates={initialChecklists} initialPersonnel={initialPersonnel} initialDepartments={initialDepartments} initialAircraft={initialAircraft} />
+                <AuditChecklistsManager 
+                    initialTemplates={initialChecklists} 
+                    initialPersonnel={initialPersonnel} 
+                    initialDepartments={initialDepartments} 
+                    initialAircraft={initialAircraft} 
+                />
             </TabsContent>
 
             <TabsContent value="task-tracker">
@@ -475,12 +586,19 @@ export function QualityPageContent({
             <TabsContent value="coherence-matrix">
                 <Card>
                     <CardHeader className="flex-row justify-between items-center">
-                        <div><CardTitle>Coherence Matrix</CardTitle><CardDescription>Regulatory compliance and oversight register.</CardDescription></div>
+                        <div>
+                            <CardTitle>Coherence Matrix</CardTitle>
+                            <CardDescription>Regulatory compliance and oversight register.</CardDescription>
+                        </div>
                         <div className="flex gap-2">
                             {canEdit && (
                                 <>
-                                    <Button variant="outline" onClick={() => setIsCategoryDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add Top Level</Button>
-                                    <Button onClick={() => setIsComplianceDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add Sub-Regulation</Button>
+                                    <Button variant="outline" onClick={() => setIsCategoryDialogOpen(true)}>
+                                        <PlusCircle className="mr-2 h-4 w-4" /> Add Top Level
+                                    </Button>
+                                    <Button onClick={() => setIsComplianceDialogOpen(true)}>
+                                        <PlusCircle className="mr-2 h-4 w-4" /> Add Sub-Regulation
+                                    </Button>
                                 </>
                             )}
                         </div>
@@ -494,25 +612,56 @@ export function QualityPageContent({
                                             <div className="flex items-center gap-2"><Badge variant="outline">{catName}</Badge></div>
                                             {canEdit && catName !== 'Other / Uncategorized' && (
                                                 <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                                                    <Button size="sm" variant="ghost" onClick={() => { setEditingCategory(categories.find(c => c.name === catName)!); setNewCategoryName(catName); setIsCategoryDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                                                    <Button size="sm" variant="ghost" onClick={async () => { if (!company) return; const catId = categories.find(c => c.name === catName)?.id; if (catId) await deleteDoc(doc(db, `companies/${company.id}/coherence-matrix-categories`, catId)); fetchMatrixData(); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                                    <Button size="sm" variant="ghost" onClick={() => { 
+                                                        setEditingCategory(categories.find(c => c.name === catName)!); 
+                                                        setNewCategoryName(catName); 
+                                                        setIsCategoryDialogOpen(true); 
+                                                    }}>
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button size="sm" variant="ghost" onClick={async () => { 
+                                                        if (!company) return; 
+                                                        const catId = categories.find(c => c.name === catName)?.id; 
+                                                        if (catId) await deleteDoc(doc(db, `companies/${company.id}/coherence-matrix-categories`, catId)); 
+                                                        fetchMatrixData(); 
+                                                    }}>
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
                                                 </div>
                                             )}
                                         </div>
                                     </AccordionTrigger>
                                     <AccordionContent>
                                         <Table>
-                                            <TableHeader><TableRow><TableHead>Regulation</TableHead><TableHead>Statement</TableHead><TableHead>Manager</TableHead><TableHead>Next Audit</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Regulation</TableHead>
+                                                    <TableHead>Statement</TableHead>
+                                                    <TableHead>Co. Ref.</TableHead>
+                                                    <TableHead>Manager</TableHead>
+                                                    <TableHead>Next Audit</TableHead>
+                                                    <TableHead className="text-right">Actions</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
                                             <TableBody>
                                                 {groupedMatrix[catName].map(item => (
                                                     <TableRow key={item.id}>
                                                         <TableCell className="font-semibold">{item.regulation}</TableCell>
                                                         <TableCell className="max-w-xs truncate">{item.regulationStatement}</TableCell>
+                                                        <TableCell className="max-w-xs truncate">{item.companyReference || 'N/A'}</TableCell>
                                                         <TableCell>{item.responsibleManager}</TableCell>
                                                         <TableCell>{item.nextAuditDate || 'N/A'}</TableCell>
                                                         <TableCell className="text-right">
-                                                            <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setIsComplianceDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                                                            <Button variant="ghost" size="icon" onClick={async () => { if (!company) return; await deleteDoc(doc(db, `companies/${company.id}/compliance-matrix`, item.id)); fetchMatrixData(); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                                            <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setIsComplianceDialogOpen(true); }}>
+                                                                <Edit className="h-4 w-4" />
+                                                            </Button>
+                                                            <Button variant="ghost" size="icon" onClick={async () => { 
+                                                                if (!company) return; 
+                                                                await deleteDoc(doc(db, `companies/${company.id}/compliance-matrix`, item.id)); 
+                                                                fetchMatrixData(); 
+                                                            }}>
+                                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                                            </Button>
                                                         </TableCell>
                                                     </TableRow>
                                                 ))}
@@ -527,8 +676,31 @@ export function QualityPageContent({
             </TabsContent>
         </Tabs>
 
-        <Dialog open={isComplianceDialogOpen} onOpenChange={setIsComplianceDialogOpen}><DialogContent className="sm:max-w-2xl"><DialogHeader><DialogTitle>{editingItem ? 'Edit' : 'Add'} Compliance Requirement</DialogTitle></DialogHeader><ComplianceItemForm onSubmit={handleMatrixSubmit} personnel={initialPersonnel} departments={initialDepartments} categories={categories} existingItem={editingItem} preSelectedParentId={preSelectedCategoryName} /></DialogContent></Dialog>
-        <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}><DialogContent><DialogHeader><DialogTitle>{editingCategory ? 'Rename' : 'Add'} Top Level Regulation</DialogTitle></DialogHeader><div className="space-y-4 pt-4"><div className="space-y-2"><Label>Regulation Name</Label><Input value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} /></div><DialogFooter><Button onClick={handleCategorySubmit}>{editingCategory ? 'Save Changes' : 'Add'}</Button></DialogFooter></div></DialogContent></Dialog>
+        <Dialog open={isComplianceDialogOpen} onOpenChange={setIsComplianceDialogOpen}>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader><DialogTitle>{editingItem ? 'Edit' : 'Add'} Compliance Requirement</DialogTitle></DialogHeader>
+                <ComplianceItemForm 
+                    onSubmit={handleMatrixSubmit} 
+                    personnel={initialPersonnel} 
+                    departments={initialDepartments} 
+                    categories={categories} 
+                    existingItem={editingItem} 
+                    preSelectedParentId={preSelectedCategoryName} 
+                />
+            </DialogContent>
+        </Dialog>
+        <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+            <DialogContent>
+                <DialogHeader><DialogTitle>{editingCategory ? 'Rename' : 'Add'} Top Level Regulation</DialogTitle></DialogHeader>
+                <div className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                        <Label>Regulation Name</Label>
+                        <Input value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="Enter regulation title..." />
+                    </div>
+                    <DialogFooter><Button onClick={handleCategorySubmit}>{editingCategory ? 'Save Changes' : 'Add'}</Button></DialogFooter>
+                </div>
+            </DialogContent>
+        </Dialog>
     </main>
   );
 }
