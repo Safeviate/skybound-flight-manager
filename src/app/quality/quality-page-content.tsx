@@ -831,7 +831,7 @@ export function QualityPageContent({
   };
   
   const groupedActiveAudits = useMemo(() => groupAuditsByDepartment(reportsControls.items), [reportsControls.items]);
-  const groupedArchivedAudits = useMemo(() => groupPersonnelByDepartment(archivedReportsControls.items), [archivedReportsControls.items]);
+  const groupedArchivedAudits = useMemo(() => groupAuditsByDepartment(archivedReportsControls.items), [archivedReportsControls.items]);
 
 
   const ReportTable = ({ audits: reportList, isArchivedTable = false }: { audits: QualityAudit[], isArchivedTable?: boolean }) => {
@@ -1047,7 +1047,7 @@ export function QualityPageContent({
                                     <ReportTable audits={groupedActiveAudits[department]} isArchivedTable={false} />
                                 </div>
                             ))}
-                            {Object.keys(groupedActiveAudits).length === 0 && (
+                            {Object.keys(groupedActiveActiveAudits).length === 0 && (
                                 <div className="text-center text-muted-foreground py-10">No active reports found.</div>
                             )}
                         </TabsContent>
