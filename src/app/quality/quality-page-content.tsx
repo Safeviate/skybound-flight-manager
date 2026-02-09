@@ -5,22 +5,22 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import type { QualityAudit, AuditScheduleItem, User, ComplianceItem, CompanyDepartment, Aircraft, Department, UnifiedTask, CompanyAuditArea, CoherenceMatrixCategory, FindingStatus, FindingLevel, AuditChecklistItem } from '@/lib/types';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell } from 'recharts';
-import { format, parseISO, isAfter } from 'date-fns';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, ReferenceLine } from 'recharts';
+import { format, parseISO, isAfter, startOfMonth } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, ArrowLeft, TrendingUp, AlertTriangle, Clock, MapPin, ArrowUpDown, ChevronDown } from 'lucide-react';
+import { ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, ArrowLeft, TrendingUp, AlertTriangle, Clock, MapPin, ArrowUpDown, ChevronDown, CheckCircle, MinusCircle, XCircle, MessageSquareWarning, Ban, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { AuditSchedule } from '../quality/audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch, deleteDoc } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch, deleteDoc, where, orderBy, limit } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { useTableControls } from '@/hooks/use-table-controls.ts';
+import { useTableControls } from '@/hooks/use-table-controls';
 import { AuditChecklistsManager } from '../quality/audit-checklists-manager';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -40,6 +40,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { TaskTrackerPageContent } from '@/app/task-tracker/task-tracker-page-content';
 import { getQualityPageData } from './data';
+import { Label } from '@/components/ui/label';
 
 const getFindingInfo = (finding: FindingStatus | null) => {
     switch (finding) {
@@ -51,6 +52,18 @@ const getFindingInfo = (finding: FindingStatus | null) => {
         default: return { icon: <ListChecks className="h-5 w-5" />, variant: 'outline' as const, text: 'Not Set' };
     }
 };
+
+const getLevelInfo = (level: FindingLevel) => {
+    switch (level) {
+        case 'Level 1 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
+        case 'Level 2 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-orange-600" />, variant: 'orange' as const };
+        case 'Level 3 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
+        case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const };
+        default: return null;
+    }
+};
+
+const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
 
 const ComplianceItemForm = ({
   onSubmit,
@@ -241,7 +254,7 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
     const [categories, setCategories] = useState<CoherenceMatrixCategory[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
-    const [editingItem, setEditingItem] = useState<ComplianceItem | null>(null);
+    const [editingItem, setEditingItem] = setEditingItem = useState<ComplianceItem | null>(null);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [preSelectedCategoryName, setPreSelectedCategoryName] = useState<string | undefined>();
     const [editingCategory, setEditingCategory] = useState<CoherenceMatrixCategory | null>(null);
@@ -527,6 +540,15 @@ const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
     );
 };
 
+const groupAuditsByDepartment = (reportList: QualityAudit[]) => {
+  return reportList.reduce((acc, audit) => {
+    const dept = audit.department || 'Uncategorized';
+    if (!acc[dept]) acc[dept] = [];
+    acc[dept].push(audit);
+    return acc;
+  }, {} as Record<string, QualityAudit[]>);
+};
+
 export function QualityPageContent({
     initialAudits,
     initialSchedule,
@@ -705,15 +727,6 @@ export function QualityPageContent({
     return 'text-red-600';
   };
 
-  const groupAuditsByDepartment = (reportList: QualityAudit[]) => {
-    return reportList.reduce((acc, audit) => {
-      const dept = audit.department || 'Uncategorized';
-      if (!acc[dept]) acc[dept] = [];
-      acc[dept].push(audit);
-      return acc;
-    }, {} as Record<string, QualityAudit[]>);
-  };
-  
   const groupedActiveAudits = useMemo(() => groupAuditsByDepartment(reportsControls.items), [reportsControls.items]);
   const groupedArchivedAudits = useMemo(() => groupAuditsByDepartment(archivedReportsControls.items), [archivedReportsControls.items]);
 
@@ -745,7 +758,7 @@ export function QualityPageContent({
                                     <DropdownMenuContent>
                                         <DropdownMenuItem asChild><Link href={`/quality/${audit.id}`}><FileText className="mr-2 h-4 w-4" />View Report</Link></DropdownMenuItem>
                                         {isArchivedTable ? (
-                                            <><DropdownMenuItem onSelect={() => handleRestoreAudit(audit.id)}><RotateCw className="mr-2 h-4 w-4" />Restore</DropdownMenuItem><DropdownMenuSeparator /><AlertDialog><AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the audit.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteAudit(audit.id)}>Yes, delete audit</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></>
+                                            <><DropdownMenuItem onSelect={() => handleRestoreAudit(audit.id)}><RotateCw className="mr-2 h-4 w-4" />Restore</DropdownMenuItem><DropdownMenuSeparator /><AlertDialog><AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the audit.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteAudit(audit.id)}>Yes, delete audit</AlertDialogAction></AlertDialogFooter></AlertDialog></>
                                         ) : (<DropdownMenuItem onSelect={() => handleArchiveAudit(audit.id)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>)}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
