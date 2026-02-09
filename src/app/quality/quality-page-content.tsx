@@ -41,44 +41,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { TaskTrackerPageContent } from '@/app/task-tracker/task-tracker-page-content';
 import { Label } from '@/components/ui/label';
 
-// --- Helper Functions & Constants ---
-
-const getFindingInfo = (finding: FindingStatus | null) => {
-    switch (finding) {
-        case 'Compliant': return { icon: <CheckCircle className="h-5 w-5 text-green-600" />, variant: 'success' as const, text: 'Compliant' };
-        case 'Partial': return { icon: <MinusCircle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const, text: 'Partial Compliance' };
-        case 'Non Compliant': return { icon: <XCircle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const, text: 'Non-compliant' };
-        case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const, text: 'Observation' };
-        case 'Not Applicable': return { icon: <Ban className="h-5 w-5 text-gray-500" />, variant: 'outline' as const, text: 'N/A' };
-        default: return { icon: <ListChecks className="h-5 w-5" />, variant: 'outline' as const, text: 'Not Set' };
-    }
-};
-
-const getStatusVariant = (status: QualityAudit['status']) => {
-    switch (status) {
-      case 'Closed': return 'success';
-      case 'Open': return 'warning';
-      case 'Archived': return 'secondary';
-      default: return 'outline';
-    }
-};
-
-const getComplianceColor = (score: number) => {
-    if (score >= 95) return 'text-green-600';
-    if (score >= 80) return 'text-yellow-600';
-    return 'text-red-600';
-};
-
-const groupAuditsByDepartment = (reportList: QualityAudit[]) => {
-  return reportList.reduce((acc, audit) => {
-    const dept = audit.department || 'Uncategorized';
-    if (!acc[dept]) acc[dept] = [];
-    acc[dept].push(audit);
-    return acc;
-  }, {} as Record<string, QualityAudit[]>);
-};
-
-// --- Top-Level UI Components ---
+// --- Helper Components ---
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({ date: format(parseISO(audit.date), 'MMM yy'), score: audit.complianceScore, })).reverse();
@@ -130,6 +93,21 @@ const ReportTable = ({
     handleArchiveAudit, 
     handleDeleteAudit, 
 }: ReportTableProps) => {
+    const getComplianceColor = (score: number) => {
+        if (score >= 95) return 'text-green-600';
+        if (score >= 80) return 'text-yellow-600';
+        return 'text-red-600';
+    };
+
+    const getStatusVariant = (status: QualityAudit['status']) => {
+        switch (status) {
+          case 'Closed': return 'success';
+          case 'Open': return 'warning';
+          case 'Archived': return 'secondary';
+          default: return 'outline';
+        }
+    };
+
     return (
         <ScrollArea className="w-full whitespace-nowrap rounded-md border">
             <Table>
@@ -587,18 +565,21 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
                                                     <Button size="sm" variant="ghost" onClick={() => { setPreSelectedCategoryName(parentReg === 'Other / Uncategorized' ? undefined : parentReg); setEditingItem(null); setIsDialogOpen(true); }}>
                                                         <PlusCircle className="h-4 w-4 mr-1" /> Add Requirement
                                                     </Button>
-                                                    {parentReg !== 'Other / Uncategorized' && (
-                                                        <>
-                                                            <Button size="sm" variant="ghost" onClick={() => { const cat = categories.find(c => c.name === parentReg); if(cat){ setEditingCategory(cat); setNewCategoryName(cat.name); setIsCategoryDialogOpen(true); } }} className="h-8 w-8 p-0"><Edit className="h-4 w-4" /></Button>
-                                                            <AlertDialog>
-                                                                <AlertDialogTrigger asChild><Button size="sm" variant="ghost" className="text-destructive h-8 w-8 p-0"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
-                                                                <AlertDialogContent>
-                                                                    <AlertDialogHeader><AlertDialogTitle>Delete Top Level Regulation?</AlertDialogTitle><AlertDialogDescription>This will remove "{parentReg}". Items will be moved to "Uncategorized".</AlertDialogDescription></AlertDialogHeader>
-                                                                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => { const cat = categories.find(c => c.name === parentReg); if (cat) handleDeleteCategory(cat.id); }} className="bg-destructive">Delete</AlertDialogAction></AlertDialogFooter>
-                                                                </AlertDialogContent>
-                                                            </AlertDialog>
-                                                        </>
-                                                    )}
+                                                    {(() => {
+                                                        const cat = categories.find(c => c.name === parentReg);
+                                                        return cat && (
+                                                            <>
+                                                                <Button size="sm" variant="ghost" onClick={() => { setEditingCategory(cat); setNewCategoryName(cat.name); setIsCategoryDialogOpen(true); }} className="h-8 w-8 p-0"><Edit className="h-4 w-4" /></Button>
+                                                                <AlertDialog>
+                                                                    <AlertDialogTrigger asChild><Button size="sm" variant="ghost" className="text-destructive h-8 w-8 p-0"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                                                                    <AlertDialogContent>
+                                                                        <AlertDialogHeader><AlertDialogTitle>Delete Top Level Regulation?</AlertDialogTitle><AlertDialogDescription>This will remove "{parentReg}". Items will be moved to "Uncategorized".</AlertDialogDescription></AlertDialogHeader>
+                                                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteCategory(cat.id)} className="bg-destructive">Delete</AlertDialogAction></AlertDialogFooter>
+                                                                    </AlertDialogContent>
+                                                                </AlertDialog>
+                                                            </>
+                                                        )
+                                                    })()}
                                                 </div>
                                             )}
                                         </div>
@@ -836,8 +817,31 @@ export function QualityPageContent({
     } catch (error) { toast({ variant: 'destructive', title: 'Error' }); }
   };
 
+  const groupAuditsByDepartment = (list: QualityAudit[]) => {
+    return list.reduce((acc, audit) => {
+      const dept = audit.department || 'Uncategorized';
+      if (!acc[dept]) acc[dept] = [];
+      acc[dept].push(audit);
+      return acc;
+    }, {} as Record<string, QualityAudit[]>);
+  };
+
   const groupedActiveAudits = useMemo(() => groupAuditsByDepartment(reportsControls.items), [reportsControls.items]);
   const groupedArchivedAudits = useMemo(() => groupAuditsByDepartment(archivedReportsControls.items), [archivedReportsControls.items]);
+
+  const SortableHeader = ({ label, sortKey }: { label: string, sortKey: string }) => {
+    const controls = showArchived ? archivedReportsControls : reportsControls;
+    return (
+        <Button variant="ghost" onClick={() => controls.requestSort(sortKey)}>
+            {label}
+            {controls.sortConfig?.key === sortKey ? (
+                <ArrowUpDown className={cn("ml-2 h-4 w-4", controls.sortConfig.direction === 'desc' && "rotate-180")} />
+            ) : (
+                <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />
+            )}
+        </Button>
+    );
+  };
 
   return (
       <main className="flex-1 p-4 md:p-8">
