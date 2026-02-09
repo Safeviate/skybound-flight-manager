@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -7,7 +6,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, Au
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Eraser, Users, Camera, Image as ImageIcon, RotateCw, FileUp, Trash2, ChevronDown, Signature } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser, Users, Camera, Image as ImageIcon, RotateCw, FileUp, Trash2, ChevronDown } from 'lucide-react';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
@@ -69,8 +68,8 @@ const getLevelInfo = (level: FindingLevel) => {
 
 const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
 
-const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack, company }: { audit: QualityAudit, onUpdate: (updatedAudit: QualityAudit, showToast?: boolean) => void, personnel: User[], onNavigateBack: () => void, company: any }) => {
-    const { user } = useUser();
+const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit: QualityAudit, onUpdate: (updatedAudit: QualityAudit, showToast?: boolean) => void, personnel: User[], onNavigateBack: () => void }) => {
+    const { user, company } = useUser();
     const { toast } = useToast();
     const discussionForm = useForm<DiscussionFormValues>({
         resolver: zodResolver(discussionFormSchema),
@@ -87,25 +86,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack, company }
         if (!audit.auditTeam || !user) return [];
         return audit.auditTeam.filter(name => name !== user.name);
     }, [audit.auditTeam, user]);
-
-    const getLevelDisplayInfo = (level: FindingLevel) => {
-        const defaultLevels = {
-            'Level 1 Finding': { icon: <AlertTriangle className="h-5 w-5" />, variant: 'warning' as const },
-            'Level 2 Finding': { icon: <AlertTriangle className="h-5 w-5" />, variant: 'orange' as const },
-            'Level 3 Finding': { icon: <AlertTriangle className="h-5 w-5" />, variant: 'destructive' as const },
-            'Observation': { icon: <MessageSquareWarning className="h-5 w-5" />, variant: 'secondary' as const }
-        };
-
-        if (!level) return null;
-        
-        const customColor = company?.findingLevelColors?.[level];
-        if (customColor) {
-            return { style: { backgroundColor: customColor, color: '#ffffff' }, variant: 'default' as const, icon: <AlertTriangle className="h-5 w-5 text-white" /> };
-        }
-        
-        const defaultStyle = defaultLevels[level];
-        return defaultStyle ? { ...defaultStyle, style: {} } : null;
-    }
 
 
     const handleReply = (recipient: string) => {
@@ -322,55 +302,50 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack, company }
                         <CardDescription>Details of all non-compliant findings from this audit.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {nonConformances.map((issue, index) => {
-                            const levelDisplay = getLevelDisplayInfo(issue.level);
-                            return (
-                                <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <Badge variant={getFindingInfo(issue.finding).variant}>{issue.finding}</Badge>
-                                                {issue.level && levelDisplay && (
-                                                    <Badge style={levelDisplay.style} variant={levelDisplay.variant}>{issue.level}</Badge>
-                                                )}
-                                            </div>
-                                            <p className="font-medium mt-2">{index + 1}. {issue.itemText}</p>
-                                            <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
-                                            <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
-                                            {issue.photo && <Image src={issue.photo} alt={`Photo for ${issue.text}`} width={200} height={112} className="mt-2 rounded-md" />}
+                        {nonConformances.map((issue, index) => (
+                            <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <Badge variant={getFindingInfo(issue.finding).variant}>{issue.finding}</Badge>
+                                            {issue.level && <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>}
                                         </div>
+                                        <p className="font-medium mt-2">{index + 1}. {issue.itemText}</p>
+                                        <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
+                                        <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
+                                        {issue.photo && <Image src={issue.photo} alt={`Photo for ${issue.itemText}`} width={200} height={112} className="mt-2 rounded-md" />}
                                     </div>
-                                    {issue.correctiveActionPlans && issue.correctiveActionPlans.length > 0 && (
-                                    <div className="space-y-4">
-                                        <h4 className="font-semibold text-sm">Corrective Action Plan(s)</h4>
-                                        {issue.correctiveActionPlans.map((plan, planIndex) => (
-                                        <div key={planIndex} className="p-3 border rounded-md space-y-2 bg-background">
-                                            <div>
-                                            <p className="font-medium text-muted-foreground text-sm">Root Cause</p>
-                                            <p className="text-sm">{plan.rootCause}</p>
-                                            </div>
-                                            <div>
-                                            <p className="font-medium text-muted-foreground text-sm">Actions</p>
-                                            <ul className="list-disc pl-5 text-sm">
-                                                {plan.actions.map(action => (
-                                                <li key={action.id} className="mb-1">
-                                                    <span className={cn(action.status === 'Closed' && "line-through text-muted-foreground")}>
-                                                    {action.action}
-                                                    </span>
-                                                    <div className="text-xs text-muted-foreground">
-                                                    {action.responsiblePerson} - Due: {format(parseISO(action.completionDate), 'PPP')} - <Badge variant={action.status === 'Closed' ? 'success' : 'warning'} className="h-auto py-0 px-1.5">{action.status}</Badge>
-                                                    </div>
-                                                </li>
-                                                ))}
-                                            </ul>
-                                            </div>
-                                        </div>
-                                        ))}
-                                    </div>
-                                    )}
                                 </div>
-                            )
-                        })}
+                                {issue.correctiveActionPlans && issue.correctiveActionPlans.length > 0 && (
+                                <div className="space-y-4">
+                                    <h4 className="font-semibold text-sm">Corrective Action Plan(s)</h4>
+                                    {issue.correctiveActionPlans.map((plan, planIndex) => (
+                                    <div key={planIndex} className="p-3 border rounded-md space-y-2 bg-background">
+                                        <div>
+                                        <p className="font-medium text-muted-foreground text-sm">Root Cause</p>
+                                        <p className="text-sm">{plan.rootCause}</p>
+                                        </div>
+                                        <div>
+                                        <p className="font-medium text-muted-foreground text-sm">Actions</p>
+                                        <ul className="list-disc pl-5 text-sm">
+                                            {plan.actions.map(action => (
+                                            <li key={action.id} className="mb-1">
+                                                <span className={cn(action.status === 'Closed' && "line-through text-muted-foreground")}>
+                                                {action.action}
+                                                </span>
+                                                <div className="text-xs text-muted-foreground">
+                                                {action.responsiblePerson} - Due: {format(parseISO(action.completionDate), 'PPP')} - <Badge variant={action.status === 'Closed' ? 'success' : 'warning'} className="h-auto py-0 px-1.5">{action.status}</Badge>
+                                                </div>
+                                            </li>
+                                            ))}
+                                        </ul>
+                                        </div>
+                                    </div>
+                                    ))}
+                                </div>
+                                )}
+                            </div>
+                        ))}
                     </CardContent>
                 </Card>
             )}
@@ -457,7 +432,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack, company }
                 <CardContent className="grid md:grid-cols-2 gap-8">
                     <div className="space-y-2">
                         <h4 className="font-semibold">Lead Auditor: {audit.auditor}</h4>
-                        {audit.auditorSignature && audit.auditorSignature.signature ? (
+                        {audit.auditorSignature ? (
                             <div>
                                 <Image src={audit.auditorSignature.signature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
                             </div>
@@ -469,7 +444,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack, company }
                     </div>
                      <div className="space-y-2">
                         <h4 className="font-semibold">Auditee: {audit.auditeeName}</h4>
-                         {audit.auditeeSignature && audit.auditeeSignature.signature ? (
+                         {audit.auditeeSignature ? (
                             <div>
                                 <Image src={audit.auditeeSignature.signature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
                             </div>
@@ -715,7 +690,7 @@ export default function QualityAuditDetailPage() {
       </AlertDialog>
 
       {isAuditClosed ? (
-          <AuditReportView audit={audit} onUpdate={handleAuditUpdate} personnel={personnel} onNavigateBack={handleNavigateBack} company={company} />
+          <AuditReportView audit={audit} onUpdate={handleAuditUpdate} personnel={personnel} onNavigateBack={handleNavigateBack} />
       ) : (
       <>
           <h2 className="text-2xl font-bold">Audit Questionnaire</h2>

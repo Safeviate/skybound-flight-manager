@@ -483,7 +483,7 @@ export type NonConformanceIssue = {
   level: FindingLevel;
   comment?: string;
   reference?: string;
-  correctiveActionPlans?: CorrectiveActionPlan[];
+  correctiveActionPlan?: CorrectiveActionPlan[];
   photo?: string;
 };
 
