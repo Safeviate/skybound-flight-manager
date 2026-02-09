@@ -8,7 +8,7 @@ import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, Corre
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, ChevronDown } from 'lucide-react';
+import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, ChevronDown, Signature } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { AuditSchedule } from '../quality/audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -207,7 +207,7 @@ const ComplianceItemForm = ({
                                 className={cn( "w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                                 >
                                 {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
-                                <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
                             </FormControl>
                             </PopoverTrigger>
@@ -241,6 +241,7 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
     const [editingItem, setEditingItem] = React.useState<ComplianceItem | null>(null);
     const [newCategoryName, setNewCategoryName] = React.useState('');
     const [preSelectedCategoryName, setPreSelectedCategoryName] = React.useState<string | undefined>();
+    const [editingCategory, setEditingCategory] = React.useState<CoherenceMatrixCategory | null>(null);
 
     const fetchData = React.useCallback(async () => {
         if (!company) return;
@@ -320,13 +321,33 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
     const handleCategorySubmit = async () => {
         if (!company || !newCategoryName.trim()) return;
         try {
-            await addDoc(collection(db, `companies/${company.id}/coherence-matrix-categories`), { name: newCategoryName.trim() });
-            toast({ title: 'Top Level Regulation Added' });
+            if (editingCategory) {
+                const batch = writeBatch(db);
+                const catRef = doc(db, `companies/${company.id}/coherence-matrix-categories`, editingCategory.id);
+                batch.update(catRef, { name: newCategoryName.trim() });
+
+                // Update associated items
+                const oldName = editingCategory.name;
+                const newName = newCategoryName.trim();
+                complianceItems.forEach(item => {
+                    if (item.parentRegulation === oldName) {
+                        const itemRef = doc(db, `companies/${company.id}/compliance-matrix`, item.id);
+                        batch.update(itemRef, { parentRegulation: newName });
+                    }
+                });
+
+                await batch.commit();
+                toast({ title: 'Top Level Regulation Updated' });
+            } else {
+                await addDoc(collection(db, `companies/${company.id}/coherence-matrix-categories`), { name: newCategoryName.trim() });
+                toast({ title: 'Top Level Regulation Added' });
+            }
             setNewCategoryName('');
+            setEditingCategory(null);
             setIsCategoryDialogOpen(false);
             fetchData();
         } catch (e) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to add category.' });
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to save category.' });
         }
     };
 
@@ -377,6 +398,15 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
         setIsDialogOpen(true);
     };
 
+    const handleEditCategory = (catName: string) => {
+        const category = categories.find(c => c.name === catName);
+        if (category) {
+            setEditingCategory(category);
+            setNewCategoryName(category.name);
+            setIsCategoryDialogOpen(true);
+        }
+    };
+
     if (loading) {
         return <main className="flex-1 p-4 md:p-8"><p>Loading...</p></main>;
     }
@@ -393,18 +423,20 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
                 <div className="flex gap-2">
                     {canEdit && (
                         <>
-                            <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+                            <Dialog open={isCategoryDialogOpen} onOpenChange={(open) => { setIsCategoryDialogOpen(open); if (!open) { setEditingCategory(null); setNewCategoryName(''); } }}>
                                 <DialogTrigger asChild>
                                     <Button variant="outline"><PlusCircle className="mr-2 h-4 w-4" /> Add Top Level</Button>
                                 </DialogTrigger>
                                 <DialogContent>
-                                    <DialogHeader><DialogTitle>Add Top Level Regulation</DialogTitle></DialogHeader>
+                                    <DialogHeader><DialogTitle>{editingCategory ? 'Rename' : 'Add'} Top Level Regulation</DialogTitle></DialogHeader>
                                     <div className="space-y-4 pt-4">
                                         <div className="space-y-2">
                                             <Label>Regulation Name (e.g. SA-CATS 141)</Label>
                                             <Input value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="Enter regulation title..." />
                                         </div>
-                                        <DialogFooter><Button onClick={handleCategorySubmit}>Add Category</Button></DialogFooter>
+                                        <DialogFooter>
+                                            <Button onClick={handleCategorySubmit}>{editingCategory ? 'Save Changes' : 'Add Category'}</Button>
+                                        </DialogFooter>
                                     </div>
                                 </DialogContent>
                             </Dialog>
@@ -437,6 +469,9 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
                                                 <div className="flex items-center gap-2 no-print" onClick={(e) => e.stopPropagation()}>
                                                     <Button size="sm" variant="ghost" onClick={() => handleAddItemToCategory(parentReg)}>
                                                         <PlusCircle className="h-4 w-4 mr-1" /> Add Requirement
+                                                    </Button>
+                                                    <Button size="sm" variant="ghost" onClick={() => handleEditCategory(parentReg)} className="h-8 w-8 p-0">
+                                                        <Edit className="h-4 w-4" />
                                                     </Button>
                                                     <AlertDialog>
                                                         <AlertDialogTrigger asChild>
@@ -1085,8 +1120,7 @@ export function QualityPageContent({
                       <CardContent>
                           <NonConformanceChart data={activeAudits} />
                       </CardContent>
-                  </Card>
-              </div>
+                  </div>
           </TabsContent>
           <TabsContent value="audits" className="mt-4">
               <Card>
