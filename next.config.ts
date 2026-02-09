@@ -2,7 +2,6 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  // A trivial comment to force a recompilation and fix chunk loading errors.
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -19,6 +18,19 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["*"],
+    },
+  },
+  webpack: (config) => {
+    // This is to fix a bug in genkit with handlebars
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'handlebars': 'handlebars/dist/handlebars.js',
+    }
+    return config
+  }
 };
 
 export default nextConfig;
