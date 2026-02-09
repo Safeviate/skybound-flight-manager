@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, GroupedRisk, Booking, UnifiedTask, CompanyAuditArea } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, GroupedRisk, Booking, UnifiedTask, CompanyAuditArea, CoherenceMatrixCategory } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import { AuditSchedule } from '../quality/audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch, deleteDoc, where } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch, deleteDoc, where, onSnapshot } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -49,17 +49,21 @@ const ComplianceItemForm = ({
   onSubmit,
   personnel,
   departments,
-  existingItem
+  categories,
+  existingItem,
+  preSelectedParentId,
 }: {
   onSubmit: (data: Omit<ComplianceItem, 'id' | 'companyId'>) => void;
   personnel: User[];
   departments: CompanyDepartment[];
+  categories: CoherenceMatrixCategory[];
   existingItem?: ComplianceItem | null;
+  preSelectedParentId?: string;
 }) => {
   const [departmentFilter, setDepartmentFilter] = useState('');
 
   const complianceItemSchema = z.object({
-    parentRegulation: z.string().min(2, 'Parent Regulation (e.g. SA-CATS 141) is required.'),
+    parentRegulation: z.string().min(1, 'Parent Regulation is required.'),
     regulation: z.string().min(3, 'Regulation point is required.'),
     regulationStatement: z.string().min(5, 'Regulation statement is required.'),
     companyReference: z.string().optional(),
@@ -78,7 +82,7 @@ const ComplianceItemForm = ({
           nextAuditDate: existingItem.nextAuditDate ? parseISO(existingItem.nextAuditDate) : null,
         }
       : {
-          parentRegulation: '',
+          parentRegulation: preSelectedParentId || '',
           regulation: '',
           regulationStatement: '',
           companyReference: '',
@@ -110,9 +114,15 @@ const ComplianceItemForm = ({
           name="parentRegulation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Parent Regulation (e.g., SA-CATS 141)</FormLabel>
-              <FormControl><Input placeholder="e.g., SA-CATS 141 Aviation Training Organisations" {...field} /></FormControl>
-              <FormDescription>This will be used to group sub-regulations.</FormDescription>
+              <FormLabel>Top Level Regulation</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl><SelectTrigger><SelectValue placeholder="Select parent regulation" /></SelectTrigger></FormControl>
+                <SelectContent>
+                  {categories.map(cat => (
+                    <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -222,11 +232,15 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
     const { company, user, loading } = useUser();
     const { toast } = useToast();
     const [complianceItems, setComplianceItems] = React.useState<ComplianceItem[]>([]);
+    const [categories, setCategories] = React.useState<CoherenceMatrixCategory[]>([]);
     const [personnel, setPersonnel] = React.useState<User[]>(initialPersonnel);
     const [departments, setDepartments] = React.useState<CompanyDepartment[]>(initialDepartments);
     const [audits, setAudits] = React.useState<QualityAudit[]>(initialAudits);
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+    const [isCategoryDialogOpen, setIsCategoryDialogOpen] = React.useState(false);
     const [editingItem, setEditingItem] = React.useState<ComplianceItem | null>(null);
+    const [newCategoryName, setNewCategoryName] = React.useState('');
+    const [preSelectedCategoryName, setPreSelectedCategoryName] = React.useState<string | undefined>();
 
     const fetchData = React.useCallback(async () => {
         if (!company) return;
@@ -234,6 +248,10 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
             const complianceQuery = query(collection(db, `companies/${company.id}/compliance-matrix`));
             const complianceSnapshot = await getDocs(complianceQuery);
             setComplianceItems(complianceSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ComplianceItem)));
+            
+            const categoriesQuery = query(collection(db, `companies/${company.id}/coherence-matrix-categories`));
+            const categoriesSnapshot = await getDocs(categoriesQuery);
+            setCategories(categoriesSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as CoherenceMatrixCategory)));
         } catch (error) {
             console.error("Error fetching data:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not load coherence matrix data.' });
@@ -293,8 +311,33 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
             fetchData();
             setIsDialogOpen(false);
             setEditingItem(null);
+            setPreSelectedCategoryName(undefined);
         } catch(e) {
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to save item.' });
+        }
+    };
+    
+    const handleCategorySubmit = async () => {
+        if (!company || !newCategoryName.trim()) return;
+        try {
+            await addDoc(collection(db, `companies/${company.id}/coherence-matrix-categories`), { name: newCategoryName.trim() });
+            toast({ title: 'Top Level Regulation Added' });
+            setNewCategoryName('');
+            setIsCategoryDialogOpen(false);
+            fetchData();
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to add category.' });
+        }
+    };
+
+    const handleDeleteCategory = async (catId: string) => {
+        if (!company) return;
+        try {
+            await deleteDoc(doc(db, `companies/${company.id}/coherence-matrix-categories`, catId));
+            toast({ title: 'Category Deleted' });
+            fetchData();
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete category.' });
         }
     };
     
@@ -310,35 +353,29 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
         }
     };
     
-    const handleSeedData = async () => {
-        if (!company) return;
-        const batch = writeBatch(db);
-        const matrixCollectionRef = collection(db, `companies/${company.id}/compliance-matrix`);
+    const groupedItems = useMemo(() => {
+        const grouped: Record<string, ComplianceItem[]> = {};
         
-        seedComplianceData.forEach(item => {
-            const docRef = doc(matrixCollectionRef);
-            const { findings, ...itemToSeed } = item;
-            batch.set(docRef, {...itemToSeed, regulationStatement: item.process, companyId: company.id});
+        // Initialize with all categories
+        categories.forEach(cat => {
+            grouped[cat.name] = [];
         });
         
-        try {
-            await batch.commit();
-            fetchData();
-            toast({title: 'Sample Data Seeded', description: 'The coherence matrix has been populated with Part 141 regulations.'})
-        } catch (error) {
-            console.error("Error seeding coherence matrix:", error);
-            toast({ variant: 'destructive', title: 'Seeding Failed', description: 'Could not seed coherence matrix data.' });
-        }
-    };
-
-    const groupedItems = useMemo(() => {
-        return complianceItems.reduce((acc, item) => {
+        // Populate with items
+        complianceItems.forEach(item => {
             const parent = item.parentRegulation || 'Other / Uncategorized';
-            if (!acc[parent]) acc[parent] = [];
-            acc[parent].push(item);
-            return acc;
-        }, {} as Record<string, ComplianceItem[]>);
-    }, [complianceItems]);
+            if (!grouped[parent]) grouped[parent] = [];
+            grouped[parent].push(item);
+        });
+        
+        return grouped;
+    }, [complianceItems, categories]);
+
+    const handleAddItemToCategory = (categoryName: string) => {
+        setPreSelectedCategoryName(categoryName);
+        setEditingItem(null);
+        setIsDialogOpen(true);
+    };
 
     if (loading) {
         return <main className="flex-1 p-4 md:p-8"><p>Loading...</p></main>;
@@ -356,21 +393,24 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
                 <div className="flex gap-2">
                     {canEdit && (
                         <>
-                            <Button variant="outline" onClick={handleSeedData}>
-                              <Database className="mr-2 h-4 w-4" />
-                              Seed Part 141 Regulations
-                            </Button>
-                            <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingItem(null); }}>
+                            <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
                                 <DialogTrigger asChild>
-                                    <Button><PlusCircle className="mr-2 h-4 w-4" /> Add Requirement</Button>
+                                    <Button variant="outline"><PlusCircle className="mr-2 h-4 w-4" /> Add Top Level</Button>
                                 </DialogTrigger>
-                                <DialogContent className="sm:max-w-2xl">
-                                    <DialogHeader>
-                                        <DialogTitle>{editingItem ? 'Edit' : 'Add'} Compliance Item</DialogTitle>
-                                    </DialogHeader>
-                                    <ComplianceItemForm onSubmit={handleFormSubmit} personnel={personnel} departments={departments} existingItem={editingItem} />
+                                <DialogContent>
+                                    <DialogHeader><DialogTitle>Add Top Level Regulation</DialogTitle></DialogHeader>
+                                    <div className="space-y-4 pt-4">
+                                        <div className="space-y-2">
+                                            <Label>Regulation Name (e.g. SA-CATS 141)</Label>
+                                            <Input value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="Enter regulation title..." />
+                                        </div>
+                                        <DialogFooter><Button onClick={handleCategorySubmit}>Add Category</Button></DialogFooter>
+                                    </div>
                                 </DialogContent>
                             </Dialog>
+                            <Button onClick={() => { setPreSelectedCategoryName(undefined); setEditingItem(null); setIsDialogOpen(true); }}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add Sub-Regulation
+                            </Button>
                         </>
                     )}
                 </div>
@@ -388,14 +428,43 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
                             {Object.keys(groupedItems).sort().map(parentReg => (
                                 <AccordionItem value={parentReg} key={parentReg} className="border-b last:border-b-0">
                                     <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/20">
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant="outline" className="font-bold">{parentReg}</Badge>
-                                            <span className="text-xs text-muted-foreground">({groupedItems[parentReg].length} items)</span>
+                                        <div className="flex items-center justify-between w-full pr-4">
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="outline" className="font-bold text-sm">{parentReg}</Badge>
+                                                <span className="text-xs text-muted-foreground">({groupedItems[parentReg].length} items)</span>
+                                            </div>
+                                            {canEdit && (
+                                                <div className="flex items-center gap-2 no-print" onClick={(e) => e.stopPropagation()}>
+                                                    <Button size="sm" variant="ghost" onClick={() => handleAddItemToCategory(parentReg)}>
+                                                        <PlusCircle className="h-4 w-4 mr-1" /> Add Requirement
+                                                    </Button>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button size="sm" variant="ghost" className="text-destructive h-8 w-8 p-0">
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Delete Top Level Regulation?</AlertDialogTitle>
+                                                                <AlertDialogDescription>This will remove the category "{parentReg}". Existing items within this category will be moved to "Uncategorized".</AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => {
+                                                                    const catId = categories.find(c => c.name === parentReg)?.id;
+                                                                    if (catId) handleDeleteCategory(catId);
+                                                                }} className="bg-destructive">Delete</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </div>
+                                            )}
                                         </div>
                                     </AccordionTrigger>
                                     <AccordionContent className="p-0">
                                         <div className="divide-y bg-muted/5">
-                                            {groupedItems[parentReg].map(item => {
+                                            {groupedItems[parentReg].length > 0 ? groupedItems[parentReg].map(item => {
                                                 const { lastAuditDate, findings } = getAuditDataForRegulation(item.regulation);
                                                 return (
                                                     <Collapsible key={item.id} className="w-full">
@@ -471,7 +540,9 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
                                                         </CollapsibleContent>
                                                     </Collapsible>
                                                 )
-                                            })}
+                                            }) : (
+                                                <div className="p-4 text-center text-xs text-muted-foreground italic">No requirements added to this section yet.</div>
+                                            )}
                                         </div>
                                     </AccordionContent>
                                 </AccordionItem>
@@ -479,7 +550,7 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
                         </Accordion>
                     ) : (
                         <div className="p-10 text-center text-sm text-muted-foreground">
-                            No compliance items have been added yet. Use the button above to add your first regulation mapping.
+                            No regulations added yet. Use the buttons above to create your first top-level regulation heading.
                         </div>
                     )}
                 </div>
@@ -789,7 +860,7 @@ export function QualityPageContent({
     if (checked) {
         setSelectedAudits(prev => [...prev, auditId]);
     } else {
-        setSelectedAudits(prev => prev.filter(id => id !== auditId));
+        setSelectedAudits(prev => prev.filter(id => id !== id));
     }
   }
 
@@ -1047,7 +1118,7 @@ export function QualityPageContent({
                                     <ReportTable audits={groupedActiveAudits[department]} isArchivedTable={false} />
                                 </div>
                             ))}
-                            {Object.keys(groupedActiveActiveAudits).length === 0 && (
+                            {Object.keys(groupedActiveAudits).length === 0 && (
                                 <div className="text-center text-muted-foreground py-10">No active reports found.</div>
                             )}
                         </TabsContent>

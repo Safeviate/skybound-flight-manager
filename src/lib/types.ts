@@ -68,6 +68,11 @@ export type BookingPurpose = {
   name: string;
 };
 
+export type CoherenceMatrixCategory = {
+    id: string;
+    name: string;
+};
+
 export type Company = {
   id: string;
   name: string;
