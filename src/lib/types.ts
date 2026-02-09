@@ -1,5 +1,3 @@
-
-
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
@@ -552,6 +550,7 @@ export type Alert = {
 export type ComplianceItem = {
     id: string;
     companyId: string;
+    parentRegulation?: string;
     regulation: string;
     regulationStatement: string;
     companyReference?: string;

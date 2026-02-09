@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -44,6 +43,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Label } from '@/components/ui/label';
 import { TaskTrackerPageContent } from '@/app/task-tracker/task-tracker-page-content';
 import { getQualityPageData } from './data';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 
 const ComplianceItemForm = ({
@@ -60,7 +60,8 @@ const ComplianceItemForm = ({
   const [departmentFilter, setDepartmentFilter] = useState('');
 
   const complianceItemSchema = z.object({
-    regulation: z.string().min(3, 'Regulation is required.'),
+    parentRegulation: z.string().min(2, 'Parent Regulation (e.g. SA-CATS 141) is required.'),
+    regulation: z.string().min(3, 'Regulation point is required.'),
     regulationStatement: z.string().min(5, 'Regulation statement is required.'),
     companyReference: z.string().optional(),
     responsibleManager: z.string().min(1, 'Responsible Manager is required.'),
@@ -78,6 +79,7 @@ const ComplianceItemForm = ({
           nextAuditDate: existingItem.nextAuditDate ? parseISO(existingItem.nextAuditDate) : null,
         }
       : {
+          parentRegulation: '',
           regulation: '',
           regulationStatement: '',
           companyReference: '',
@@ -106,10 +108,22 @@ const ComplianceItemForm = ({
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
         <FormField
           control={form.control}
+          name="parentRegulation"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Parent Regulation (e.g., SA-CATS 141)</FormLabel>
+              <FormControl><Input placeholder="e.g., SA-CATS 141 Aviation Training Organisations" {...field} /></FormControl>
+              <FormDescription>This will be used to group sub-regulations.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="regulation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Regulation (e.g., CAR Part 121.03.5)</FormLabel>
+              <FormLabel>Sub-regulation / Point (e.g., 141.02.3)</FormLabel>
               <FormControl><Input {...field} /></FormControl>
               <FormMessage />
             </FormItem>
@@ -318,6 +332,15 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
         }
     };
 
+    const groupedItems = useMemo(() => {
+        return complianceItems.reduce((acc, item) => {
+            const parent = item.parentRegulation || 'Other / Uncategorized';
+            if (!acc[parent]) acc[parent] = [];
+            acc[parent].push(item);
+            return acc;
+        }, {} as Record<string, ComplianceItem[]>);
+    }, [complianceItems]);
+
     if (loading) {
         return <main className="flex-1 p-4 md:p-8"><p>Loading...</p></main>;
     }
@@ -354,89 +377,112 @@ const CoherenceMatrix = ({ audits: initialAudits, personnel: initialPersonnel, d
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="border rounded-md">
-                    <div className="grid grid-cols-[1fr,2fr,1fr] p-4 font-semibold border-b">
-                        <div>Regulation</div>
+                <div className="border rounded-md overflow-hidden">
+                    <div className="grid grid-cols-[1fr,2fr,1fr] p-4 font-semibold border-b bg-muted/30">
+                        <div>Regulation / Section</div>
                         <div>Regulation Statement</div>
                         <div className="text-right">Next Audit</div>
                     </div>
-                    <div className="space-y-1">
-                    {complianceItems.length > 0 ? complianceItems.map(item => {
-                        const { lastAuditDate, findings } = getAuditDataForRegulation(item.regulation);
-                        return (
-                        <Collapsible key={item.id} className="border-b last:border-b-0">
-                            <CollapsibleTrigger className="w-full">
-                                <div className="grid grid-cols-[1fr,2fr,1fr] p-4 text-left hover:bg-muted/50">
-                                    <div className="font-semibold">{item.regulation}</div>
-                                    <div className="truncate pr-4">{item.regulationStatement}</div>
-                                    <div className="text-right flex items-center justify-end gap-2">
-                                        {item.nextAuditDate ? format(parseISO(item.nextAuditDate), 'dd MMM yyyy') : 'N/A'}
-                                        <ChevronDown className="h-4 w-4" />
-                                    </div>
-                                </div>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                                <div className="px-4 py-3 bg-muted/50 border-t space-y-4">
-                                     <div>
-                                        <h4 className="text-xs font-semibold text-muted-foreground mb-1">Regulation Statement</h4>
-                                        <p className="text-sm whitespace-pre-wrap">{item.regulationStatement}</p>
-                                    </div>
-                                     <div>
-                                        <h4 className="text-xs font-semibold text-muted-foreground mb-1">Company Reference</h4>
-                                        <p className="text-sm whitespace-pre-wrap">{item.companyReference || 'N/A'}</p>
-                                    </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        <div>
-                                            <h4 className="text-xs font-semibold text-muted-foreground mb-1">Responsible Manager</h4>
-                                            <p className="text-sm">{item.responsibleManager}</p>
+                    
+                    {Object.keys(groupedItems).length > 0 ? (
+                        <Accordion type="multiple" className="w-full">
+                            {Object.keys(groupedItems).sort().map(parentReg => (
+                                <AccordionItem value={parentReg} key={parentReg} className="border-b last:border-b-0">
+                                    <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/20">
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="outline" className="font-bold">{parentReg}</Badge>
+                                            <span className="text-xs text-muted-foreground">({groupedItems[parentReg].length} items)</span>
                                         </div>
-                                        <div>
-                                            <h4 className="text-xs font-semibold text-muted-foreground mb-1">Last Audit</h4>
-                                            <p className="text-sm">{lastAuditDate}</p>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="p-0">
+                                        <div className="divide-y bg-muted/5">
+                                            {groupedItems[parentReg].map(item => {
+                                                const { lastAuditDate, findings } = getAuditDataForRegulation(item.regulation);
+                                                return (
+                                                    <Collapsible key={item.id} className="w-full">
+                                                        <CollapsibleTrigger className="w-full">
+                                                            <div className="grid grid-cols-[1fr,2fr,1fr] p-4 text-left hover:bg-muted/50 transition-colors">
+                                                                <div className="font-semibold text-primary">{item.regulation}</div>
+                                                                <div className="truncate pr-4 text-sm">{item.regulationStatement}</div>
+                                                                <div className="text-right flex items-center justify-end gap-2 text-sm">
+                                                                    {item.nextAuditDate ? format(parseISO(item.nextAuditDate), 'dd MMM yyyy') : 'N/A'}
+                                                                    <ChevronDown className="h-4 w-4" />
+                                                                </div>
+                                                            </div>
+                                                        </CollapsibleTrigger>
+                                                        <CollapsibleContent>
+                                                            <div className="px-8 py-4 bg-background border-t space-y-4 shadow-inner">
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                                    <div className="space-y-4">
+                                                                        <div>
+                                                                            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Regulation Statement</h4>
+                                                                            <p className="text-sm whitespace-pre-wrap leading-relaxed">{item.regulationStatement}</p>
+                                                                        </div>
+                                                                        <div>
+                                                                            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Company Reference</h4>
+                                                                            <p className="text-sm whitespace-pre-wrap leading-relaxed">{item.companyReference || 'N/A'}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="space-y-4">
+                                                                        <div className="grid grid-cols-2 gap-4">
+                                                                            <div>
+                                                                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Responsible Manager</h4>
+                                                                                <p className="text-sm font-medium">{item.responsibleManager}</p>
+                                                                            </div>
+                                                                            <div>
+                                                                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Last Audit</h4>
+                                                                                <p className="text-sm">{lastAuditDate}</p>
+                                                                            </div>
+                                                                            <div>
+                                                                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Next Audit</h4>
+                                                                                <p className="text-sm">{item.nextAuditDate ? format(parseISO(item.nextAuditDate), 'dd MMM yyyy') : 'N/A'}</p>
+                                                                            </div>
+                                                                            <div>
+                                                                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Findings</h4>
+                                                                                <Badge variant={findings === 'None' ? 'success' : 'destructive'} className="text-[10px] uppercase">{findings}</Badge>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                {canEdit && (
+                                                                    <div className="flex justify-end gap-2 pt-4 border-t">
+                                                                        <Button variant="outline" size="sm" onClick={() => { setEditingItem(item); setIsDialogOpen(true); }}>
+                                                                            <Edit className="mr-2 h-4 w-4" /> Edit
+                                                                        </Button>
+                                                                        <AlertDialog>
+                                                                            <AlertDialogTrigger asChild>
+                                                                                <Button variant="outline" size="sm" className="text-destructive border-destructive hover:bg-destructive hover:text-white">
+                                                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                                                </Button>
+                                                                            </AlertDialogTrigger>
+                                                                            <AlertDialogContent>
+                                                                                <AlertDialogHeader>
+                                                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                                    <AlertDialogDescription>This will permanently delete this compliance entry. This action cannot be undone.</AlertDialogDescription>
+                                                                                </AlertDialogHeader>
+                                                                                <AlertDialogFooter>
+                                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                                    <AlertDialogAction onClick={() => handleDeleteItem(item.id)} className="bg-destructive">Yes, Delete</AlertDialogAction>
+                                                                                </AlertDialogFooter>
+                                                                            </AlertDialogContent>
+                                                                        </AlertDialog>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </CollapsibleContent>
+                                                    </Collapsible>
+                                                )
+                                            })}
                                         </div>
-                                        <div>
-                                            <h4 className="text-xs font-semibold text-muted-foreground mb-1">Next Audit</h4>
-                                            <p className="text-sm">{item.nextAuditDate ? format(parseISO(item.nextAuditDate), 'dd MMM yyyy') : 'N/A'}</p>
-                                        </div>
-                                         <div>
-                                            <h4 className="text-xs font-semibold text-muted-foreground mb-1">Findings</h4>
-                                            <p className="text-sm">{findings}</p>
-                                        </div>
-                                    </div>
-                                    {canEdit && (
-                                    <div className="flex justify-end gap-2 pt-2 border-t">
-                                        <Button variant="ghost" size="sm" onClick={() => { setEditingItem(item); setIsDialogOpen(true); }}>
-                                            <Edit className="mr-2 h-4 w-4" /> Edit
-                                        </Button>
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                    <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDeleteItem(item.id)}>Yes, Delete</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                    </div>
-                                    )}
-                                </div>
-                            </CollapsibleContent>
-                        </Collapsible>
-                        )
-                    }) : (
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                    ) : (
                         <div className="p-10 text-center text-sm text-muted-foreground">
-                            No compliance items have been added.
+                            No compliance items have been added yet. Use the button above to add your first regulation mapping.
                         </div>
                     )}
-                    </div>
                 </div>
             </CardContent>
         </Card>
