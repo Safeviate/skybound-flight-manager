@@ -369,7 +369,7 @@ export function QualityPageContent({
     
     setAudits(auditsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as QualityAudit)));
     setSchedule(scheduleSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as AuditScheduleItem)));
-    setAuditAreas(auditAreasSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as CompanyAuditArea)));
+    setAuditAreas(auditAreasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyAuditArea)));
   }, [company]);
 
   const fetchMatrixData = useCallback(async () => {
@@ -395,6 +395,12 @@ export function QualityPageContent({
         const parent = item.parentRegulation || 'Other / Uncategorized';
         if (!grouped[parent]) grouped[parent] = [];
         grouped[parent].push(item);
+    });
+    // Sort items within each group numerically/naturally by regulation string
+    Object.keys(grouped).forEach(key => {
+        grouped[key].sort((a, b) => 
+            a.regulation.localeCompare(b.regulation, undefined, { numeric: true, sensitivity: 'base' })
+        );
     });
     return grouped;
   }, [complianceItems, categories]);

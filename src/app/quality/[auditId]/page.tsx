@@ -157,7 +157,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
         const alertsCollection = collection(db, `companies/${company.id}/alerts`);
 
         for (const sigUser of signatureUsers) {
-            const targetUser = personnel.find(p => p.name === sigUser);
+            const targetUser = personnel.find(p => p.id === sigUser);
             if(targetUser) {
                  const newAlert: Omit<Alert, 'id' | 'number'> = {
                     companyId: company.id,
