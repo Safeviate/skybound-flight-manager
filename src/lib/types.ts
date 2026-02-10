@@ -261,7 +261,7 @@ export const ALL_PERMISSIONS: Permission[] = [
 export type Role = string;
 export type Department = string;
 
-export type NavMenuItem = 'My Dashboard' | 'My Profile' | 'Company Dashboard' | 'Operations' | 'Training' | 'Safety' | 'Quality' | 'Assets' | 'Administration' | 'Task Tracker' | 'Fleet Track' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Hire and Fly' | 'Training Schedule' | 'Flight Logs' | 'Flight Statistics' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart' | 'Roles & Departments' | 'Meetings' | 'Exams' | 'Quality Dashboard' | 'Audits' | 'Audit Checklists' | 'Coherence Matrix' | 'Safety Dashboard' | 'Safety Reports' | 'Risk Register' | 'SPIs' | 'MOC';
+export type NavMenuItem = 'My Dashboard' | 'My Profile' | 'Company Dashboard' | 'Operations' | 'Training' | 'Safety' | 'Quality' | 'Assets' | 'Administration' | 'Task Tracker' | 'Fleet Track' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Hire and Fly' | 'Training Schedule' | 'Flight Logs' | 'Flight Statistics' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart' | 'Roles & Departments' | 'Meetings' | 'Exams' | 'Quality Dashboard' | 'Audits' | 'Audit Checklists' | 'Coherence Matrix' | 'CAPS Tracker' | 'Safety Dashboard' | 'Safety Reports' | 'Risk Register' | 'SPIs' | 'MOC';
 
 export type User = {
     id: string;

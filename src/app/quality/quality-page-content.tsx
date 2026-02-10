@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -6,7 +5,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import type { QualityAudit, AuditScheduleItem, User, ComplianceItem, CompanyDepartment, Aircraft, CoherenceMatrixCategory, UnifiedTask, CompanyAuditArea, FindingStatus, FindingLevel } from '@/lib/types';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell } from 'recharts';
 import { format, parseISO, startOfMonth } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, ChevronDown, Calendar as CalendarIcon, FileUp } from 'lucide-react';
@@ -308,7 +307,7 @@ export function QualityPageContent({
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
-  const { company, user, updateCompany } = useUser();
+  const { company, user } = useUser();
   const { toast } = useToast();
 
   const [audits, setAudits] = useState<QualityAudit[]>(initialAudits);
@@ -474,6 +473,10 @@ export function QualityPageContent({
   const sortedCategoryNames = useMemo(() => {
     return Object.keys(groupedMatrix).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
   }, [groupedMatrix]);
+
+  useEffect(() => {
+    if (tabFromUrl) setActiveTab(tabFromUrl);
+  }, [tabFromUrl]);
 
   return (
     <main className="flex-1 p-4 md:p-8">

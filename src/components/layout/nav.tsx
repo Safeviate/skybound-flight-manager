@@ -1,4 +1,3 @@
-
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
@@ -110,6 +109,7 @@ export const navItems: {
       { href: '/quality?tab=dashboard', label: 'Quality Dashboard', icon: LayoutDashboard },
       { href: '/quality?tab=audits', label: 'Audits', icon: ClipboardCheck },
       { href: '/quality?tab=checklists', label: 'Audit Checklists', icon: ListChecks },
+      { href: '/quality?tab=cap-tracker', label: 'CAPS Tracker', icon: ListChecks },
       { href: '/quality?tab=task-tracker', label: 'Task Tracker', icon: ListChecks },
       { href: '/quality?tab=coherence-matrix', label: 'Coherence Matrix', icon: Network },
     ],

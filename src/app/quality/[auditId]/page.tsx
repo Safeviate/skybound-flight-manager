@@ -1,16 +1,15 @@
-
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem, User, DiscussionEntry, Signature, Alert } from '@/lib/types';
+import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem, User, DiscussionEntry, CorrectiveActionPlan, Alert, Department, FindingOption } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Ban, MinusCircle, XCircle, FileText, Save, Send, Check, Loader2, Bot, Printer, ArrowLeft, Signature as SignatureIcon, Eraser, Camera, Image as ImageIcon, RotateCw, FileUp, Trash2, ChevronDown } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser, Users, Camera, Image as ImageIcon, RotateCw, FileUp, Trash2, ChevronDown } from 'lucide-react';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useUser } from '@/context/user-provider';
-import { doc, getDoc, setDoc, collection, getDocs, addDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -19,7 +18,7 @@ import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -82,6 +81,74 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
     const observations = useMemo(() => audit.checklistItems.filter(item => item.finding === 'Observation'), [audit.checklistItems]);
     const otherFindings = useMemo(() => audit.checklistItems.filter(item => !nonConformances.some(nc => nc.id === item.id) && !observations.some(obs => obs.id === item.id)), [audit.checklistItems, nonConformances, observations]);
 
+
+    const availableRecipients = React.useMemo(() => {
+        if (!audit.auditTeam || !user) return [];
+        return audit.auditTeam.filter(name => name !== user.name);
+    }, [audit.auditTeam, user]);
+
+
+    const handleReply = (recipient: string) => {
+        discussionForm.setValue('recipient', recipient);
+        setIsDiscussionDialogOpen(true);
+    };
+
+    const handleNewDiscussionMessage = async (data: DiscussionFormValues) => {
+        if (!user || !audit || !company) {
+            return;
+        }
+
+        const newEntry: DiscussionEntry = {
+            id: `d-${Date.now()}`,
+            author: user.name,
+            recipient: data.recipient || 'Team',
+            message: data.message,
+            datePosted: new Date().toISOString(),
+            replyByDate: data.replyByDate ? data.replyByDate.toISOString() : undefined,
+        };
+
+        const cleanNewEntry = JSON.parse(JSON.stringify(newEntry, (key, value) => {
+            return value === undefined ? null : value;
+        }));
+        
+        const updatedAudit = {
+            ...audit,
+            discussion: [...(audit.discussion || []), cleanNewEntry],
+        };
+
+        const recipients = data.recipient
+          ? [data.recipient]
+          : audit.auditTeam?.filter((name) => name !== user.name) || [];
+
+        if (recipients.length > 0) {
+            toast({ title: 'Message Posted', description: `A notification has been sent to relevant team members.`});
+        }
+        
+        for (const recipientName of recipients) {
+            const recipientUser = personnel.find(p => p.name === recipientName);
+            if (recipientUser) {
+                const newAlert: Omit<Alert, 'id' | 'number'> = {
+                    companyId: company.id,
+                    type: 'Task',
+                    title: `New Message on Audit: ${audit.id.substring(0,8)}`,
+                    description: `From ${user.name}: "${data.message.substring(0, 50)}..."`,
+                    author: user.name,
+                    date: new Date().toISOString(),
+                    readBy: [],
+                    targetUserId: recipientUser.id,
+                    relatedLink: `/quality/${audit.id}`,
+                };
+                const alertsCollection = collection(db, `companies/${company.id}/alerts`);
+                await addDoc(alertsCollection, newAlert);
+            }
+        }
+
+
+        onUpdate(updatedAudit, true);
+        discussionForm.reset();
+        setIsDiscussionDialogOpen(false);
+    }
+
     const handleRequestSignatures = async () => {
         if (!audit || !company || !user) return;
         const signatureUsers = [audit.auditor, audit.auditeeName].filter(Boolean) as string[];
@@ -108,7 +175,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
 
         toast({
             title: 'Signatures Requested',
-            description: `Alerts have been sent to the Lead Auditor and Auditee.`
+            description: `Alerts have been sent to ${signatureUsers.join(' and ')}.`
         });
     };
 
@@ -147,7 +214,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                     </Button>
                 )}
                 <Button variant="outline" onClick={handleRequestSignatures} className="w-full">
-                    <SignatureIcon className="mr-2 h-4 w-4" />
+                    <Signature className="mr-2 h-4 w-4" />
                     Request Signatures
                 </Button>
                 <Button variant="destructive" size="sm" onClick={handleResetSignatures} className="w-full">
