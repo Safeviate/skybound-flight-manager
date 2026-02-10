@@ -21,6 +21,7 @@ import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useTableControls } from '@/hooks/use-table-controls';
 import { AuditChecklistsManager } from '../quality/audit-checklists-manager';
 import { TaskTrackerPageContent } from '../task-tracker/task-tracker-page-content';
@@ -363,7 +364,7 @@ export function QualityPageContent({
     const [auditsSnap, scheduleSnap, auditAreasSnap] = await Promise.all([
         getDocs(auditsQuery),
         getDocs(scheduleQuery),
-        getDocs(auditAreasSnap || collection(db, 'temp')), // fallback for safety
+        getDocs(auditAreasQuery),
     ]);
     
     setAudits(auditsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as QualityAudit)));

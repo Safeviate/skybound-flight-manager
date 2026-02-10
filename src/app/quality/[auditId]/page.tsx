@@ -3,11 +3,11 @@
 
 import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem, User, DiscussionEntry, Alert } from '@/lib/types';
+import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem, User, DiscussionEntry, Alert, Signature } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Ban, MinusCircle, XCircle, FileText, Save, Send, Check, Loader2, Bot, Printer, ArrowLeft, Signature, Eraser, Camera, Image as ImageIcon, RotateCw, FileUp, Trash2, ChevronDown } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Ban, MinusCircle, XCircle, FileText, Save, Send, Check, Loader2, Bot, Printer, ArrowLeft, Signature as SignatureIcon, Eraser, Camera, Image as ImageIcon, RotateCw, FileUp, Trash2, ChevronDown } from 'lucide-react';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, setDoc, collection, getDocs, addDoc } from 'firebase/firestore';
@@ -215,7 +215,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                     </Button>
                 )}
                 <Button variant="outline" onClick={handleRequestSignatures} className="w-full">
-                    <Signature className="mr-2 h-4 w-4" />
+                    <SignatureIcon className="mr-2 h-4 w-4" />
                     Request Signatures
                 </Button>
                 <Button variant="destructive" size="sm" onClick={handleResetSignatures} className="w-full">
@@ -311,10 +311,10 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                             <Badge variant={getFindingInfo(issue.finding).variant}>{issue.finding}</Badge>
                                             {issue.level && <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>}
                                         </div>
-                                        <p className="font-medium mt-2">{index + 1}. {issue.itemText}</p>
+                                        <p className="font-medium mt-2">{index + 1}. {issue.text}</p>
                                         <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
                                         <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
-                                        {issue.photo && <Image src={issue.photo} alt={`Photo for ${issue.itemText}`} width={200} height={112} className="mt-2 rounded-md" />}
+                                        {issue.photo && <Image src={issue.photo} alt={`Photo for ${issue.text}`} width={200} height={112} className="mt-2 rounded-md" />}
                                     </div>
                                 </div>
                                 {issue.correctiveActionPlans && issue.correctiveActionPlans.length > 0 && (
