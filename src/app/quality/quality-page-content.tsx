@@ -5,11 +5,11 @@ import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, User, ComplianceItem, CompanyDepartment, Aircraft, CoherenceMatrixCategory, UnifiedTask, CompanyAuditArea } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, User, ComplianceItem, CompanyDepartment, Aircraft, CoherenceMatrixCategory, UnifiedTask, CompanyAuditArea, FindingStatus, FindingLevel, Permission } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, ReferenceLine } from 'recharts';
-import { format, parseISO, startOfMonth } from 'date-fns';
+import { format, parseISO, startOfMonth, isValid } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, ChevronDown } from 'lucide-react';
+import { ChevronRight, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, ChevronDown, Calendar as CalendarIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { AuditSchedule } from '../quality/audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -36,6 +36,8 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 
 // --- Helper Components ---
 
@@ -100,6 +102,7 @@ const ComplianceItemForm = ({
     regulationStatement: z.string().min(5, 'Regulation statement is required.'),
     companyReference: z.string().optional(),
     responsibleManager: z.string().min(1, 'Responsible Manager is required.'),
+    nextAuditDate: z.date().optional().nullable(),
   });
 
   type ComplianceFormValues = z.infer<typeof complianceItemSchema>;
@@ -111,6 +114,7 @@ const ComplianceItemForm = ({
           ...existingItem,
           parentRegulation: existingItem.parentRegulation || 'none',
           regulationStatement: existingItem.regulationStatement || '',
+          nextAuditDate: existingItem.nextAuditDate ? parseISO(existingItem.nextAuditDate) : null,
         }
       : {
           parentRegulation: preSelectedParentId || 'none',
@@ -118,6 +122,7 @@ const ComplianceItemForm = ({
           regulationStatement: '',
           companyReference: '',
           responsibleManager: '',
+          nextAuditDate: null,
         },
   });
 
@@ -125,6 +130,7 @@ const ComplianceItemForm = ({
     onSubmit({
         ...data,
         parentRegulation: data.parentRegulation === 'none' ? undefined : data.parentRegulation,
+        nextAuditDate: data.nextAuditDate ? format(data.nextAuditDate, 'yyyy-MM-dd') : undefined,
     } as any);
   };
 
@@ -161,6 +167,32 @@ const ComplianceItemForm = ({
                 <FormMessage />
             </FormItem>
         )} />
+        <FormField
+            control={form.control}
+            name="nextAuditDate"
+            render={({ field }) => (
+                <FormItem className="flex flex-col">
+                    <FormLabel>Next Audit Date</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                    variant={"outline"}
+                                    className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                                >
+                                    {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
         <DialogFooter><Button type="submit">Save Requirement</Button></DialogFooter>
       </form>
     </Form>
@@ -343,7 +375,7 @@ export function QualityPageContent({
     const [auditsSnap, scheduleSnap, auditAreasSnap] = await Promise.all([
         getDocs(auditsQuery),
         getDocs(scheduleQuery),
-        getDocs(auditAreasQuery),
+        getDocs(auditAreasSnap),
     ]);
     
     setAudits(auditsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as QualityAudit)));
@@ -581,11 +613,12 @@ export function QualityPageContent({
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-[15%_35%_20%_20%_10%] px-4 py-2 border-b text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        <div className="grid grid-cols-[10%_30%_15%_15%_15%_15%] px-4 py-2 border-b text-xs font-bold text-muted-foreground uppercase tracking-wider">
                             <div>Regulation</div>
                             <div>Statement</div>
                             <div>Co. Ref.</div>
                             <div>Manager</div>
+                            <div>Next Audit</div>
                             <div className="text-right">Actions</div>
                         </div>
 
@@ -598,9 +631,12 @@ export function QualityPageContent({
                                             {canEdit && catName !== 'Other / Uncategorized' && (
                                                 <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                                                     <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => { 
-                                                        setEditingCategory(categories.find(c => c.name === catName)!); 
-                                                        setNewCategoryName(catName); 
-                                                        setIsCategoryDialogOpen(true); 
+                                                        const cat = categories.find(c => c.name === catName);
+                                                        if (cat) {
+                                                            setEditingCategory(cat); 
+                                                            setNewCategoryName(catName); 
+                                                            setIsCategoryDialogOpen(true);
+                                                        }
                                                     }}>
                                                         <Edit className="h-4 w-4" />
                                                     </Button>
@@ -619,11 +655,12 @@ export function QualityPageContent({
                                     <AccordionContent>
                                         <div className="space-y-1">
                                             {groupedMatrix[catName].map(item => (
-                                                <div key={item.id} className="grid grid-cols-[15%_35%_20%_20%_10%] px-4 py-3 border-b last:border-0 hover:bg-muted/30 transition-colors text-sm items-center">
+                                                <div key={item.id} className="grid grid-cols-[10%_30%_15%_15%_15%_15%] px-4 py-3 border-b last:border-0 hover:bg-muted/30 transition-colors text-sm items-center">
                                                     <div className="font-semibold">{item.regulation}</div>
                                                     <div className="pr-4 line-clamp-2" title={item.regulationStatement}>{item.regulationStatement}</div>
                                                     <div className="pr-4 truncate" title={item.companyReference}>{item.companyReference || 'N/A'}</div>
                                                     <div>{item.responsibleManager}</div>
+                                                    <div>{item.nextAuditDate ? format(parseISO(item.nextAuditDate), 'dd MMM yyyy') : 'N/A'}</div>
                                                     <div className="flex justify-end gap-1">
                                                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingItem(item); setIsComplianceDialogOpen(true); }}>
                                                             <Edit className="h-4 w-4" />
