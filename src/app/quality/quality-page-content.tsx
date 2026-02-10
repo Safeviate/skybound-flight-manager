@@ -38,6 +38,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import CapTracker from './cap-tracker';
 
 // --- Helper Components ---
 
@@ -481,6 +482,7 @@ export function QualityPageContent({
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="audits">Audits</TabsTrigger>
                 <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
+                <TabsTrigger value="cap-tracker">CAPS Tracker</TabsTrigger>
                 <TabsTrigger value="task-tracker">Task Tracker</TabsTrigger>
                 <TabsTrigger value="coherence-matrix">Coherence Matrix</TabsTrigger>
             </TabsList>
@@ -566,6 +568,10 @@ export function QualityPageContent({
                     initialDepartments={initialDepartments} 
                     initialAircraft={initialAircraft} 
                 />
+            </TabsContent>
+
+            <TabsContent value="cap-tracker">
+                <CapTracker audits={activeAudits} />
             </TabsContent>
 
             <TabsContent value="task-tracker">
