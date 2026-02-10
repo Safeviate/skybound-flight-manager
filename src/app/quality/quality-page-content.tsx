@@ -4,10 +4,10 @@
 import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import type { QualityAudit, AuditScheduleItem, User, ComplianceItem, CompanyDepartment, Aircraft, CoherenceMatrixCategory, UnifiedTask, CompanyAuditArea, FindingStatus, FindingLevel } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, ReferenceLine } from 'recharts';
-import { format, parseISO, startOfMonth } from 'date-fns';
+import { format, parseISO, startOfMonth, isValid } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, ChevronDown, Calendar as CalendarIcon, FileUp } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -102,7 +102,6 @@ const ComplianceItemForm = ({
     regulationStatement: z.string().min(5, 'Regulation statement is required.'),
     companyReference: z.string().optional(),
     responsibleManager: z.string().min(1, 'Responsible Manager is required.'),
-    nextAuditDate: z.date().optional().nullable(),
   });
 
   type ComplianceFormValues = z.infer<typeof complianceItemSchema>;
@@ -114,7 +113,6 @@ const ComplianceItemForm = ({
           ...existingItem,
           parentRegulation: existingItem.parentRegulation || 'none',
           regulationStatement: existingItem.regulationStatement || '',
-          nextAuditDate: existingItem.nextAuditDate ? parseISO(existingItem.nextAuditDate) : null,
         }
       : {
           parentRegulation: preSelectedParentId || 'none',
@@ -122,7 +120,6 @@ const ComplianceItemForm = ({
           regulationStatement: '',
           companyReference: '',
           responsibleManager: '',
-          nextAuditDate: null,
         },
   });
 
@@ -130,7 +127,6 @@ const ComplianceItemForm = ({
     onSubmit({
         ...data,
         parentRegulation: data.parentRegulation === 'none' ? undefined : data.parentRegulation,
-        nextAuditDate: data.nextAuditDate ? format(data.nextAuditDate, 'yyyy-MM-dd') : undefined,
     } as any);
   };
 
@@ -167,32 +163,6 @@ const ComplianceItemForm = ({
                 <FormMessage />
             </FormItem>
         )} />
-        <FormField
-            control={form.control}
-            name="nextAuditDate"
-            render={({ field }) => (
-                <FormItem className="flex flex-col">
-                    <FormLabel>Next Audit Date</FormLabel>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                    variant={"outline"}
-                                    className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                                >
-                                    {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
-                        </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                </FormItem>
-            )}
-        />
         <DialogFooter><Button type="submit">Save Requirement</Button></DialogFooter>
       </form>
     </Form>
@@ -431,6 +401,16 @@ export function QualityPageContent({
     } catch (e) { toast({ variant: 'destructive', title: 'Error' }); }
   };
 
+  const handleUpdateItemDate = async (itemId: string, date: Date | undefined) => {
+    if (!company) return;
+    try {
+        const dateString = date ? format(date, 'yyyy-MM-dd') : null;
+        await updateDoc(doc(db, `companies/${company.id}/compliance-matrix`, itemId), { nextAuditDate: dateString });
+        setComplianceItems(prev => prev.map(item => item.id === itemId ? { ...item, nextAuditDate: dateString || undefined } : item));
+        toast({ title: 'Date Updated' });
+    } catch (e) { toast({ variant: 'destructive', title: 'Error' }); }
+  };
+
   const handleCategorySubmit = async () => {
     if (!company || !newCategoryName.trim()) return;
     try {
@@ -605,7 +585,7 @@ export function QualityPageContent({
                                     <Button variant="outline" onClick={() => setIsCategoryDialogOpen(true)}>
                                         <PlusCircle className="mr-2 h-4 w-4" /> Add Top Level
                                     </Button>
-                                    <Button onClick={() => setIsComplianceDialogOpen(true)}>
+                                    <Button onClick={() => { setEditingItem(null); setIsComplianceDialogOpen(true); }}>
                                         <PlusCircle className="mr-2 h-4 w-4" /> Add Sub-Regulation
                                     </Button>
                                 </>
@@ -660,7 +640,24 @@ export function QualityPageContent({
                                                     <div className="pr-4 line-clamp-2" title={item.regulationStatement}>{item.regulationStatement}</div>
                                                     <div className="pr-4 truncate" title={item.companyReference}>{item.companyReference || 'N/A'}</div>
                                                     <div>{item.responsibleManager}</div>
-                                                    <div>{item.nextAuditDate ? format(parseISO(item.nextAuditDate), 'dd MMM yyyy') : 'N/A'}</div>
+                                                    <div>
+                                                        <Popover>
+                                                            <PopoverTrigger asChild>
+                                                                <Button variant="outline" size="sm" className="h-8 text-xs font-normal">
+                                                                    <CalendarIcon className="mr-2 h-3 w-3" />
+                                                                    {item.nextAuditDate ? format(parseISO(item.nextAuditDate), 'dd MMM yyyy') : 'Set Date'}
+                                                                </Button>
+                                                            </PopoverTrigger>
+                                                            <PopoverContent className="w-auto p-0" align="start">
+                                                                <Calendar 
+                                                                    mode="single" 
+                                                                    selected={item.nextAuditDate ? parseISO(item.nextAuditDate) : undefined} 
+                                                                    onSelect={(date) => handleUpdateItemDate(item.id, date)} 
+                                                                    initialFocus 
+                                                                />
+                                                            </PopoverContent>
+                                                        </Popover>
+                                                    </div>
                                                     <div className="flex justify-end gap-1">
                                                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingItem(item); setIsComplianceDialogOpen(true); }}>
                                                             <Edit className="h-4 w-4" />
