@@ -5,17 +5,17 @@ import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, GroupedRisk, Booking, CoherenceMatrixCategory, FindingStatus, FindingLevel, UnifiedTask, CompanyAuditArea } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, User, ComplianceItem, CompanyDepartment, Aircraft, CoherenceMatrixCategory, UnifiedTask, CompanyAuditArea } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, ReferenceLine } from 'recharts';
-import { format, parseISO, startOfMonth, differenceInDays } from 'date-fns';
+import { format, parseISO, startOfMonth } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, ChevronDown, MinusCircle, XCircle, MessageSquareWarning, Ban, Check, CalendarIcon, Signature } from 'lucide-react';
+import { ChevronRight, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, ChevronDown } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { AuditSchedule } from '../quality/audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch, deleteDoc, where, orderBy, limit } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, doc, updateDoc, writeBatch, deleteDoc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -26,12 +26,8 @@ import { useTableControls } from '@/hooks/use-table-controls';
 import { AuditChecklistsManager } from '../quality/audit-checklists-manager';
 import { TaskTrackerPageContent } from '../task-tracker/task-tracker-page-content';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -39,6 +35,9 @@ import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
+// --- Helper Components ---
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({ 
@@ -85,25 +84,22 @@ const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
 const ComplianceItemForm = ({
   onSubmit,
   personnel,
-  departments,
   categories,
   existingItem,
   preSelectedParentId,
 }: {
   onSubmit: (data: Omit<ComplianceItem, 'id' | 'companyId'>) => void;
   personnel: User[];
-  departments: CompanyDepartment[];
   categories: CoherenceMatrixCategory[];
   existingItem?: ComplianceItem | null;
   preSelectedParentId?: string;
 }) => {
   const complianceItemSchema = z.object({
     parentRegulation: z.string().optional(),
-    regulation: z.string().min(3, 'Regulation point is required.'),
+    regulation: z.string().min(1, 'Regulation point is required.'),
     regulationStatement: z.string().min(5, 'Regulation statement is required.'),
     companyReference: z.string().optional(),
     responsibleManager: z.string().min(1, 'Responsible Manager is required.'),
-    nextAuditDate: z.date().optional().nullable(),
   });
 
   type ComplianceFormValues = z.infer<typeof complianceItemSchema>;
@@ -115,7 +111,6 @@ const ComplianceItemForm = ({
           ...existingItem,
           parentRegulation: existingItem.parentRegulation || 'none',
           regulationStatement: existingItem.regulationStatement || '',
-          nextAuditDate: existingItem.nextAuditDate ? parseISO(existingItem.nextAuditDate) : null,
         }
       : {
           parentRegulation: preSelectedParentId || 'none',
@@ -130,7 +125,6 @@ const ComplianceItemForm = ({
     onSubmit({
         ...data,
         parentRegulation: data.parentRegulation === 'none' ? undefined : data.parentRegulation,
-        nextAuditDate: data.nextAuditDate ? format(data.nextAuditDate, 'yyyy-MM-dd') : undefined,
     } as any);
   };
 
@@ -154,33 +148,16 @@ const ComplianceItemForm = ({
             </FormItem>
           )}
         />
-        <FormField control={form.control} name="regulation" render={({ field }) => (<FormItem><FormLabel>Regulation Point</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-        <FormField control={form.control} name="regulationStatement" render={({ field }) => (<FormItem><FormLabel>Statement</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-        <FormField control={form.control} name="companyReference" render={({ field }) => (<FormItem><FormLabel>Company Reference</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
+        <FormField control={form.control} name="regulation" render={({ field }) => (<FormItem><FormLabel>Regulation Point</FormLabel><FormControl><Input placeholder="e.g., 91.01.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+        <FormField control={form.control} name="regulationStatement" render={({ field }) => (<FormItem><FormLabel>Statement</FormLabel><FormControl><Textarea placeholder="Describe the regulatory requirement..." {...field} /></FormControl><FormMessage /></FormItem>)} />
+        <FormField control={form.control} name="companyReference" render={({ field }) => (<FormItem><FormLabel>Company Reference</FormLabel><FormControl><Textarea placeholder="Reference to internal manuals/policies..." {...field} /></FormControl><FormMessage /></FormItem>)} />
         <FormField control={form.control} name="responsibleManager" render={({ field }) => (
             <FormItem>
-                <FormLabel>Manager</FormLabel>
+                <FormLabel>Responsible Manager</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select manager" /></SelectTrigger></FormControl>
                     <SelectContent>{personnel.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent>
                 </Select>
-                <FormMessage />
-            </FormItem>
-        )} />
-        <FormField control={form.control} name="nextAuditDate" render={({ field }) => (
-            <FormItem>
-                <FormLabel>Next Audit</FormLabel>
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <FormControl>
-                            <Button variant="outline" className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                                {field.value ? format(field.value, "PPP") : "Pick a date"}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                        </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus /></PopoverContent>
-                </Popover>
                 <FormMessage />
             </FormItem>
         )} />
@@ -304,6 +281,8 @@ const ReportTable = ({
     );
 };
 
+// --- Main Page Component ---
+
 export function QualityPageContent({
     initialAudits,
     initialSchedule,
@@ -396,7 +375,7 @@ export function QualityPageContent({
         if (!grouped[parent]) grouped[parent] = [];
         grouped[parent].push(item);
     });
-    // Sort items within each group numerically/naturally by regulation string
+    // Natural Numerical Sort for items within groups
     Object.keys(grouped).forEach(key => {
         grouped[key].sort((a, b) => 
             a.regulation.localeCompare(b.regulation, undefined, { numeric: true, sensitivity: 'base' })
@@ -478,6 +457,10 @@ export function QualityPageContent({
 
   const groupedActive = useMemo(() => groupAuditsByDept(reportsControls.items), [reportsControls.items]);
   const groupedArchived = useMemo(() => groupAuditsByDept(archivedReportsControls.items), [archivedReportsControls.items]);
+
+  const sortedCategoryNames = useMemo(() => {
+    return Object.keys(groupedMatrix).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+  }, [groupedMatrix]);
 
   return (
     <main className="flex-1 p-4 md:p-8">
@@ -598,17 +581,16 @@ export function QualityPageContent({
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-[15%_30%_15%_15%_15%_10%] px-4 py-2 border-b text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        <div className="grid grid-cols-[15%_35%_20%_20%_10%] px-4 py-2 border-b text-xs font-bold text-muted-foreground uppercase tracking-wider">
                             <div>Regulation</div>
                             <div>Statement</div>
                             <div>Co. Ref.</div>
                             <div>Manager</div>
-                            <div>Next Audit</div>
                             <div className="text-right">Actions</div>
                         </div>
 
                         <Accordion type="multiple" className="w-full">
-                            {Object.keys(groupedMatrix).sort().map(catName => (
+                            {sortedCategoryNames.map(catName => (
                                 <AccordionItem key={catName} value={catName}>
                                     <AccordionTrigger className="px-4 hover:bg-muted/50 transition-colors">
                                         <div className="flex items-center justify-between w-full pr-4">
@@ -637,12 +619,11 @@ export function QualityPageContent({
                                     <AccordionContent>
                                         <div className="space-y-1">
                                             {groupedMatrix[catName].map(item => (
-                                                <div key={item.id} className="grid grid-cols-[15%_30%_15%_15%_15%_10%] px-4 py-3 border-b last:border-0 hover:bg-muted/30 transition-colors text-sm items-center">
+                                                <div key={item.id} className="grid grid-cols-[15%_35%_20%_20%_10%] px-4 py-3 border-b last:border-0 hover:bg-muted/30 transition-colors text-sm items-center">
                                                     <div className="font-semibold">{item.regulation}</div>
                                                     <div className="pr-4 line-clamp-2" title={item.regulationStatement}>{item.regulationStatement}</div>
                                                     <div className="pr-4 truncate" title={item.companyReference}>{item.companyReference || 'N/A'}</div>
                                                     <div>{item.responsibleManager}</div>
-                                                    <div>{item.nextAuditDate || 'N/A'}</div>
                                                     <div className="flex justify-end gap-1">
                                                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingItem(item); setIsComplianceDialogOpen(true); }}>
                                                             <Edit className="h-4 w-4" />
@@ -676,7 +657,6 @@ export function QualityPageContent({
                 <ComplianceItemForm 
                     onSubmit={handleMatrixSubmit} 
                     personnel={initialPersonnel} 
-                    departments={initialDepartments} 
                     categories={categories} 
                     existingItem={editingItem} 
                     preSelectedParentId={preSelectedCategoryName} 
