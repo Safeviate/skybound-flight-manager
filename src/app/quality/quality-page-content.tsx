@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import type { QualityAudit, AuditScheduleItem, User, ComplianceItem, CompanyDepartment, Aircraft, CoherenceMatrixCategory, UnifiedTask, CompanyAuditArea, FindingStatus, FindingLevel } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, ReferenceLine } from 'recharts';
-import { format, parseISO, startOfMonth, isValid } from 'date-fns';
+import { format, parseISO, startOfMonth } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, ChevronDown, Calendar as CalendarIcon, FileUp } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
