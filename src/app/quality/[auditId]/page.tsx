@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -434,7 +435,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                         <h4 className="font-semibold">Lead Auditor: {audit.auditor}</h4>
                         {audit.auditorSignature && audit.auditorSignature.signature ? (
                             <div>
-                                <Image src={audit.auditorSignature.signature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                                <Image src={audit.auditorSignature.signature} alt="Lead Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
                             </div>
                         ) : canSign(user, audit.auditor) ? (
                              <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditorSignature: { signature, date: new Date().toISOString() } }, true)} />

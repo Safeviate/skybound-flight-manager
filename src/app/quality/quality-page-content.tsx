@@ -1,10 +1,11 @@
+
 'use client';
 
 import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, GroupedRisk, Booking, CoherenceMatrixCategory, FindingStatus, FindingLevel } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, GroupedRisk, Booking, CoherenceMatrixCategory, FindingStatus, FindingLevel, UnifiedTask, CompanyAuditArea } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useTableControls } from '@/hooks/use-table-controls';
 import { AuditChecklistsManager } from '../quality/audit-checklists-manager';
+import { TaskTrackerPageContent } from '../task-tracker/task-tracker-page-content';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -36,8 +38,6 @@ import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-
-// --- Top Level Helper Components ---
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({ 
@@ -189,6 +189,15 @@ const ComplianceItemForm = ({
   );
 };
 
+interface ReportTableProps {
+    reportList: QualityAudit[];
+    isArchivedTable?: boolean;
+    controls: any;
+    handleArchiveAudit: (id: string) => void;
+    handleRestoreAudit: (id: string) => void;
+    handleDeleteAudit: (id: string) => void;
+}
+
 const ReportTable = ({ 
     reportList, 
     isArchivedTable = false, 
@@ -196,14 +205,7 @@ const ReportTable = ({
     handleArchiveAudit, 
     handleRestoreAudit, 
     handleDeleteAudit 
-}: { 
-    reportList: QualityAudit[], 
-    isArchivedTable?: boolean, 
-    controls: any, 
-    handleArchiveAudit: (id: string) => void, 
-    handleRestoreAudit: (id: string) => void, 
-    handleDeleteAudit: (id: string) => void 
-}) => {
+}: ReportTableProps) => {
     const getComplianceColor = (score: number) => {
         if (score >= 95) return 'text-green-600';
         if (score >= 80) return 'text-yellow-600';
@@ -301,8 +303,6 @@ const ReportTable = ({
     );
 };
 
-// --- Main Quality Page Content ---
-
 export function QualityPageContent({
     initialAudits,
     initialSchedule,
@@ -363,7 +363,7 @@ export function QualityPageContent({
     const [auditsSnap, scheduleSnap, auditAreasSnap] = await Promise.all([
         getDocs(auditsQuery),
         getDocs(scheduleQuery),
-        getDocs(auditAreasQuery),
+        getDocs(auditAreasSnap || collection(db, 'temp')), // fallback for safety
     ]);
     
     setAudits(auditsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as QualityAudit)));
@@ -591,7 +591,6 @@ export function QualityPageContent({
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {/* Headers row above Top Level Regulations */}
                         <div className="grid grid-cols-[15%_30%_15%_15%_15%_10%] px-4 py-2 border-b text-xs font-bold text-muted-foreground uppercase tracking-wider">
                             <div>Regulation</div>
                             <div>Statement</div>
