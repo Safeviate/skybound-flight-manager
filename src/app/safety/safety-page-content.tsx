@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useTableControls } from '@/hooks/use-table-controls';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { EditSpiForm } from './edit-spi-form';
@@ -82,7 +83,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                         </DialogDescription>
                         </DialogHeader>
                         <EditSpiForm
-                        spi={{ id: `spi-${Date.now()}`, name: 'New Indicator', type: 'Lagging Indicator', calculation: 'count', targetDirection: '<=', target: 0, alert2: 1, alert3: 2, alert4: 3 }}
+                        spi={{ id: `spi-${Date.now()}`, name: 'New Indicator', type: 'Lagging Indicator', calculation: 'count', unit: 'Per Month', targetDirection: '<=', target: 0, alert2: 1, alert3: 2, alert4: 3 }}
                         onUpdate={handleNewSpiSubmit}
                         />
                     </DialogContent>
@@ -106,7 +107,6 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                         }));
                         
                         if (config.unit === 'Per Year') {
-                            // Sum manual data for the current year (approximation based on displayed data)
                             currentDisplayValue = chartData.reduce((sum, item) => sum + item.value, 0);
                         } else {
                             currentDisplayValue = chartData[chartData.length - 1]?.value || 0;
@@ -125,7 +125,8 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                             let value = count;
                             if (config.calculation === 'rate' && config.unit) {
                                 const totalHours = monthlyFlightHours[month] || 0;
-                                value = totalHours > 0 ? ((count) / totalHours) * 100 : 0;
+                                const multiplier = config.unit.includes('1000') ? 1000 : 100;
+                                value = totalHours > 0 ? (count / totalHours) * multiplier : 0;
                             }
                             return { name: month, value: parseFloat(value.toFixed(2)) };
                         });
@@ -178,7 +179,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                                 <div className="mt-4 flex items-center justify-between bg-muted/30 p-2 rounded-md">
                                     <div className="text-center flex-1">
                                         <p className="text-[10px] text-muted-foreground uppercase">Current</p>
-                                        <p className="text-lg font-bold">{currentDisplayValue} <span className="text-[10px] font-normal">{config.unit?.replace('Per ', '/ ')}</span></p>
+                                        <p className="text-lg font-bold">{currentDisplayValue} <span className="text-[10px] font-normal">{config.unit}</span></p>
                                     </div>
                                     <Separator orientation="vertical" className="h-8" />
                                     <div className="text-center flex-1">
@@ -210,7 +211,6 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                                                 <Tooltip contentStyle={{ borderRadius: '8px' }} />
                                                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                                                     {chartData.map((entry, index) => {
-                                                        // Monthly bars are colored individually based on the target logic
                                                         const entryStatus = getStatus(entry.value);
                                                         const color = {
                                                             'success': 'hsl(var(--success))',
@@ -476,7 +476,7 @@ export function SafetyPageContent({
             setSpiConfigs([
                 { id: 'unstableApproaches', name: 'Unstable Approach Rate', type: 'Lagging Indicator', calculation: 'count', unit: 'Per Month', targetDirection: '<=', target: 1, alert2: 2, alert3: 3, alert4: 4, filterType: 'Flight Operations Report', filterSubCategory: 'Unstable Approach' },
                 { id: 'adr', name: 'Aircraft Technical Defect Rate', type: 'Lagging Indicator', calculation: 'count', unit: 'Per Month', targetDirection: '<=', target: 3, alert2: 4, alert3: 5, alert4: 6, filterType: 'Aircraft Defect Report' },
-                { id: 'allIncidentsRate', name: 'All Incidents per 100 Flight Hours', type: 'Lagging Indicator', calculation: 'rate', unit: 'per 100 hours', targetDirection: '<=', target: 0.5, alert2: 0.75, alert3: 1.0, alert4: 1.25, filterType: 'All' }
+                { id: 'allIncidentsRate', name: 'All Incidents per 100 Flight Hours', type: 'Lagging Indicator', calculation: 'rate', unit: 'per 100 Flight Hours', targetDirection: '<=', target: 0.5, alert2: 0.75, alert3: 1.0, alert4: 1.25, filterType: 'All' }
             ]);
         }
     });

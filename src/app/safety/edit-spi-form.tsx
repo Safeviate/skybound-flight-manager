@@ -24,7 +24,7 @@ import type { SpiConfig } from '@/lib/types';
 const spiFormSchema = z.object({
   name: z.string().min(3, 'Name is required.'),
   calculation: z.enum(['count', 'rate']),
-  unit: z.string().optional(),
+  unit: z.string().min(1, 'Unit is required.'),
   targetDirection: z.enum(['<=', '>=']),
   target: z.coerce.number(),
   alert2: z.coerce.number(),
@@ -43,7 +43,8 @@ interface EditSpiFormProps {
   onUpdate: (updatedSpi: SpiConfig) => void;
 }
 
-const countUnits = ["Per Day", "Per Week", "Per Month", "Per Year"];
+const countPeriodOptions = ["Per Month", "Per Year"];
+const rateUnitOptions = ["per 100 Flight Hours", "per 1000 Flight Hours"];
 
 export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
   const { toast } = useToast();
@@ -186,7 +187,10 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
               render={({ field }) => (
                   <FormItem>
                   <FormLabel>Calculation</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                   <Select onValueChange={(val) => {
+                       field.onChange(val);
+                       form.setValue('unit', '');
+                   }} defaultValue={field.value}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select type" />
@@ -207,14 +211,20 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
               render={({ field }) => (
                   <FormItem>
                     <FormLabel>Unit Label</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                             <SelectTrigger><SelectValue placeholder="Select a unit" /></SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            {countUnits.map(unit => (
-                                <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                            ))}
+                            {calculationType === 'count' ? (
+                                countPeriodOptions.map(unit => (
+                                    <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                                ))
+                            ) : (
+                                rateUnitOptions.map(unit => (
+                                    <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                                ))
+                            )}
                         </SelectContent>
                     </Select>
                     <FormMessage />
