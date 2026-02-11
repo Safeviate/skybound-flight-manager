@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,24 +11,33 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { SafetyReport } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import React, { useMemo } from 'react';
+import { subMonths, eachMonthOfInterval, format } from 'date-fns';
 
 export type SpiConfig = {
     id: string;
     name: string;
     type: 'Leading Indicator' | 'Lagging Indicator';
     calculation: 'count' | 'rate';
-    unit?: string; // e.g., "per 100 hours"
+    unit?: string;
     targetDirection: '<=' | '>=';
     target: number;
     alert2: number;
     alert3: number;
     alert4: number;
-    filter: (report: SafetyReport) => boolean;
+    isManual?: boolean;
+    manualData?: Record<string, number>;
+    filterType?: string;
+    filterSubCategory?: string;
 };
 
 const spiFormSchema = z.object({
@@ -41,16 +49,11 @@ const spiFormSchema = z.object({
   alert2: z.coerce.number(),
   alert3: z.coerce.number(),
   alert4: z.coerce.number(),
-}).refine(data => {
-    if (data.calculation === 'rate' && !data.unit) {
-        return false;
-    }
-    return true;
-}, {
-    message: "Unit is required for rate calculations.",
-    path: ["unit"],
+  isManual: z.boolean().default(false),
+  filterType: z.string().optional(),
+  filterSubCategory: z.string().optional(),
+  manualData: z.record(z.coerce.number()).optional(),
 });
-
 
 type SpiFormValues = z.infer<typeof spiFormSchema>;
 
@@ -63,6 +66,13 @@ const countUnits = ["Per Day", "Per Week", "Per Month", "Per Year"];
 
 export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
   const { toast } = useToast();
+  
+  const last6Months = useMemo(() => {
+    const end = new Date();
+    const start = subMonths(end, 5);
+    return eachMonthOfInterval({ start, end }).map(date => format(date, 'MMM yy'));
+  }, []);
+
   const form = useForm<SpiFormValues>({
     resolver: zodResolver(spiFormSchema),
     defaultValues: {
@@ -74,38 +84,119 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
       alert2: spi.alert2,
       alert3: spi.alert3,
       alert4: spi.alert4,
+      isManual: spi.isManual || false,
+      filterType: spi.filterType || 'All',
+      filterSubCategory: spi.filterSubCategory || '',
+      manualData: spi.manualData || last6Months.reduce((acc, m) => ({ ...acc, [m]: 0 }), {}),
     },
   });
   
   const calculationType = form.watch('calculation');
+  const isManual = form.watch('isManual');
 
   function onSubmit(data: SpiFormValues) {
     onUpdate({
       ...spi,
       ...data,
-    });
+      // For automated SPIs, we'll recreate the filter function in the parent based on filterType/SubCategory
+    } as any);
     toast({
-      title: 'SPI Targets Updated',
-      description: `The targets for ${spi.name} have been saved.`,
+      title: 'Indicator Updated',
+      description: `Settings for ${spi.name} have been saved.`,
     });
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Indicator Name</FormLabel>
-                <FormControl>
-                    <Input placeholder="e.g., Unstable Approach Rate" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-        />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-4">
+            <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Indicator Name</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., Unstable Approach Rate" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            
+            <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                    <Label className="text-base">Manual Data Entry</Label>
+                    <p className="text-sm text-muted-foreground">Input data points directly instead of deriving from reports.</p>
+                </div>
+                <FormField
+                    control={form.control}
+                    name="isManual"
+                    render={({ field }) => (
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    )}
+                />
+            </div>
+        </div>
+
+        {!isManual && (
+            <div className="p-4 border rounded-lg bg-muted/30 space-y-4">
+                <h4 className="font-semibold text-sm">Automated Filter Criteria</h4>
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="filterType"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Report Type</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="All">All Reports</SelectItem>
+                                        <SelectItem value="Flight Operations Report">Flight Ops</SelectItem>
+                                        <SelectItem value="Ground Operations Report">Ground Ops</SelectItem>
+                                        <SelectItem value="Aircraft Defect Report">Defect Report</SelectItem>
+                                        <SelectItem value="Occupational Report">Occupational</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="filterSubCategory"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Sub-Category (Optional)</FormLabel>
+                                <FormControl><Input placeholder="e.g., Unstable Approach" {...field} /></FormControl>
+                            </FormItem>
+                        )}
+                    />
+                </div>
+            </div>
+        )}
+
+        {isManual && (
+            <div className="p-4 border rounded-lg bg-muted/30 space-y-4">
+                <h4 className="font-semibold text-sm">Monthly Data Points</h4>
+                <div className="grid grid-cols-3 gap-4">
+                    {last6Months.map(month => (
+                        <FormField
+                            key={month}
+                            control={form.control}
+                            name={`manualData.${month}`}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-xs">{month}</Label>
+                                    <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
+                                </FormItem>
+                            )}
+                        />
+                    ))}
+                </div>
+            </div>
+        )}
+
         <div className="grid grid-cols-2 gap-4">
           <FormField
               control={form.control}
@@ -116,7 +207,7 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                         <SelectTrigger>
-                            <SelectValue placeholder="Select calculation type" />
+                            <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -133,13 +224,11 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
               name="unit"
               render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Unit</FormLabel>
+                    <FormLabel>Unit Label</FormLabel>
                     {calculationType === 'count' ? (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a unit" />
-                                </SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Select a unit" /></SelectTrigger>
                             </FormControl>
                             <SelectContent>
                                 {countUnits.map(unit => (
@@ -158,85 +247,37 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
           />
         </div>
 
-         <FormField
-            control={form.control}
-            name="targetDirection"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Target Direction</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select target direction" />
-                    </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                        <SelectItem value="<=">Less than or equal to (&le;)</SelectItem>
-                        <SelectItem value=">=">Greater than or equal to (&ge;)</SelectItem>
-                    </SelectContent>
-                </Select>
-                <FormMessage />
-                </FormItem>
-            )}
-        />
-        
-        <p className="text-sm font-medium text-foreground pt-2">Alert Levels</p>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-4">
+            <h4 className="font-semibold text-sm">Alert Thresholds</h4>
             <FormField
                 control={form.control}
-                name="target"
+                name="targetDirection"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Target</FormLabel>
-                    <FormControl>
-                        <Input type="number" step="0.01" {...field} />
-                    </FormControl>
-                    <FormMessage />
+                    <FormLabel>Target Direction</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="<=">Goal is lower than target (&le;)</SelectItem>
+                            <SelectItem value=">=">Goal is higher than target (&ge;)</SelectItem>
+                        </SelectContent>
+                    </Select>
                     </FormItem>
                 )}
             />
-            <FormField
-                control={form.control}
-                name="alert2"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Alert Level 2 (Monitor)</FormLabel>
-                    <FormControl>
-                        <Input type="number" step="0.01" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-                control={form.control}
-                name="alert3"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Alert Level 3 (Action)</FormLabel>
-                    <FormControl>
-                        <Input type="number" step="0.01" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-                control={form.control}
-                name="alert4"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Alert Level 4 (Urgent)</FormLabel>
-                    <FormControl>
-                        <Input type="number" step="0.01" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
+            
+            <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="target" render={({ field }) => (<FormItem><FormLabel>Target Level</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl></FormItem>)} />
+                <FormField control={form.control} name="alert2" render={({ field }) => (<FormItem><FormLabel>A2: Monitor</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl></FormItem>)} />
+                <FormField control={form.control} name="alert3" render={({ field }) => (<FormItem><FormLabel>A3: Action Required</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl></FormItem>)} />
+                <FormField control={form.control} name="alert4" render={({ field }) => (<FormItem><FormLabel>A4: Urgent Action</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl></FormItem>)} />
+            </div>
         </div>
-        <div className="flex justify-end pt-4">
-          <Button type="submit">Save Changes</Button>
+
+        <div className="flex justify-end gap-2 pt-4 border-t">
+          <Button type="submit">Save Performance Indicator</Button>
         </div>
       </form>
     </Form>

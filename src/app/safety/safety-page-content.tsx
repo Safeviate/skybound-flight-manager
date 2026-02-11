@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -11,7 +10,6 @@ import { format, parseISO, startOfMonth, differenceInDays, isAfter, subMonths, e
 import { Button } from '@/components/ui/button';
 import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AuditSchedule } from '../quality/audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
@@ -43,7 +41,6 @@ interface SafetyPerformanceIndicatorsProps {
 const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, monthlyFlightHours }: SafetyPerformanceIndicatorsProps) => {
     const [editingSpi, setEditingSpi] = useState<SpiConfig | null>(null);
     const [isNewTargetDialogOpen, setIsNewTargetDialogOpen] = useState(false);
-    const { company } = useUser();
 
     const handleSpiUpdate = (updatedSpi: SpiConfig) => {
         onConfigChange(spiConfigs.map(spi => spi.id === updatedSpi.id ? updatedSpi : spi));
@@ -51,11 +48,10 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
     };
 
     const handleNewSpiSubmit = (newSpi: SpiConfig) => {
-        onConfigChange([...spiConfigs, { ...newSpi, filter: () => true }]);
+        onConfigChange([...spiConfigs, newSpi]);
         setIsNewTargetDialogOpen(false);
-    }
+    };
 
-    // Get last 6 months labels for consistency
     const last6Months = useMemo(() => {
         const end = new Date();
         const start = subMonths(end, 5);
@@ -78,7 +74,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                         Add New Target
                         </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="sm:max-w-xl">
                         <DialogHeader>
                         <DialogTitle>Add New SPI Target</DialogTitle>
                         <DialogDescription>
@@ -86,7 +82,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                         </DialogDescription>
                         </DialogHeader>
                         <EditSpiForm
-                        spi={{ id: `spi-${Date.now()}`, name: 'New Indicator', type: 'Lagging Indicator', calculation: 'count', targetDirection: '<=', filter: (r) => true, target: 0, alert2: 1, alert3: 2, alert4: 3 }}
+                        spi={{ id: `spi-${Date.now()}`, name: 'New Indicator', type: 'Lagging Indicator', calculation: 'count', targetDirection: '<=', target: 0, alert2: 1, alert3: 2, alert4: 3 }}
                         onUpdate={handleNewSpiSubmit}
                         />
                     </DialogContent>
@@ -94,28 +90,41 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
                 {spiConfigs.map(config => {
-                    const spiDataByMonth = reports
-                        .filter(r => config.filter(r))
-                        .reduce((acc, report) => {
-                            const month = format(startOfMonth(parseISO(report.filedDate)), 'MMM yy');
-                            acc[month] = (acc[month] || 0) + 1;
-                            return acc;
-                        }, {} as Record<string, number>);
+                    let chartData = [];
+                    
+                    if (config.isManual && config.manualData) {
+                        chartData = last6Months.map(month => ({
+                            name: month,
+                            value: config.manualData![month] || 0
+                        }));
+                    } else {
+                        const spiDataByMonth = reports
+                            .filter(r => {
+                                if (config.filterType && config.filterType !== 'All' && r.type !== config.filterType) return false;
+                                if (config.filterSubCategory && !r.subCategory?.toLowerCase().includes(config.filterSubCategory.toLowerCase())) return false;
+                                return true;
+                            })
+                            .reduce((acc, report) => {
+                                const month = format(startOfMonth(parseISO(report.filedDate)), 'MMM yy');
+                                acc[month] = (acc[month] || 0) + 1;
+                                return acc;
+                            }, {} as Record<string, number>);
 
-                    const chartData = last6Months.map(month => {
-                        const count = spiDataByMonth[month] || 0;
-                        let value = count;
-                        if (config.calculation === 'rate' && config.unit) {
-                            const totalHours = monthlyFlightHours[month] || 0;
-                            value = totalHours > 0 ? ((count) / totalHours) * 100 : 0;
-                        }
-                        return { name: month, value: parseFloat(value.toFixed(2)) };
-                    });
+                        chartData = last6Months.map(month => {
+                            const count = spiDataByMonth[month] || 0;
+                            let value = count;
+                            if (config.calculation === 'rate' && config.unit) {
+                                const totalHours = monthlyFlightHours[month] || 0;
+                                value = totalHours > 0 ? ((count) / totalHours) * 100 : 0;
+                            }
+                            return { name: month, value: parseFloat(value.toFixed(2)) };
+                        });
+                    }
                     
                     const latestValue = chartData[chartData.length - 1]?.value || 0;
                     
                      const getStatus = (value: number) => {
-                        const { targetDirection, alert4, alert3, alert2, target } = config;
+                        const { targetDirection, alert4, alert3, alert2 } = config;
                         if (targetDirection === '>=') {
                             if (value < alert4) return { label: 'Urgent Action', variant: 'destructive' as const };
                             if (value < alert3) return { label: 'Action Required', variant: 'orange' as const };
@@ -184,7 +193,6 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                                                 <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} />
                                                 <YAxis fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} />
                                                 <Tooltip contentStyle={{ borderRadius: '8px' }} />
-                                                <ReferenceLine y={config.target} stroke="hsl(var(--success))" strokeDasharray="3 3" />
                                                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                                                     {chartData.map((entry, index) => {
                                                         const entryStatus = getStatus(entry.value);
@@ -208,11 +216,11 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
             </CardContent>
             {editingSpi && (
                 <Dialog open={!!editingSpi} onOpenChange={() => setEditingSpi(null)}>
-                    <DialogContent>
+                    <DialogContent className="sm:max-w-xl">
                         <DialogHeader>
-                            <DialogTitle>Edit SPI: {editingSpi.name}</DialogTitle>
+                            <DialogTitle>Edit Indicator: {editingSpi.name}</DialogTitle>
                             <DialogDescription>
-                                Adjust the target and alert levels for this Safety Performance Indicator.
+                                Adjust targets and alert levels.
                             </DialogDescription>
                         </DialogHeader>
                         <EditSpiForm spi={editingSpi} onUpdate={handleSpiUpdate} />
@@ -280,10 +288,6 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
 
         const avgDays = Math.round(totalDays / closedReports.length);
         
-        if (isNaN(avgDays)) {
-             return { value: 'N/A', description: 'Calculation error' };
-        }
-
         return {
             value: `${avgDays} Days`,
             description: `Based on ${closedReports.length} closed report(s)`
@@ -387,7 +391,6 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
                             <Legend />
                             <Bar dataKey="count" name="Number of Risks">
                                 {riskLevelsData.map((entry, index) => {
-                                    const score = {Low: 1, Medium: 5, High: 10, Extreme: 4}[entry.name] || 1;
                                     return <Cell key={`cell-${index}`} fill={cn(
                                         entry.name === 'Low' && 'hsl(var(--success))',
                                         entry.name === 'Medium' && 'hsl(var(--warning))',
@@ -454,7 +457,8 @@ export function SafetyPageContent({
         unit: 'Per Month',
         targetDirection: '<=',
         target: 1, alert2: 2, alert3: 3, alert4: 4, 
-        filter: (r: SafetyReport) => r.subCategory === 'Unstable Approach' 
+        filterType: 'Flight Operations Report',
+        filterSubCategory: 'Unstable Approach'
     },
     { 
         id: 'adr', 
@@ -464,7 +468,7 @@ export function SafetyPageContent({
         unit: 'Per Month',
         targetDirection: '<=',
         target: 3, alert2: 4, alert3: 5, alert4: 6, 
-        filter: (r: SafetyReport) => r.type === 'Aircraft Defect Report'
+        filterType: 'Aircraft Defect Report'
     },
     {
         id: 'allIncidentsRate',
@@ -474,7 +478,7 @@ export function SafetyPageContent({
         unit: 'per 100 hours',
         targetDirection: '<=',
         target: 0.5, alert2: 0.75, alert3: 1.0, alert4: 1.25,
-        filter: (r: SafetyReport) => r.type && r.type.includes('Report'),
+        filterType: 'All'
     }
   ]);
 
@@ -522,7 +526,7 @@ export function SafetyPageContent({
         fetchData();
         toast({ title: 'Report Reactivated', description: 'The safety report has been moved back to active reports.' });
     } catch (error) {
-        console.error(`Error updating student status:`, error);
+        console.error(`Error updating report status:`, error);
         toast({
             variant: 'destructive',
             title: 'Update Failed',
@@ -546,7 +550,7 @@ export function SafetyPageContent({
         <Button variant="ghost" onClick={() => controls.requestSort(sortKey as any)}>
             {label}
             {controls.sortConfig?.key === sortKey ? (
-                <ArrowUpDown className={`ml-2 h-4 w-4 ${controls.sortConfig.direction === 'asc' ? '' : 'rotate-180'}`} />
+                <ArrowUpDown className={cn("ml-2 h-4 w-4", controls.sortConfig.direction === 'asc' ? '' : 'rotate-180')} />
             ) : (
                 <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />
             )}
