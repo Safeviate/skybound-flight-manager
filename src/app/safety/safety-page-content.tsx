@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, GroupedRisk, Booking } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, GroupedRisk, Booking, SpiConfig } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter, subMonths, eachMonthOfInterval } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch, deleteDoc, where } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch, deleteDoc, where, onSnapshot } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useTableControls } from '@/hooks/use-table-controls';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { EditSpiForm, type SpiConfig } from './edit-spi-form';
+import { EditSpiForm } from './edit-spi-form';
 import { RiskRegister } from './risk-register';
 import { RiskAssessmentTool } from './[reportId]/risk-assessment-tool';
 import { getSafetyPageData } from './data';
@@ -433,6 +433,8 @@ export function SafetyPageContent({
   const { toast } = useToast();
   const [isNewMocOpen, setIsNewMocOpen] = useState(false);
   
+  const [spiConfigs, setSpiConfigs] = useState<SpiConfig[]>([]);
+
   const fetchData = React.useCallback(async () => {
     if (!company) return;
     const { reportsList, risksList, bookingsList, mocList, personnelList, departmentsList } = await getSafetyPageData(company.id);
@@ -448,39 +450,39 @@ export function SafetyPageContent({
     fetchData();
   }, [fetchData]);
 
-  const [spiConfigs, setSpiConfigs] = useState<SpiConfig[]>([
-    { 
-        id: 'unstableApproaches', 
-        name: 'Unstable Approach Rate',
-        type: 'Lagging Indicator',
-        calculation: 'count',
-        unit: 'Per Month',
-        targetDirection: '<=',
-        target: 1, alert2: 2, alert3: 3, alert4: 4, 
-        filterType: 'Flight Operations Report',
-        filterSubCategory: 'Unstable Approach'
-    },
-    { 
-        id: 'adr', 
-        name: 'Aircraft Technical Defect Rate',
-        type: 'Lagging Indicator',
-        calculation: 'count',
-        unit: 'Per Month',
-        targetDirection: '<=',
-        target: 3, alert2: 4, alert3: 5, alert4: 6, 
-        filterType: 'Aircraft Defect Report'
-    },
-    {
-        id: 'allIncidentsRate',
-        name: 'All Incidents per 100 Flight Hours',
-        type: 'Lagging Indicator',
-        calculation: 'rate',
-        unit: 'per 100 hours',
-        targetDirection: '<=',
-        target: 0.5, alert2: 0.75, alert3: 1.0, alert4: 1.25,
-        filterType: 'All'
+  useEffect(() => {
+    if (!company) return;
+    const q = query(collection(db, `companies/${company.id}/spi-configs`));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+            setSpiConfigs(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as SpiConfig)));
+        } else {
+            // Set some initial defaults if none exist in DB
+            setSpiConfigs([
+                { id: 'unstableApproaches', name: 'Unstable Approach Rate', type: 'Lagging Indicator', calculation: 'count', unit: 'Per Month', targetDirection: '<=', target: 1, alert2: 2, alert3: 3, alert4: 4, filterType: 'Flight Operations Report', filterSubCategory: 'Unstable Approach' },
+                { id: 'adr', name: 'Aircraft Technical Defect Rate', type: 'Lagging Indicator', calculation: 'count', unit: 'Per Month', targetDirection: '<=', target: 3, alert2: 4, alert3: 5, alert4: 6, filterType: 'Aircraft Defect Report' },
+                { id: 'allIncidentsRate', name: 'All Incidents per 100 Flight Hours', type: 'Lagging Indicator', calculation: 'rate', unit: 'per 100 hours', targetDirection: '<=', target: 0.5, alert2: 0.75, alert3: 1.0, alert4: 1.25, filterType: 'All' }
+            ]);
+        }
+    });
+    return () => unsubscribe();
+  }, [company]);
+
+  const handleSpiConfigsChange = async (newConfigs: SpiConfig[]) => {
+    if (!company) return;
+    setSpiConfigs(newConfigs);
+    try {
+        const batch = writeBatch(db);
+        newConfigs.forEach(config => {
+            const ref = doc(db, `companies/${company.id}/spi-configs`, config.id);
+            batch.set(ref, config, { merge: true });
+        });
+        await batch.commit();
+    } catch (e) {
+        console.error("Failed to save SPI configs:", e);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to persist SPI settings.' });
     }
-  ]);
+  };
 
   const activeReports = useMemo(() => safetyReports.filter(r => r.status !== 'Archived'), [safetyReports]);
   const archivedReports = useMemo(() => safetyReports.filter(r => r.status === 'Archived'), [safetyReports]);
@@ -800,7 +802,7 @@ export function SafetyPageContent({
             <SafetyPerformanceIndicators 
                 reports={safetyReports} 
                 spiConfigs={spiConfigs} 
-                onConfigChange={setSpiConfigs} 
+                onConfigChange={handleSpiConfigsChange} 
                 monthlyFlightHours={monthlyFlightHours}
             />
           </TabsContent>

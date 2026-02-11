@@ -19,23 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { subMonths, eachMonthOfInterval, format } from 'date-fns';
-
-export type SpiConfig = {
-    id: string;
-    name: string;
-    type: 'Leading Indicator' | 'Lagging Indicator';
-    calculation: 'count' | 'rate';
-    unit?: string;
-    targetDirection: '<=' | '>=';
-    target: number;
-    alert2: number;
-    alert3: number;
-    alert4: number;
-    isManual?: boolean;
-    manualData?: Record<string, number>;
-    filterType?: string;
-    filterSubCategory?: string;
-};
+import type { SpiConfig } from '@/lib/types';
 
 const spiFormSchema = z.object({
   name: z.string().min(3, 'Name is required.'),
@@ -91,20 +75,20 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
   const calculationType = form.watch('calculation');
   const isManual = form.watch('isManual');
 
-  const handleFormSubmit = (data: SpiFormValues) => {
+  const onSubmit = (data: SpiFormValues) => {
     onUpdate({
       ...spi,
       ...data,
     } as SpiConfig);
     toast({
       title: 'Indicator Updated',
-      description: `Settings for ${spi.name} have been saved.`,
+      description: `Settings for ${data.name} have been saved.`,
     });
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-4">
             <FormField
                 control={form.control}

@@ -398,6 +398,23 @@ export type InvestigationTeamMember = {
   role: 'Lead Investigator' | 'Investigator' | 'Technical Expert' | 'Observer';
 };
 
+export type SpiConfig = {
+    id: string;
+    name: string;
+    type: 'Leading Indicator' | 'Lagging Indicator';
+    calculation: 'count' | 'rate';
+    unit?: string;
+    targetDirection: '<=' | '>=';
+    target: number;
+    alert2: number;
+    alert3: number;
+    alert4: number;
+    isManual?: boolean;
+    manualData?: Record<string, number>;
+    filterType?: string;
+    filterSubCategory?: string;
+};
+
 export type SafetyReport = {
   id: string;
   companyId: string;
@@ -513,8 +530,10 @@ export type QualityAudit = {
   discussion?: DiscussionEntry[];
   auditTeam?: string[];
   auditeeTeam?: string[];
-  auditorSignature?: Signature;
-  auditeeSignature?: Signature;
+  auditorSignature?: string;
+  auditorSignatureDate?: string;
+  auditeeSignature?: string;
+  auditeeSignatureDate?: string;
   scope?: string;
   evidenceReference?: string;
 };
@@ -589,6 +608,8 @@ export type MocRisk = {
   riskScore: number;
   mitigations?: MocMitigation[];
 };
+
+export type MocRiskStatus = 'Open' | 'Mitigated' | 'Closed';
 
 export type MocHazard = {
   id: string;

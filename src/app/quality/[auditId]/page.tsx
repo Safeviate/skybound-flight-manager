@@ -344,24 +344,24 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                 <CardContent className="grid md:grid-cols-2 gap-8">
                     <div className="space-y-2">
                         <h4 className="font-semibold">Lead Auditor: {audit.auditor}</h4>
-                        {audit.auditorSignature && audit.auditorSignature.signature ? (
+                        {audit.auditorSignature ? (
                             <div>
-                                <Image src={audit.auditorSignature.signature} alt="Lead Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                                <Image src={audit.auditorSignature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
                             </div>
                         ) : canSign(user, audit.auditor) ? (
-                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditorSignature: { signature, date: new Date().toISOString() } }, true)} />
+                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditorSignature: signature, auditorSignatureDate: new Date().toISOString() }, true)} />
                         ) : (
                             <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
                         )}
                     </div>
                      <div className="space-y-2">
                         <h4 className="font-semibold">Auditee: {audit.auditeeName}</h4>
-                         {audit.auditeeSignature && audit.auditeeSignature.signature ? (
+                         {audit.auditeeSignature ? (
                             <div>
-                                <Image src={audit.auditeeSignature.signature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                                <Image src={audit.auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
                             </div>
                         ) : canSign(user, audit.auditeeName) ? (
-                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditeeSignature: { signature, date: new Date().toISOString() } }, true)} />
+                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditeeSignature: signature, auditeeSignatureDate: new Date().toISOString() }, true)} />
                         ) : (
                             <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
                         )}
