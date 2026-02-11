@@ -7,11 +7,10 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, GroupedRisk, Booking } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
-import { format, parseISO, startOfMonth, differenceInDays, isAfter } from 'date-fns';
+import { format, parseISO, startOfMonth, differenceInDays, isAfter, subMonths, eachMonthOfInterval } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AuditSchedule } from '../quality/audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
@@ -21,23 +20,7 @@ import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { useTableControls } from '@/hooks/use-table-controls.ts';
-import { AuditChecklistsManager } from '../quality/audit-checklists-manager';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { CapTracker } from '../quality/cap-tracker';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { complianceData as seedComplianceData } from '@/lib/data-provider';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { cn } from '@/lib/utils.tsx';
-import { useForm } from 'react-hook-form';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { useTableControls } from '@/hooks/use-table-controls';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { EditSpiForm, type SpiConfig } from './edit-spi-form';
 import { RiskRegister } from './risk-register';
@@ -45,23 +28,7 @@ import { RiskAssessmentTool } from './[reportId]/risk-assessment-tool';
 import { getSafetyPageData } from './data';
 import { NewMocForm } from './new-moc-form';
 import { getRiskLevel } from '@/lib/utils';
-
-
-function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
-  const grouped: { [key: string]: Risk[] } = risks.reduce((acc, risk) => {
-    const area = risk.hazardArea || 'Uncategorized';
-    if (!acc[area]) {
-      acc[area] = [];
-    }
-    acc[area].push(risk);
-    return acc;
-  }, {} as { [key: string]: Risk[] });
-
-  return Object.keys(grouped).map(area => ({
-    area,
-    risks: grouped[area],
-  }));
-}
+import { cn } from '@/lib/utils';
 
 interface SafetyPerformanceIndicatorsProps {
   reports: SafetyReport[];
@@ -73,6 +40,7 @@ interface SafetyPerformanceIndicatorsProps {
 const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, monthlyFlightHours }: SafetyPerformanceIndicatorsProps) => {
     const [editingSpi, setEditingSpi] = useState<SpiConfig | null>(null);
     const [isNewTargetDialogOpen, setIsNewTargetDialogOpen] = useState(false);
+    const { company } = useUser();
 
     const handleSpiUpdate = (updatedSpi: SpiConfig) => {
         onConfigChange(spiConfigs.map(spi => spi.id === updatedSpi.id ? updatedSpi : spi));
@@ -80,13 +48,20 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
     };
 
     const handleNewSpiSubmit = (newSpi: SpiConfig) => {
-        onConfigChange([...spiConfigs, { ...newSpi, filter: () => true }]); // Generic filter for new SPI
+        onConfigChange([...spiConfigs, { ...newSpi, filter: () => true }]);
         setIsNewTargetDialogOpen(false);
     }
 
+    // Get last 6 months labels for consistency
+    const last6Months = useMemo(() => {
+        const end = new Date();
+        const start = subMonths(end, 5);
+        return eachMonthOfInterval({ start, end }).map(date => format(date, 'MMM yy'));
+    }, []);
+
     return (
         <Card>
-            <CardHeader className="flex-row justify-between items-start">
+            <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <CardTitle>Safety Performance Indicators (SPIs)</CardTitle>
                     <CardDescription>
@@ -108,15 +83,15 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                         </DialogDescription>
                         </DialogHeader>
                         <EditSpiForm
-                        spi={{ id: `spi-${Date.now()}`, name: 'Runway Excursions', type: 'Lagging Indicator', calculation: 'count', targetDirection: '<=', filter: (r) => r.subCategory === 'Runway Excursion', target: 0, alert2: 1, alert3: 2, alert4: 3 }}
+                        spi={{ id: `spi-${Date.now()}`, name: 'New Indicator', type: 'Lagging Indicator', calculation: 'count', targetDirection: '<=', filter: (r) => true, target: 0, alert2: 1, alert3: 2, alert4: 3 }}
                         onUpdate={handleNewSpiSubmit}
                         />
                     </DialogContent>
                 </Dialog>
             </CardHeader>
-            <CardContent className="grid gap-8 md:grid-cols-1 lg:grid-cols-2">
+            <CardContent className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
                 {spiConfigs.map(config => {
-                    const spiData = reports
+                    const spiDataByMonth = reports
                         .filter(r => config.filter(r))
                         .reduce((acc, report) => {
                             const month = format(startOfMonth(parseISO(report.filedDate)), 'MMM yy');
@@ -124,17 +99,17 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                             return acc;
                         }, {} as Record<string, number>);
 
-                    const chartData = Object.keys(spiData).map(month => {
-                        const value = spiData[month as keyof typeof spiData];
+                    const chartData = last6Months.map(month => {
+                        const count = spiDataByMonth[month] || 0;
+                        let value = count;
                         if (config.calculation === 'rate' && config.unit) {
-                            const totalHours = monthlyFlightHours[month as keyof typeof monthlyFlightHours] || 0;
-                            const rate = totalHours > 0 ? ((value as number) / totalHours) * 100 : 0;
-                            return { name: month, value: parseFloat(rate.toFixed(2)) };
+                            const totalHours = monthlyFlightHours[month] || 0;
+                            value = totalHours > 0 ? ((count) / totalHours) * 100 : 0;
                         }
-                        return { name: month, value: value as number };
-                    }).reverse();
+                        return { name: month, value: parseFloat(value.toFixed(2)) };
+                    });
                     
-                    const latestValue = chartData[0]?.value || 0;
+                    const latestValue = chartData[chartData.length - 1]?.value || 0;
                     
                      const getStatus = (value: number) => {
                         const { targetDirection, alert4, alert3, alert2, target } = config;
@@ -143,7 +118,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                             if (value < alert3) return { label: 'Action Required', variant: 'orange' as const };
                             if (value < alert2) return { label: 'Monitor', variant: 'warning' as const };
                             return { label: 'Acceptable', variant: 'success' as const };
-                        } else { // '<=' direction
+                        } else {
                             if (value > alert4) return { label: 'Urgent Action', variant: 'destructive' as const };
                             if (value > alert3) return { label: 'Action Required', variant: 'orange' as const };
                             if (value > alert2) return { label: 'Monitor', variant: 'warning' as const };
@@ -153,69 +128,77 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
 
                     const status = getStatus(latestValue);
                     
-                    const ChartComponent = config.calculation === 'rate' ? LineChart : BarChart;
-                    const ChartTypeComponent = config.calculation === 'rate' ? Line : Bar;
-                    
-                    const chartProps: any = {
-                        dataKey: "value",
-                        name: config.name,
-                    };
-                    if (ChartComponent === LineChart) {
-                        chartProps.stroke = "hsl(var(--primary))";
-                        chartProps.strokeWidth = 2;
-                        chartProps.activeDot = { r: 8 };
-                        chartProps.type = "monotone";
-                    } else {
-                        chartProps.children = chartData.map((entry, index) => {
-                            const entryStatus = getStatus(entry.value);
-                            const color = {
-                                'success': 'hsl(var(--success))',
-                                'warning': 'hsl(var(--warning))',
-                                'orange': 'hsl(var(--orange))',
-                                'destructive': 'hsl(var(--destructive))'
-                            }[entryStatus.variant];
-                            return <Cell key={`cell-${index}`} fill={color} />;
-                        });
-                    }
-
-
                     return (
-                        <Card key={config.id} className="flex flex-col">
-                            <CardHeader>
+                        <Card key={config.id} className="flex flex-col border shadow-sm">
+                            <CardHeader className="pb-2">
                                 <div className="flex justify-between items-start">
-                                    <div>
-                                        <CardTitle className="text-lg">{config.name}</CardTitle>
-                                        <CardDescription className="text-xs">Type: {config.type}</CardDescription>
+                                    <div className="space-y-1">
+                                        <CardTitle className="text-lg leading-tight">{config.name}</CardTitle>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="outline" className="text-[10px] font-normal">{config.type}</Badge>
+                                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{config.calculation}</span>
+                                        </div>
                                     </div>
-                                    <div className="flex flex-col items-end gap-2">
-                                        <Badge variant={status.variant}>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <Badge variant={status.variant} className="px-3">
                                             {status.label}
                                         </Badge>
-                                        <Button variant="ghost" size="sm" onClick={() => setEditingSpi(config)}>
-                                            <Edit className="h-3 w-3 mr-1" /> Edit Targets
+                                        <Button variant="ghost" size="sm" className="h-7 text-xs px-2" onClick={() => setEditingSpi(config)}>
+                                            <Edit className="h-3 w-3 mr-1" /> Targets
                                         </Button>
                                     </div>
                                 </div>
+                                <div className="mt-4 flex items-center justify-between bg-muted/30 p-2 rounded-md">
+                                    <div className="text-center flex-1">
+                                        <p className="text-[10px] text-muted-foreground uppercase">Current</p>
+                                        <p className="text-lg font-bold">{latestValue} <span className="text-[10px] font-normal">{config.unit?.replace('Per ', '/ ')}</span></p>
+                                    </div>
+                                    <Separator orientation="vertical" className="h-8" />
+                                    <div className="text-center flex-1">
+                                        <p className="text-[10px] text-muted-foreground uppercase">Target</p>
+                                        <p className="text-lg font-bold">{config.targetDirection} {config.target}</p>
+                                    </div>
+                                </div>
                             </CardHeader>
-                            <CardContent className="flex-1 flex flex-col justify-center">
-                                <ResponsiveContainer width="100%" height={250}>
-                                    <ChartComponent data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="name" fontSize={12} />
-                                        <YAxis allowDecimals={config.calculation === 'rate'} />
-                                        <Tooltip formatter={(value) => `${value} ${config.unit || ''}`} />
-                                        <Legend verticalAlign="top" height={36}/>
-                                        <ReferenceLine y={config.target} label={{ value: 'Target', position: 'insideTopLeft', fill: 'hsl(var(--success-foreground))' }} stroke="hsl(var(--success))" strokeDasharray="3 3" />
-                                        <ReferenceLine y={config.alert2} stroke="hsl(var(--warning))" strokeDasharray="3 3" />
-                                        <ReferenceLine y={config.alert3} stroke="hsl(var(--orange))" strokeDasharray="3 3" />
-                                        <ReferenceLine y={config.alert4} stroke="hsl(var(--destructive))" strokeDasharray="3 3" />
-                                        <ChartTypeComponent {...chartProps} />
-                                    </ChartComponent>
-                                </ResponsiveContainer>
+                            <CardContent className="pt-2">
+                                <div className="h-[200px] w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        {config.calculation === 'rate' ? (
+                                            <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                                <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} />
+                                                <YAxis fontSize={10} tickLine={false} axisLine={false} />
+                                                <Tooltip contentStyle={{ borderRadius: '8px' }} />
+                                                <ReferenceLine y={config.target} stroke="hsl(var(--success))" strokeDasharray="3 3" label={{ value: 'T', position: 'left', fontSize: 10, fill: 'hsl(var(--success))' }} />
+                                                <ReferenceLine y={config.alert2} stroke="hsl(var(--warning))" strokeDasharray="3 3" label={{ value: 'A2', position: 'left', fontSize: 10, fill: 'hsl(var(--warning))' }} />
+                                                <ReferenceLine y={config.alert3} stroke="hsl(var(--orange))" strokeDasharray="3 3" label={{ value: 'A3', position: 'left', fontSize: 10, fill: 'hsl(var(--orange))' }} />
+                                                <ReferenceLine y={config.alert4} stroke="hsl(var(--destructive))" strokeDasharray="3 3" label={{ value: 'A4', position: 'left', fontSize: 10, fill: 'hsl(var(--destructive))' }} />
+                                                <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                                            </LineChart>
+                                        ) : (
+                                            <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                                <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} />
+                                                <YAxis fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} />
+                                                <Tooltip contentStyle={{ borderRadius: '8px' }} />
+                                                <ReferenceLine y={config.target} stroke="hsl(var(--success))" strokeDasharray="3 3" />
+                                                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                                                    {chartData.map((entry, index) => {
+                                                        const entryStatus = getStatus(entry.value);
+                                                        const color = {
+                                                            'success': 'hsl(var(--success))',
+                                                            'warning': 'hsl(var(--warning))',
+                                                            'orange': 'hsl(var(--orange))',
+                                                            'destructive': 'hsl(var(--destructive))'
+                                                        }[entryStatus.variant];
+                                                        return <Cell key={`cell-${index}`} fill={color} />;
+                                                    })}
+                                                </Bar>
+                                            </BarChart>
+                                        )}
+                                    </ResponsiveContainer>
+                                </div>
                             </CardContent>
-                             <CardFooter className="text-center text-xs text-muted-foreground justify-center">
-                                <p>Safety Performance Target: {config.targetDirection} {config.target} {config.unit || ''}</p>
-                            </CardFooter>
                         </Card>
                     )
                 })}
@@ -271,7 +254,7 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
     const riskLevelsData = Object.keys(riskLevels).map(level => ({
         name: level,
         count: riskLevels[level],
-    })).sort((a,b) => { // Ensure consistent order
+    })).sort((a,b) => {
         const order = { 'Low': 1, 'Medium': 2, 'High': 3, 'Extreme': 4 };
         return order[a.name as keyof typeof order] - order[b.name as keyof typeof order];
     });
@@ -440,7 +423,7 @@ export function SafetyPageContent({
   const [personnel, setPersonnel] = useState<User[]>([]);
   const [departments, setDepartments] = useState<CompanyDepartment[]>([]);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
-  const { user, company, loading } = useUser();
+  const { user, company } = useUser();
   const { toast } = useToast();
   const [isNewMocOpen, setIsNewMocOpen] = useState(false);
   
@@ -532,7 +515,7 @@ export function SafetyPageContent({
     if (!company) return;
     try {
         const reportRef = doc(db, `companies/${company.id}/safety-reports`, reportId);
-        await updateDoc(reportRef, { status: 'Open' }); // Or 'Under Review'
+        await updateDoc(reportRef, { status: 'Open' });
         fetchData();
         toast({ title: 'Report Reactivated', description: 'The safety report has been moved back to active reports.' });
     } catch (error) {
@@ -555,7 +538,7 @@ export function SafetyPageContent({
 
 
   const SortableHeader = ({ label, sortKey }: { label: string, sortKey: keyof SafetyReport | keyof Risk }) => {
-    const controls = activeTab === 'reports' ? reportsControls : reportsControls; // Simplified for now
+    const controls = reportsControls;
     return (
         <Button variant="ghost" onClick={() => controls.requestSort(sortKey as any)}>
             {label}
@@ -749,6 +732,10 @@ export function SafetyPageContent({
 
   const canEditMoc = user?.permissions.includes('MOC:Edit') || user?.permissions.includes('Super User');
 
+  useEffect(() => {
+    if (tabFromUrl) setActiveTab(tabFromUrl);
+  }, [tabFromUrl]);
+
   return (
       <main className="flex-1 p-4 md:p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -770,7 +757,7 @@ export function SafetyPageContent({
 
           <TabsContent value="reports">
             <Card>
-              <CardHeader className="flex-row justify-between items-start">
+              <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
                     <CardTitle>Filed Safety Reports</CardTitle>
                     <CardDescription>Incidents and hazards reported by personnel.</CardDescription>
@@ -812,7 +799,7 @@ export function SafetyPageContent({
           </TabsContent>
            <TabsContent value="moc">
               <Card>
-                <CardHeader className="flex-row justify-between items-start">
+                <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
                       <CardTitle>Management of Change (MOC)</CardTitle>
                       <CardDescription>
@@ -826,7 +813,7 @@ export function SafetyPageContent({
                               Propose Change
                           </Button>
                       </DialogTrigger>
-                      <DialogContent>
+                      <DialogContent className="sm:max-w-xl">
                           <DialogHeader>
                               <DialogTitle>Management of Change Proposal</DialogTitle>
                               <DialogDescription>
