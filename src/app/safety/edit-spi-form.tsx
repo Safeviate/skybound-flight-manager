@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -162,7 +163,7 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
 
         {isManual && (
             <div className="p-4 border rounded-lg bg-muted/30 space-y-4">
-                <h4 className="font-semibold text-sm">Monthly Data Points (12 Months)</h4>
+                <h4 className="font-semibold text-sm">Monthly Data Points (Last 12 Months)</h4>
                 <ScrollArea className="h-48 pr-4">
                     <div className="grid grid-cols-3 gap-4">
                         {last12Months.map(month => (

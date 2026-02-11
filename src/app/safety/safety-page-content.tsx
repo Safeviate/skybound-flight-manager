@@ -1,10 +1,11 @@
+
 'use client';
 
 import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, GroupedRisk, Booking, SpiConfig } from '@/lib/types';
+import type { Risk, SafetyReport, User, Booking, SpiConfig } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter, subMonths, eachMonthOfInterval, startOfYear } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -65,7 +66,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                 <div>
                     <CardTitle>Safety Performance Indicators (SPIs)</CardTitle>
                     <CardDescription>
-                        Monitoring key indicators to proactively manage safety, based on ICAO and SACAA principles.
+                        Monitoring key indicators to proactively manage safety over a rolling 12-month period.
                     </CardDescription>
                 </div>
                  <Dialog open={isNewTargetDialogOpen} onOpenChange={setIsNewTargetDialogOpen}>
@@ -100,19 +101,23 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                         return true;
                     };
 
+                    let totalCountsOverPeriod = 0;
+                    let totalHoursOverPeriod = 0;
+
                     if (config.isManual && config.manualData) {
-                        chartData = last12Months.map(month => ({
-                            name: month,
-                            value: config.manualData![month] || 0
-                        }));
+                        chartData = last12Months.map(month => {
+                            const val = config.manualData![month] || 0;
+                            totalCountsOverPeriod += val;
+                            return { name: month, value: val };
+                        });
                         
-                        if (config.unit === 'Per Year') {
-                            currentDisplayValue = chartData.reduce((sum, item) => sum + item.value, 0);
+                        if (config.unit === 'Per Year' || config.calculation === 'rate') {
+                            currentDisplayValue = totalCountsOverPeriod;
                         } else {
                             currentDisplayValue = chartData[chartData.length - 1]?.value || 0;
                         }
                     } else {
-                        const spiDataByMonth = reports
+                        const spiCountsByMonth = reports
                             .filter(matchesFilter)
                             .reduce((acc, report) => {
                                 const month = format(startOfMonth(parseISO(report.filedDate)), 'MMM yy');
@@ -121,24 +126,34 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                             }, {} as Record<string, number>);
 
                         chartData = last12Months.map(month => {
-                            const count = spiDataByMonth[month] || 0;
+                            const count = spiCountsByMonth[month] || 0;
+                            const hours = monthlyFlightHours[month] || 0;
+                            
+                            totalCountsOverPeriod += count;
+                            totalHoursOverPeriod += hours;
+
                             let value = count;
                             if (config.calculation === 'rate' && config.unit) {
-                                const totalHours = monthlyFlightHours[month] || 0;
                                 const multiplier = config.unit.includes('1000') ? 1000 : 100;
-                                value = totalHours > 0 ? (count / totalHours) * multiplier : 0;
+                                value = hours > 0 ? (count / hours) * multiplier : 0;
                             }
                             return { name: month, value: parseFloat(value.toFixed(2)) };
                         });
 
-                        if (config.unit === 'Per Year') {
-                            const currentYearStart = startOfYear(new Date());
-                            currentDisplayValue = reports.filter(r => isAfter(parseISO(r.filedDate), currentYearStart) && matchesFilter(r)).length;
+                        if (config.calculation === 'rate') {
+                            const multiplier = config.unit?.includes('1000') ? 1000 : 100;
+                            currentDisplayValue = totalHoursOverPeriod > 0 
+                                ? (totalCountsOverPeriod / totalHoursOverPeriod) * multiplier 
+                                : 0;
+                        } else if (config.unit === 'Per Year') {
+                            currentDisplayValue = totalCountsOverPeriod;
                         } else {
                             currentDisplayValue = chartData[chartData.length - 1]?.value || 0;
                         }
                     }
                     
+                    const formattedDisplayValue = parseFloat(currentDisplayValue.toFixed(2));
+
                      const getStatus = (value: number) => {
                         const { targetDirection, alert4, alert3, alert2 } = config;
                         if (targetDirection === '>=') {
@@ -154,7 +169,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                         }
                     };
 
-                    const status = getStatus(currentDisplayValue);
+                    const status = getStatus(formattedDisplayValue);
                     
                     return (
                         <Card key={config.id} className="flex flex-col border shadow-sm">
@@ -178,8 +193,8 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                                 </div>
                                 <div className="mt-4 flex items-center justify-between bg-muted/30 p-2 rounded-md">
                                     <div className="text-center flex-1">
-                                        <p className="text-[10px] text-muted-foreground uppercase">Current</p>
-                                        <p className="text-lg font-bold">{currentDisplayValue} <span className="text-[10px] font-normal">{config.unit}</span></p>
+                                        <p className="text-[10px] text-muted-foreground uppercase">Current (Rolling 12m)</p>
+                                        <p className="text-lg font-bold">{formattedDisplayValue} <span className="text-[10px] font-normal">{config.unit?.replace('per ', '/ ')}</span></p>
                                     </div>
                                     <Separator orientation="vertical" className="h-8" />
                                     <div className="text-center flex-1">
@@ -236,7 +251,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                         <DialogHeader>
                             <DialogTitle>Edit Indicator: {editingSpi.name}</DialogTitle>
                             <DialogDescription>
-                                Adjust targets and alert levels.
+                                Adjust targets and alert levels for this rolling 12-month metric.
                             </DialogDescription>
                         </DialogHeader>
                         <EditSpiForm spi={editingSpi} onUpdate={handleSpiUpdate} />
