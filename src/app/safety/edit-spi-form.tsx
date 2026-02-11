@@ -20,6 +20,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { subMonths, eachMonthOfInterval, format } from 'date-fns';
 import type { SpiConfig } from '@/lib/types';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const spiFormSchema = z.object({
   name: z.string().min(3, 'Name is required.'),
@@ -49,9 +50,9 @@ const rateUnitOptions = ["per 100 Flight Hours", "per 1000 Flight Hours"];
 export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
   const { toast } = useToast();
   
-  const last6Months = React.useMemo(() => {
+  const last12Months = React.useMemo(() => {
     const end = new Date();
-    const start = subMonths(end, 5);
+    const start = subMonths(end, 11);
     return eachMonthOfInterval({ start, end }).map(date => format(date, 'MMM yy'));
   }, []);
 
@@ -69,7 +70,7 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
       isManual: spi.isManual || false,
       filterType: spi.filterType || 'All',
       filterSubCategory: spi.filterSubCategory || '',
-      manualData: spi.manualData || last6Months.reduce((acc, m) => ({ ...acc, [m]: 0 }), {}),
+      manualData: spi.manualData || last12Months.reduce((acc, m) => ({ ...acc, [m]: 0 }), {}),
     },
   });
   
@@ -114,7 +115,9 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
                     control={form.control}
                     name="isManual"
                     render={({ field }) => (
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        <FormControl>
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
                     )}
                 />
             </div>
@@ -159,24 +162,26 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
 
         {isManual && (
             <div className="p-4 border rounded-lg bg-muted/30 space-y-4">
-                <h4 className="font-semibold text-sm">Monthly Data Points</h4>
-                <div className="grid grid-cols-3 gap-4">
-                    {last6Months.map(month => (
-                        <FormField
-                            key={month}
-                            control={form.control}
-                            name={`manualData.${month}`}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-xs">{month}</FormLabel>
-                                    <FormControl>
-                                        <Input type="number" step="0.1" {...field} />
-                                    </FormControl>
-                                </FormItem>
-                            )}
-                        />
-                    ))}
-                </div>
+                <h4 className="font-semibold text-sm">Monthly Data Points (12 Months)</h4>
+                <ScrollArea className="h-48 pr-4">
+                    <div className="grid grid-cols-3 gap-4">
+                        {last12Months.map(month => (
+                            <FormField
+                                key={month}
+                                control={form.control}
+                                name={`manualData.${month}`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-xs">{month}</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" step="0.1" {...field} />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                        ))}
+                    </div>
+                </ScrollArea>
             </div>
         )}
 
@@ -255,10 +260,30 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
             />
             
             <div className="grid grid-cols-2 gap-4">
-                <FormField control={form.control} name="target" render={({ field }) => (<FormItem><FormLabel>Target Level</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl></FormItem>)} />
-                <FormField control={form.control} name="alert2" render={({ field }) => (<FormItem><FormLabel>A2: Monitor</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl></FormItem>)} />
-                <FormField control={form.control} name="alert3" render={({ field }) => (<FormItem><FormLabel>A3: Action Required</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl></FormItem>)} />
-                <FormField control={form.control} name="alert4" render={({ field }) => (<FormItem><FormLabel>A4: Urgent Action</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl></FormItem>)} />
+                <FormField control={form.control} name="target" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Target Level</FormLabel>
+                        <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                    </FormItem>
+                )} />
+                <FormField control={form.control} name="alert2" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>A2: Monitor</FormLabel>
+                        <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                    </FormItem>
+                )} />
+                <FormField control={form.control} name="alert3" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>A3: Action Required</FormLabel>
+                        <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                    </FormItem>
+                )} />
+                <FormField control={form.control} name="alert4" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>A4: Urgent Action</FormLabel>
+                        <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                    </FormItem>
+                )} />
             </div>
         </div>
 

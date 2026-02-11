@@ -53,9 +53,9 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
         setIsNewTargetDialogOpen(false);
     };
 
-    const last6Months = useMemo(() => {
+    const last12Months = useMemo(() => {
         const end = new Date();
-        const start = subMonths(end, 5);
+        const start = subMonths(end, 11);
         return eachMonthOfInterval({ start, end }).map(date => format(date, 'MMM yy'));
     }, []);
 
@@ -101,7 +101,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                     };
 
                     if (config.isManual && config.manualData) {
-                        chartData = last6Months.map(month => ({
+                        chartData = last12Months.map(month => ({
                             name: month,
                             value: config.manualData![month] || 0
                         }));
@@ -120,7 +120,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                                 return acc;
                             }, {} as Record<string, number>);
 
-                        chartData = last6Months.map(month => {
+                        chartData = last12Months.map(month => {
                             const count = spiDataByMonth[month] || 0;
                             let value = count;
                             if (config.calculation === 'rate' && config.unit) {
