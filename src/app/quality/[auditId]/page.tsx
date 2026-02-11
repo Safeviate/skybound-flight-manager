@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -36,14 +37,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { AuditTeamForm } from './audit-team-form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-
-const discussionFormSchema = z.object({
-  recipient: z.string().optional(),
-  message: z.string().min(1, 'Message cannot be empty.'),
-  replyByDate: z.date().optional(),
-});
-
-type DiscussionFormValues = z.infer<typeof discussionFormSchema>;
 
 const getFindingInfo = (finding: FindingStatus | null) => {
     switch (finding) {
@@ -101,7 +94,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
     };
 
     const handleResetSignatures = () => {
-        onUpdate({ ...audit, auditorSignature: undefined, auditeeSignature: undefined }, true);
+        onUpdate({ ...audit, auditorSignature: undefined, auditeeSignature: undefined, auditorSignatureDate: undefined, auditeeSignatureDate: undefined }, true);
     };
     
     const handleReopenAudit = () => {

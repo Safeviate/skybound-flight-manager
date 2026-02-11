@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -168,7 +169,9 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-xs">{month}</FormLabel>
-                                    <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
+                                    <FormControl>
+                                        <Input type="number" step="0.1" {...field} />
+                                    </FormControl>
                                 </FormItem>
                             )}
                         />
@@ -240,8 +243,8 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            <SelectItem value="<=">Goal is lower than target (&le;)</SelectItem>
-                            <SelectItem value=">=">Goal is higher than target (&ge;)</SelectItem>
+                            <SelectItem value="<=">Less is Better (e.g. Defect Rate)</SelectItem>
+                            <SelectItem value=">=">More is Better (e.g. Completion Rate)</SelectItem>
                         </SelectContent>
                     </Select>
                     </FormItem>
