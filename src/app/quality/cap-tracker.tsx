@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -29,7 +28,7 @@ export default function CapTracker({ audits }: CapTrackerProps) {
   }, [audits]);
 
   const getStatusInfo = (issue: NonConformanceIssue) => {
-    const plans = issue.correctiveActionPlans || [];
+    const plans = issue.correctiveActionPlan || []; // Use CorrectiveActionPlan[] based on types.ts
     if (plans.length === 0) {
       return { label: 'Needs CAP', variant: 'destructive' as const, icon: <AlertTriangle className="h-3 w-3" /> };
     }

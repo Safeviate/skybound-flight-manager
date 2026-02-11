@@ -82,12 +82,12 @@ export const navItems: {
     ]
   },
   {
-      label: 'Training',
-      icon: BookOpen,
-      subItems: [
-        { href: '/students', label: 'Students', icon: Users, requiredFeature: 'Students' },
-        { href: '/exams', label: 'Exams', icon: FileQuestion, requiredPermissions: ['Exams:View'] },
-      ]
+    label: 'Training',
+    icon: BookOpen,
+    subItems: [
+      { href: '/students', label: 'Students', icon: Users, requiredFeature: 'Students' },
+      { href: '/exams', label: 'Exams', icon: FileQuestion, requiredPermissions: ['Exams:View'] },
+    ]
   },
   {
     label: 'Safety',
@@ -140,16 +140,6 @@ export const adminNavItems = [
     { href: '/reports/system-health', label: 'System Health', icon: Activity },
     { href: '/functions', label: 'Functions', icon: FlaskConical },
 ]
-
-const settingsNavItems: {
-  href: string;
-  label: string;
-  icon: React.ElementType;
-  requiredPermissions?: Permission[];
-  requiredFeature?: Feature;
-}[] = [
-    // items moved to main nav or admin nav
-];
 
 export default function Nav() {
   const pathname = usePathname();
@@ -296,18 +286,6 @@ export default function Nav() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-         <SidebarMenu>
-            {settingsNavItems.map((item) => (
-                 <SidebarMenuItem key={item.href}>
-                    <Link href={item.href} passHref>
-                        <SidebarMenuButton tooltip={{ children: item.label }} isActive={getIsActive(item.href)} onClick={handleLinkClick}>
-                            <item.icon />
-                            <span>{item.label}</span>
-                        </SidebarMenuButton>
-                    </Link>
-                </SidebarMenuItem>
-            ))}
-         </SidebarMenu>
       </SidebarFooter>
     </>
   );

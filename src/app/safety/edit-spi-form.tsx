@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -11,16 +12,12 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import type { SafetyReport } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import React, { useMemo } from 'react';
 import { subMonths, eachMonthOfInterval, format } from 'date-fns';
 
 export type SpiConfig = {
@@ -67,7 +64,7 @@ const countUnits = ["Per Day", "Per Week", "Per Month", "Per Year"];
 export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
   const { toast } = useToast();
   
-  const last6Months = useMemo(() => {
+  const last6Months = React.useMemo(() => {
     const end = new Date();
     const start = subMonths(end, 5);
     return eachMonthOfInterval({ start, end }).map(date => format(date, 'MMM yy'));
@@ -94,21 +91,20 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
   const calculationType = form.watch('calculation');
   const isManual = form.watch('isManual');
 
-  function onSubmit(data: SpiFormValues) {
+  const handleFormSubmit = (data: SpiFormValues) => {
     onUpdate({
       ...spi,
       ...data,
-      // For automated SPIs, we'll recreate the filter function in the parent based on filterType/SubCategory
-    } as any);
+    } as SpiConfig);
     toast({
       title: 'Indicator Updated',
       description: `Settings for ${spi.name} have been saved.`,
     });
-  }
+  };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         <div className="space-y-4">
             <FormField
                 control={form.control}
@@ -187,7 +183,7 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
                             name={`manualData.${month}`}
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-xs">{month}</Label>
+                                    <FormLabel className="text-xs">{month}</FormLabel>
                                     <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
                                 </FormItem>
                             )}
