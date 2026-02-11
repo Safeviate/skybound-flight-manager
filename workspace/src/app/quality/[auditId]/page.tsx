@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -436,9 +435,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                         {audit.auditorSignature ? (
                             <div>
                                 <Image src={audit.auditorSignature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
-                                {audit.auditorSignatureDate && (
-                                    <p className="text-xs text-muted-foreground mt-1">Signed on: {format(parseISO(audit.auditorSignatureDate), 'PPP p')}</p>
-                                )}
                             </div>
                         ) : canSign(user, audit.auditor) ? (
                              <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditorSignature: signature, auditorSignatureDate: new Date().toISOString() }, true)} />
@@ -451,9 +447,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                          {audit.auditeeSignature ? (
                             <div>
                                 <Image src={audit.auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
-                                {audit.auditeeSignatureDate && (
-                                    <p className="text-xs text-muted-foreground mt-1">Signed by {audit.auditeeName} on: {format(parseISO(audit.auditeeSignatureDate), 'PPP p')}</p>
-                                )}
                             </div>
                         ) : canSign(user, audit.auditeeName) ? (
                              <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditeeSignature: signature, auditeeSignatureDate: new Date().toISOString() }, true)} />
@@ -969,14 +962,3 @@ export default function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
-    
-
-
-    
-
-    
-
-  
-
-
-    

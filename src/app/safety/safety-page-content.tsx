@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -7,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, Department, ManagementOfChange, SafetyReport, GroupedRisk, Booking, SpiConfig } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, ReferenceLine } from 'recharts';
-import { format, parseISO, startOfMonth, differenceInDays, isAfter, subMonths, eachMonthOfInterval } from 'date-fns';
+import { format, parseISO, startOfMonth, differenceInDays, isAfter, subMonths, eachMonthOfInterval, startOfYear } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -92,19 +91,29 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
             <CardContent className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
                 {spiConfigs.map(config => {
                     let chartData = [];
+                    let currentDisplayValue = 0;
                     
+                    const matchesFilter = (r: SafetyReport) => {
+                        if (config.filterType && config.filterType !== 'All' && r.type !== config.filterType) return false;
+                        if (config.filterSubCategory && !r.subCategory?.toLowerCase().includes(config.filterSubCategory.toLowerCase())) return false;
+                        return true;
+                    };
+
                     if (config.isManual && config.manualData) {
                         chartData = last6Months.map(month => ({
                             name: month,
                             value: config.manualData![month] || 0
                         }));
+                        
+                        if (config.unit === 'Per Year') {
+                            // Sum manual data for the current year (approximation based on displayed data)
+                            currentDisplayValue = chartData.reduce((sum, item) => sum + item.value, 0);
+                        } else {
+                            currentDisplayValue = chartData[chartData.length - 1]?.value || 0;
+                        }
                     } else {
                         const spiDataByMonth = reports
-                            .filter(r => {
-                                if (config.filterType && config.filterType !== 'All' && r.type !== config.filterType) return false;
-                                if (config.filterSubCategory && !r.subCategory?.toLowerCase().includes(config.filterSubCategory.toLowerCase())) return false;
-                                return true;
-                            })
+                            .filter(matchesFilter)
                             .reduce((acc, report) => {
                                 const month = format(startOfMonth(parseISO(report.filedDate)), 'MMM yy');
                                 acc[month] = (acc[month] || 0) + 1;
@@ -120,9 +129,14 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                             }
                             return { name: month, value: parseFloat(value.toFixed(2)) };
                         });
+
+                        if (config.unit === 'Per Year') {
+                            const currentYearStart = startOfYear(new Date());
+                            currentDisplayValue = reports.filter(r => isAfter(parseISO(r.filedDate), currentYearStart) && matchesFilter(r)).length;
+                        } else {
+                            currentDisplayValue = chartData[chartData.length - 1]?.value || 0;
+                        }
                     }
-                    
-                    const latestValue = chartData[chartData.length - 1]?.value || 0;
                     
                      const getStatus = (value: number) => {
                         const { targetDirection, alert4, alert3, alert2 } = config;
@@ -139,7 +153,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                         }
                     };
 
-                    const status = getStatus(latestValue);
+                    const status = getStatus(currentDisplayValue);
                     
                     return (
                         <Card key={config.id} className="flex flex-col border shadow-sm">
@@ -164,7 +178,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                                 <div className="mt-4 flex items-center justify-between bg-muted/30 p-2 rounded-md">
                                     <div className="text-center flex-1">
                                         <p className="text-[10px] text-muted-foreground uppercase">Current</p>
-                                        <p className="text-lg font-bold">{latestValue} <span className="text-[10px] font-normal">{config.unit?.replace('Per ', '/ ')}</span></p>
+                                        <p className="text-lg font-bold">{currentDisplayValue} <span className="text-[10px] font-normal">{config.unit?.replace('Per ', '/ ')}</span></p>
                                     </div>
                                     <Separator orientation="vertical" className="h-8" />
                                     <div className="text-center flex-1">
@@ -196,6 +210,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                                                 <Tooltip contentStyle={{ borderRadius: '8px' }} />
                                                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                                                     {chartData.map((entry, index) => {
+                                                        // Monthly bars are colored individually based on the target logic
                                                         const entryStatus = getStatus(entry.value);
                                                         const color = {
                                                             'success': 'hsl(var(--success))',

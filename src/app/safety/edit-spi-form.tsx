@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -208,22 +207,16 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
               render={({ field }) => (
                   <FormItem>
                     <FormLabel>Unit Label</FormLabel>
-                    {calculationType === 'count' ? (
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                                <SelectTrigger><SelectValue placeholder="Select a unit" /></SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {countUnits.map(unit => (
-                                    <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    ) : (
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                            <Input placeholder="e.g., per 100 hours" {...field} />
+                            <SelectTrigger><SelectValue placeholder="Select a unit" /></SelectTrigger>
                         </FormControl>
-                    )}
+                        <SelectContent>
+                            {countUnits.map(unit => (
+                                <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
               )}
@@ -243,8 +236,8 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            <SelectItem value="<=">Less is Better (e.g. Defect Rate)</SelectItem>
-                            <SelectItem value=">=">More is Better (e.g. Completion Rate)</SelectItem>
+                            <SelectItem value="<=">Less is Better (e.g. Incidents, Defects)</SelectItem>
+                            <SelectItem value=">=">More is Better (e.g. Training, Compliance)</SelectItem>
                         </SelectContent>
                     </Select>
                     </FormItem>
