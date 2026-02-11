@@ -457,7 +457,6 @@ export function SafetyPageContent({
         if (!snapshot.empty) {
             setSpiConfigs(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as SpiConfig)));
         } else {
-            // Set some initial defaults if none exist in DB
             setSpiConfigs([
                 { id: 'unstableApproaches', name: 'Unstable Approach Rate', type: 'Lagging Indicator', calculation: 'count', unit: 'Per Month', targetDirection: '<=', target: 1, alert2: 2, alert3: 3, alert4: 4, filterType: 'Flight Operations Report', filterSubCategory: 'Unstable Approach' },
                 { id: 'adr', name: 'Aircraft Technical Defect Rate', type: 'Lagging Indicator', calculation: 'count', unit: 'Per Month', targetDirection: '<=', target: 3, alert2: 4, alert3: 5, alert4: 6, filterType: 'Aircraft Defect Report' },
