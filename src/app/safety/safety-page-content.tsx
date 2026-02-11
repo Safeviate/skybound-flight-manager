@@ -29,6 +29,7 @@ import { getSafetyPageData } from './data';
 import { NewMocForm } from './new-moc-form';
 import { getRiskLevel } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface SafetyPerformanceIndicatorsProps {
   reports: SafetyReport[];

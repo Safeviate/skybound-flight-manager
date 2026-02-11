@@ -873,5 +873,3 @@ export default function QualityAuditDetailPage() {
     </main>
   );
 }
-
-QualityAuditDetailPage.title = "Quality Audit Investigation";
