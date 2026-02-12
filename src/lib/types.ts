@@ -489,6 +489,10 @@ export type CorrectiveActionPlan = {
   id: string;
   rootCause: string;
   actions: CorrectiveAction[];
+  status: 'Open' | 'Closed';
+  closureNotes?: string;
+  closedDate?: string;
+  closedBy?: string;
 };
 
 

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -156,7 +155,7 @@ export default function MocDetailPage() {
     if (!moc || !dialogState) return;
 
     let updatedPhases = [...(moc.phases || [])];
-    const { type, data } = dialogState as any; // Cast to any to access data property without checking type
+    const { type, data } = dialogState as any;
     
     if (type === 'addPhase') {
         const newPhase: MocPhase = { id: `phase-${Date.now()}`, description: formData.description, steps: [] };
@@ -228,15 +227,6 @@ export default function MocDetailPage() {
         handleUpdate({ phases: updatedPhases }, true);
     };
 
-    const getStatusBadgeVariant = (status: MocMitigation['status']) => {
-        switch (status) {
-            case 'Open': return 'warning';
-            case 'In Progress': return 'primary';
-            case 'Closed': return 'success';
-            default: return 'outline';
-        }
-    };
-
   const handleRequestProposerSignature = async () => {
     if (!moc || !company || !user) return;
 
@@ -267,7 +257,7 @@ export default function MocDetailPage() {
   if (!moc) return <main className="flex-1 p-4 md:p-8 flex items-center justify-center"><p>The requested Management of Change record could not be found.</p></main>;
 
   const canSignAsProposer = user?.name === moc.proposedBy;
-  const canSignAsApprover = canEdit; // Simplified logic, could be a specific role
+  const canSignAsApprover = canEdit;
 
   return (
     <main className="flex-1 p-4 md:p-8 print:p-0">
@@ -482,7 +472,7 @@ const TextareaForm = ({ onSubmit, placeholder, initialValue = '' }: { onSubmit: 
 const riskFormSchema = z.object({ description: z.string().min(1, 'Description is required'), likelihood: z.enum(probabilityOptions), severity: z.enum(severityOptions) });
 const RiskForm = ({ onSubmit, risk }: { onSubmit: (data: any) => void, risk?: MocRisk }) => {
     const form = useForm<z.infer<typeof riskFormSchema>>({ resolver: zodResolver(riskFormSchema), defaultValues: risk });
-    return (<Form {...form}><form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4"><FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormControl><Textarea placeholder="Describe the risk..." {...field} /></FormControl><FormMessage /></FormItem>)} /><div className="grid grid-cols-2 gap-4"><FormField control={form.control} name="likelihood" render={({ field }) => (<FormItem><FormLabel>Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Likelihood" /></SelectTrigger><SelectTrigger><SelectValue placeholder="Select Likelihood" /></SelectTrigger><SelectContent>{probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={form.control} name="severity" render={({ field }) => (<FormItem><FormLabel>Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Severity" /></SelectTrigger><SelectContent>{severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /></div><DialogFooter><Button type="submit">Save Risk</Button></DialogFooter></form></Form>);
+    return (<Form {...form}><form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4"><FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormControl><Textarea placeholder="Describe the risk..." {...field} /></FormControl><FormMessage /></FormItem>)} /><div className="grid grid-cols-2 gap-4"><FormField control={form.control} name="likelihood" render={({ field }) => (<FormItem><FormLabel>Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Likelihood" /></SelectTrigger><SelectContent>{probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={form.control} name="severity" render={({ field }) => (<FormItem><FormLabel>Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Severity" /></SelectTrigger><SelectContent>{severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /></div><DialogFooter><Button type="submit">Save Risk</Button></DialogFooter></form></Form>);
 };
 
 const mitigationFormSchema = z.object({ description: z.string().min(1, 'Description is required'), residualLikelihood: z.enum(probabilityOptions), residualSeverity: z.enum(severityOptions), responsiblePerson: z.string().optional(), completionDate: z.date().optional(), status: z.enum(['Open', 'In Progress', 'Closed']).default('Open') });
