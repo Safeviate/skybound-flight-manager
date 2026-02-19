@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -30,6 +29,9 @@ import autoTable from 'jspdf-autotable';
 import { PreFlightChecklistForm } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm } from '@/app/checklists/post-flight-checklist-form';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import Loading from '@/app/loading';
+import type { Aircraft, Booking } from '@/lib/types';
 
 const componentHierarchy = {
     "Airframe": ["Fuselage", "Wings", "Empennage", "Doors", "Windows"],
@@ -42,9 +44,6 @@ const componentHierarchy = {
     "Interior/Cabin": ["Seats", "Belts/Harnesses", "HVAC", "Panels/Trim"],
     "Other": [],
 };
-
-const componentOptions = Object.keys(componentHierarchy);
-const allSubcomponents = Array.from(new Set(Object.values(componentHierarchy).flat()));
 
 export function AircraftDetailsContent() {
     const params = useParams();
