@@ -1,10 +1,11 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Wrench, History, CheckCircle2, ChevronDown, Loader2, Download, Eye, ListChecks, FileText, Calendar as CalendarIcon, Clock, Hash, Trash2, Mail, Settings2 } from 'lucide-react';
+import { ArrowLeft, Edit, Wrench, History, CheckCircle2, ChevronDown, Loader2, Download, Eye, ListChecks, FileText, Calendar as CalendarIcon, Clock, Hash, Trash2, Mail, Settings2, PlusCircle, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { doc, getDoc, collection, query, onSnapshot, orderBy, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';

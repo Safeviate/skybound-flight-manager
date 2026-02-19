@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -12,6 +13,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -106,21 +108,21 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
                 )}
             />
             
-            <div className="flex items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                    <Label className="text-base">Manual Data Entry</Label>
-                    <p className="text-sm text-muted-foreground">Input data points directly instead of deriving from reports.</p>
-                </div>
-                <FormField
-                    control={form.control}
-                    name="isManual"
-                    render={({ field }) => (
+            <FormField
+                control={form.control}
+                name="isManual"
+                render={({ field }) => (
+                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                            <FormLabel className="text-base">Manual Data Entry</FormLabel>
+                            <FormDescription>Input data points directly instead of deriving from reports.</FormDescription>
+                        </div>
                         <FormControl>
                             <Switch checked={field.value} onCheckedChange={field.onChange} />
                         </FormControl>
-                    )}
-                />
-            </div>
+                    </FormItem>
+                )}
+            />
         </div>
 
         {!isManual && (
