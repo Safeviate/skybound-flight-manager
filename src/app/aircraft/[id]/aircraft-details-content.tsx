@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Wrench, History, CheckCircle2, ChevronDown, Loader2, Download, Eye, ListChecks, FileText, Calendar as CalendarIcon, Clock, Hash, Trash2, Mail } from 'lucide-react';
+import { ArrowLeft, Edit, Wrench, History, CheckCircle2, ChevronDown, Loader2, Download, Eye, ListChecks, FileText, Calendar as CalendarIcon, Clock, Hash, Trash2, Mail, Settings2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { doc, getDoc, collection, query, onSnapshot, orderBy, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
@@ -24,26 +24,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { PreFlightChecklistForm } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm } from '@/app/checklists/post-flight-checklist-form';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Loading from '@/app/loading';
 import type { Aircraft, Booking } from '@/lib/types';
-
-const componentHierarchy = {
-    "Airframe": ["Fuselage", "Wings", "Empennage", "Doors", "Windows"],
-    "Powerplant": ["Engine", "Propeller", "Exhaust System", "Ignition System", "Fuel System (Engine)"],
-    "Landing Gear": ["Main Gear", "Nose Gear", "Wheels", "Tires", "Brakes"],
-    "Avionics/Instruments": ["GPS/Navigation", "Com Radio", "Transponder", "Attitude Indicator", "Airspeed Indicator", "Altimeter", "Other Instrument"],
-    "Flight Controls": ["Ailerons", "Elevator/Stabilator", "Rudder", "Flaps", "Control Cables/Rods"],
-    "Fuel System": ["Tanks", "Lines & Hoses", "Pumps", "Gauges"],
-    "Electrical System": ["Battery", "Alternator/Generator", "Wiring", "Circuit Breakers", "Lighting"],
-    "Interior/Cabin": ["Seats", "Belts/Harnesses", "HVAC", "Panels/Trim"],
-    "Other": [],
-};
 
 export function AircraftDetailsContent() {
     const params = useParams();
@@ -203,11 +189,12 @@ export function AircraftDetailsContent() {
             </div>
 
             <Tabs defaultValue="dashboard" className="w-full">
-                <TabsList className="w-full justify-start h-auto p-1 bg-muted/50 border">
+                <TabsList className="w-full justify-start h-auto p-1 bg-muted/50 border overflow-x-auto whitespace-nowrap">
                     <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                     <TabsTrigger value="maintenance">Maintenance & Tech Log</TabsTrigger>
                     <TabsTrigger value="history">Checklist History</TabsTrigger>
                     <TabsTrigger value="documents">Documentation</TabsTrigger>
+                    <TabsTrigger value="components">Components</TabsTrigger>
                     <TabsTrigger value="checklists" className="text-primary font-semibold">Perform Checklist</TabsTrigger>
                 </TabsList>
 
@@ -444,6 +431,53 @@ export function AircraftDetailsContent() {
                     </Card>
                 </TabsContent>
 
+                <TabsContent value="components" className="mt-6 space-y-6">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Component Registry</CardTitle>
+                                <CardDescription>Tracking lifecycle and maintenance data for major aircraft components.</CardDescription>
+                            </div>
+                            <Button variant="outline" size="sm">
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add Component
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Component Name</TableHead>
+                                        <TableHead>Serial Number</TableHead>
+                                        <TableHead>Install Date</TableHead>
+                                        <TableHead>Hrs at Install</TableHead>
+                                        <TableHead>Current Hours</TableHead>
+                                        <TableHead className="text-right">Status</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {[
+                                        { name: 'Engine (Left/Main)', sn: 'L-12345-A', date: '2023-01-15', installHrs: 4500.0, currentHrs: 4625.4, status: 'Healthy' },
+                                        { name: 'Propeller', sn: 'P-98765', date: '2024-05-20', installHrs: 4580.0, currentHrs: 4625.4, status: 'Healthy' },
+                                        { name: 'Magneto 1', sn: 'M-11223', date: '2025-02-10', installHrs: 4610.5, currentHrs: 4625.4, status: 'Recent' },
+                                        { name: 'Alternator', sn: 'ALT-4455', date: '2022-11-30', installHrs: 4400.0, currentHrs: 4625.4, status: 'Monitor' },
+                                    ].map((comp, i) => (
+                                        <TableRow key={i}>
+                                            <TableCell className="font-medium">{comp.name}</TableCell>
+                                            <TableCell className="font-mono text-xs">{comp.sn}</TableCell>
+                                            <TableCell>{format(parseISO(comp.date), 'dd MMM yyyy')}</TableCell>
+                                            <TableCell>{comp.installHrs.toFixed(1)}</TableCell>
+                                            <TableCell>{comp.currentHrs.toFixed(1)}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Badge variant={comp.status === 'Healthy' ? 'success' : comp.status === 'Monitor' ? 'warning' : 'outline'}>{comp.status}</Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
                 <TabsContent value="checklists" className="mt-6 max-w-2xl mx-auto space-y-6">
                     {aircraft.checklistStatus === 'needs-post-flight' ? (
                         <Card className="border-primary/20 bg-primary/5">
@@ -468,7 +502,7 @@ export function AircraftDetailsContent() {
                             </CardHeader>
                             <CardContent>
                                 <PreFlightChecklistForm 
-                                    onSuccess={handleChecklistSuccess}
+                                    onSuccess={handleChecklistSuccess} 
                                     aircraft={aircraft}
                                     onReportIssue={() => {}}
                                     onCancelBooking={() => {}}
