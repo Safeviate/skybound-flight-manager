@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -196,8 +195,8 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
                   <FormLabel>Calculation</FormLabel>
                    <Select onValueChange={(val) => {
                        field.onChange(val);
-                       form.setValue('unit', '');
-                   }} defaultValue={field.value}>
+                       form.setValue('unit', val === 'count' ? 'Per Month' : 'per 100 Flight Hours');
+                   }} value={field.value}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select type" />

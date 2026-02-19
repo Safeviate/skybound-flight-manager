@@ -97,6 +97,18 @@ export type AircraftDocument = {
     url?: string | null;
 };
 
+export type AircraftComponent = {
+    id: string;
+    name: string;
+    serialNumber: string;
+    installDate: string;
+    installHrs: number;
+    currentHrs: number;
+    tsn: number;
+    tso: number;
+    status: 'Healthy' | 'Monitor' | 'Recent' | 'Overdue';
+};
+
 export type Aircraft = {
   id: string;
   companyId: string;
@@ -121,6 +133,7 @@ export type Aircraft = {
   totalTimeInService?: number;
   maintenanceStartDate?: string | null;
   maintenanceEndDate?: string | null;
+  components?: AircraftComponent[];
 };
 
 export type Endorsement = {

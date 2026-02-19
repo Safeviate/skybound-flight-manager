@@ -1,14 +1,13 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Wrench, History, CheckCircle2, ChevronDown, Loader2, Download, Eye, ListChecks, FileText, Calendar as CalendarIcon, Clock, Hash, Trash2, Mail, Settings2, PlusCircle, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Edit, Wrench, History, CheckCircle2, ChevronDown, Loader2, Download, Eye, ListChecks, FileText, Calendar as CalendarIcon, Clock, Hash, Trash2, Mail, Settings2, PlusCircle, ChevronRight, Save } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { doc, getDoc, collection, query, onSnapshot, orderBy, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, collection, query, onSnapshot, orderBy, updateDoc, deleteDoc, writeBatch, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
@@ -30,7 +29,24 @@ import { PostFlightChecklistForm } from '@/app/checklists/post-flight-checklist-
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Loading from '@/app/loading';
-import type { Aircraft, Booking } from '@/lib/types';
+import type { Aircraft, Booking, AircraftComponent } from '@/lib/types';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+
+const componentFormSchema = z.object({
+  name: z.string().min(1, 'Component name is required.'),
+  serialNumber: z.string().min(1, 'Serial number is required.'),
+  installDate: z.string().min(1, 'Installation date is required.'),
+  installHrs: z.coerce.number().min(0),
+  currentHrs: z.coerce.number().min(0),
+  tsn: z.coerce.number().min(0),
+  tso: z.coerce.number().min(0),
+  status: z.enum(['Healthy', 'Monitor', 'Recent', 'Overdue']),
+});
+
+type ComponentFormValues = z.infer<typeof componentFormSchema>;
 
 export function AircraftDetailsContent() {
     const params = useParams();
@@ -43,11 +59,27 @@ export function AircraftDetailsContent() {
     const [aircraft, setAircraft] = useState<Aircraft | null>(null);
     const [history, setHistory] = useState<any[]>([]);
     const [techReports, setTechReports] = useState<any[]>([]);
+    const [components, setComponents] = useState<AircraftComponent[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditModalOpen, setIsEditEditModalOpen] = useState(false);
+    const [isAddComponentOpen, setIsAddComponentOpen] = useState(false);
     const [rectifyingReport, setRectifyingReport] = useState<any | null>(null);
     const [viewingChecklist, setViewingLog] = useState<any | null>(null);
     const [bookings, setBookings] = useState<Booking[]>([]);
+
+    const componentForm = useForm<ComponentFormValues>({
+        resolver: zodResolver(componentFormSchema),
+        defaultValues: {
+            name: '',
+            serialNumber: '',
+            installDate: format(new Date(), 'yyyy-MM-dd'),
+            installHrs: 0,
+            currentHrs: 0,
+            tsn: 0,
+            tso: 0,
+            status: 'Healthy',
+        }
+    });
 
     useEffect(() => {
         if (!company || !id) return;
@@ -75,11 +107,16 @@ export function AircraftDetailsContent() {
             setBookings(snap.docs.map(d => ({ id: d.id, ...d.data() } as Booking)));
         });
 
+        const unsubComponents = onSnapshot(collection(db, `companies/${company.id}/aircraft/${id}/components`), (snap) => {
+            setComponents(snap.docs.map(d => ({ id: d.id, ...d.data() } as AircraftComponent)));
+        });
+
         return () => {
             unsubAircraft();
             unsubHistory();
             unsubTech();
             unsubBookings();
+            unsubComponents();
         };
     }, [company, id, router, aircraft?.tailNumber]);
 
@@ -104,6 +141,28 @@ export function AircraftDetailsContent() {
             toast({ variant: 'destructive', title: 'Update Failed' });
         }
     };
+
+    const handleAddComponent = async (data: ComponentFormValues) => {
+        if (!company || !id) return;
+        try {
+            await addDoc(collection(db, `companies/${company.id}/aircraft/${id}/components`), data);
+            setIsAddComponentOpen(false);
+            componentForm.reset();
+            toast({ title: 'Component Added' });
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to add component.' });
+        }
+    };
+
+    const handleDeleteComponent = async (compId: string) => {
+        if (!company || !id) return;
+        try {
+            await deleteDoc(doc(db, `companies/${company.id}/aircraft/${id}/components`, compId));
+            toast({ title: 'Component Removed' });
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Delete Failed' });
+        }
+    }
 
     const handleChecklistSuccess = async (data: any) => {
         if (!aircraft || !company || !user) return;
@@ -439,7 +498,7 @@ export function AircraftDetailsContent() {
                                 <CardTitle>Component Registry</CardTitle>
                                 <CardDescription>Tracking lifecycle and maintenance data for major aircraft components.</CardDescription>
                             </div>
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" onClick={() => setIsAddComponentOpen(true)}>
                                 <PlusCircle className="mr-2 h-4 w-4" /> Add Component
                             </Button>
                         </CardHeader>
@@ -451,28 +510,34 @@ export function AircraftDetailsContent() {
                                         <TableHead>Serial Number</TableHead>
                                         <TableHead>Install Date</TableHead>
                                         <TableHead>Hrs at Install</TableHead>
-                                        <TableHead>Current Hours</TableHead>
+                                        <TableHead>TSN</TableHead>
+                                        <TableHead>TSO</TableHead>
                                         <TableHead className="text-right">Status</TableHead>
+                                        <TableHead className="text-right no-print">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {[
-                                        { name: 'Engine (Left/Main)', sn: 'L-12345-A', date: '2023-01-15', installHrs: 4500.0, currentHrs: 4625.4, status: 'Healthy' },
-                                        { name: 'Propeller', sn: 'P-98765', date: '2024-05-20', installHrs: 4580.0, currentHrs: 4625.4, status: 'Healthy' },
-                                        { name: 'Magneto 1', sn: 'M-11223', date: '2025-02-10', installHrs: 4610.5, currentHrs: 4625.4, status: 'Recent' },
-                                        { name: 'Alternator', sn: 'ALT-4455', date: '2022-11-30', installHrs: 4400.0, currentHrs: 4625.4, status: 'Monitor' },
-                                    ].map((comp, i) => (
-                                        <TableRow key={i}>
+                                    {components.map((comp) => (
+                                        <TableRow key={comp.id}>
                                             <TableCell className="font-medium">{comp.name}</TableCell>
-                                            <TableCell className="font-mono text-xs">{comp.sn}</TableCell>
-                                            <TableCell>{format(parseISO(comp.date), 'dd MMM yyyy')}</TableCell>
+                                            <TableCell className="font-mono text-xs">{comp.serialNumber}</TableCell>
+                                            <TableCell>{format(parseISO(comp.installDate), 'dd MMM yyyy')}</TableCell>
                                             <TableCell>{comp.installHrs.toFixed(1)}</TableCell>
-                                            <TableCell>{comp.currentHrs.toFixed(1)}</TableCell>
+                                            <TableCell className="font-semibold">{comp.tsn.toFixed(1)}</TableCell>
+                                            <TableCell className="font-semibold">{comp.tso.toFixed(1)}</TableCell>
                                             <TableCell className="text-right">
                                                 <Badge variant={comp.status === 'Healthy' ? 'success' : comp.status === 'Monitor' ? 'warning' : 'outline'}>{comp.status}</Badge>
                                             </TableCell>
+                                            <TableCell className="text-right no-print">
+                                                <Button variant="ghost" size="icon" onClick={() => handleDeleteComponent(comp.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                            </TableCell>
                                         </TableRow>
                                     ))}
+                                    {components.length === 0 && (
+                                        <TableRow>
+                                            <TableCell colSpan={8} className="text-center h-24 text-muted-foreground italic">No components registered.</TableCell>
+                                        </TableRow>
+                                    )}
                                 </TableBody>
                             </Table>
                         </CardContent>
@@ -539,6 +604,30 @@ export function AircraftDetailsContent() {
                         </div>
                         <DialogFooter><Button type="submit">Finalize & Close Report</Button></DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isAddComponentOpen} onOpenChange={setIsAddComponentOpen}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Add Aircraft Component</DialogTitle>
+                        <DialogDescription>Enter the tracking data for a major airframe or powerplant component.</DialogDescription>
+                    </DialogHeader>
+                    <Form {...componentForm}>
+                        <form onSubmit={componentForm.handleSubmit(handleAddComponent)} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField control={componentForm.control} name="name" render={({ field }) => (<FormItem><FormLabel>Component Name</FormLabel><FormControl><Input placeholder="e.g. Engine" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={componentForm.control} name="serialNumber" render={({ field }) => (<FormItem><FormLabel>Serial Number</FormLabel><FormControl><Input placeholder="S/N" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={componentForm.control} name="installDate" render={({ field }) => (<FormItem><FormLabel>Install Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={componentForm.control} name="installHrs" render={({ field }) => (<FormItem><FormLabel>Hrs at Install</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={componentForm.control} name="currentHrs" render={({ field }) => (<FormItem><FormLabel>Total Airframe Hrs</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={componentForm.control} name="status" render={({ field }) => (<FormItem><FormLabel>Health Status</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Healthy">Healthy</SelectItem><SelectItem value="Monitor">Monitor</SelectItem><SelectItem value="Recent">Recent</SelectItem><SelectItem value="Overdue">Overdue</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                                <FormField control={componentForm.control} name="tsn" render={({ field }) => (<FormItem><FormLabel>TSN (Time Since New)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={componentForm.control} name="tso" render={({ field }) => (<FormItem><FormLabel>TSO (Time Since Overhaul)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            </div>
+                            <DialogFooter><Button type="submit">Register Component</Button></DialogFooter>
+                        </form>
+                    </Form>
                 </DialogContent>
             </Dialog>
 
