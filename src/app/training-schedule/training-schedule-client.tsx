@@ -133,7 +133,7 @@ const SwimlaneCalendar = ({
         return hours * 60 + minutes;
     };
     
-    const TOP_OFFSET = 24;
+    const TOP_OFFSET = 0; // Removed extra vertical gap
 
     const minutesToTop = (minutes: number) => {
         return (minutes - (6 * 60)) * 2 + TOP_OFFSET;
@@ -179,7 +179,7 @@ const SwimlaneCalendar = ({
                 </div>
             </div>
 
-            <div className="relative flex pt-[24px]" style={{ height: `${18 * 60 * 2 + TOP_OFFSET}px` }}>
+            <div className="relative flex pt-0" style={{ height: `${18 * 60 * 2 + TOP_OFFSET}px` }}>
                 <div className="w-16 flex-shrink-0">
                     {Array.from({ length: 18 }).map((_, i) => (
                         <div key={i} className="h-[120px] text-xs text-center text-muted-foreground border-r border-t relative">
