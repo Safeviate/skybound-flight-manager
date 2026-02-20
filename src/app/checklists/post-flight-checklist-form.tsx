@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { Bot, Camera, Plane, Hash, Image as ImageIcon, AlertTriangle, Send } from 'lucide-react';
+import { Camera, Plane, Hash, Image as ImageIcon, AlertTriangle, Send } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import type { Aircraft } from '@/lib/types';
@@ -44,7 +43,6 @@ interface PostFlightChecklistFormProps {
 export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onReportIssue }: PostFlightChecklistFormProps) {
   const { toast } = useToast();
   const { settings } = useSettings();
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | 'defectPhoto' | null>(null);
 
@@ -80,13 +78,6 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
 
   const { setValue, watch, getValues } = form;
   const watchedValues = watch();
-
-  const handleScanSuccess = (data: { registration?: string; hobbs?: number }) => {
-    if (data.hobbs) {
-      setValue('hobbs', data.hobbs, { shouldValidate: true });
-    }
-    setIsScannerOpen(false);
-  };
   
   const handlePhotoSuccess = (dataUrl: string) => {
     if (photoTarget) {
@@ -159,11 +150,6 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
                                                     className="flex-1" 
                                                 />
                                             </FormControl>
-                                            {settings.useAiChecklists && (
-                                                <Button type="button" variant="outline" size="icon" onClick={() => toast({ title: 'AI Scanner Disabled', description: 'This feature is temporarily unavailable.' })}>
-                                                    <Bot className="h-4 w-4" />
-                                                </Button>
-                                            )}
                                         </div>
                                         <FormMessage />
                                     </FormItem>

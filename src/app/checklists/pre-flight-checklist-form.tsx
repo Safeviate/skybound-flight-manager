@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { Bot, Camera, Check, FileCheck, Plane, Hash, Image as ImageIcon, AlertTriangle, Send, Edit, Trash2 } from 'lucide-react';
+import { Plane, Hash, Image as ImageIcon, AlertTriangle, Send, Edit, Trash2, Camera, Check, FileCheck } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
@@ -36,7 +35,7 @@ const deletionReasons = [
 
 
 const createChecklistSchema = (requirePhotos: boolean) => z.object({
-  registration: z.string().min(1, { message: "Aircraft registration scan is required." }),
+  registration: z.string().min(1, { message: "Aircraft registration is required." }),
   hobbs: z.coerce.number().min(0.1, { message: "Hobbs meter reading is required." }),
   tacho: z.coerce.number().optional(),
   fuelUplift: z.coerce.number().optional(),
@@ -237,7 +236,6 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, onC
                             />
                         </div>
 
-                        {/* Standard Camera Photos */}
                         {settings.requirePreFlightPhotos && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
@@ -285,7 +283,6 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, onC
                         </div>
                         )}
 
-                        {/* Document Checks */}
                         <div className="space-y-4 rounded-lg border p-4">
                             <h4 className="font-medium text-sm flex items-center gap-2"><FileCheck className="h-4 w-4"/> Document Checks</h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -392,7 +389,6 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, onC
             </CardFooter>
         </Card>
         
-        {/* Dialog for Standard Camera */}
         <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>

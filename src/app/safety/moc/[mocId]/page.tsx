@@ -10,15 +10,12 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, Bot, Loader2, ChevronDown, Save, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, ChevronDown, Save } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getRiskScore, getRiskScoreColor } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
@@ -30,7 +27,6 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RiskAssessmentTool } from '../../[reportId]/risk-assessment-tool';
 import { SignaturePad } from '@/components/ui/signature-pad';
-import { analyzeMoc } from '@/ai/flows/analyze-moc-flow';
 
 const probabilityOptions: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
 const severityOptions: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
@@ -225,8 +221,6 @@ export default function MocDetailPage() {
   const [personnel, setPersonnel] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [analysisParams, setAnalysisParams] = useState('');
   const [dialogState, setDialogState] = useState<DialogState>(null);
   
   const canEdit = useMemo(() => user?.permissions.includes('MOC:Edit') || user?.permissions.includes('Super User'), [user]);
@@ -290,51 +284,6 @@ export default function MocDetailPage() {
       toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save changes to MOC.' });
     }
   };
-  
-  const handleAnalyzeWithAi = async () => {
-    if (!moc) return;
-    setIsAiLoading(true);
-    try {
-        const result = await analyzeMoc({
-            title: moc.title,
-            description: moc.description,
-            reason: moc.reason,
-            scope: moc.scope,
-            params: analysisParams,
-        });
-
-        if (result && result.phases) {
-            const phasesWithIds: MocPhase[] = result.phases.map((p, pIdx) => ({
-                id: `phase-${Date.now()}-${pIdx}`,
-                description: p.description,
-                steps: p.steps.map((s, sIdx) => ({
-                    id: `step-${Date.now()}-${pIdx}-${sIdx}`,
-                    description: s.description,
-                    hazards: s.hazards.map((h, hIdx) => ({
-                        id: `hazard-${Date.now()}-${pIdx}-${sIdx}-${hIdx}`,
-                        description: h.description,
-                        risks: h.risks.map((r, rIdx) => ({
-                            id: `risk-${Date.now()}-${pIdx}-${sIdx}-${hIdx}-${rIdx}`,
-                            description: r.description,
-                            likelihood: r.likelihood as RiskLikelihood,
-                            severity: r.severity as RiskSeverity,
-                            riskScore: getRiskScore(r.likelihood as RiskLikelihood, r.severity as RiskSeverity),
-                            mitigations: [],
-                        })),
-                    })),
-                })),
-            }));
-
-            await handleUpdate({ phases: phasesWithIds });
-            toast({ title: 'AI Analysis Complete', description: 'The implementation plan has been generated based on your proposal.' });
-        }
-    } catch (error) {
-      console.error("AI Analysis Error:", error);
-      toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'Could not generate an implementation plan. Please ensure your API key is configured.' });
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
 
   const handleDialogSubmit = (formData: any) => {
     if (!moc || !dialogState) return;
@@ -358,17 +307,17 @@ export default function MocDetailPage() {
     } else if (type === 'editHazard') {
         updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, description: formData.description } : h) } : s) } : p);
     } else if (type === 'addRisk') {
-        const newRisk: MocRisk = { ...formData, id: `risk-${Date.now()}`, riskScore: getRiskScore(formData.likelihood, formData.severity), mitigations: [] };
+        const newRisk: MocRisk = { ...formData, id: `risk-${Date.now()}`, riskScore: (probabilityOptions.indexOf(formData.likelihood) + 1) * (severityOptions.indexOf(formData.severity) + 1), mitigations: [] };
         updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: [...(h.risks || []), newRisk] } : h) } : s) } : p);
     } else if (type === 'editRisk') {
-        const riskScore = getRiskScore(formData.likelihood, formData.severity);
+        const riskScore = (probabilityOptions.indexOf(formData.likelihood) + 1) * (severityOptions.indexOf(formData.severity) + 1);
         updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: h.risks?.map(r => r.id === data.risk.id ? { ...r, ...formData, riskScore } : r) } : h) } : s) } : p);
     } else if (type === 'addMitigation') {
-        const newMitigation: MocMitigation = { ...formData, id: `mitigation-${Date.now()}`, residualRiskScore: getRiskScore(formData.residualLikelihood, formData.residualSeverity) };
-        updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === hazardId ? { ...h, risks: h.risks?.map(r => r.id === data.riskId ? { ...r, mitigations: [...(r.mitigations || []), newMitigation] } : r) } : h) } : s) } : p);
+        const newMitigation: MocMitigation = { ...formData, id: `mitigation-${Date.now()}`, residualRiskScore: (probabilityOptions.indexOf(formData.residualLikelihood) + 1) * (severityOptions.indexOf(formData.residualSeverity) + 1) };
+        updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: h.risks?.map(r => r.id === data.riskId ? { ...r, mitigations: [...(r.mitigations || []), newMitigation] } : r) } : h) } : s) } : p);
     } else if (type === 'editMitigation') {
-        const residualRiskScore = getRiskScore(formData.residualLikelihood, formData.residualSeverity);
-        updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === hazardId ? { ...h, risks: h.risks?.map(r => r.id === data.riskId ? { ...r, mitigations: r.mitigations?.map(m => m.id === data.mitigation.id ? { ...m, ...formData, residualRiskScore } : m) } : r) } : h) } : s) } : p);
+        const residualRiskScore = (probabilityOptions.indexOf(formData.residualLikelihood) + 1) * (severityOptions.indexOf(formData.residualSeverity) + 1);
+        updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: h.risks?.map(r => r.id === data.riskId ? { ...r, mitigations: r.mitigations?.map(m => m.id === data.mitigation.id ? { ...m, ...formData, residualRiskScore } : m) } : r) } : h) } : s) } : p);
     }
 
     handleUpdate({ phases: updatedPhases });
@@ -488,16 +437,6 @@ export default function MocDetailPage() {
                 <CardTitle>Implementation Plan & Hazard Analysis</CardTitle>
              </CardHeader>
              <CardContent>
-                <div className="space-y-4 rounded-lg border p-4 no-print">
-                    {canEdit && (<>
-                        <Label htmlFor="analysis-params">AI Analysis Parameters (Optional)</Label>
-                        <Textarea id="analysis-params" placeholder="Enter specific keywords for the AI to focus on, e.g., 'impact on flight crew duty times'..." value={analysisParams} onChange={(e) => setAnalysisParams(e.target.value)}/>
-                        <div className="flex items-center gap-2 justify-end">
-                            <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />} Analyze with AI</Button>
-                        </div>
-                    </>)}
-                </div>
-
                 <div className="space-y-6 pt-6">
                      {moc.phases?.map((phase, phaseIndex) => (
                          <Card key={phase.id} className="print:shadow-none print:border-none">
@@ -536,7 +475,7 @@ export default function MocDetailPage() {
                                                                  <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('risk', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                                                              </div>}
                                                          </div>
-                                                         <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity, company?.riskMatrixColors), color: 'black' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
+                                                         <Badge className="font-mono print-force-color" style={{ backgroundColor: 'hsl(var(--muted))', color: 'black' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
                                                      </div>
                                                      {risk.mitigations?.map(mitigation => (
                                                         <div key={mitigation.id} className="pl-6 pt-2 mt-2 border-t border-dashed moc-print-mitigation-wrapper">
@@ -547,7 +486,7 @@ export default function MocDetailPage() {
                                                                 </div>
                                                                 <div className="flex items-center gap-2">
                                                                     {mitigation.residualLikelihood && mitigation.residualSeverity && (
-                                                                        <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(mitigation.residualLikelihood, mitigation.residualSeverity, company?.riskMatrixColors), color: 'black' }}>
+                                                                        <Badge className="font-mono print-force-color" style={{ backgroundColor: 'hsl(var(--muted))', color: 'black' }}>
                                                                             {getAlphanumericCode(mitigation.residualLikelihood, mitigation.residualSeverity)}
                                                                         </Badge>
                                                                     )}

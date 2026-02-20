@@ -1,10 +1,8 @@
-
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Bot, FileText, Loader2, PlayCircle, Calendar as CalendarIcon, Users, ArrowUpDown } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, FileText, Loader2, PlayCircle, Calendar as CalendarIcon, Users, ArrowUpDown } from 'lucide-react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
@@ -35,67 +33,6 @@ import {
 } from '@/components/ui/table';
 import { useTableControls } from '@/hooks/use-table-controls';
 
-
-const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
-    const [topic, setTopic] = useState('');
-    const [numItems, setNumItems] = useState('10');
-    const [isLoading, setIsLoading] = useState(false);
-    const { toast } = useToast();
-
-    const handleGenerate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        try {
-            // AI functionality removed due to build errors.
-            toast({
-                variant: 'destructive',
-                title: 'AI Generation Failed',
-                description: 'This feature is currently unavailable.',
-            });
-        } catch (error) {
-            console.error('AI Generation Error:', error);
-            toast({
-                variant: 'destructive',
-                title: 'AI Generation Failed',
-                description: 'Could not generate the checklist. This is likely due to an invalid or missing API key. Please check the server logs for more details.',
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    
-    return (
-        <form onSubmit={handleGenerate} className="space-y-4">
-            <div className="space-y-2">
-                <Label htmlFor="topic">Audit Topic</Label>
-                <Input 
-                    id="topic" 
-                    name="topic" 
-                    placeholder="e.g., Hangar Safety, Flight Documentation" 
-                    required 
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="numItems">Number of Items</Label>
-                <Input 
-                    id="numItems" 
-                    name="numItems" 
-                    type="number" 
-                    value={numItems}
-                    onChange={(e) => setNumItems(e.target.value)}
-                    required 
-                />
-            </div>
-            <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-              Generate Checklist
-            </Button>
-        </form>
-    )
-}
-
 const StartAuditDialog = ({ onStart, personnel, template, departments, aircraft }: { onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'> & { department?: Department }) => void, personnel: User[], template: Checklist, departments: CompanyDepartment[], aircraft: Aircraft[] }) => {
     const [leadAuditor, setLeadAuditor] = useState('');
     const [auditeeName, setAuditeeName] = useState('');
@@ -120,7 +57,7 @@ const StartAuditDialog = ({ onStart, personnel, template, departments, aircraft 
                 auditeeName: auditeeName,
                 area: area,
                 department: department,
-                aircraftInvolved: aircraftInvolved || null, // Ensure null instead of undefined
+                aircraftInvolved: aircraftInvolved || null,
                 auditTeam: auditTeam.split(',').map(s => s.trim()).filter(Boolean),
                 auditeeTeam: auditeeTeam.split(',').map(s => s.trim()).filter(Boolean),
                 scope: scope,
@@ -286,19 +223,14 @@ export function AuditChecklistsManager({
     const [departments, setDepartments] = useState<CompanyDepartment[]>(initialDepartments);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState<Checklist | null>(null);
-    const { user, company, loading } = useUser();
+    const { user, company } = useUser();
     const { toast } = useToast();
-    const [creationMode, setCreationMode] = useState<'manual' | 'ai' | null>(null);
     const router = useRouter();
 
     const fetchCompanyData = useCallback(async () => {
         if (!company) return;
         const deptsQuery = query(collection(db, `companies/${company.id}/departments`));
-        
-        const [deptsSnapshot] = await Promise.all([
-            getDocs(deptsQuery),
-        ]);
-        
+        const [deptsSnapshot] = await Promise.all([getDocs(deptsQuery)]);
         setDepartments(deptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment)));
     }, [company]);
 
@@ -402,29 +334,8 @@ export function AuditChecklistsManager({
         closeDialog();
     };
 
-    const handleAiGenerated = (data: { title: string; items: { text: string; regulationReference: string }[] }) => {
-        const newTemplate: Checklist = {
-            id: `temp-${Date.now()}`,
-            companyId: company?.id || '',
-            title: data.title,
-            department: 'Uncategorized',
-            items: data.items.map((item, index) => ({
-                id: `item-${Date.now()}-${index}`,
-                text: item.text,
-                regulationReference: item.regulationReference,
-                type: 'Checkbox',
-                finding: null,
-                level: null,
-            })),
-        };
-        setEditingTemplate(newTemplate);
-        setCreationMode('manual');
-        setIsDialogOpen(true);
-    };
-
     const handleEdit = (template: Checklist) => {
         setEditingTemplate(template);
-        setCreationMode('manual');
         setIsDialogOpen(true);
     };
 
@@ -438,14 +349,12 @@ export function AuditChecklistsManager({
 
     const openNewDialog = () => {
         setEditingTemplate(null);
-        setCreationMode(null);
         setIsDialogOpen(true);
     }
     
     const closeDialog = () => {
         setIsDialogOpen(false);
         setEditingTemplate(null);
-        setCreationMode(null);
     }
 
     return (
@@ -517,22 +426,7 @@ export function AuditChecklistsManager({
                     <DialogHeader>
                         <DialogTitle>{editingTemplate ? 'Edit Checklist Template' : 'Create New Checklist Template'}</DialogTitle>
                     </DialogHeader>
-                    {!creationMode && !editingTemplate ? (
-                         <div className="flex gap-4 pt-4">
-                            <Button variant="outline" className="w-full h-24 flex-col" onClick={() => setCreationMode('manual')}>
-                                <FileText className="h-8 w-8 mb-2" />
-                                Manual Creation
-                            </Button>
-                            <Button variant="outline" className="w-full h-24 flex-col" onClick={() => setCreationMode('ai')}>
-                                <Bot className="h-8 w-8 mb-2" />
-                                AI Generator
-                            </Button>
-                        </div>
-                    ) : creationMode === 'manual' ? (
-                        <AuditChecklistTemplateForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate} departments={departments} />
-                    ) : creationMode === 'ai' ? (
-                        <AiGenerator onGenerated={handleAiGenerated} />
-                    ) : null}
+                    <AuditChecklistTemplateForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate} departments={departments} />
                 </DialogContent>
             </Dialog>
         </Card>

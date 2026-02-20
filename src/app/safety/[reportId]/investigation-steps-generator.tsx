@@ -1,15 +1,10 @@
-
-
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Bot, Clipboard, CheckCircle, CalendarIcon, User, BookOpen, X, RefreshCw, ChevronDown } from 'lucide-react';
+import { Clipboard, CheckCircle, CalendarIcon, ChevronDown, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { SafetyReport, InvestigationTask, User as Personnel } from '@/lib/types';
-import type { SuggestInvestigationStepsOutput } from '@/lib/types';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
@@ -17,215 +12,126 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
 
+const manualTaskFormSchema = z.object({
+  description: z.string().min(5, 'Task description must be at least 5 characters.'),
+  assignedTo: z.string({ required_error: 'You must assign this task.' }),
+  dueDate: z.date({ required_error: 'A due date is required.' }),
+});
 
-const initialState = {
-  message: '',
-  data: null,
-  errors: null,
-};
+type ManualTaskFormValues = z.infer<typeof manualTaskFormSchema>;
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
+export function InvestigationStepsGenerator({ report, personnel, onAssignTasks }: { report: SafetyReport, personnel: Personnel[], onAssignTasks: (tasks: Omit<InvestigationTask, 'id'|'status'>[]) => void; }) {
+  const { toast } = useToast();
+  const [isManualTaskOpen, setIsManualTaskOpen] = useState(false);
+
+  const manualTaskForm = useForm<ManualTaskFormValues>({
+      resolver: zodResolver(manualTaskFormSchema),
+      defaultValues: {
+          dueDate: addDays(new Date(), 7),
+      }
+  });
+
+  const handleManualTaskSubmit = (data: ManualTaskFormValues) => {
+      onAssignTasks([{
+          description: data.description,
+          assignedTo: data.assignedTo,
+          dueDate: format(data.dueDate, 'yyyy-MM-dd'),
+      }]);
+      manualTaskForm.reset();
+      setIsManualTaskOpen(false);
+      toast({ title: "Task Added", description: "The investigation task has been assigned." });
+  };
+
   return (
-    <Button type="submit" variant="outline" size="sm" disabled={true} className="w-full">
-      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-      Generate Investigation Steps (Disabled)
-    </Button>
-  );
-}
-
-function AnalysisResult({ data, personnel, reportTasks, onAssignTasks }: { data: SuggestInvestigationStepsOutput, personnel: Personnel[], reportTasks: InvestigationTask[], onAssignTasks: (tasks: Omit<InvestigationTask, 'id'|'status'>[]) => void }) {
-    const [checkedItems, setCheckedItems] = useState<Record<string, string[]>>({});
-    const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-    const [taskAssignments, setTaskAssignments] = useState<Record<string, { assignedTo: string, dueDate: Date }>>({});
-
-    const existingTaskDescriptions = useMemo(() => new Set(reportTasks.map(t => t.description)), [reportTasks]);
-
-    const handleCheckedChange = (group: string, value: string, isChecked: boolean) => {
-        setCheckedItems(prev => {
-            const groupItems = prev[group] || [];
-            if (isChecked) {
-                return { ...prev, [group]: [...groupItems, value] };
-            } else {
-                return { ...prev, [group]: groupItems.filter(item => item !== value) };
-            }
-        });
-    };
-    
-    const selectedTaskDescriptions = useMemo(() => {
-        return Object.values(checkedItems).flat();
-    }, [checkedItems]);
-
-
-    const handleAssignClick = () => {
-        // Pre-populate assignments with default values
-        const initialAssignments = selectedTaskDescriptions.reduce((acc, desc) => {
-            acc[desc] = { assignedTo: '', dueDate: addDays(new Date(), 7) };
-            return acc;
-        }, {} as Record<string, { assignedTo: string, dueDate: Date }>);
-        setTaskAssignments(initialAssignments);
-        setIsAssignDialogOpen(true);
-    }
-    
-    const handleAssignmentChange = (taskDesc: string, field: 'assignedTo' | 'dueDate', value: string | Date) => {
-        setTaskAssignments(prev => ({
-            ...prev,
-            [taskDesc]: { ...prev[taskDesc], [field]: value }
-        }));
-    }
-
-    const handleConfirmAssignments = () => {
-        const newTasks = selectedTaskDescriptions.map(desc => ({
-            description: desc,
-            assignedTo: taskAssignments[desc].assignedTo,
-            dueDate: format(taskAssignments[desc].dueDate, 'yyyy-MM-dd'),
-        }));
-        
-        onAssignTasks(newTasks as Omit<InvestigationTask, 'id'|'status'>[]);
-        setIsAssignDialogOpen(false);
-        setCheckedItems({}); // Clear selections
-    };
-
-    const resultItems = [
-        { title: "Initial Assessment", value: data.initialAssessment, key: 'initialAssessment' },
-        { title: "Key Areas to Investigate", value: data.keyAreasToInvestigate, key: 'keyAreasToInvestigate' },
-        { title: "Recommended Immediate Actions", value: data.recommendedActions, key: 'recommendedActions' },
-        { title: "Potential Contributing Factors", value: data.potentialContributingFactors, key: 'potentialContributingFactors' },
-    ];
-
-    const isAnyCheckboxChecked = Object.values(checkedItems).some(arr => arr.length > 0);
-
-    return (
-        <div className="mt-4 space-y-4">
-            {resultItems.map(item => (
-                <div key={item.title}>
-                    <h4 className="font-semibold text-sm">{item.title}</h4>
-                    {Array.isArray(item.value) ? (
-                        <div className="text-sm text-muted-foreground mt-1 space-y-2">
-                            {item.value.map((v, i) => {
-                                const isAlreadyTask = existingTaskDescriptions.has(v);
-                                return (
-                                <div key={i} className="flex items-center space-x-2">
-                                    <Checkbox 
-                                        id={`${item.key}-${i}`} 
-                                        onCheckedChange={(checked) => handleCheckedChange(item.key, v, !!checked)} 
-                                        checked={checkedItems[item.key]?.includes(v) || false}
-                                        disabled={isAlreadyTask}
-                                    />
-                                    <Label htmlFor={`${item.key}-${i}`} className={cn("font-normal cursor-pointer", isAlreadyTask && "text-muted-foreground line-through")}>{v}</Label>
-                                </div>
-                            )})}
-                        </div>
-                    ) : (
-                        <p className="text-sm text-muted-foreground mt-1">{item.value}</p>
-                    )}
-                </div>
-            ))}
-            <Button variant="outline" size="sm" onClick={handleAssignClick} disabled={!isAnyCheckboxChecked}>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Assign Selected as Tasks
-            </Button>
-            
-            <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-                <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Assign Investigation Tasks</DialogTitle>
-                        <DialogDescription>Assign each task to a team member and set a due date.</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
-                        {selectedTaskDescriptions.map(desc => (
-                            <div key={desc} className="p-4 border rounded-lg space-y-3">
-                                <p className="font-medium text-sm">{desc}</p>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <Label className="text-xs">Assign To</Label>
-                                        <Select
-                                            value={taskAssignments[desc]?.assignedTo}
-                                            onValueChange={(val) => handleAssignmentChange(desc, 'assignedTo', val)}
-                                        >
-                                            <SelectTrigger><SelectValue placeholder="Select person..." /></SelectTrigger>
+    <div className="flex items-center justify-between">
+         <div className="space-y-1">
+            <h4 className="text-sm font-semibold">Investigation Planning</h4>
+            <p className="text-xs text-muted-foreground">
+                Manually define the structured investigation plan and assign tasks to the team.
+            </p>
+         </div>
+         <Dialog open={isManualTaskOpen} onOpenChange={setIsManualTaskOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Investigation Task
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add Investigation Task</DialogTitle>
+                    <DialogDescription>Create a new task for the investigation team.</DialogDescription>
+                </DialogHeader>
+                <Form {...manualTaskForm}>
+                    <form onSubmit={manualTaskForm.handleSubmit(handleManualTaskSubmit)} className="space-y-4">
+                        <FormField
+                            control={manualTaskForm.control}
+                            name="description"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Task Description</FormLabel>
+                                    <FormControl><Textarea placeholder="e.g., Interview the pilot in command..." {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={manualTaskForm.control}
+                                name="assignedTo"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Assign To</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Select person" /></SelectTrigger></FormControl>
                                             <SelectContent>
                                                 {personnel.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
-                                    </div>
-                                    <div>
-                                        <Label className="text-xs">Due Date</Label>
-                                         <Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={manualTaskForm.control}
+                                name="dueDate"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>Due Date</FormLabel>
+                                        <Popover>
                                             <PopoverTrigger asChild>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn("w-full justify-start text-left font-normal", !taskAssignments[desc]?.dueDate && "text-muted-foreground")}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {taskAssignments[desc]?.dueDate ? format(taskAssignments[desc].dueDate, "PPP") : <span>Pick a date</span>}
-                                                </Button>
+                                                <FormControl>
+                                                    <Button
+                                                        variant={"outline"}
+                                                        className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                                                    >
+                                                        {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={taskAssignments[desc]?.dueDate}
-                                                    onSelect={(date) => handleAssignmentChange(desc, 'dueDate', date || new Date())}
-                                                    initialFocus
-                                                />
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
                                             </PopoverContent>
                                         </Popover>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="flex justify-end gap-2">
-                        <DialogClose asChild>
-                            <Button type="button" variant="secondary">Cancel</Button>
-                        </DialogClose>
-                        <Button onClick={handleConfirmAssignments}>Confirm Assignments</Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
-        </div>
-    );
-}
-
-export function InvestigationStepsGenerator({ report, personnel, onAssignTasks }: { report: SafetyReport, personnel: Personnel[], onAssignTasks: (tasks: Omit<InvestigationTask, 'id'|'status'>[]) => void; }) {
-  const { toast } = useToast();
-  const [showSuggestions, setShowSuggestions] = useState(!!report.aiSuggestedSteps);
-
-  const suggestionsToShow = report.aiSuggestedSteps;
-
-  return (
-    <Collapsible open={showSuggestions} onOpenChange={setShowSuggestions}>
-        <div className="flex items-center justify-between">
-             <div className="space-y-1">
-                <h4 className="text-sm font-semibold">AI Suggested Steps</h4>
-                <p className="text-xs text-muted-foreground">
-                    Generate a structured investigation plan based on the report details.
-                </p>
-             </div>
-             {suggestionsToShow ? (
-                <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="w-9 p-0">
-                        <ChevronDown className="h-4 w-4" />
-                        <span className="sr-only">Toggle</span>
-                    </Button>
-                </CollapsibleTrigger>
-             ) : (
-                <SubmitButton />
-             )}
-        </div>
-
-        <CollapsibleContent>
-            {suggestionsToShow && (
-                <AnalysisResult 
-                    data={suggestionsToShow as SuggestInvestigationStepsOutput} 
-                    personnel={personnel} 
-                    reportTasks={report.tasks || []}
-                    onAssignTasks={onAssignTasks} 
-                />
-            )}
-        </CollapsibleContent>
-    </Collapsible>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                        <div className="flex justify-end">
+                            <Button type="submit">Assign Task</Button>
+                        </div>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+    </div>
   );
 }

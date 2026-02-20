@@ -1,79 +1,89 @@
-
-
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Bot, Save } from 'lucide-react';
+import { Save, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { SafetyReport } from '@/lib/types';
-import type { FiveWhysAnalysisOutput } from '@/lib/types';
+import type { SafetyReport, FiveWhysAnalysisOutput } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-const initialState = {
-  message: '',
-  data: null,
-  errors: null,
-};
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" variant="outline" size="sm" disabled={pending} className="w-full">
-      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-      Perform 5 Whys Analysis
-    </Button>
-  );
-}
-
-function AnalysisResult({ initialData, onSave }: { initialData: FiveWhysAnalysisOutput; onSave: (data: FiveWhysAnalysisOutput) => void }) {
-  const [editableData, setEditableData] = useState(initialData);
-
-  useEffect(() => {
-    setEditableData(initialData);
-  }, [initialData]);
+export function FiveWhysGenerator({ report, onUpdate }: { report: SafetyReport, onUpdate?: (data: Partial<SafetyReport>) => void }) {
+  const { toast } = useToast();
+  const [analysisData, setAnalysisData] = useState<FiveWhysAnalysisOutput>(report.fiveWhysAnalysis || {
+      problemStatement: '',
+      analysis: [
+          { why: '', because: '' },
+          { why: '', because: '' },
+          { why: '', because: '' },
+          { why: '', because: '' },
+          { why: '', because: '' },
+      ],
+      rootCause: ''
+  });
 
   const handleWhyChange = (index: number, field: 'why' | 'because', value: string) => {
-    const newAnalysis = [...editableData.analysis];
+    const newAnalysis = [...analysisData.analysis];
     newAnalysis[index] = { ...newAnalysis[index], [field]: value };
-    setEditableData({ ...editableData, analysis: newAnalysis });
+    setAnalysisData({ ...analysisData, analysis: newAnalysis });
   };
 
   const handleProblemStatementChange = (value: string) => {
-    setEditableData({ ...editableData, problemStatement: value });
+    setAnalysisData({ ...analysisData, problemStatement: value });
   };
   
   const handleRootCauseChange = (value: string) => {
-    setEditableData({ ...editableData, rootCause: value });
+    setAnalysisData({ ...analysisData, rootCause: value });
   };
 
+  const handleSave = () => {
+    if (typeof onUpdate === 'function') {
+      onUpdate({ fiveWhysAnalysis: analysisData });
+      toast({
+          title: 'Analysis Saved',
+          description: 'The 5 Whys analysis has been updated.',
+      });
+    }
+  }
+
   return (
-    <div className="mt-4 space-y-4">
+    <div className="space-y-4">
+        <div className="flex items-center justify-between">
+            <div>
+                <h4 className="font-semibold text-sm">5 Whys Analysis</h4>
+                <p className="text-xs text-muted-foreground">Drill down to the root cause of the incident.</p>
+            </div>
+            <Button onClick={handleSave} size="sm">
+                <Save className="mr-2 h-4 w-4" />
+                Save Analysis
+            </Button>
+        </div>
+        
         <div>
-            <Label htmlFor="problemStatement" className="font-semibold text-sm">Problem Statement</Label>
+            <Label htmlFor="problemStatement" className="text-xs font-semibold">Problem Statement</Label>
             <Textarea 
                 id="problemStatement"
-                value={editableData.problemStatement}
+                placeholder="State the problem clearly..."
+                value={analysisData.problemStatement}
                 onChange={(e) => handleProblemStatementChange(e.target.value)}
-                className="mt-1"
+                className="mt-1 min-h-[60px]"
             />
         </div>
+
         <div className="space-y-4">
-            {editableData.analysis.map((item, index) => (
-                <div key={index} className="space-y-2">
-                    <Label htmlFor={`why-${index}`} className="font-semibold text-sm">{index + 1}. Why?</Label>
+            {analysisData.analysis.map((item, index) => (
+                <div key={index} className="space-y-2 p-3 border rounded-md bg-muted/30">
+                    <Label className="text-xs font-bold uppercase text-muted-foreground">{index + 1}. Why?</Label>
                     <Input
-                        id={`why-${index}`}
+                        placeholder={`Why did this happen?`}
                         value={item.why}
                         onChange={(e) => handleWhyChange(index, 'why', e.target.value)}
                     />
-                    <Label htmlFor={`because-${index}`} className="font-semibold text-sm">Because...</Label>
+                    <Label className="text-xs font-bold uppercase text-muted-foreground">Because...</Label>
                     <Textarea
-                        id={`because-${index}`}
+                        placeholder={`Because...`}
                         value={item.because}
                         onChange={(e) => handleWhyChange(index, 'because', e.target.value)}
                         className="min-h-[60px]"
@@ -81,47 +91,19 @@ function AnalysisResult({ initialData, onSave }: { initialData: FiveWhysAnalysis
                 </div>
             ))}
         </div>
+
         <Separator />
+        
         <div>
-            <Label htmlFor="rootCause" className="font-semibold text-sm">Determined Root Cause</Label>
+            <Label htmlFor="rootCause" className="text-xs font-bold text-destructive">Determined Root Cause</Label>
             <Textarea 
                 id="rootCause"
-                value={editableData.rootCause}
+                placeholder="The final determined root cause..."
+                value={analysisData.rootCause}
                 onChange={(e) => handleRootCauseChange(e.target.value)}
-                className="mt-1 text-destructive border-destructive/50"
+                className="mt-1 border-destructive/50"
             />
         </div>
-        <div className="flex justify-end">
-            <Button onClick={() => onSave(editableData)}>
-                <Save className="mr-2 h-4 w-4" />
-                Save Analysis
-            </Button>
-        </div>
-    </div>
-  );
-}
-
-export function FiveWhysGenerator({ report, onUpdate }: { report: SafetyReport, onUpdate?: (data: Partial<SafetyReport>) => void }) {
-  // AI functionality is disabled.
-  const [state, setState] = useState(initialState);
-  const { toast } = useToast();
-  const [analysisData, setAnalysisData] = useState<FiveWhysAnalysisOutput | null>(report.fiveWhysAnalysis || null);
-
-  const handleSave = (data: FiveWhysAnalysisOutput) => {
-    if (typeof onUpdate === 'function') {
-      onUpdate({ fiveWhysAnalysis: data });
-      toast({
-          title: 'Analysis Saved',
-          description: 'Your changes to the 5 Whys analysis have been saved.',
-      });
-    }
-  }
-
-  return (
-    <div>
-      <p className="text-xs text-muted-foreground mb-2">Use the 5 Whys method to drill down to the root cause of the incident.</p>
-      <SubmitButton />
-      {analysisData && <AnalysisResult initialData={analysisData} onSave={handleSave} />}
     </div>
   );
 }

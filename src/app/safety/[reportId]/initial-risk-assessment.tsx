@@ -1,20 +1,16 @@
-
-
 'use client';
 
 import React, { useState, Fragment } from 'react';
-import { useForm, useFormContext } from 'react-hook-form';
-import { useFormStatus } from 'react-dom';
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
 import type { AssociatedRisk, SafetyReport, Risk as RiskRegisterEntry, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, ArrowUpCircle, Bot, Loader2, Edit, Save } from 'lucide-react';
+import { PlusCircle, ArrowUpCircle, Edit, Save } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AddRiskForm } from './add-risk-form';
-import type { SuggestHazardsOutput } from '@/lib/types';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,201 +20,15 @@ import { RiskAssessmentTool } from './risk-assessment-tool';
 import { z } from 'zod';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const hazardAreas = ['Flight Operations', 'Maintenance', 'Ground Operations', 'Cabin Safety', 'Occupational Safety', 'Security', 'Administration & Management'];
-const processes = [
-    'AB Initio Training',
-    'Advanced Training',
-    'Aerobatics',
-    'Airfield Operations',
-    'Aircraft Ferry',
-    'Cabin Safety Procedures',
-    'Charter Operations',
-    'Cross-Country Flight',
-    'Emergency Procedures Training',
-    'Flight Dispatch',
-    'Ground Handling',
-    'Hangar Operations',
-    'Instrument Flight Rules (IFR) Ops',
-    'Instrument Training',
-    'Line Maintenance',
-    'Night Flying',
-    'Passenger Briefing',
-    'Passenger Transport',
-    'Ramp Operations',
-    'Refueling',
-    'Scheduled Maintenance',
-    'Security Procedures',
-    'Short Field Landings',
-    'Solo Flight Operations',
-    'Specialized Operations',
-    'Taxiing',
-    'Towing',
-    'Unscheduled Maintenance',
-    'Visual Flight Rules (VFR) Ops',
-    'Other'
-];
-const likelihoodValues: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
-const severityValues: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
-
-const assessHazardFormSchema = z.object({
-  hazard: z.string().min(10, { message: 'Hazard description must be at least 10 characters long.' }),
-  risk: z.string().min(10, { message: 'Risk description must be at least 10 characters long.' }),
-  likelihood: z.enum(likelihoodValues, { required_error: 'Likelihood is required.'}),
-  severity: z.enum(severityValues, { required_error: 'Severity is required.'}),
-  hazardArea: z.string({ required_error: 'Please select a hazard area.'}),
-  process: z.string({ required_error: 'Please select a process.'}),
-});
-
-type AssessHazardFormValues = z.infer<typeof assessHazardFormSchema>;
-
-const severityMap: Record<RiskSeverity, string> = { 'Catastrophic': 'A', 'Hazardous': 'B', 'Major': 'C', 'Minor': 'D', 'Negligible': 'E' };
-const likelihoodMap: Record<RiskLikelihood, number> = { 'Frequent': 5, 'Occasional': 4, 'Remote': 3, 'Improbable': 2, 'Extremely Improbable': 1 };
-
-
-function AssessHazardDialog({ suggestion, onAddRisk, onCancel }: { suggestion: Omit<AssociatedRisk, 'id'>, onAddRisk: (risk: Omit<AssociatedRisk, 'id'>) => void, onCancel: () => void }) {
-    const form = useForm<AssessHazardFormValues>({
-        resolver: zodResolver(assessHazardFormSchema),
-        defaultValues: {
-            hazard: suggestion.hazard,
-            risk: suggestion.risk,
-            likelihood: suggestion.likelihood,
-            severity: suggestion.severity,
-        },
-    });
-
-    const watchedLikelihood = form.watch('likelihood');
-    const watchedSeverity = form.watch('severity');
-
-    const handleAssessmentChange = (likelihood: RiskLikelihood, severity: RiskSeverity) => {
-        form.setValue('likelihood', likelihood, { shouldValidate: true });
-        form.setValue('severity', severity, { shouldValidate: true });
-    };
-
-    const getSelectedCode = () => {
-        if (watchedLikelihood && watchedSeverity) {
-            return `${likelihoodMap[watchedLikelihood]}${severityMap[watchedSeverity]}`;
-        }
-        return null;
-    }
-
-    const onSubmit = (data: AssessHazardFormValues) => {
-        onAddRisk(data);
-    };
-    
-    return (
-        <DialogContent className="sm:max-w-3xl">
-            <DialogHeader>
-                <DialogTitle>Assess Suggested Hazard</DialogTitle>
-                <DialogDescription>
-                    Categorize the hazard and use the matrix to set the initial risk score. The hazard is: "{suggestion.hazard}"
-                </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <ScrollArea className="h-[60vh] pr-4">
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="hazardArea"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Hazard Area</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Select an area" /></SelectTrigger></FormControl>
-                                            <SelectContent>{hazardAreas.map(area => <SelectItem key={area} value={area}>{area}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="process"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Process / Activity</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Select a process" /></SelectTrigger></FormControl>
-                                            <SelectContent>{processes.map(proc => <SelectItem key={proc} value={proc}>{proc}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                            <RiskAssessmentTool onCellClick={handleAssessmentChange} selectedCode={getSelectedCode()} />
-                        </div>
-                    </ScrollArea>
-                    <div className="flex justify-end gap-2 pt-4 border-t">
-                        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-                        <Button type="submit"><Save className="mr-2 h-4 w-4" /> Save Hazard</Button>
-                    </div>
-                </form>
-            </Form>
-        </DialogContent>
-    )
-}
-
-function HazardSuggestionsResult({ data, onAddRisk }: { data: SuggestHazardsOutput, onAddRisk: (risk: Omit<AssociatedRisk, 'id'>) => void }) {
-    const [assessingSuggestion, setAssessingSuggestion] = useState<Omit<AssociatedRisk, 'id'> | null>(null);
-
-    return (
-        <div className="space-y-4 p-4 border-t mt-4">
-            <h4 className="font-semibold text-sm">AI Suggested Hazards</h4>
-            <p className="text-xs text-muted-foreground">Review and assess each suggestion before adding it to the report.</p>
-            <div className="space-y-2">
-                {data.suggestedHazards.map((suggestion, index) => (
-                    <div key={index} className="flex items-center justify-between gap-3 p-3 border rounded-lg bg-muted/50">
-                        <div className="flex-1 text-sm">
-                            <p className="font-semibold">{suggestion.hazard}</p>
-                            <p className="text-muted-foreground">{suggestion.risk}</p>
-                        </div>
-                        <Button variant="secondary" size="sm" onClick={() => setAssessingSuggestion(suggestion)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Assess
-                        </Button>
-                    </div>
-                ))}
-            </div>
-            {assessingSuggestion && (
-                 <Dialog open={!!assessingSuggestion} onOpenChange={(isOpen) => !isOpen && setAssessingSuggestion(null)}>
-                    <AssessHazardDialog 
-                        suggestion={assessingSuggestion} 
-                        onAddRisk={(risk) => {
-                            onAddRisk(risk);
-                            setAssessingSuggestion(null);
-                        }} 
-                        onCancel={() => setAssessingSuggestion(null)}
-                    />
-                </Dialog>
-            )}
-        </div>
-    );
-}
-
 interface InitialRiskAssessmentProps {
     report: SafetyReport;
     onUpdate: (updatedReport: SafetyReport) => void;
     onPromoteRisk: (newRisk: RiskRegisterEntry) => void;
 }
 
-function SuggestHazardsButton() {
-    const { pending } = useFormStatus();
-    return (
-      <Button type="submit" variant="outline" size="sm" disabled={true} className="w-full">
-        {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-        AI Hazard Suggestions (Disabled)
-      </Button>
-    );
-}
-
 export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: InitialRiskAssessmentProps) {
   const [isAddRiskOpen, setIsAddRiskOpen] = useState(false);
   const { toast } = useToast();
-  
-  // AI functionality is disabled.
-  const suggestHazardsState = { message: '', data: null };
 
   const handleAddRisk = (newRiskData: Omit<AssociatedRisk, 'id'>) => {
     const riskScore = getRiskScore(newRiskData.likelihood, newRiskData.severity);
@@ -233,7 +43,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
     
     setIsAddRiskOpen(false);
     toast({
-        title: 'Hazard Added to Register',
+        title: 'Hazard Added',
         description: 'The new hazard and its initial risk score have been recorded.'
     });
   }
@@ -252,7 +62,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                     <DialogTrigger asChild>
                         <Button size="sm" className="w-full">
                             <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Hazard Manually
+                            Add Hazard
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-2xl">
@@ -265,16 +75,9 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                         <AddRiskForm onAddRisk={handleAddRisk} />
                     </DialogContent>
                 </Dialog>
-                <SuggestHazardsButton />
             </div>
         </div>
 
-        {suggestHazardsState.data && (
-            <HazardSuggestionsResult 
-                data={suggestHazardsState.data as SuggestHazardsOutput} 
-                onAddRisk={handleAddRisk}
-            />
-        )}
         {report.associatedRisks && report.associatedRisks.length > 0 ? (
                 <Table>
                 <TableHeader>
@@ -283,7 +86,6 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                         <TableHead>Risk</TableHead>
                         <TableHead>Risk Score</TableHead>
                         <TableHead>Level</TableHead>
-                        <TableHead className="text-right no-print">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -302,12 +104,6 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                             </TableCell>
                             <TableCell>
                                 <Badge variant="outline">{getRiskLevel(risk.riskScore)}</Badge>
-                            </TableCell>
-                            <TableCell className="text-right no-print">
-                                    <Button size="sm" type="submit" disabled={true}>
-                                        <ArrowUpCircle className="mr-2 h-4 w-4" />
-                                        Promote
-                                    </Button>
                             </TableCell>
                         </TableRow>
                     ))}
