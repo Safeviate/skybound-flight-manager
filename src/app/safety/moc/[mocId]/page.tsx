@@ -50,6 +50,159 @@ const DetailSection = ({ title, children }: { title: string, children: React.Rea
     </div>
 );
 
+const TextareaForm = ({ onSubmit, placeholder, initialValue = '' }: { onSubmit: (data: { description: string }) => void, placeholder: string, initialValue?: string }) => {
+    const [description, setDescription] = useState(initialValue);
+    return (
+        <div className="space-y-4 py-4">
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={placeholder} />
+            <DialogFooter>
+                <Button onClick={() => onSubmit({ description })} disabled={!description.trim()}>Save</Button>
+            </DialogFooter>
+        </div>
+    );
+};
+
+const riskFormSchema = z.object({ 
+    description: z.string().min(1, 'Description is required'), 
+    likelihood: z.enum(probabilityOptions), 
+    severity: z.enum(severityOptions) 
+});
+
+const RiskForm = ({ onSubmit, risk }: { onSubmit: (data: any) => void, risk?: MocRisk }) => {
+    const form = useForm<z.infer<typeof riskFormSchema>>({ 
+        resolver: zodResolver(riskFormSchema), 
+        defaultValues: risk 
+    });
+    return (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                <FormField control={form.control} name="description" render={({ field }) => (
+                    <FormItem>
+                        <FormControl><Textarea placeholder="Describe the risk..." {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="likelihood" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Likelihood</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <SelectTrigger><SelectValue placeholder="Select Likelihood" /></SelectTrigger>
+                                <SelectContent>
+                                    {probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                    <FormField control={form.control} name="severity" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Severity</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <SelectTrigger><SelectValue placeholder="Select Severity" /></SelectTrigger>
+                                <SelectContent>
+                                    {severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                </div>
+                <DialogFooter><Button type="submit">Save Risk</Button></DialogFooter>
+            </form>
+        </Form>
+    );
+};
+
+const mitigationFormSchema = z.object({ 
+    description: z.string().min(1, 'Description is required'), 
+    residualLikelihood: z.enum(probabilityOptions), 
+    residualSeverity: z.enum(severityOptions), 
+    responsiblePerson: z.string().optional(), 
+    completionDate: z.date().optional(), 
+    status: z.enum(['Open', 'In Progress', 'Closed']).default('Open') 
+});
+
+const MitigationForm = ({ onSubmit, mitigation, personnel }: { onSubmit: (data: any) => void, mitigation?: MocMitigation, personnel: User[] }) => {
+    const form = useForm<z.infer<typeof mitigationFormSchema>>({ 
+        resolver: zodResolver(mitigationFormSchema), 
+        defaultValues: mitigation ? { ...mitigation, completionDate: mitigation.completionDate ? parseISO(mitigation.completionDate) : undefined } : { responsiblePerson: '', status: 'Open' } 
+    });
+    return (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit((data) => onSubmit({...data, completionDate: data.completionDate ? format(data.completionDate, 'yyyy-MM-dd') : undefined }))} className="space-y-4 py-4">
+                <FormField control={form.control} name="description" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Mitigation Action</FormLabel>
+                        <FormControl><Textarea placeholder="Describe the mitigation..." {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="residualLikelihood" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Residual Likelihood</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <SelectTrigger><SelectValue placeholder="Select Likelihood" /></SelectTrigger>
+                                <SelectContent>
+                                    {probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                    <FormField control={form.control} name="residualSeverity" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Residual Severity</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <SelectTrigger><SelectValue placeholder="Select Severity" /></SelectTrigger>
+                                <SelectContent>
+                                    {severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="responsiblePerson" render={({ field }) => ( 
+                        <FormItem>
+                            <FormLabel>Responsible Person</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Select a person" /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    {personnel.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                    <FormField control={form.control} name="completionDate" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Completion Date</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <FormControl>
+                                        <Button variant="outline" className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                </div>
+                <DialogFooter><Button type="submit">Save Mitigation</Button></DialogFooter>
+            </form>
+        </Form>
+    );
+};
+
 type DialogState = 
     | { type: 'addPhase' }
     | { type: 'editPhase'; data: { phaseId: string; description: string } }
@@ -62,7 +215,6 @@ type DialogState =
     | { type: 'addMitigation'; data: { phaseId: string; stepId: string; hazardId: string; riskId: string } }
     | { type: 'editMitigation'; data: { phaseId: string; stepId: string; hazardId: string; riskId: string; mitigation: MocMitigation } }
     | null;
-
 
 export default function MocDetailPage() {
   const params = useParams();
@@ -496,20 +648,3 @@ export default function MocDetailPage() {
     </main>
   );
 }
-
-const TextareaForm = ({ onSubmit, placeholder, initialValue = '' }: { onSubmit: (data: { description: string }) => void, placeholder: string, initialValue?: string }) => {
-    const [description, setDescription] = useState(initialValue);
-    return (<div className="space-y-4 py-4"><Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={placeholder} /><DialogFooter><Button onClick={() => onSubmit({ description })} disabled={!description.trim()}>Save</Button></DialogFooter></div>);
-};
-
-const riskFormSchema = z.object({ description: z.string().min(1, 'Description is required'), likelihood: z.enum(probabilityOptions), severity: z.enum(severityOptions) });
-const RiskForm = ({ onSubmit, risk }: { onSubmit: (data: any) => void, risk?: MocRisk }) => {
-    const form = useForm<z.infer<typeof riskFormSchema>>({ resolver: zodResolver(riskFormSchema), defaultValues: risk });
-    return (<Form {...form}><form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4"><FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormControl><Textarea placeholder="Describe the risk..." {...field} /></FormControl><FormMessage /></FormItem>)} /><div className="grid grid-cols-2 gap-4"><FormField control={form.control} name="likelihood" render={({ field }) => (<FormItem><FormLabel>Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Likelihood" /></SelectTrigger><SelectContent>{probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</Select><FormMessage /></FormItem>)} /><FormField control={form.control} name="severity" render={({ field }) => (<FormItem><FormLabel>Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Severity" /></SelectTrigger><SelectContent>{severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</Select><FormMessage /></FormItem>)} /></div><DialogFooter><Button type="submit">Save Risk</Button></DialogFooter></form></Form>);
-};
-
-const mitigationFormSchema = z.object({ description: z.string().min(1, 'Description is required'), residualLikelihood: z.enum(probabilityOptions), residualSeverity: z.enum(severityOptions), responsiblePerson: z.string().optional(), completionDate: z.date().optional(), status: z.enum(['Open', 'In Progress', 'Closed']).default('Open') });
-const MitigationForm = ({ onSubmit, mitigation, personnel }: { onSubmit: (data: any) => void, mitigation?: MocMitigation, personnel: User[] }) => {
-    const form = useForm<z.infer<typeof mitigationFormSchema>>({ resolver: zodResolver(mitigationFormSchema), defaultValues: mitigation ? { ...mitigation, completionDate: mitigation.completionDate ? parseISO(mitigation.completionDate) : undefined } : { responsiblePerson: '', status: 'Open' } });
-    return (<Form {...form}><form onSubmit={form.handleSubmit((data) => onSubmit({...data, completionDate: data.completionDate ? format(data.completionDate, 'yyyy-MM-dd') : undefined }))} className="space-y-4 py-4"><FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Mitigation Action</FormLabel><FormControl><Textarea placeholder="Describe the mitigation..." {...field} /></FormControl><FormMessage /></FormItem>)} /><div className="grid grid-cols-2 gap-4"><FormField control={form.control} name="residualLikelihood" render={({ field }) => (<FormItem><FormLabel>Residual Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Likelihood" /></SelectTrigger><SelectContent>{probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</Select><FormMessage /></FormItem>)} /><FormField control={form.control} name="residualSeverity" render={({ field }) => (<FormItem><FormLabel>Residual Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Severity" /></SelectTrigger><SelectContent>{severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</Select><FormMessage /></FormItem>)} /></div><div className="grid grid-cols-2 gap-4"><FormField control={form.control} name="responsiblePerson" render={({ field }) => ( <FormItem><FormLabel>Responsible Person</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a person" /></SelectTrigger></FormControl><SelectContent>{personnel.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={form.control} name="completionDate" render={({ field }) => (<FormItem><FormLabel>Completion Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} /></div><DialogFooter><Button type="submit">Save Mitigation</Button></DialogFooter></form></Form>);
-};
