@@ -43,7 +43,7 @@ const componentFormSchema = z.object({
   currentHrs: z.coerce.number().min(0),
   tsn: z.coerce.number().min(0),
   tso: z.coerce.number().min(0),
-  status: z.enum(['Healthy', 'Monitor', 'Recent', 'Overdue']),
+  maxHours: z.coerce.number().min(0),
 });
 
 type ComponentFormValues = z.infer<typeof componentFormSchema>;
@@ -77,7 +77,7 @@ export function AircraftDetailsContent() {
             currentHrs: 0,
             tsn: 0,
             tso: 0,
-            status: 'Healthy',
+            maxHours: 0,
         }
     });
 
@@ -512,7 +512,7 @@ export function AircraftDetailsContent() {
                                         <TableHead>Hrs at Install</TableHead>
                                         <TableHead>TSN</TableHead>
                                         <TableHead>TSO</TableHead>
-                                        <TableHead className="text-right">Status</TableHead>
+                                        <TableHead className="text-right">Max Hours</TableHead>
                                         <TableHead className="text-right no-print">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -525,8 +525,8 @@ export function AircraftDetailsContent() {
                                             <TableCell>{comp.installHrs.toFixed(1)}</TableCell>
                                             <TableCell className="font-semibold">{comp.tsn.toFixed(1)}</TableCell>
                                             <TableCell className="font-semibold">{comp.tso.toFixed(1)}</TableCell>
-                                            <TableCell className="text-right">
-                                                <Badge variant={comp.status === 'Healthy' ? 'success' : comp.status === 'Monitor' ? 'warning' : 'outline'}>{comp.status}</Badge>
+                                            <TableCell className="text-right font-semibold">
+                                                {comp.maxHours?.toFixed(1) || '0.0'}
                                             </TableCell>
                                             <TableCell className="text-right no-print">
                                                 <Button variant="ghost" size="icon" onClick={() => handleDeleteComponent(comp.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
@@ -621,7 +621,7 @@ export function AircraftDetailsContent() {
                                 <FormField control={componentForm.control} name="installDate" render={({ field }) => (<FormItem><FormLabel>Install Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <FormField control={componentForm.control} name="installHrs" render={({ field }) => (<FormItem><FormLabel>Hrs at Install</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <FormField control={componentForm.control} name="currentHrs" render={({ field }) => (<FormItem><FormLabel>Total Airframe Hrs</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={componentForm.control} name="status" render={({ field }) => (<FormItem><FormLabel>Health Status</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Healthy">Healthy</SelectItem><SelectItem value="Monitor">Monitor</SelectItem><SelectItem value="Recent">Recent</SelectItem><SelectItem value="Overdue">Overdue</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                                <FormField control={componentForm.control} name="maxHours" render={({ field }) => (<FormItem><FormLabel>Max Hours (TBO)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <FormField control={componentForm.control} name="tsn" render={({ field }) => (<FormItem><FormLabel>TSN (Time Since New)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <FormField control={componentForm.control} name="tso" render={({ field }) => (<FormItem><FormLabel>TSO (Time Since Overhaul)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                             </div>

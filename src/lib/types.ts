@@ -106,7 +106,7 @@ export type AircraftComponent = {
     currentHrs: number;
     tsn: number;
     tso: number;
-    status: 'Healthy' | 'Monitor' | 'Recent' | 'Overdue';
+    maxHours: number;
 };
 
 export type Aircraft = {
@@ -680,7 +680,7 @@ export type TechnicalReport = {
   rectificationDetails?: string;
   componentsReplaced?: string;
   physicalLogEntry?: string;
-  rectifiedBy?: string;
+  reportedBy?: string;
   rectificationDate?: string;
   photo?: string;
 };
