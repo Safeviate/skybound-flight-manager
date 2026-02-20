@@ -8,11 +8,11 @@ import { NewBookingForm } from './new-booking-form';
 import { NewFacilityBookingForm } from './new-facility-booking-form';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, writeBatch, arrayUnion, getDocs, getDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, arrayUnion, getDocs, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertTriangle, Calendar as CalendarIcon, Search, Trash2, Edit } from 'lucide-react';
+import { Loader2, AlertTriangle, Calendar as CalendarIcon, Search, Trash2, Edit, PlusCircle, PlayCircle, ChevronDown } from 'lucide-react';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -133,8 +133,11 @@ const SwimlaneCalendar = ({
         return hours * 60 + minutes;
     };
     
+    // 24px top offset prevents the 06:00 label from being cut off by the sticky header
+    const TOP_OFFSET = 24;
+
     const minutesToTop = (minutes: number) => {
-        return (minutes - (6 * 60)) * 2; // Each minute is 2px
+        return (minutes - (6 * 60)) * 2 + TOP_OFFSET; // Each minute is 2px
     }
 
     const getBookingLabel = (booking: Booking) => {
@@ -167,7 +170,7 @@ const SwimlaneCalendar = ({
     return (
         <div className="relative border-t border-l">
             {/* Header row */}
-            <div className="sticky top-0 z-20 flex bg-card">
+            <div className="sticky top-0 z-20 flex bg-card border-b">
                 <div className="w-16 flex-shrink-0 border-r py-2 text-center font-medium text-sm">Time</div>
                 <div className="flex-grow grid" style={{ gridTemplateColumns: `repeat(${resources.length}, 1fr)` }}>
                     {resources.map((resource) => (
@@ -179,7 +182,7 @@ const SwimlaneCalendar = ({
             </div>
 
             {/* Scrollable Content */}
-            <div className="relative flex" style={{ height: `${18 * 60 * 2}px` }}>
+            <div className="relative flex pt-[24px]" style={{ height: `${18 * 60 * 2 + TOP_OFFSET}px` }}>
                 {/* Time Gutter */}
                 <div className="w-16 flex-shrink-0">
                     {Array.from({ length: 18 }).map((_, i) => (
