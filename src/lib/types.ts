@@ -97,6 +97,13 @@ export type AircraftDocument = {
     url?: string | null;
 };
 
+export type AircraftCustomDocument = {
+    id: string;
+    label: string;
+    expiryDate: string | null;
+    url?: string | null;
+};
+
 export type AircraftComponent = {
     id: string;
     name: string;
@@ -124,6 +131,7 @@ export type Aircraft = {
   registrationDoc: AircraftDocument;
   massAndBalanceDoc: AircraftDocument;
   radioLicenseDoc: AircraftDocument;
+  customDocuments?: AircraftCustomDocument[];
   location: string; // Airport ID
   checklistStatus?: 'needs-pre-flight' | 'needs-post-flight' | 'ready';
   activeBookingId?: string | null;

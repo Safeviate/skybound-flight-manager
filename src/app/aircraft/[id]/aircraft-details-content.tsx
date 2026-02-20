@@ -23,13 +23,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import Image from 'next/image';
 import { PreFlightChecklistForm } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm } from '@/app/checklists/post-flight-checklist-form';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Loading from '@/app/loading';
-import type { Aircraft, Booking, AircraftComponent } from '@/lib/types';
+import type { Aircraft, Booking, AircraftComponent, AircraftCustomDocument } from '@/lib/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -63,10 +65,14 @@ export function AircraftDetailsContent() {
     const [loading, setLoading] = useState(true);
     const [isEditModalOpen, setIsEditEditModalOpen] = useState(false);
     const [isAddComponentOpen, setIsAddComponentOpen] = useState(false);
+    const [isAddDocOpen, setIsAddDocOpen] = useState(false);
     const [editingComponent, setEditingComponent] = useState<AircraftComponent | null>(null);
     const [rectifyingReport, setRectifyingReport] = useState<any | null>(null);
     const [viewingChecklist, setViewingLog] = useState<any | null>(null);
     const [bookings, setBookings] = useState<Booking[]>([]);
+
+    const [newDocLabel, setNewDocLabel] = useState('');
+    const [newDocExpiry, setNewDocExpiry] = useState<Date | undefined>();
 
     const componentForm = useForm<ComponentFormValues>({
         resolver: zodResolver(componentFormSchema),
@@ -171,6 +177,43 @@ export function AircraftDetailsContent() {
             toast({ variant: 'destructive', title: 'Delete Failed' });
         }
     }
+
+    const handleAddCustomDocument = async () => {
+        if (!aircraft || !company || !newDocLabel) return;
+        
+        const newDoc: AircraftCustomDocument = {
+            id: `custom-doc-${Date.now()}`,
+            label: newDocLabel,
+            expiryDate: newDocExpiry ? newDocExpiry.toISOString() : null,
+        };
+
+        const updatedCustomDocs = [...(aircraft.customDocuments || []), newDoc];
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
+        
+        try {
+            await updateDoc(aircraftRef, { customDocuments: updatedCustomDocs });
+            toast({ title: 'Document Added' });
+            setIsAddDocOpen(false);
+            setNewDocLabel('');
+            setNewDocExpiry(undefined);
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Error adding document' });
+        }
+    };
+
+    const handleDeleteCustomDocument = async (docId: string) => {
+        if (!aircraft || !company) return;
+        
+        const updatedCustomDocs = (aircraft.customDocuments || []).filter(d => d.id !== docId);
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
+        
+        try {
+            await updateDoc(aircraftRef, { customDocuments: updatedCustomDocs });
+            toast({ title: 'Document Removed' });
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Error removing document' });
+        }
+    };
 
     const handleChecklistSuccess = async (data: any) => {
         if (!aircraft || !company || !user) return;
@@ -466,9 +509,14 @@ export function AircraftDetailsContent() {
 
                 <TabsContent value="documents" className="mt-6 space-y-6">
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Certificate Tracking</CardTitle>
-                            <CardDescription>Regulatory documentation and validity monitoring.</CardDescription>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Certificate Tracking</CardTitle>
+                                <CardDescription>Regulatory documentation and validity monitoring.</CardDescription>
+                            </div>
+                            <Button variant="outline" size="sm" onClick={() => setIsAddDocOpen(true)}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add Document
+                            </Button>
                         </CardHeader>
                         <CardContent className="grid md:grid-cols-2 gap-6">
                             <div className="space-y-4">
@@ -476,10 +524,23 @@ export function AircraftDetailsContent() {
                                     { label: 'Certificate of Airworthiness', date: aircraft.airworthinessDoc?.expiryDate },
                                     { label: 'Insurance Certificate', date: aircraft.insuranceDoc?.expiryDate },
                                     { label: 'Certificate of Release to Service', date: aircraft.releaseToServiceDoc?.expiryDate },
-                                ].map(doc => (
-                                    <div key={doc.label} className="flex items-center justify-between p-3 border rounded-lg">
+                                    ...(aircraft.customDocuments || []).filter((_, i) => i % 2 === 0).map(d => ({ label: d.label, date: d.expiryDate, id: d.id, isCustom: true }))
+                                ].map((doc, idx) => (
+                                    <div key={doc.id || doc.label} className="flex items-center justify-between p-3 border rounded-lg group">
                                         <span className="text-sm font-medium">{doc.label}</span>
-                                        {getExpiryBadge(doc.date, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                                        <div className="flex items-center gap-2">
+                                            {getExpiryBadge(doc.date, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                                            {doc.isCustom && (
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    onClick={() => handleDeleteCustomDocument(doc.id!)}
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -488,10 +549,23 @@ export function AircraftDetailsContent() {
                                     { label: 'Certificate of Registration', date: aircraft.registrationDoc?.expiryDate },
                                     { label: 'Mass & Balance Schedule', date: aircraft.massAndBalanceDoc?.expiryDate },
                                     { label: 'Radio Station License', date: aircraft.radioLicenseDoc?.expiryDate },
-                                ].map(doc => (
-                                    <div key={doc.label} className="flex items-center justify-between p-3 border rounded-lg">
+                                    ...(aircraft.customDocuments || []).filter((_, i) => i % 2 !== 0).map(d => ({ label: d.label, date: d.expiryDate, id: d.id, isCustom: true }))
+                                ].map((doc, idx) => (
+                                    <div key={doc.id || doc.label} className="flex items-center justify-between p-3 border rounded-lg group">
                                         <span className="text-sm font-medium">{doc.label}</span>
-                                        {getExpiryBadge(doc.date, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                                        <div className="flex items-center gap-2">
+                                            {getExpiryBadge(doc.date, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                                            {doc.isCustom && (
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    onClick={() => handleDeleteCustomDocument(doc.id!)}
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -646,8 +720,46 @@ export function AircraftDetailsContent() {
                 </DialogContent>
             </Dialog>
 
+            <Dialog open={isAddDocOpen} onOpenChange={setIsAddDocOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Add Custom Document</DialogTitle>
+                        <DialogDescription>Track an additional certificate or permit for this aircraft.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="doc-label">Document Label</Label>
+                            <Input 
+                                id="doc-label" 
+                                placeholder="e.g. Fire Extinguisher Certificate" 
+                                value={newDocLabel} 
+                                onChange={(e) => setNewDocLabel(e.target.value)} 
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Expiry Date</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !newDocExpiry && "text-muted-foreground")}>
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {newDocExpiry ? format(newDocExpiry, "PPP") : <span>Set expiry date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar mode="single" selected={newDocExpiry} onSelect={setNewDocExpiry} initialFocus />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsAddDocOpen(false)}>Cancel</Button>
+                        <Button onClick={handleAddCustomDocument} disabled={!newDocLabel}>Add Document</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             {viewingChecklist && (
-                <Dialog open={!!viewingChecklist} onOpenChange={() => setViewingLog(null)}>
+                <Dialog open={!!viewingChecklist} onOpenChange={setViewingLog}>
                     <DialogContent className="max-w-3xl">
                         <DialogHeader>
                             <DialogTitle>{viewingChecklist.type} Checklist: {viewingChecklist.aircraftTailNumber}</DialogTitle>
