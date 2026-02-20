@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@genkit-ai/googleai": "^0.5.7",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
@@ -41,9 +42,10 @@
     "embla-carousel-react": "^8.6.0",
     "firebase": "^11.9.1",
     "firebase-admin": "^12.3.0",
+    "genkit": "^1.0.0",
+    "jsqr": "^1.4.0",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
-    "jsqr": "^1.4.0",
     "lucide-react": "^0.475.0",
     "next": "14.2.35",
     "qrcode.react": "^3.1.0",
