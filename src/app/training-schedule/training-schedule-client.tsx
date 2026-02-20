@@ -133,11 +133,10 @@ const SwimlaneCalendar = ({
         return hours * 60 + minutes;
     };
     
-    // 24px top offset prevents the 06:00 label from being cut off by the sticky header
     const TOP_OFFSET = 24;
 
     const minutesToTop = (minutes: number) => {
-        return (minutes - (6 * 60)) * 2 + TOP_OFFSET; // Each minute is 2px
+        return (minutes - (6 * 60)) * 2 + TOP_OFFSET;
     }
 
     const getBookingLabel = (booking: Booking) => {
@@ -154,7 +153,7 @@ const SwimlaneCalendar = ({
         } else if (booking.purpose === 'Maintenance') {
             line1 = `Maintenance`;
             line2 = `${booking.maintenanceType}`;
-        } else { // Training or other aircraft bookings
+        } else {
             line1 = `${bookingNumPart}${booking.purpose}`;
             line2 = `${booking.student} w/ ${booking.instructor}`;
         }
@@ -169,7 +168,6 @@ const SwimlaneCalendar = ({
 
     return (
         <div className="relative border-t border-l">
-            {/* Header row */}
             <div className="sticky top-0 z-20 flex bg-card border-b">
                 <div className="w-16 flex-shrink-0 border-r py-2 text-center font-medium text-sm">Time</div>
                 <div className="flex-grow grid" style={{ gridTemplateColumns: `repeat(${resources.length}, 1fr)` }}>
@@ -181,22 +179,18 @@ const SwimlaneCalendar = ({
                 </div>
             </div>
 
-            {/* Scrollable Content */}
             <div className="relative flex pt-[24px]" style={{ height: `${18 * 60 * 2 + TOP_OFFSET}px` }}>
-                {/* Time Gutter */}
                 <div className="w-16 flex-shrink-0">
                     {Array.from({ length: 18 }).map((_, i) => (
                         <div key={i} className="h-[120px] text-xs text-center text-muted-foreground border-r border-t relative">
-                            <span className="absolute -translate-y-1/2 left-1">{((i + 6) % 24).toString().padStart(2, '0')}:00</span>
+                            <span className="absolute top-1 left-1">{((i + 6) % 24).toString().padStart(2, '0')}:00</span>
                         </div>
                     ))}
                 </div>
 
-                {/* Main Grid */}
                 <div className="flex-grow grid" style={{ gridTemplateColumns: `repeat(${resources.length}, 1fr)` }}>
                     {resources.map((resource, index) => (
                         <div key={resource[resourceKey]} className={cn("relative border-r", index === resources.length - 1 && "border-r-0")}>
-                            {/* Time slot lines for clicking */}
                             {Array.from({ length: 18 * 60 }).map((_, i) => {
                                 const minuteOfDay = (6 * 60) + i;
                                 const hour = Math.floor(minuteOfDay / 60);
@@ -211,7 +205,6 @@ const SwimlaneCalendar = ({
                                 )
                             })}
 
-                            {/* Booking blocks */}
                             {bookings
                                 .filter(b => (b.resourceType === 'facility' ? b.facilityId : b.aircraft) === resource[resourceKey])
                                 .map(booking => {
@@ -381,12 +374,12 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     const batch = writeBatch(db);
 
     try {
-        if ('id' in data) { // This is an existing booking
+        if ('id' in data) {
              const collectionName = data.resourceType === 'facility' ? 'facility-bookings' : 'aircraft-bookings';
              const bookingRef = doc(db, `companies/${company.id}/${collectionName}`, data.id);
              batch.update(bookingRef, { ...data, endDate: data.endDate || null });
              toast({ title: 'Booking Updated', description: 'The booking has been successfully updated.' });
-        } else { // This is a new booking
+        } else {
             const newBookingId = doc(collection(db, 'temp')).id;
             let bookingData: any = { ...data, id: newBookingId, companyId: company.id, status: 'Approved' as const, endDate: data.endDate || null };
             
@@ -486,7 +479,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             batch.update(aircraftRef, { checklistStatus: 'needs-post-flight' });
             batch.update(bookingRef, { startHobbs: data.hobbs, preFlightData: data });
             toast({ title: 'Pre-Flight Checklist Submitted' });
-        } else { // POST-FLIGHT LOGIC
+        } else {
             const flightDuration = activeFlight.booking.startHobbs ? parseFloat((data.hobbs - activeFlight.booking.startHobbs).toFixed(1)) : 0;
             
             batch.update(aircraftRef, {
@@ -586,7 +579,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const handleEditBookingInFlightHub = () => {
     if (activeFlight) {
         setEditingBooking(activeFlight.booking);
-        setActiveFlight(null); // Close the FlightHub to open the edit form
+        setActiveFlight(null);
     }
   }
 
