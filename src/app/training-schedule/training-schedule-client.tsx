@@ -1,7 +1,7 @@
-
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
 import type { Aircraft, Booking, User, CompletedChecklist, Alert as AlertType, TrainingLogEntry, Facility } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { NewBookingForm } from './new-booking-form';
