@@ -63,6 +63,7 @@ export function AircraftDetailsContent() {
     const [loading, setLoading] = useState(true);
     const [isEditModalOpen, setIsEditEditModalOpen] = useState(false);
     const [isAddComponentOpen, setIsAddComponentOpen] = useState(false);
+    const [editingComponent, setEditingComponent] = useState<AircraftComponent | null>(null);
     const [rectifyingReport, setRectifyingReport] = useState<any | null>(null);
     const [viewingChecklist, setViewingLog] = useState<any | null>(null);
     const [bookings, setBookings] = useState<Booking[]>([]);
@@ -145,12 +146,19 @@ export function AircraftDetailsContent() {
     const handleAddComponent = async (data: ComponentFormValues) => {
         if (!company || !id) return;
         try {
-            await addDoc(collection(db, `companies/${company.id}/aircraft/${id}/components`), data);
+            if (editingComponent) {
+                const compRef = doc(db, `companies/${company.id}/aircraft/${id}/components`, editingComponent.id);
+                await updateDoc(compRef, data);
+                toast({ title: 'Component Updated' });
+            } else {
+                await addDoc(collection(db, `companies/${company.id}/aircraft/${id}/components`), data);
+                toast({ title: 'Component Added' });
+            }
             setIsAddComponentOpen(false);
+            setEditingComponent(null);
             componentForm.reset();
-            toast({ title: 'Component Added' });
         } catch (e) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to add component.' });
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to save component.' });
         }
     };
 
@@ -498,7 +506,7 @@ export function AircraftDetailsContent() {
                                 <CardTitle>Component Registry</CardTitle>
                                 <CardDescription>Tracking lifecycle and maintenance data for major aircraft components.</CardDescription>
                             </div>
-                            <Button variant="outline" size="sm" onClick={() => setIsAddComponentOpen(true)}>
+                            <Button variant="outline" size="sm" onClick={() => { setEditingComponent(null); componentForm.reset(); setIsAddComponentOpen(true); }}>
                                 <PlusCircle className="mr-2 h-4 w-4" /> Add Component
                             </Button>
                         </CardHeader>
@@ -528,7 +536,14 @@ export function AircraftDetailsContent() {
                                             <TableCell className="text-right font-semibold">
                                                 {comp.maxHours?.toFixed(1) || '0.0'}
                                             </TableCell>
-                                            <TableCell className="text-right no-print">
+                                            <TableCell className="text-right no-print space-x-2">
+                                                <Button variant="ghost" size="icon" onClick={() => {
+                                                    setEditingComponent(comp);
+                                                    componentForm.reset(comp);
+                                                    setIsAddComponentOpen(true);
+                                                }}>
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
                                                 <Button variant="ghost" size="icon" onClick={() => handleDeleteComponent(comp.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                             </TableCell>
                                         </TableRow>
@@ -610,7 +625,7 @@ export function AircraftDetailsContent() {
             <Dialog open={isAddComponentOpen} onOpenChange={setIsAddComponentOpen}>
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Add Aircraft Component</DialogTitle>
+                        <DialogTitle>{editingComponent ? 'Edit Component' : 'Add Aircraft Component'}</DialogTitle>
                         <DialogDescription>Enter the tracking data for a major airframe or powerplant component.</DialogDescription>
                     </DialogHeader>
                     <Form {...componentForm}>
@@ -625,7 +640,7 @@ export function AircraftDetailsContent() {
                                 <FormField control={componentForm.control} name="tsn" render={({ field }) => (<FormItem><FormLabel>TSN (Time Since New)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <FormField control={componentForm.control} name="tso" render={({ field }) => (<FormItem><FormLabel>TSO (Time Since Overhaul)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                             </div>
-                            <DialogFooter><Button type="submit">Register Component</Button></DialogFooter>
+                            <DialogFooter><Button type="submit">{editingComponent ? 'Update Component' : 'Register Component'}</Button></DialogFooter>
                         </form>
                     </Form>
                 </DialogContent>
