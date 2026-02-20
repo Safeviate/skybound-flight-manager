@@ -360,7 +360,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         const [personnelSnapshot, studentsSnapshot, hireAndFlySnapshot] = await Promise.all([
             getDocs(personnelQuery),
             getDocs(studentsQuery),
-            getDocs(hireAndFlySnapshot),
+            getDocs(hireAndFlyQuery),
         ]);
         
         const personnel = personnelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
