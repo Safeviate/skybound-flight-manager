@@ -1,4 +1,3 @@
-
 import type {NextConfig} from 'next';
 import withPWA from 'next-pwa';
 
@@ -56,6 +55,7 @@ const nextConfig: NextConfig = {
     // This is to fix a bug in genkit with handlebars
     config.resolve.alias = {
       ...config.resolve.alias,
+      'handlebars/dist/cjs/handlebars.js': 'handlebars/dist/handlebars.js',
       'handlebars': 'handlebars/dist/handlebars.js',
     }
     return config
