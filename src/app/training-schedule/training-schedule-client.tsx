@@ -8,10 +8,9 @@ import { NewBookingForm } from './new-booking-form';
 import { NewFacilityBookingForm } from './new-facility-booking-form';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, arrayUnion, getDocs, getDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, arrayUnion, getDocs, getDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { Loader2, AlertTriangle, Calendar as CalendarIcon, Search, Trash2, Edit, PlusCircle, PlayCircle, ChevronDown } from 'lucide-react';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
@@ -107,8 +106,6 @@ const BookingTooltipContent = ({ booking }: { booking: Booking }) => (
     </div>
 );
 
-const hourlyTimeSlots = Array.from({ length: 24 }, (_, i) => `${((i + 6) % 24).toString().padStart(2, '0')}:00`);
-
 const SwimlaneCalendar = ({ 
     resources, 
     bookings, 
@@ -128,12 +125,19 @@ const SwimlaneCalendar = ({
     getBookingVariant: (booking: Booking) => { className?: string, style?: React.CSSProperties, isClickable: boolean },
     selectedDate: Date,
 }) => {
+    const [now, setNow] = useState(new Date());
+
+    useEffect(() => {
+        const timer = setInterval(() => setNow(new Date()), 60000);
+        return () => clearInterval(timer);
+    }, []);
+
     const timeToMinutes = (time: string) => {
         const [hours, minutes] = time.split(':').map(Number);
         return hours * 60 + minutes;
     };
     
-    const TOP_OFFSET = 0; // Removed extra vertical gap
+    const TOP_OFFSET = 0; 
 
     const minutesToTop = (minutes: number) => {
         return (minutes - (6 * 60)) * 2 + TOP_OFFSET;
@@ -166,6 +170,11 @@ const SwimlaneCalendar = ({
         );
     };
 
+    const isToday = isSameDay(now, selectedDate);
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const showNowLine = isToday && nowMinutes >= 360 && nowMinutes <= 1440;
+    const nowLineTop = minutesToTop(nowMinutes);
+
     return (
         <div className="relative border-t border-l">
             <div className="sticky top-0 z-20 flex bg-card border-b">
@@ -180,6 +189,20 @@ const SwimlaneCalendar = ({
             </div>
 
             <div className="relative flex pt-0" style={{ height: `${18 * 60 * 2 + TOP_OFFSET}px` }}>
+                {/* Current Time Indicator Line */}
+                {showNowLine && (
+                    <div 
+                        className="absolute left-0 right-0 z-30 pointer-events-none"
+                        style={{ top: `${nowLineTop}px` }}
+                    >
+                        <div className="w-full h-[2px] bg-destructive shadow-[0_0_4px_rgba(220,38,38,0.5)] relative">
+                            <span className="absolute -left-12 -top-2.5 px-1 py-0.5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded">
+                                NOW
+                            </span>
+                        </div>
+                    </div>
+                )}
+
                 <div className="w-16 flex-shrink-0">
                     {Array.from({ length: 18 }).map((_, i) => (
                         <div key={i} className="h-[120px] text-xs text-center text-muted-foreground border-r border-t relative">
