@@ -52,6 +52,7 @@ const nextConfig: NextConfig = {
     ],
   },
   webpack: (config, { isServer }) => {
+    // This is to fix a bug in genkit with handlebars
     config.resolve.alias = {
       ...config.resolve.alias,
       'handlebars/dist/cjs/handlebars.js': 'handlebars/dist/handlebars.js',
