@@ -1,18 +1,17 @@
-
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, writeBatch } from 'firebase/firestore';
+import { collection, writeBatch, doc } from 'firebase/firestore';
 import type { AuditChecklist } from '@/lib/types';
 
 const PRE_FLIGHT_CHECKLIST: Omit<AuditChecklist, 'id' | 'companyId'> = {
   title: 'Master Pre-Flight Checklist',
   category: 'Pre-Flight',
   items: [
-    { id: 'pre1', type: 'AICamera-Registration', text: 'Scan Aircraft Registration', completed: false },
+    { id: 'pre1', type: 'Checkbox', text: 'Verify Aircraft Registration', completed: false },
     { id: 'pre2', type: 'StandardCamera', text: 'Take photo of Left Side of Aircraft', completed: false },
     { id: 'pre3', type: 'StandardCamera', text: 'Take photo of Right Side of Aircraft', completed: false },
-    { id: 'pre4', type: 'AICamera-Hobbs', text: 'Scan Hobbs Meter for starting hours', completed: false },
+    { id: 'pre4', type: 'Textbox', text: 'Enter current Hobbs Meter reading', completed: false },
     { id: 'pre5', type: 'Checkbox', text: 'Aircraft Checklist / POH onboard', completed: false },
     { id: 'pre6', type: 'Checkbox', text: 'Flight Operations Manual onboard', completed: false },
     { id: 'pre7', type: 'Textbox', text: 'Anything to Report?', completed: false },
@@ -25,7 +24,7 @@ const POST_FLIGHT_CHECKLIST: Omit<AuditChecklist, 'id' | 'companyId'> = {
   items: [
     { id: 'post1', type: 'StandardCamera', text: 'Take photo of Left Side of Aircraft', completed: false },
     { id: 'post2', type: 'StandardCamera', text: 'Take photo of Right Side of Aircraft', completed: false },
-    { id: 'post3', type: 'AICamera-Hobbs', text: 'Scan Hobbs Meter for closing hours', completed: false },
+    { id: 'post3', type: 'Textbox', text: 'Enter closing Hobbs Meter reading', completed: false },
     { id: 'post4', type: 'Textbox', text: 'Anything to Report?', completed: false },
   ],
 };

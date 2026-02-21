@@ -1,15 +1,14 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/form/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlusCircle, Trash2, GripVertical } from 'lucide-react';
-import type { AuditChecklist, AuditChecklistItem, ChecklistItemType, CompanyDepartment } from '@/lib/types';
+import type { AuditChecklist, ChecklistItemType, CompanyDepartment } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEffect, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
@@ -40,7 +39,7 @@ interface AuditChecklistTemplateFormProps {
     departments: CompanyDepartment[];
 }
 
-const checklistItemTypes: ChecklistItemType[] = ['Checkbox', 'Textbox', 'StandardCamera', 'AICamera-Registration', 'AICamera-Hobbs', 'Header'];
+const checklistItemTypes: ChecklistItemType[] = ['Checkbox', 'Textbox', 'StandardCamera', 'Header'];
 
 export function AuditChecklistTemplateForm({ onSubmit, existingTemplate, departments }: AuditChecklistTemplateFormProps) {
   const form = useForm<ChecklistFormValues>({

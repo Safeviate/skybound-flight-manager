@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,7 +33,7 @@ interface ChecklistTemplateFormProps {
 }
 
 const checklistCategories: ChecklistCategory[] = ['Pre-Flight', 'Post-Flight', 'Post-Maintenance'];
-const checklistItemTypes: ChecklistItemType[] = ['Checkbox', 'Textbox', 'StandardCamera', 'AICamera-Registration', 'AICamera-Hobbs'];
+const checklistItemTypes: ChecklistItemType[] = ['Checkbox', 'Textbox', 'StandardCamera'];
 
 export function ChecklistTemplateForm({ onSubmit, existingTemplate }: ChecklistTemplateFormProps) {
   const form = useForm<ChecklistFormValues>({

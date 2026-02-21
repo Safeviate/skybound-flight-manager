@@ -1,9 +1,3 @@
-import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
-export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
-import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
-export type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
-import type { SuggestInvestigationStepsOutput } from '@/ai/flows/suggest-investigation-steps-flow';
-export type { SuggestInvestigationStepsOutput } from '@/ai/flows/suggest-investigation-steps-flow';
 import { PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 
@@ -460,9 +454,6 @@ export type SafetyReport = {
   investigationNotes?: string;
   discussion?: DiscussionEntry[];
   associatedRisks?: AssociatedRisk[];
-  correctiveActionPlan?: GenerateCorrectiveActionPlanOutput;
-  fiveWhysAnalysis?: FiveWhysAnalysisOutput;
-  aiSuggestedSteps?: SuggestInvestigationStepsOutput;
   // Dynamic fields based on category
   phaseOfFlight?: string;
   crewInvolved?: string;
@@ -889,5 +880,5 @@ export type AuditArea = string;
 export type FindingStatus = 'Compliant' | 'Non Compliant' | 'Partial' | 'Not Applicable' | 'Observation';
 export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Finding' | 'Observation' | null;
 export type ChecklistCategory = 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
-export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs' | 'Header';
+export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'Header';
 export type AuditChecklistItem = { id: string; text: string; finding: FindingStatus | null; level: FindingLevel; observation?: string; findingNotes?: string; evidence?: string; regulationReference?: string; reference?: string; comment?: string; photo?: string; suggestedImprovement?: string; type?: ChecklistItemType; };
