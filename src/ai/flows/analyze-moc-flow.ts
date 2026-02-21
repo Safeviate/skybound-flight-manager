@@ -2,8 +2,7 @@
 /**
  * @fileOverview Management of Change (MOC) Analysis AI Flow.
  * 
- * This flow takes an MOC proposal and generates a structured implementation plan,
- * including phases, steps, hazards, and initial risk assessments.
+ * - analyzeMoc: Generates a structured implementation plan from an MOC proposal.
  */
 
 import {ai} from '@/ai/genkit';
@@ -59,22 +58,9 @@ const analyzeMocPrompt = ai.definePrompt({
  * Analyze a Management of Change proposal using Generative AI.
  */
 export async function analyzeMoc(input: AnalyzeMocInput): Promise<AnalyzeMocOutput> {
-  return analyzeMocFlow(input);
-}
-
-const analyzeMocFlow = ai.defineFlow(
-  {
-    name: 'analyzeMocFlow',
-    inputSchema: AnalyzeMocInputSchema,
-    outputSchema: AnalyzeMocOutputSchema,
-  },
-  async (input) => {
-    const {output} = await analyzeMocPrompt(input);
-    
-    if (!output) {
-      throw new Error('AI failed to generate implementation plan.');
-    }
-
-    return output;
+  const {output} = await analyzeMocPrompt(input);
+  if (!output) {
+    throw new Error('AI failed to generate implementation plan.');
   }
-);
+  return output;
+}

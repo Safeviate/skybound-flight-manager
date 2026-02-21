@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       allowedOrigins: ["*"],
     },
-    serverComponentsExternalPackages: ['handlebars', 'genkit', '@genkit-ai/google-genai'],
+    serverComponentsExternalPackages: ['genkit', 'dotprompt', 'handlebars', '@genkit-ai/google-genai'],
   },
   webpack: (config) => {
     config.resolve.alias = {
