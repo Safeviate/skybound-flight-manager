@@ -1,14 +1,9 @@
-
 'use server';
 
-import { z } from 'zod';
-
-const schema = z.object({
-  auditText: z.string().min(20, 'Audit report text must be at least 20 characters long.'),
-});
-
+/**
+ * AI analysis actions removed as per user request to disable AI features.
+ */
 export async function analyzeAuditAction(prevState: any, formData: FormData) {
-    // AI functionality removed due to build errors.
     return {
         message: 'AI feature is currently disabled.',
         data: null,

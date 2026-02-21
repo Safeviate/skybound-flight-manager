@@ -22,15 +22,6 @@ const nextConfig: NextConfig = {
       allowedOrigins: ["*"],
     },
   },
-  webpack: (config) => {
-    // This is to fix a bug in genkit with handlebars
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      'handlebars/dist/cjs/handlebars.js': 'handlebars/dist/handlebars.js',
-      'handlebars': 'handlebars/dist/handlebars.js',
-    }
-    return config
-  }
 };
 
 export default nextConfig;

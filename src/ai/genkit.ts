@@ -1,6 +1,4 @@
-import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/googleai';
-
-export const ai = genkit({
-  plugins: [googleAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY })],
-});
+/**
+ * Genkit initialization removed as per user request to disable AI features.
+ */
+export const ai = null;
