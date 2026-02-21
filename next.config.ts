@@ -21,12 +21,13 @@ const nextConfig: NextConfig = {
     serverActions: {
       allowedOrigins: ["*"],
     },
+    serverComponentsExternalPackages: ['handlebars'],
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
-      'handlebars/dist/cjs/handlebars.js': 'handlebars/dist/handlebars.js',
-      'handlebars': 'handlebars/dist/handlebars.js',
+      'handlebars/dist/cjs/handlebars.js': 'handlebars',
+      'handlebars': 'handlebars',
     }
     return config
   },

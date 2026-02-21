@@ -51,12 +51,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    serverComponentsExternalPackages: ['handlebars'],
+  },
   webpack: (config, { isServer }) => {
     // This is to fix a bug in genkit with handlebars
     config.resolve.alias = {
       ...config.resolve.alias,
-      'handlebars/dist/cjs/handlebars.js': 'handlebars/dist/handlebars.js',
-      'handlebars': 'handlebars/dist/handlebars.js',
+      'handlebars/dist/cjs/handlebars.js': 'handlebars',
+      'handlebars': 'handlebars',
     }
     return config
   }
