@@ -5,8 +5,8 @@ const nextConfig: NextConfig = {
   webpack: (config, { isServer }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
-      'handlebars/dist/cjs/handlebars.js': 'handlebars/dist/handlebars.js',
-      'handlebars': 'handlebars/dist/handlebars.js',
+      'handlebars/dist/cjs/handlebars.js': 'handlebars',
+      'handlebars': 'handlebars',
     }
     return config
   },
@@ -25,6 +25,9 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  experimental: {
+    serverComponentsExternalPackages: ['handlebars', 'genkit', '@genkit-ai/google-genai'],
   },
 };
 
