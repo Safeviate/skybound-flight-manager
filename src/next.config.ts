@@ -1,15 +1,6 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  webpack: (config, { isServer }) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      'handlebars/dist/cjs/handlebars.js': 'handlebars',
-      'handlebars': 'handlebars',
-    }
-    return config
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -27,7 +18,22 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
-    serverComponentsExternalPackages: ['genkit', 'dotprompt', 'handlebars', '@genkit-ai/google-genai'],
+    serverComponentsExternalPackages: [
+      'genkit', 
+      'dotprompt', 
+      'handlebars', 
+      '@genkit-ai/google-genai', 
+      '@genkit-ai/core', 
+      '@genkit-ai/ai'
+    ],
+  },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'handlebars/dist/cjs/handlebars.js': 'handlebars',
+      'handlebars': 'handlebars/dist/handlebars.js',
+    }
+    return config
   },
 };
 

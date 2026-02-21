@@ -52,14 +52,20 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
-    serverComponentsExternalPackages: ['genkit', 'dotprompt', 'handlebars', '@genkit-ai/google-genai'],
+    serverComponentsExternalPackages: [
+      'genkit', 
+      'dotprompt', 
+      'handlebars', 
+      '@genkit-ai/google-genai', 
+      '@genkit-ai/core', 
+      '@genkit-ai/ai'
+    ],
   },
   webpack: (config, { isServer }) => {
-    // This is to fix a bug in genkit with handlebars
     config.resolve.alias = {
       ...config.resolve.alias,
       'handlebars/dist/cjs/handlebars.js': 'handlebars',
-      'handlebars': 'handlebars',
+      'handlebars': 'handlebars/dist/handlebars.js',
     }
     return config
   }
