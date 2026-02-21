@@ -51,6 +51,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack: (config, { isServer }) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'handlebars/dist/cjs/handlebars.js': 'handlebars/dist/handlebars.js',
+      'handlebars': 'handlebars/dist/handlebars.js',
+    }
+    return config
+  }
 };
 
 export default pwaConfig(nextConfig);
