@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, ChevronDown, Save } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, ChevronDown, Save, Bot, Loader2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getRiskScore } from '@/lib/utils';
 import Image from 'next/image';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -27,6 +27,7 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RiskAssessmentTool } from '../../[reportId]/risk-assessment-tool';
 import { SignaturePad } from '@/components/ui/signature-pad';
+import { analyzeMoc } from '@/ai/flows/analyze-moc-flow';
 
 const probabilityOptions: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
 const severityOptions: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
@@ -220,6 +221,7 @@ export default function MocDetailPage() {
   const [moc, setMoc] = useState<ManagementOfChange | null>(null);
   const [personnel, setPersonnel] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
   const { toast } = useToast();
   const [dialogState, setDialogState] = useState<DialogState>(null);
   
@@ -285,6 +287,49 @@ export default function MocDetailPage() {
     }
   };
 
+  const handleAiAnalysis = async () => {
+    if (!moc) return;
+    setIsAiAnalyzing(true);
+    try {
+        const result = await analyzeMoc({
+            title: moc.title,
+            description: moc.description,
+            reason: moc.reason,
+            scope: moc.scope,
+        });
+
+        // Convert AI output to application structure
+        const phases: MocPhase[] = result.phases.map((phase, pIdx) => ({
+            id: `phase-ai-${Date.now()}-${pIdx}`,
+            description: phase.description,
+            steps: phase.steps.map((step, sIdx) => ({
+                id: `step-ai-${Date.now()}-${pIdx}-${sIdx}`,
+                description: step.description,
+                hazards: step.hazards.map((hazard, hIdx) => ({
+                    id: `hazard-ai-${Date.now()}-${pIdx}-${sIdx}-${hIdx}`,
+                    description: hazard.description,
+                    risks: hazard.risks.map((risk, rIdx) => ({
+                        id: `risk-ai-${Date.now()}-${pIdx}-${sIdx}-${hIdx}-${rIdx}`,
+                        description: risk.description,
+                        likelihood: risk.likelihood,
+                        severity: risk.severity,
+                        riskScore: getRiskScore(risk.likelihood, risk.severity),
+                        mitigations: [],
+                    })),
+                })),
+            })),
+        }));
+
+        await handleUpdate({ phases, status: 'Under Review' });
+        toast({ title: 'AI Analysis Complete', description: 'A structured implementation plan has been generated.' });
+    } catch (error) {
+        console.error("AI Analysis failed:", error);
+        toast({ variant: 'destructive', title: 'Analysis Failed', description: 'AI was unable to generate a plan. Please try again.' });
+    } finally {
+        setIsAiAnalyzing(false);
+    }
+  };
+
   const handleDialogSubmit = (formData: any) => {
     if (!moc || !dialogState) return;
 
@@ -307,16 +352,16 @@ export default function MocDetailPage() {
     } else if (type === 'editHazard') {
         updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, description: formData.description } : h) } : s) } : p);
     } else if (type === 'addRisk') {
-        const newRisk: MocRisk = { ...formData, id: `risk-${Date.now()}`, riskScore: (probabilityOptions.indexOf(formData.likelihood) + 1) * (severityOptions.indexOf(formData.severity) + 1), mitigations: [] };
+        const newRisk: MocRisk = { ...formData, id: `risk-${Date.now()}`, riskScore: getRiskScore(formData.likelihood, formData.severity), mitigations: [] };
         updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: [...(h.risks || []), newRisk] } : h) } : s) } : p);
     } else if (type === 'editRisk') {
-        const riskScore = (probabilityOptions.indexOf(formData.likelihood) + 1) * (severityOptions.indexOf(formData.severity) + 1);
+        const riskScore = getRiskScore(formData.likelihood, formData.severity);
         updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: h.risks?.map(r => r.id === data.risk.id ? { ...r, ...formData, riskScore } : r) } : h) } : s) } : p);
     } else if (type === 'addMitigation') {
-        const newMitigation: MocMitigation = { ...formData, id: `mitigation-${Date.now()}`, residualRiskScore: (probabilityOptions.indexOf(formData.residualLikelihood) + 1) * (severityOptions.indexOf(formData.residualSeverity) + 1) };
-        updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: h.risks?.map(r => r.id === data.riskId ? { ...r, mitigations: [...(r.mitigations || []), newMitigation] } : r) } : h) } : s) } : p);
+        const newMitigation: MocMitigation = { ...formData, id: `mitigation-${Date.now()}`, residualRiskScore: getRiskScore(formData.residualLikelihood, formData.residualSeverity) };
+        updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === hazardId ? { ...h, risks: h.risks?.map(r => r.id === data.riskId ? { ...r, mitigations: [...(r.mitigations || []), newMitigation] } : r) } : h) } : s) } : p);
     } else if (type === 'editMitigation') {
-        const residualRiskScore = (probabilityOptions.indexOf(formData.residualLikelihood) + 1) * (severityOptions.indexOf(formData.residualSeverity) + 1);
+        const residualRiskScore = getRiskScore(formData.residualLikelihood, formData.residualSeverity);
         updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: h.risks?.map(r => r.id === data.riskId ? { ...r, mitigations: r.mitigations?.map(m => m.id === data.mitigation.id ? { ...m, ...formData, residualRiskScore } : m) } : r) } : h) } : s) } : p);
     }
 
@@ -414,7 +459,15 @@ export default function MocDetailPage() {
                     <div className="w-16 flex justify-end"><Badge>{moc.status}</Badge></div>
                 </div>
                 <Separator className="my-4"/>
-                <div><CardTitle className="mt-2">{moc.mocNumber}: {moc.title}</CardTitle><CardDescription>Proposed by {moc.proposedBy} on {format(parseISO(moc.proposalDate), 'MMMM d, yyyy')}</CardDescription></div>
+                <div className="flex justify-between items-end">
+                    <div><CardTitle className="mt-2 text-2xl">{moc.mocNumber}: {moc.title}</CardTitle><CardDescription>Proposed by {moc.proposedBy} on {format(parseISO(moc.proposalDate), 'MMMM d, yyyy')}</CardDescription></div>
+                    {canEdit && (
+                        <Button variant="secondary" onClick={handleAiAnalysis} disabled={isAiAnalyzing} className="no-print">
+                            {isAiAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                            Analyze with AI
+                        </Button>
+                    )}
+                </div>
             </CardHeader>
             <CardContent className="space-y-6">
                 <DetailSection title="Description of Change"><p className="whitespace-pre-wrap">{moc.description}</p></DetailSection>
