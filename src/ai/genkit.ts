@@ -1,4 +1,4 @@
 /**
- * Genkit initialization removed as per user request to disable AI features.
+ * Genkit functionality completely removed as per user request.
  */
 export const ai = null;
