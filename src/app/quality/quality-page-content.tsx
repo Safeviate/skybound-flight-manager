@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -14,7 +15,7 @@ import { AuditSchedule } from '../quality/audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, doc, updateDoc, writeBatch, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, doc, updateDoc, writeBatch, deleteDoc, setDoc, where, orderBy, limit } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -514,7 +515,15 @@ export function QualityPageContent({
                             }} 
                             onAreaDelete={async (id) => { 
                                 if (!company) return; 
-                                await deleteDoc(doc(db, `companies/${company.id}/audit-areas`, id)); 
+                                const areaToDelete = auditAreas.find(a => a.id === id);
+                                if (areaToDelete) {
+                                    const batch = writeBatch(db);
+                                    batch.delete(doc(db, `companies/${company.id}/audit-areas`, id));
+                                    const itemsQuery = query(collection(db, `companies/${company.id}/audit-schedule-items`), where('area', '==', areaToDelete.name));
+                                    const itemsSnap = await getDocs(itemsQuery);
+                                    itemsSnap.forEach(itemDoc => batch.delete(itemDoc.ref));
+                                    await batch.commit();
+                                }
                                 fetchData(); 
                             }} 
                         />

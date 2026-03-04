@@ -1,10 +1,11 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/form/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlusCircle, Trash2, GripVertical } from 'lucide-react';
@@ -199,9 +200,9 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate, departm
                     })}
                 </div>
              </ScrollArea>
-             {form.formState.errors.items && form.formState.errors.items.root && (
+             {form.formState.errors.items && (form.formState.errors.items as any).root && (
                  <p className="text-sm font-medium text-destructive mt-2">
-                    {form.formState.errors.items.message}
+                    {(form.formState.errors.items as any).message}
                 </p>
              )}
         </div>

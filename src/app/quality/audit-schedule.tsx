@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -12,6 +11,17 @@ import { Edit, PlusCircle, Save, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useUser } from '@/context/user-provider';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const STATUS_OPTIONS: AuditStatus[] = ['Scheduled', 'Completed', 'Pending', 'Not Scheduled'];
@@ -139,9 +149,10 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
     setEditingIndex(null);
   };
   
-  const handleCancelClick = () => {
+  const handleAreaDelete = (areaId: string) => {
+    onAreaDelete(areaId);
     setEditingIndex(null);
-  };
+  }
 
   return (
     <div className="w-full">
@@ -240,9 +251,25 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
                             >
                                 <Save className="h-4 w-4 text-primary" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onAreaDelete(area.id)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7">
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Delete Audit Area?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will permanently remove "{area.name}" and all its scheduled audit entries. This action cannot be undone.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleAreaDelete(area.id)}>Delete</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </>
                     ) : (
                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditClick(index, area.name)}>
