@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, ChevronDown, Save, Bot, Loader2 } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, ChevronDown, Save } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -27,7 +27,6 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RiskAssessmentTool } from '../../[reportId]/risk-assessment-tool';
 import { SignaturePad } from '@/components/ui/signature-pad';
-import { analyzeMoc } from '@/ai/flows/analyze-moc-flow';
 
 const probabilityOptions: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
 const severityOptions: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
@@ -221,7 +220,6 @@ export default function MocDetailPage() {
   const [moc, setMoc] = useState<ManagementOfChange | null>(null);
   const [personnel, setPersonnel] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
   const { toast } = useToast();
   const [dialogState, setDialogState] = useState<DialogState>(null);
   
@@ -284,49 +282,6 @@ export default function MocDetailPage() {
     } catch (error) {
       console.error("Error updating MOC:", error);
       toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save changes to MOC.' });
-    }
-  };
-
-  const handleAiAnalysis = async () => {
-    if (!moc) return;
-    setIsAiAnalyzing(true);
-    try {
-        const result = await analyzeMoc({
-            title: moc.title,
-            description: moc.description,
-            reason: moc.reason,
-            scope: moc.scope,
-        });
-
-        // Convert AI output to application structure
-        const phases: MocPhase[] = result.phases.map((phase, pIdx) => ({
-            id: `phase-ai-${Date.now()}-${pIdx}`,
-            description: phase.description,
-            steps: phase.steps.map((step, sIdx) => ({
-                id: `step-ai-${Date.now()}-${pIdx}-${sIdx}`,
-                description: step.description,
-                hazards: step.hazards.map((hazard, hIdx) => ({
-                    id: `hazard-ai-${Date.now()}-${pIdx}-${sIdx}-${hIdx}`,
-                    description: hazard.description,
-                    risks: hazard.risks.map((risk, rIdx) => ({
-                        id: `risk-ai-${Date.now()}-${pIdx}-${sIdx}-${hIdx}-${rIdx}`,
-                        description: risk.description,
-                        likelihood: risk.likelihood,
-                        severity: risk.severity,
-                        riskScore: getRiskScore(risk.likelihood, risk.severity),
-                        mitigations: [],
-                    })),
-                })),
-            })),
-        }));
-
-        await handleUpdate({ phases, status: 'Under Review' });
-        toast({ title: 'AI Analysis Complete', description: 'A structured implementation plan has been generated.' });
-    } catch (error) {
-        console.error("AI Analysis failed:", error);
-        toast({ variant: 'destructive', title: 'Analysis Failed', description: 'AI was unable to generate a plan. Please try again.' });
-    } finally {
-        setIsAiAnalyzing(false);
     }
   };
 
@@ -461,12 +416,6 @@ export default function MocDetailPage() {
                 <Separator className="my-4"/>
                 <div className="flex justify-between items-end">
                     <div><CardTitle className="mt-2 text-2xl">{moc.mocNumber}: {moc.title}</CardTitle><CardDescription>Proposed by {moc.proposedBy} on {format(parseISO(moc.proposalDate), 'MMMM d, yyyy')}</CardDescription></div>
-                    {canEdit && (
-                        <Button variant="secondary" onClick={handleAiAnalysis} disabled={isAiAnalyzing} className="no-print">
-                            {isAiAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                            Analyze with AI
-                        </Button>
-                    )}
                 </div>
             </CardHeader>
             <CardContent className="space-y-6">

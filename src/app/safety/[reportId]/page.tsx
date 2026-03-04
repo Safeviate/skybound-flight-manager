@@ -1,8 +1,6 @@
-
-
 'use client';
 
-import { useEffect, useState, useActionState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -11,12 +9,12 @@ import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { Risk, SafetyReport, User, InvestigationTask, TaskComment, CorrectiveAction, InvestigationTeamMember } from '@/lib/types';
-import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle, ListTodo, MessageSquare, ChevronDown, User as UserIcon, CheckCircle, XCircle, Edit, Signature, RotateCw, Eraser } from 'lucide-react';
+import type { Risk, SafetyReport, User, InvestigationTask, TaskComment, CorrectiveAction, InvestigationTeamMember, DiscussionEntry } from '@/lib/types';
+import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Loader2, BookOpen, Send, PlusCircle, ListTodo, MessageSquare, ChevronDown, User as UserIcon, CheckCircle, XCircle, Edit, Signature, RotateCw, Eraser } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, collection, getDocs, arrayUnion, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, arrayUnion, updateDoc, addDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InvestigationTeamForm } from './investigation-team-form';
@@ -45,7 +43,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, parseISO, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, Check } from 'lucide-react';
-import type { DiscussionEntry } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import { TaskItem } from './task-item';
@@ -232,12 +229,10 @@ function SafetyReportInvestigationPage() {
   const [dataLoading, setDataLoading] = useState(true);
   const { toast } = useToast();
   
-  const [isIcaoLoading, setIsIcaoLoading] = React.useState(false);
-
   const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
   const [personnel, setPersonnel] = React.useState<User[]>([]);
   const [isEditingReport, setIsEditingReport] = useState(false);
-  const [reportDetails, setReportDetails] = useState('');
+  const [reportDetails, setReportDetails] = setReportDetails('');
 
   const discussionForm = useForm<DiscussionFormValues>({
     resolver: zodResolver(discussionFormSchema),
@@ -267,7 +262,6 @@ function SafetyReportInvestigationPage() {
                 setReport(reportData);
                 setReportDetails(reportData.details);
             } else {
-                console.error("No such document!");
                 setReport(null);
             }
         } catch (error) {
@@ -340,14 +334,6 @@ function SafetyReportInvestigationPage() {
         description: `Your message has been posted to the team.`
       });
     }
-  }
-
-  const handleIcaoSuggest = async () => {
-    if (!report) return;
-    setIsIcaoLoading(true);
-    // AI functionality removed.
-    toast({ variant: 'destructive', title: 'AI Feature Disabled', description: 'AI category suggestion is currently unavailable.' });
-    setIsIcaoLoading(false);
   }
 
   const handleReportUpdate = async (updatedReport: Partial<SafetyReport>, showToast = true) => {
@@ -437,7 +423,7 @@ function SafetyReportInvestigationPage() {
         author: user.name,
         date: new Date().toISOString(),
         message,
-        readBy: [user.id], // The author has "read" it.
+        readBy: [user.id],
     };
 
     const updatedTasks = report.tasks?.map(task => 
@@ -463,7 +449,7 @@ function SafetyReportInvestigationPage() {
         return task;
     });
     
-    handleReportUpdate({ ...report, tasks: updatedTasks }, false); // Update silently
+    handleReportUpdate({ ...report, tasks: updatedTasks }, false);
   };
   
   const handleRequestExtension = (taskId: string, reason: string, newDeadline: string) => {
@@ -550,7 +536,6 @@ function SafetyReportInvestigationPage() {
                 </TabsList>
             <TabsContent value="triage" id="triage-tab-content" className="mt-6 space-y-6">
                  <Card>
-                    {/* THIS IS THE STANDARD DOCUMENT HEADER. ALL REPORTS/FORMS SHOULD FOLLOW THIS FORMAT. */}
                     <CardHeader>
                         <div className="flex justify-between items-start">
                             <div className="flex items-center gap-4">
@@ -688,9 +673,6 @@ function SafetyReportInvestigationPage() {
                                   />
                                 </div>
                                 <div className="hidden print:block p-2 border rounded-md h-10 w-full">{report.occurrenceCategory || 'N/A'}</div>
-                                  <Button type="button" variant="outline" size="icon" disabled={isIcaoLoading} onClick={handleIcaoSuggest}>
-                                      {isIcaoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
-                                  </Button>
                               </div>
                           </div>
                               <div className="space-y-2 flex-1 min-w-[200px]">

@@ -51,24 +51,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  experimental: {
-    serverComponentsExternalPackages: [
-      'genkit', 
-      'dotprompt', 
-      'handlebars', 
-      '@genkit-ai/google-genai', 
-      '@genkit-ai/core', 
-      '@genkit-ai/ai'
-    ],
-  },
-  webpack: (config, { isServer }) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      'handlebars/dist/cjs/handlebars.js': 'handlebars',
-      'handlebars': 'handlebars/dist/handlebars.js',
-    }
-    return config
-  }
 };
 
 export default pwaConfig(nextConfig);
