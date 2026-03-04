@@ -50,7 +50,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
-  },
+  }
 };
 
 export default pwaConfig(nextConfig);

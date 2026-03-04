@@ -50,25 +50,6 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
-  },
-  experimental: {
-    serverComponentsExternalPackages: [
-      'genkit', 
-      'dotprompt', 
-      'handlebars', 
-      '@genkit-ai/google-genai', 
-      '@genkit-ai/core', 
-      '@genkit-ai/ai',
-      '@genkit-ai/dotprompt'
-    ],
-  },
-  webpack: (config, { isServer }) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      'handlebars/dist/cjs/handlebars.js': 'handlebars',
-      'handlebars': 'handlebars/dist/handlebars.js',
-    }
-    return config
   }
 };
 
