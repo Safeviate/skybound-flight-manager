@@ -181,7 +181,7 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
       <div className="min-w-[1600px]">
         <div className="sticky top-0 z-20 bg-card">
             <div className="grid font-semibold" style={{ gridTemplateColumns: '250px repeat(12, 1fr)' }}>
-                <div className="p-3 border-b border-r text-center flex items-center justify-center row-span-2">Audit Area</div>
+                <div className="p-3 border-b border-r text-center flex items-center justify-center row-span-2 whitespace-normal break-words">Audit Area</div>
                 
                 {headers.map((headerText, index) => (
                     <div key={index} className="p-3 text-center border-b border-r last:border-r-0 flex items-center justify-center" style={{ gridColumn: `span 3 / span 3`}}>
@@ -198,7 +198,7 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
                             className="h-8 text-center bg-background"
                         />
                         ) : (
-                        <span onClick={() => handleHeaderClick(index)} className="cursor-pointer hover:bg-muted-foreground/20 p-1 rounded-md">
+                        <span onClick={() => handleHeaderClick(index)} className="cursor-pointer hover:bg-muted-foreground/20 p-1 rounded-md whitespace-normal break-words">
                             {headerText}
                         </span>
                         )}
@@ -220,7 +220,7 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
                                 className="h-7 text-center text-sm bg-background"
                             />
                         ) : (
-                            <span onClick={() => handleMonthHeaderClick(index)} className="cursor-pointer hover:bg-muted-foreground/20 p-1 rounded-md">
+                            <span onClick={() => handleMonthHeaderClick(index)} className="cursor-pointer hover:bg-muted-foreground/20 p-1 rounded-md whitespace-normal break-words">
                                 {headerText}
                             </span>
                         )}
@@ -230,17 +230,19 @@ export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, on
         </div>
         <div className="grid" style={{ gridTemplateColumns: '250px repeat(12, 1fr)' }}>
           {auditAreas.flatMap((area, index) => [
-              <div key={area.id} className="p-2 border-b border-r font-medium flex items-center justify-between gap-2">
-                {editingIndex === index ? (
-                  <Input
-                    value={tempAreaName}
-                    onChange={(e) => setTempAreaName(e.target.value)}
-                    className="h-8"
-                  />
-                ) : (
-                  <span>{area.name}</span>
-                )}
-                <div className="flex items-center">
+              <div key={area.id} className="p-2 border-b border-r font-medium flex items-center justify-between gap-2 whitespace-normal break-words min-h-[3.5rem]">
+                <div className="flex-1 min-w-0 pr-1 py-1">
+                    {editingIndex === index ? (
+                    <Input
+                        value={tempAreaName}
+                        onChange={(e) => setTempAreaName(e.target.value)}
+                        className="h-8"
+                    />
+                    ) : (
+                    <span className="leading-tight block">{area.name}</span>
+                    )}
+                </div>
+                <div className="flex items-center shrink-0">
                     {editingIndex === index ? (
                         <>
                             <Button
