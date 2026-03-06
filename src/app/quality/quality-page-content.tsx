@@ -8,7 +8,7 @@ import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, Corre
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, ReferenceLine, PieChart, Pie } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter, subMonths, eachMonthOfInterval, startOfYear, startOfToday } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2, PlusCircle, Edit, Database, ShieldCheck, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin, ArrowUpDown, Calendar as CalendarIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { AuditSchedule } from '../quality/audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

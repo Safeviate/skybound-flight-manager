@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils.tsx';
 import type { AuditScheduleItem, AuditStatus, CompanyAuditArea } from '@/lib/types';
-import { Edit, PlusCircle, Save, Trash2 } from 'lucide-react';
+import { Edit, PlusCircle, Save, Trash2, Calendar as CalendarIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useUser } from '@/context/user-provider';
