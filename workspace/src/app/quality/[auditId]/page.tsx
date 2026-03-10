@@ -37,14 +37,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { AuditTeamForm } from './audit-team-form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-const discussionFormSchema = z.object({
-  recipient: z.string().optional(),
-  message: z.string().min(1, 'Message cannot be empty.'),
-  replyByDate: z.date().optional(),
-});
-
-type DiscussionFormValues = z.infer<typeof discussionFormSchema>;
-
 const getFindingInfo = (finding: FindingStatus | null) => {
     switch (finding) {
         case 'Compliant': return { icon: <CheckCircle className="h-5 w-5 text-green-600" />, variant: 'success' as const, text: 'Compliant' };
@@ -58,9 +50,9 @@ const getFindingInfo = (finding: FindingStatus | null) => {
 
 const getLevelInfo = (level: FindingLevel) => {
     switch (level) {
-        case 'Level 1 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
+        case 'Level 3 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
         case 'Level 2 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-orange-600" />, variant: 'orange' as const };
-        case 'Level 3 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
+        case 'Level 1 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
         case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const };
         default: return null;
     }
@@ -70,84 +62,10 @@ const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Lev
 
 const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit: QualityAudit, onUpdate: (updatedAudit: QualityAudit, showToast?: boolean) => void, personnel: User[], onNavigateBack: () => void }) => {
     const { user, company } = useUser();
-    const { toast } = useToast();
-    const discussionForm = useForm<DiscussionFormValues>({
-        resolver: zodResolver(discussionFormSchema),
-    });
-
-    const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
     
     const nonConformances = useMemo(() => audit.checklistItems.filter(item => item.finding === 'Non Compliant' || item.finding === 'Partial'), [audit.checklistItems]);
     const observations = useMemo(() => audit.checklistItems.filter(item => item.finding === 'Observation'), [audit.checklistItems]);
     const otherFindings = useMemo(() => audit.checklistItems.filter(item => !nonConformances.some(nc => nc.id === item.id) && !observations.some(obs => obs.id === item.id)), [audit.checklistItems, nonConformances, observations]);
-
-
-    const availableRecipients = React.useMemo(() => {
-        if (!audit.auditTeam || !user) return [];
-        return audit.auditTeam.filter(name => name !== user.name);
-    }, [audit.auditTeam, user]);
-
-
-    const handleReply = (recipient: string) => {
-        discussionForm.setValue('recipient', recipient);
-        setIsDiscussionDialogOpen(true);
-    };
-
-    const handleNewDiscussionMessage = async (data: DiscussionFormValues) => {
-        if (!user || !audit || !company) {
-            return;
-        }
-
-        const newEntry: DiscussionEntry = {
-            id: `d-${Date.now()}`,
-            author: user.name,
-            recipient: data.recipient || 'Team',
-            message: data.message,
-            datePosted: new Date().toISOString(),
-            replyByDate: data.replyByDate ? data.replyByDate.toISOString() : undefined,
-        };
-
-        const cleanNewEntry = JSON.parse(JSON.stringify(newEntry, (key, value) => {
-            return value === undefined ? null : value;
-        }));
-        
-        const updatedAudit = {
-            ...audit,
-            discussion: [...(audit.discussion || []), cleanNewEntry],
-        };
-
-        const recipients = data.recipient
-          ? [data.recipient]
-          : audit.auditTeam?.filter((name) => name !== user.name) || [];
-
-        if (recipients.length > 0) {
-            toast({ title: 'Message Posted', description: `A notification has been sent to relevant team members.`});
-        }
-        
-        for (const recipientName of recipients) {
-            const recipientUser = personnel.find(p => p.name === recipientName);
-            if (recipientUser) {
-                const newAlert: Omit<Alert, 'id' | 'number'> = {
-                    companyId: company.id,
-                    type: 'Task',
-                    title: `New Message on Audit: ${audit.id.substring(0,8)}`,
-                    description: `From ${user.name}: "${data.message.substring(0, 50)}..."`,
-                    author: user.name,
-                    date: new Date().toISOString(),
-                    readBy: [],
-                    targetUserId: recipientUser.id,
-                    relatedLink: `/quality/${audit.id}`,
-                };
-                const alertsCollection = collection(db, `companies/${company.id}/alerts`);
-                await addDoc(alertsCollection, newAlert);
-            }
-        }
-
-
-        onUpdate(updatedAudit, true);
-        discussionForm.reset();
-        setIsDiscussionDialogOpen(false);
-    }
 
     const handleRequestSignatures = async () => {
         if (!audit || !company || !user) return;
@@ -172,27 +90,14 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                 await addDoc(alertsCollection, newAlert);
             }
         }
-
-        toast({
-            title: 'Signatures Requested',
-            description: `Alerts have been sent to ${signatureUsers.join(' and ')}.`
-        });
     };
 
     const handleResetSignatures = () => {
         onUpdate({ ...audit, auditorSignature: undefined, auditeeSignature: undefined, auditorSignatureDate: undefined, auditeeSignatureDate: undefined }, true);
-        toast({
-            title: 'Signatures Cleared',
-            description: 'The signature fields for this audit have been reset.',
-        });
     };
     
     const handleReopenAudit = () => {
         onUpdate({ ...audit, status: 'Open' }, true);
-        toast({
-            title: 'Audit Reopened',
-            description: 'The audit has been reopened for further editing.',
-        });
     };
 
     const canSign = (user: User | null, personName: string | null | undefined): boolean => {
@@ -960,5 +865,3 @@ export default function QualityAuditDetailPage() {
     </main>
   );
 }
-
-QualityAuditDetailPage.title = "Quality Audit Investigation";

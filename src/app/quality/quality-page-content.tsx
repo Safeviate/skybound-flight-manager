@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User, ComplianceItem, CompanyDepartment, Aircraft, CoherenceMatrixCategory, UnifiedTask, CompanyAuditArea, FindingStatus, FindingLevel } from '@/lib/types';
+import type { Risk, SafetyReport, User, Booking, SpiConfig, ManagementOfChange, ComplianceItem, CoherenceMatrixCategory, UnifiedTask, CompanyAuditArea, FindingStatus, FindingLevel } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, ReferenceLine, PieChart, Pie } from 'recharts';
 import { format, parseISO, startOfMonth, differenceInDays, isAfter, subMonths, eachMonthOfInterval, startOfYear, startOfToday } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -81,6 +81,16 @@ const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
             </BarChart>
         </ResponsiveContainer>
     );
+};
+
+const getLevelInfo = (level: FindingLevel) => {
+    switch (level) {
+        case 'Level 3 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
+        case 'Level 2 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-orange-600" />, variant: 'orange' as const };
+        case 'Level 1 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
+        case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const };
+        default: return null;
+    }
 };
 
 const ComplianceItemForm = ({

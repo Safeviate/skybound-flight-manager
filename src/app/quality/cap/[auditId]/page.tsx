@@ -200,7 +200,7 @@ export default function CreateCapPage() {
                                         <CardTitle className="text-base">{finding.itemText}</CardTitle>
                                         <CardDescription className="text-xs">{finding.regulationReference}</CardDescription>
                                     </div>
-                                    <Badge variant={finding.level === 'Level 3 Finding' ? 'destructive' : 'warning'}>{finding.level}</Badge>
+                                    <Badge variant={finding.level === 'Level 1 Finding' ? 'destructive' : 'warning'}>{finding.level}</Badge>
                                 </div>
                             </CardHeader>
                             <CardContent>

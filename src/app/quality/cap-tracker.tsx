@@ -87,7 +87,7 @@ export default function CapTracker({ audits }: CapTrackerProps) {
                         {finding.regulationReference || 'N/A'}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={finding.level === 'Level 3 Finding' ? 'destructive' : 'warning'} className="text-[10px] h-5">
+                        <Badge variant={finding.level === 'Level 1 Finding' ? 'destructive' : 'warning'} className="text-[10px] h-5">
                           {finding.level}
                         </Badge>
                       </TableCell>
