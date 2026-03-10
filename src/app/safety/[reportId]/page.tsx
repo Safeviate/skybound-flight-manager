@@ -232,7 +232,7 @@ function SafetyReportInvestigationPage() {
   const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
   const [personnel, setPersonnel] = React.useState<User[]>([]);
   const [isEditingReport, setIsEditingReport] = useState(false);
-  const [reportDetails, setReportDetails] = setReportDetails('');
+  const [reportDetails, setReportDetails] = useState('');
 
   const discussionForm = useForm<DiscussionFormValues>({
     resolver: zodResolver(discussionFormSchema),
