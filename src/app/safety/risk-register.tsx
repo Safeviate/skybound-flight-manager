@@ -45,13 +45,18 @@ export function RiskRegister({ risks, onUpdate }: RiskRegisterProps) {
   const handleRiskSubmit = async (data: Omit<Risk, 'id' | 'companyId'>) => {
     if (!company) return;
 
+    // Sanitize data: Firestore does not accept 'undefined' values.
+    // JSON.stringify will remove keys with undefined values.
+    const cleanData = JSON.parse(JSON.stringify(data));
+
     try {
         if (editingRisk) {
             const riskRef = doc(db, `companies/${company.id}/risks`, editingRisk.id);
-            await updateDoc(riskRef, data as any);
+            await updateDoc(riskRef, cleanData);
             toast({ title: "Risk Updated", description: "The risk details have been saved." });
         } else {
-            await addDoc(collection(db, `companies/${company.id}/risks`), { ...data, companyId: company.id });
+            const risksCollection = collection(db, `companies/${company.id}/risks`);
+            await addDoc(risksCollection, { ...cleanData, companyId: company.id });
             toast({ title: "Risk Added", description: "The new risk has been added to the register." });
         }
         onUpdate();
@@ -110,7 +115,7 @@ export function RiskRegister({ risks, onUpdate }: RiskRegisterProps) {
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
             {HAZARD_AREAS.map(area => {
-                const areaRisks = risks.filter(r => r.hazardArea === area && r.status === 'Open');
+                const areaRisks = risks.filter(r => r.hazardArea === area && r.status !== 'Closed');
                 return (
                     <TabsContent key={area} value={area}>
                          <ScrollArea className="w-full whitespace-nowrap rounded-md border">

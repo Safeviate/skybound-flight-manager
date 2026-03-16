@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -97,10 +98,19 @@ const likelihoodMap: Record<RiskLikelihood, number> = { 'Frequent': 5, 'Occasion
 export function NewRiskForm({ onSubmit, existingRisk }: NewRiskFormProps) {
   const form = useForm<RiskFormValues>({
     resolver: zodResolver(riskFormSchema),
-    defaultValues: existingRisk || {
+    defaultValues: existingRisk ? {
+        ...existingRisk,
+        residualLikelihood: existingRisk.residualLikelihood || null,
+        residualSeverity: existingRisk.residualSeverity || null,
+    } : {
         status: 'Open',
         likelihood: 'Remote',
         severity: 'Minor',
+        hazardArea: '',
+        process: '',
+        hazard: '',
+        risk: '',
+        mitigation: '',
     },
   });
 
@@ -127,6 +137,7 @@ export function NewRiskForm({ onSubmit, existingRisk }: NewRiskFormProps) {
 
     const dateIdentified = existingRisk?.dateIdentified || new Date().toISOString().split('T')[0];
     
+    // We send the raw data to the parent, which will handle the JSON scrubbing.
     onSubmit({
         ...data,
         riskScore,
@@ -189,7 +200,7 @@ export function NewRiskForm({ onSubmit, existingRisk }: NewRiskFormProps) {
                             render={({ field }) => (
                                 <FormItem>
                                 <FormLabel>Hazard Area</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value || ''}>
                                     <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select an area" />
@@ -209,7 +220,7 @@ export function NewRiskForm({ onSubmit, existingRisk }: NewRiskFormProps) {
                             render={({ field }) => (
                                 <FormItem>
                                 <FormLabel>Process / Activity</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value || ''}>
                                     <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a process" />
@@ -299,7 +310,7 @@ export function NewRiskForm({ onSubmit, existingRisk }: NewRiskFormProps) {
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Status</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value || 'Open'}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a status" />
