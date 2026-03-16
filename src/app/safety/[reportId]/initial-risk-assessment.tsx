@@ -8,7 +8,7 @@ import { getRiskScore, getRiskScoreColor, getRiskLevel, getRiskAlphaCode } from 
 import type { AssociatedRisk, SafetyReport, Risk as RiskRegisterEntry, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, ArrowUpCircle, Edit, Save } from 'lucide-react';
+import { PlusCircle, ArrowUpCircle, Edit, Save, Trash2 } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AddRiskForm } from './add-risk-form';
@@ -21,6 +21,17 @@ import { RiskAssessmentTool } from './risk-assessment-tool';
 import { z } from 'zod';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useUser } from '@/context/user-provider';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface InitialRiskAssessmentProps {
     report: SafetyReport;
@@ -48,6 +59,15 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
     toast({
         title: 'Hazard Added',
         description: 'The new hazard and its initial risk score have been recorded.'
+    });
+  }
+
+  const handleDeleteRisk = (riskId: string) => {
+    const updatedRisks = report.associatedRisks?.filter(r => r.id !== riskId) || [];
+    onUpdate({ ...report, associatedRisks: updatedRisks });
+    toast({
+        title: 'Hazard Removed',
+        description: 'The hazard has been removed from this report.'
     });
   }
 
@@ -89,6 +109,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                         <TableHead>Risk</TableHead>
                         <TableHead>Score</TableHead>
                         <TableHead>Level</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -112,6 +133,27 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                                 </TableCell>
                                 <TableCell>
                                     <Badge variant="outline">{getRiskLevel(risk.riskScore)}</Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="text-destructive">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Remove Hazard?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will remove the hazard "{risk.hazard}" from this safety report.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteRisk(risk.id)}>Remove</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 </TableCell>
                             </TableRow>
                         )

@@ -11,7 +11,7 @@ import { format, parseISO } from 'date-fns';
 import type { Risk } from '@/lib/types';
 import { getRiskScoreColor, getRiskLevel, getRiskAlphaCode } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PlusCircle, Edit, ArrowRight } from 'lucide-react';
+import { PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewRiskForm } from './new-risk-form';
 import { useUser } from '@/context/user-provider';
@@ -19,6 +19,17 @@ import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, addDoc, collection, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 
 const HAZARD_AREAS = [
@@ -46,7 +57,6 @@ export function RiskRegister({ risks, onUpdate }: RiskRegisterProps) {
     if (!company) return;
 
     // Sanitize data: Firestore does not accept 'undefined' values.
-    // JSON.stringify will remove keys with undefined values.
     const cleanData = JSON.parse(JSON.stringify(data));
 
     try {
@@ -65,6 +75,18 @@ export function RiskRegister({ risks, onUpdate }: RiskRegisterProps) {
     } catch (error) {
         console.error("Error submitting risk:", error);
         toast({ variant: "destructive", title: "Error", description: "Could not save the risk." });
+    }
+  };
+
+  const handleDeleteRisk = async (riskId: string) => {
+    if (!company) return;
+    try {
+        await deleteDoc(doc(db, `companies/${company.id}/risks`, riskId));
+        toast({ title: "Risk Deleted", description: "The hazard has been removed from the register." });
+        onUpdate();
+    } catch (error) {
+        console.error("Error deleting risk:", error);
+        toast({ variant: "destructive", title: "Error", description: "Could not delete the risk." });
     }
   };
   
@@ -168,9 +190,30 @@ export function RiskRegister({ risks, onUpdate }: RiskRegisterProps) {
                                                     </TableCell>
                                                     {canEdit && (
                                                         <TableCell className="text-right">
-                                                            <Button variant="ghost" size="icon" onClick={() => openEditDialog(risk)}>
-                                                                <Edit className="h-4 w-4" />
-                                                            </Button>
+                                                            <div className="flex justify-end gap-2">
+                                                                <Button variant="ghost" size="icon" onClick={() => openEditDialog(risk)}>
+                                                                    <Edit className="h-4 w-4" />
+                                                                </Button>
+                                                                <AlertDialog>
+                                                                    <AlertDialogTrigger asChild>
+                                                                        <Button variant="ghost" size="icon" className="text-destructive">
+                                                                            <Trash2 className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </AlertDialogTrigger>
+                                                                    <AlertDialogContent>
+                                                                        <AlertDialogHeader>
+                                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                            <AlertDialogDescription>
+                                                                                This will permanently delete the hazard "{risk.hazard}" from the register. This action cannot be undone.
+                                                                            </AlertDialogDescription>
+                                                                        </AlertDialogHeader>
+                                                                        <AlertDialogFooter>
+                                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                            <AlertDialogAction onClick={() => handleDeleteRisk(risk.id)}>Delete</AlertDialogAction>
+                                                                        </AlertDialogFooter>
+                                                                    </AlertDialogContent>
+                                                                </AlertDialog>
+                                                            </div>
                                                         </TableCell>
                                                     )}
                                                 </TableRow>
