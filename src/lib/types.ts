@@ -84,6 +84,7 @@ export type Company = {
   auditScheduleMonthHeaders?: string[];
   auditScheduleYear?: number;
   auditAreas?: CompanyAuditArea[];
+  hazardAreas?: string[];
 };
 
 export type AircraftDocument = {
@@ -880,5 +881,15 @@ export type AuditArea = string;
 export type FindingStatus = 'Compliant' | 'Non Compliant' | 'Partial' | 'Not Applicable' | 'Observation';
 export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Finding' | 'Observation' | null;
 export type ChecklistCategory = 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
-export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'Header';
+export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs' | 'Header';
 export type AuditChecklistItem = { id: string; text: string; finding: FindingStatus | null; level: FindingLevel; observation?: string; findingNotes?: string; evidence?: string; regulationReference?: string; reference?: string; comment?: string; photo?: string; suggestedImprovement?: string; type?: ChecklistItemType; };
+
+export const DEFAULT_HAZARD_AREAS = [
+    'Flight Operations', 
+    'Ground Operations',
+    'Maintenance', 
+    'Cabin Safety', 
+    'Occupational Safety', 
+    'Security', 
+    'Administration & Management'
+];

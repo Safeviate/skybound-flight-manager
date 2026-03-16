@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import type { Risk, RiskLikelihood, RiskSeverity } from '@/lib/types';
+import { DEFAULT_HAZARD_AREAS } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { RiskAssessmentTool } from './[reportId]/risk-assessment-tool';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,16 +24,8 @@ import { Input } from '@/components/ui/input';
 import { getRiskScore } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { useUser } from '@/context/user-provider';
 
-const hazardAreas = [
-    'Flight Operations', 
-    'Ground Operations',
-    'Maintenance', 
-    'Cabin Safety', 
-    'Occupational Safety', 
-    'Security', 
-    'Administration & Management'
-];
 const processes = [
     'AB Initio Training',
     'Advanced Training',
@@ -96,6 +89,11 @@ const likelihoodMap: Record<RiskLikelihood, number> = { 'Frequent': 5, 'Occasion
 
 
 export function NewRiskForm({ onSubmit, existingRisk }: NewRiskFormProps) {
+  const { company } = useUser();
+  const hazardAreas = company?.hazardAreas && company.hazardAreas.length > 0 
+    ? company.hazardAreas 
+    : DEFAULT_HAZARD_AREAS;
+
   const form = useForm<RiskFormValues>({
     resolver: zodResolver(riskFormSchema),
     defaultValues: existingRisk ? {
@@ -137,7 +135,6 @@ export function NewRiskForm({ onSubmit, existingRisk }: NewRiskFormProps) {
 
     const dateIdentified = existingRisk?.dateIdentified || new Date().toISOString().split('T')[0];
     
-    // We send the raw data to the parent, which will handle the JSON scrubbing.
     onSubmit({
         ...data,
         riskScore,

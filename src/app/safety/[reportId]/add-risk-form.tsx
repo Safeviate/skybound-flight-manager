@@ -15,13 +15,14 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import type { AssociatedRisk, RiskLikelihood, RiskSeverity } from '@/lib/types';
+import { DEFAULT_HAZARD_AREAS } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { RiskAssessmentTool } from './risk-assessment-tool';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useUser } from '@/context/user-provider';
 
-const hazardAreas = ['Flight Operations', 'Maintenance', 'Ground Operations', 'Cabin Safety', 'Occupational Safety', 'Security', 'Administration & Management'];
 const processes = [
     'AB Initio Training',
     'Advanced Training',
@@ -83,6 +84,11 @@ const severityMap: Record<RiskSeverity, string> = { 'Catastrophic': 'A', 'Hazard
 const likelihoodMap: Record<RiskLikelihood, number> = { 'Frequent': 5, 'Occasional': 4, 'Remote': 3, 'Improbable': 2, 'Extremely Improbable': 1 };
 
 export function AddRiskForm({ onAddRisk, initialValues }: AddRiskFormProps) {
+  const { company } = useUser();
+  const hazardAreas = company?.hazardAreas && company.hazardAreas.length > 0 
+    ? company.hazardAreas 
+    : DEFAULT_HAZARD_AREAS;
+
   const form = useForm<AddRiskFormValues>({
     resolver: zodResolver(addRiskFormSchema),
     defaultValues: initialValues || {},

@@ -16,6 +16,7 @@ import { RiskAssessmentTool } from '@/app/safety/[reportId]/risk-assessment-tool
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import type { Facility, FindingOption, BookingPurpose } from '@/lib/types';
+import { DEFAULT_HAZARD_AREAS } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -42,6 +43,10 @@ function CompanySettingsPage() {
   const [isPurposeDialogOpen, setIsPurposeDialogOpen] = useState(false);
   const [editingPurpose, setEditingPurpose] = useState<BookingPurpose | null>(null);
   const [purposeName, setPurposeName] = useState('');
+
+  const [isHazardAreaDialogOpen, setIsHazardAreaDialogOpen] = useState(false);
+  const [editingHazardAreaIndex, setEditingHazardAreaIndex] = useState<number | null>(null);
+  const [hazardAreaName, setHazardAreaName] = useState('');
   
   const [findingLevelColors, setFindingLevelColors] = useState<Record<string, string>>({});
 
@@ -229,6 +234,51 @@ function CompanySettingsPage() {
           toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete booking purpose.' });
       }
   };
+
+  const openHazardAreaDialog = (index: number | null) => {
+    setEditingHazardAreaIndex(index);
+    const currentAreas = company?.hazardAreas && company.hazardAreas.length > 0 
+        ? company.hazardAreas 
+        : DEFAULT_HAZARD_AREAS;
+    setHazardAreaName(index !== null ? currentAreas[index] : '');
+    setIsHazardAreaDialogOpen(true);
+  };
+
+  const handleHazardAreaSave = async () => {
+    if (!company || !hazardAreaName.trim()) return;
+
+    let updatedAreas = [...(company.hazardAreas && company.hazardAreas.length > 0 ? company.hazardAreas : DEFAULT_HAZARD_AREAS)];
+
+    if (editingHazardAreaIndex !== null) {
+      updatedAreas[editingHazardAreaIndex] = hazardAreaName.trim();
+    } else {
+      updatedAreas.push(hazardAreaName.trim());
+    }
+    
+    const success = await updateCompany(company.id, { hazardAreas: updatedAreas });
+    if (success) {
+      toast({ title: `Hazard Area ${editingHazardAreaIndex !== null ? 'Updated' : 'Added'}` });
+      setIsHazardAreaDialogOpen(false);
+      setEditingHazardAreaIndex(null);
+      setHazardAreaName('');
+    }
+  };
+
+  const handleHazardAreaDelete = async (index: number) => {
+    if (!company) return;
+    const currentAreas = company.hazardAreas && company.hazardAreas.length > 0 
+        ? company.hazardAreas 
+        : DEFAULT_HAZARD_AREAS;
+    const updatedAreas = currentAreas.filter((_, i) => i !== index);
+    const success = await updateCompany(company.id, { hazardAreas: updatedAreas });
+    if (success) {
+      toast({ title: 'Hazard Area Removed' });
+    }
+  };
+
+  const currentHazardAreas = company?.hazardAreas && company.hazardAreas.length > 0 
+    ? company.hazardAreas 
+    : DEFAULT_HAZARD_AREAS;
 
 
   if (loading || !user) {
@@ -593,6 +643,49 @@ function CompanySettingsPage() {
 
             <Separator />
 
+            <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Risk Register Headings</h3>
+                <Card>
+                    <CardHeader className="flex-row justify-between items-center">
+                        <div>
+                            <CardTitle className="text-base">Manage Hazard Areas</CardTitle>
+                            <CardDescription className="text-sm">Customize the categories (tabs) in the organizational risk register.</CardDescription>
+                        </div>
+                        <Button size="sm" onClick={() => openHazardAreaDialog(null)}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Area
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Area Name</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {currentHazardAreas.map((area, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell>{area}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="icon" onClick={() => openHazardAreaDialog(index)}>
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" onClick={() => handleHazardAreaDelete(index)}>
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <Separator />
+
              <div className="space-y-4">
                 <h3 className="font-semibold text-lg flex items-center gap-2"><ShieldAlert /> Risk Matrix Configuration</h3>
                 <RiskAssessmentTool readOnly={false} />
@@ -692,6 +785,29 @@ function CompanySettingsPage() {
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsPurposeDialogOpen(false)}>Cancel</Button>
                     <Button onClick={handlePurposeSave}>Save Purpose</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <Dialog open={isHazardAreaDialogOpen} onOpenChange={setIsHazardAreaDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{editingHazardAreaIndex !== null ? 'Edit Hazard Area' : 'Add New Hazard Area'}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="hazard-area-name">Area Name</Label>
+                        <Input
+                            id="hazard-area-name"
+                            value={hazardAreaName}
+                            onChange={(e) => setHazardAreaName(e.target.value)}
+                            placeholder="e.g., Flight Operations"
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsHazardAreaDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleHazardAreaSave}>Save Area</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
