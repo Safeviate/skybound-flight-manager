@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -12,7 +11,7 @@ import type { Risk, Company } from '@/lib/types';
 import { DEFAULT_HAZARD_AREAS } from '@/lib/types';
 import { getRiskScoreColor, getRiskLevel, getRiskAlphaCode } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewRiskForm } from './new-risk-form';
 import { useUser } from '@/context/user-provider';
