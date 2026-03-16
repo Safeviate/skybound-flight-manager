@@ -117,14 +117,14 @@ export const getRiskScore = (likelihood: RiskLikelihood, severity: RiskSeverity)
 }
 
 export const getRiskLevel = (score: number | null | undefined): 'Low' | 'Medium' | 'High' | 'Extreme' | 'N/A' => {
-      if (score === null || score === undefined) return 'N/A';
+      if (score === null || score === undefined || score === 0) return 'N/A';
       if (score <= 4) return 'Low';
       if (score <= 9) return 'Medium';
       if (score <= 16) return 'High';
       return 'Extreme';
   }
 
-const getAlphanumericCodeFromLikelihoodAndSeverity = (likelihood: RiskLikelihood | undefined, severity: RiskSeverity | undefined): string | null => {
+export const getRiskAlphaCode = (likelihood: RiskLikelihood | undefined, severity: RiskSeverity | undefined): string | null => {
     if (!likelihood || !severity) return null;
     const likelihoodValue = LIKELIHOOD_MAP[likelihood];
     const severityValue = SEVERITY_MAP[severity];
@@ -137,7 +137,7 @@ const getAlphanumericCodeFromLikelihoodAndSeverity = (likelihood: RiskLikelihood
 export const getRiskScoreColor = (likelihood: RiskLikelihood | undefined, severity: RiskSeverity | undefined, riskMatrixColors?: Record<string, string>): string => {
   if (!likelihood || !severity) return 'hsl(var(--muted-foreground))';
 
-  const alphanumericCode = getAlphanumericCodeFromLikelihoodAndSeverity(likelihood, severity);
+  const alphanumericCode = getRiskAlphaCode(likelihood, severity);
   
   if (alphanumericCode && riskMatrixColors && riskMatrixColors[alphanumericCode]) {
       return riskMatrixColors[alphanumericCode];

@@ -1,9 +1,10 @@
+
 'use client';
 
 import React, { useState, Fragment } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
+import { getRiskScore, getRiskScoreColor, getRiskLevel, getRiskAlphaCode } from '@/lib/utils.tsx';
 import type { AssociatedRisk, SafetyReport, Risk as RiskRegisterEntry, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +20,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { RiskAssessmentTool } from './risk-assessment-tool';
 import { z } from 'zod';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useUser } from '@/context/user-provider';
 
 interface InitialRiskAssessmentProps {
     report: SafetyReport;
@@ -28,6 +30,7 @@ interface InitialRiskAssessmentProps {
 
 export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: InitialRiskAssessmentProps) {
   const [isAddRiskOpen, setIsAddRiskOpen] = useState(false);
+  const { company } = useUser();
   const { toast } = useToast();
 
   const handleAddRisk = (newRiskData: Omit<AssociatedRisk, 'id'>) => {
@@ -84,29 +87,35 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                     <TableRow>
                         <TableHead>Hazard</TableHead>
                         <TableHead>Risk</TableHead>
-                        <TableHead>Risk Score</TableHead>
+                        <TableHead>Score</TableHead>
                         <TableHead>Level</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {report.associatedRisks.map(risk => (
-                        <TableRow key={risk.id}>
-                            <TableCell className="max-w-xs">{risk.hazard}</TableCell>
-                            <TableCell className="max-w-xs">{risk.risk}</TableCell>
-                            <TableCell>
-                                { !isNaN(risk.riskScore) ? (
-                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity), color: 'white' }}>
-                                        {risk.riskScore}
-                                    </Badge>
-                                ) : (
-                                    <Badge variant="outline">N/A</Badge>
-                                )}
-                            </TableCell>
-                            <TableCell>
-                                <Badge variant="outline">{getRiskLevel(risk.riskScore)}</Badge>
-                            </TableCell>
-                        </TableRow>
-                    ))}
+                    {report.associatedRisks.map(risk => {
+                        const alphaCode = getRiskAlphaCode(risk.likelihood, risk.severity);
+                        return (
+                            <TableRow key={risk.id}>
+                                <TableCell className="max-w-xs">{risk.hazard}</TableCell>
+                                <TableCell className="max-w-xs">{risk.risk}</TableCell>
+                                <TableCell>
+                                    {alphaCode ? (
+                                        <Badge 
+                                            className="text-black font-bold"
+                                            style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity, company?.riskMatrixColors) }}
+                                        >
+                                            {alphaCode}
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="outline">N/A</Badge>
+                                    )}
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant="outline">{getRiskLevel(risk.riskScore)}</Badge>
+                                </TableCell>
+                            </TableRow>
+                        )
+                    })}
                 </TableBody>
                 </Table>
         ) : (

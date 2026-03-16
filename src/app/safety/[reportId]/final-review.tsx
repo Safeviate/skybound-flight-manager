@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import type { SafetyReport } from '@/lib/types';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
+import { getRiskScoreColor, getRiskLevel, getRiskAlphaCode } from '@/lib/utils.tsx';
 import { ArrowRight, Check, ShieldCheck, ShieldAlert, CircleAlert, FileText, CheckCircle, RotateCw } from 'lucide-react';
+import { useUser } from '@/context/user-provider';
 
 interface FinalReviewProps {
   report: SafetyReport;
@@ -16,6 +17,8 @@ interface FinalReviewProps {
 }
 
 export function FinalReview({ report, onUpdate }: FinalReviewProps) {
+  const { company } = useUser();
+
   const handleCloseReport = () => {
     onUpdate({
       ...report,
@@ -65,18 +68,34 @@ export function FinalReview({ report, onUpdate }: FinalReviewProps) {
              <ShieldAlert className="h-5 w-5 text-primary mt-1" />
              <div>
                 <h4 className="font-semibold">Risk Assessments</h4>
-                {report.associatedRisks?.map(risk => (
-                    <div key={risk.id} className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
-                        <span>{risk.hazard}:</span>
-                        <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
-                            {getRiskLevel(risk.riskScore)} ({risk.riskScore})
-                        </Badge>
-                         <ArrowRight className="h-4 w-4" />
-                         <Badge style={{ backgroundColor: getRiskScoreColor(risk.residualRiskScore), color: 'white' }}>
-                            {getRiskLevel(risk.residualRiskScore)} ({risk.residualRiskScore})
-                        </Badge>
-                    </div>
-                ))}
+                {report.associatedRisks?.map(risk => {
+                    const initialCode = getRiskAlphaCode(risk.likelihood, risk.severity);
+                    const mitigatedCode = getRiskAlphaCode(risk.residualLikelihood, risk.residualSeverity);
+                    return (
+                        <div key={risk.id} className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+                            <span>{risk.hazard}:</span>
+                            {initialCode && (
+                                <Badge 
+                                    className="text-black font-bold"
+                                    style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity, company?.riskMatrixColors) }}
+                                >
+                                    {initialCode}
+                                </Badge>
+                            )}
+                            <ArrowRight className="h-4 w-4" />
+                            {mitigatedCode ? (
+                                <Badge 
+                                    className="text-black font-bold"
+                                    style={{ backgroundColor: getRiskScoreColor(risk.residualLikelihood, risk.residualSeverity, company?.riskMatrixColors) }}
+                                >
+                                    {mitigatedCode}
+                                </Badge>
+                            ) : (
+                                <Badge variant="outline">N/A</Badge>
+                            )}
+                        </div>
+                    )
+                })}
              </div>
           </div>
           <div className="flex items-start gap-3">

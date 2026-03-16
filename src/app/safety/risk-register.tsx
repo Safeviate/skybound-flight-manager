@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -10,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import type { Risk } from '@/lib/types';
-import { getRiskScoreColor, getRiskLevel } from '@/lib/utils';
+import { getRiskScoreColor, getRiskLevel, getRiskAlphaCode } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PlusCircle, Edit, ArrowRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -120,44 +119,58 @@ export function RiskRegister({ risks, onUpdate }: RiskRegisterProps) {
                                     <TableRow>
                                     <TableHead className="w-[30%]">Hazard</TableHead>
                                     <TableHead className="w-[30%]">Risk</TableHead>
-                                    <TableHead>Initial Score</TableHead>
-                                    <TableHead>Mitigated Score</TableHead>
+                                    <TableHead>Initial</TableHead>
+                                    <TableHead>Mitigated</TableHead>
                                     <TableHead>Level</TableHead>
                                     {canEdit && <TableHead className="text-right">Actions</TableHead>}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {areaRisks.length > 0 ? (
-                                        areaRisks.map(risk => (
-                                            <TableRow key={risk.id}>
-                                                <TableCell className="font-medium whitespace-normal">{risk.hazard}</TableCell>
-                                                <TableCell className="whitespace-normal">{risk.risk}</TableCell>
-                                                <TableCell>
-                                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity, company?.riskMatrixColors), color: 'black' }}>
-                                                        {risk.riskScore}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {risk.residualRiskScore !== undefined ? (
-                                                        <Badge style={{ backgroundColor: getRiskScoreColor(risk.residualLikelihood, risk.residualSeverity, company?.riskMatrixColors), color: 'black' }}>
-                                                            {risk.residualRiskScore}
-                                                        </Badge>
-                                                    ) : (
-                                                        <Badge variant="outline">N/A</Badge>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline">{getRiskLevel(risk.residualRiskScore ?? risk.riskScore)}</Badge>
-                                                </TableCell>
-                                                {canEdit && (
-                                                    <TableCell className="text-right">
-                                                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(risk)}>
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
+                                        areaRisks.map(risk => {
+                                            const initialCode = getRiskAlphaCode(risk.likelihood, risk.severity);
+                                            const mitigatedCode = getRiskAlphaCode(risk.residualLikelihood || undefined, risk.residualSeverity || undefined);
+                                            const displayLevelScore = risk.residualRiskScore !== undefined ? risk.residualRiskScore : risk.riskScore;
+
+                                            return (
+                                                <TableRow key={risk.id}>
+                                                    <TableCell className="font-medium whitespace-normal">{risk.hazard}</TableCell>
+                                                    <TableCell className="whitespace-normal">{risk.risk}</TableCell>
+                                                    <TableCell>
+                                                        {initialCode && (
+                                                            <Badge 
+                                                                className="text-black font-bold"
+                                                                style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity, company?.riskMatrixColors) }}
+                                                            >
+                                                                {initialCode}
+                                                            </Badge>
+                                                        )}
                                                     </TableCell>
-                                                )}
-                                            </TableRow>
-                                        ))
+                                                    <TableCell>
+                                                        {mitigatedCode ? (
+                                                            <Badge 
+                                                                className="text-black font-bold"
+                                                                style={{ backgroundColor: getRiskScoreColor(risk.residualLikelihood || undefined, risk.residualSeverity || undefined, company?.riskMatrixColors) }}
+                                                            >
+                                                                {mitigatedCode}
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="outline">N/A</Badge>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge variant="outline">{getRiskLevel(displayLevelScore)}</Badge>
+                                                    </TableCell>
+                                                    {canEdit && (
+                                                        <TableCell className="text-right">
+                                                            <Button variant="ghost" size="icon" onClick={() => openEditDialog(risk)}>
+                                                                <Edit className="h-4 w-4" />
+                                                            </Button>
+                                                        </TableCell>
+                                                    )}
+                                                </TableRow>
+                                            )
+                                        })
                                     ) : (
                                         <TableRow>
                                             <TableCell colSpan={canEdit ? 6 : 5} className="h-24 text-center">

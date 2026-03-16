@@ -1,11 +1,10 @@
 
-
 'use client';
 
 import { useState, Fragment } from 'react';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
+import { getRiskScore, getRiskScoreColor, getRiskLevel, getRiskAlphaCode } from '@/lib/utils.tsx';
 import type { AssociatedRisk, SafetyReport, CorrectiveAction } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -66,42 +65,55 @@ export function MitigatedRiskAssessment({ report, onUpdate, correctiveActions }:
                     <TableRow>
                         <TableHead>Hazard</TableHead>
                         <TableHead>Risk</TableHead>
-                        <TableHead>Risk Score (Initial <ArrowRight className="inline h-3 w-3" /> Mitigated)</TableHead>
+                        <TableHead>Score (Initial <ArrowRight className="inline h-3 w-3" /> Mitigated)</TableHead>
                         <TableHead>Level</TableHead>
                         <TableHead></TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {report.associatedRisks.map(risk => (
-                        <TableRow key={risk.id}>
-                            <TableCell className="max-w-xs">{risk.hazard}</TableCell>
-                            <TableCell className="max-w-xs">{risk.risk}</TableCell>
-                            <TableCell>
-                                <div className="flex items-center gap-2">
-                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity, company?.riskMatrixColors), color: 'black' }}>
-                                        {risk.riskScore}
-                                    </Badge>
-                                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                                    {risk.residualRiskScore !== undefined ? (
-                                        <Badge style={{ backgroundColor: getRiskScoreColor(risk.residualLikelihood, risk.residualSeverity, company?.riskMatrixColors), color: 'black' }}>
-                                            {risk.residualRiskScore}
-                                        </Badge>
-                                    ) : (
-                                        <Badge variant="outline">N/A</Badge>
-                                    )}
-                                </div>
-                            </TableCell>
-                            <TableCell>
-                                    <Badge variant="outline">{getRiskLevel(risk.residualRiskScore ?? risk.riskScore)}</Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="outline" size="sm" onClick={() => handleOpenAssessDialog(risk)}>
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    Assess
-                                </Button>
-                            </TableCell>
-                        </TableRow>
-                    ))}
+                    {report.associatedRisks.map(risk => {
+                        const initialCode = getRiskAlphaCode(risk.likelihood, risk.severity);
+                        const mitigatedCode = getRiskAlphaCode(risk.residualLikelihood, risk.residualSeverity);
+                        
+                        return (
+                            <TableRow key={risk.id}>
+                                <TableCell className="max-w-xs">{risk.hazard}</TableCell>
+                                <TableCell className="max-w-xs">{risk.risk}</TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-2">
+                                        {initialCode && (
+                                            <Badge 
+                                                className="text-black font-bold"
+                                                style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity, company?.riskMatrixColors) }}
+                                            >
+                                                {initialCode}
+                                            </Badge>
+                                        )}
+                                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                                        {mitigatedCode ? (
+                                            <Badge 
+                                                className="text-black font-bold"
+                                                style={{ backgroundColor: getRiskScoreColor(risk.residualLikelihood, risk.residualSeverity, company?.riskMatrixColors) }}
+                                            >
+                                                {mitigatedCode}
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="outline">N/A</Badge>
+                                        )}
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                        <Badge variant="outline">{getRiskLevel(risk.residualRiskScore ?? risk.riskScore)}</Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="outline" size="sm" onClick={() => handleOpenAssessDialog(risk)}>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Assess
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        )
+                    })}
                 </TableBody>
                 </Table>
         ) : (
